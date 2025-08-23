@@ -1,0 +1,1 @@
+UPDATE Post SET type = 'TREE' WHERE type IS NULL OR TRIM(type) = '';

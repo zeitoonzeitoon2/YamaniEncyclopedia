@@ -1,0 +1,111 @@
+// Prisma schema for SITEMAN (SQLite)
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Models (استفاده از String به‌جای enum برای سازگاری با SQLite)
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String?
+  name         String?
+  image        String?
+  role         String        @default("USER")
+  posts        Post[]
+  adminVotes   Vote[]
+  articles     Article[]
+  comments     Comment[]
+  commentReads CommentRead[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Post {
+  id              String        @id @default(cuid())
+  content         String
+  articlesData    String?
+  status          String        @default("PENDING")
+  type            String        @default("TREE")
+  version         Int?
+  revisionNumber  Int?
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id])
+
+  originalPostId  String?
+  originalPost    Post?         @relation("PostRevisions", fields: [originalPostId], references: [id])
+  revisions       Post[]        @relation("PostRevisions")
+
+  votes           Vote[]
+  comments        Comment[]
+  commentReads    CommentRead[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  score     Int
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, adminId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  // Threaded replies support
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Track last read time of a post per user (برای شمارش کامنت‌های خوانده‌نشده)
+model CommentRead {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id])
+  lastReadAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  slug        String   @unique
+  description String?
+  status      String   @default("PUBLISHED")
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Key-value settings storage (e.g., homepage header image url)
+model Setting {
+  key   String @id
+  value String
+}

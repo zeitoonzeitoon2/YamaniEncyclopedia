@@ -1,0 +1,61 @@
+/* Persian Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css');
+/* IRANYekan, Dana and Sahel fonts will be loaded via Next.js font optimization */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-dark-bg text-dark-text font-sans;
+}
+@layer components {
+  /* دکمه‌های اصلی */
+  .btn-primary {
+    @apply bg-warm-primary text-white hover:bg-warm-accent transition-colors shadow-lg rounded-xl px-6 py-3 font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-warm-cream text-warm-primary hover:bg-warm-primary hover:text-white border border-warm-primary transition-colors rounded-xl px-6 py-3 font-medium shadow-md;
+  }
+
+  /* کارت‌ها */
+  .card {
+    @apply bg-dark-card border border-dark-border rounded-lg shadow-xl;
+  }
+
+  /* فیلدهای ورودی */
+  .input-field {
+    @apply bg-dark-card border border-dark-border text-dark-text rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
+  }
+  
+  .input {
+    @apply bg-warm-cream border border-gray-400 text-gray-800 rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
+  }
+  
+  .heading {
+    @apply font-farhang text-warm-accent;
+  }
+  
+  .text-persian {
+    @apply font-iran-sans;
+  }
+
+  /* دکمه‌های جدید */
+  .btn-success {
+    @apply bg-warm-success text-white hover:bg-green-600 transition-colors shadow-lg;
+  }
+
+  .btn-warning {
+    @apply bg-warm-warning text-white hover:bg-yellow-600 transition-colors shadow-lg;
+  }
+
+  .btn-error {
+    @apply bg-warm-error text-white hover:bg-red-700 transition-colors shadow-lg;
+  }
+}
