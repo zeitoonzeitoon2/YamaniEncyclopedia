@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
@@ -283,5 +284,13 @@ export default function CreatePost() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function CreatePostPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-dark-bg flex items-center justify-center"><div className="text-dark-text">در حال بارگذاری...</div></div>}>
+      <CreatePost />
+    </Suspense>
   )
 }
