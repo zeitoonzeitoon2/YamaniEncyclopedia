@@ -59,7 +59,7 @@ export default async function HomePage() {
         {/* Header banner */}
         {headerUrl && (
           <div className="relative h-48 md:h-64 lg:h-80 mb-8">
-            <Image src={headerUrl} alt="Header" fill className="object-cover rounded-xl" priority />
+            <Image src={headerUrl} alt="Header" fill className="object-cover rounded-xl" priority unoptimized />
           </div>
         )}
 

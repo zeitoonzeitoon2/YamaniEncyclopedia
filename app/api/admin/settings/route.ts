@@ -2,22 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { createWriteStream } from 'fs'
-import { mkdir, stat } from 'fs/promises'
-import path from 'path'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 const HEADER_KEY = 'home.headerImage'
-
-async function ensureUploadDir() {
-  try {
-    await stat(UPLOAD_DIR)
-  } catch {
-    await mkdir(UPLOAD_DIR, { recursive: true })
-  }
-}
 
 export async function GET() {
   const setting = await prisma.setting.findUnique({ where: { key: HEADER_KEY } })
@@ -35,8 +25,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid content type' }, { status: 400 })
   }
 
-  await ensureUploadDir()
-
   const formData = await request.formData()
   const file = formData.get('file') as File | null
   if (!file) {
@@ -49,26 +37,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'حجم فایل باید حداکثر 5 مگابایت باشد' }, { status: 400 })
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const filename = `header-${Date.now()}.${ext}`
-  const serverPath = path.join(UPLOAD_DIR, filename)
-
-  await new Promise<void>((resolve, reject) => {
-    const stream = createWriteStream(serverPath)
-    stream.on('finish', () => resolve())
-    stream.on('error', reject)
-    stream.write(buffer)
-    stream.end()
-  })
-
-  const publicUrl = `/uploads/${filename}`
+  // ذخیره به صورت Data URL در پایگاه داده (سازگار با محیط‌های Read-only مثل Netlify)
+  const arrayBuffer = await file.arrayBuffer()
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+  const mime = (file as any).type || 'image/jpeg'
+  const dataUrl = `data:${mime};base64,${base64}`
 
   await prisma.setting.upsert({
     where: { key: HEADER_KEY },
-    create: { key: HEADER_KEY, value: publicUrl },
-    update: { value: publicUrl },
+    create: { key: HEADER_KEY, value: dataUrl },
+    update: { value: dataUrl },
   })
 
-  return NextResponse.json({ url: publicUrl })
+  return NextResponse.json({ url: dataUrl })
 }

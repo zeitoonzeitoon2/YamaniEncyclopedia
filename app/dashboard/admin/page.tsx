@@ -201,7 +201,7 @@ export default function AdminDashboard() {
           <p className="text-dark-muted text-sm mb-3">سایز پیشنهادی: 1920×480 پیکسل (نسبت 4:1)، حداکثر حجم 5 مگابایت، فرمت‌های JPG/PNG/WebP</p>
           {headerUrl && (
             <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
-              <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" />
+              <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" unoptimized />
             </div>
           )}
           {previewUrl && (
