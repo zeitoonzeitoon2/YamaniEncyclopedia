@@ -20,6 +20,11 @@ export const authOptions: NextAuthOptions = {
         const rawEmail = credentials.email.trim()
         const normalizedEmail = rawEmail.toLowerCase()
 
+        // DEBUG: log lookup attempt (no sensitive data)
+        try {
+          console.log('Auth: lookup start', { rawEmail, normalizedEmail })
+        } catch {}
+
         const user = await prisma.user.findFirst({
           where: {
             OR: [
@@ -29,6 +34,10 @@ export const authOptions: NextAuthOptions = {
           },
         })
 
+        try {
+          console.log('Auth: lookup result', { found: !!user, hasPass: !!user?.password, userEmail: user?.email })
+        } catch {}
+
         if (!user || !user.password) {
           return null
         }
@@ -37,6 +46,10 @@ export const authOptions: NextAuthOptions = {
           credentials.password,
           user.password
         )
+
+        try {
+          console.log('Auth: compare', { userId: user.id, ok: isPasswordValid })
+        } catch {}
 
         if (!isPasswordValid) {
           return null

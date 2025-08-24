@@ -1,7 +1,7 @@
-// Prisma schema for SITEMAN (SQLite)
+// Prisma schema for SITEMAN (PostgreSQL)
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -9,7 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Models (استفاده از String به‌جای enum برای سازگاری با SQLite)
+// Models (استفاده از String به‌جای enum برای سازگاری و سادگی)
 
 model User {
   id           String        @id @default(cuid())
