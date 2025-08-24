@@ -95,7 +95,7 @@ function CreatePost() {
 
     const loadTopPost = async () => {
       try {
-        const response = await fetch('/api/posts/top')
+        const response = await fetch('/api/posts/latest')
         if (response.ok) {
           const topPost = await response.json()
           if (topPost) {
