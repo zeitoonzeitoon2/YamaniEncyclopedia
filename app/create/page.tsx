@@ -9,7 +9,7 @@ import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
 import { Node, Edge } from 'reactflow'
 
-export default function CreatePost() {
+function CreatePost() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
