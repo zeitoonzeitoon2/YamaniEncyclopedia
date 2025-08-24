@@ -256,7 +256,10 @@ export default function EnhancedDiagramComparison({
     })
 
     // 3) اتحاد دو مجموعه برای به‌دست آوردن آمار نهایی «ویرایش مقالات»
-    const unionEditedCount = new Set<string>([...editedByLinkSlugs, ...editedDraftSlugs]).size
+    const unionEditedCount = new Set<string>([
+      ...Array.from(editedByLinkSlugs),
+      ...Array.from(editedDraftSlugs),
+    ]).size
 
     const mergedStats = {
       ...incomingStats,
