@@ -95,7 +95,7 @@ function CreatePost() {
 
     const loadTopPost = async () => {
       try {
-        const response = await fetch('/api/posts/latest')
+        const response = await fetch('/api/posts/latest', { cache: 'no-store' })
         if (response.ok) {
           const topPost = await response.json()
           if (topPost) {
@@ -118,7 +118,7 @@ function CreatePost() {
       if (!handled) {
         // سناریو: حالت غیر ویرایشی. ابتدا آخرین نسخه منتشرشده را بگیر، سپس تصمیم بگیر آیا پیش‌نویس محلی معتبر است یا خیر
         try {
-          const resp = await fetch('/api/posts/latest')
+          const resp = await fetch('/api/posts/latest', { cache: 'no-store' })
           const latest = resp.ok ? await resp.json() : null
 
           if (!editId) {
