@@ -2,7 +2,7 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata = {
-  title: 'درخت علم - مدیریت دانش مفهومی',
+  title: 'درخت علم - پلتفرم هم اندیشی',
   description: 'سامانهٔ مدیریت دانش مبتنی بر نمودارهای مفهومی',
 }
 
