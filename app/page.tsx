@@ -1,13 +1,15 @@
+export const dynamic = 'force-dynamic'
+
 import { PostCard } from '@/components/PostCard'
 import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
 
-// کمکی: گرفتن پست با بیشترین امتیاز مثبت
+// کمکی: گرفتن پست با بیشترین امتیاز مثبت (در صورت نبود، آخرین پست منتشرشده)
 async function getTopVotedPost() {
   try {
     const posts = await prisma.post.findMany({
-      where: { status: 'APPROVED' },
+      where: { status: 'APPROVED', version: { not: null } },
       include: {
         author: { select: { name: true, image: true } },
         votes: true,
@@ -21,7 +23,17 @@ async function getTopVotedPost() {
       .filter((p) => p.totalScore > 0)
       .sort((a, b) => b.totalScore - a.totalScore)
 
-    return postsWithScores[0] ?? null
+    const topByScore = postsWithScores[0] ?? null
+    if (topByScore) return topByScore
+
+    // اگر پست با رای مثبت وجود ندارد، آخرین پست APPROVED را به عنوان fallback برگردان
+    if (posts.length > 0) {
+      const p = posts[0]
+      const pTotal = p.votes.reduce((s, v) => s + v.score, 0)
+      return { ...p, totalScore: pTotal }
+    }
+
+    return null
   } catch (err) {
     console.error('[HomePage.getTopVotedPost] Failed to fetch from Prisma:', err)
     return null

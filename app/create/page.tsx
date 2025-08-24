@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
@@ -11,6 +11,9 @@ import { Node, Edge } from 'reactflow'
 export default function CreatePost() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+  const draftKey = editId ? `create_tree_draft_v1_edit_${editId}` : 'create_tree_draft_v1'
   const [originalPostId, setOriginalPostId] = useState<string | null>(null)
   const [treeData, setTreeData] = useState<{ nodes: Node[]; edges: Edge[] }>({
     nodes: [
@@ -25,8 +28,6 @@ export default function CreatePost() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
-  const DRAFT_KEY = 'create_tree_draft_v1'
 
   // Guard to temporarily disable autosave (e.g., right after successful submit)
   const skipAutoSaveRef = useRef(false)
@@ -48,27 +49,47 @@ export default function CreatePost() {
     if (hasLoadedRef.current) return
     hasLoadedRef.current = true
 
-    // تلاش برای بازیابی پیش‌نویس از localStorage
-    try {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed?.treeData?.nodes && parsed?.treeData?.edges) {
-          // فقط اگر پیش‌نویس واقعی باشد (بیش از یک نود یا دارای یال)
-          if (!isTrivialTree(parsed.treeData)) {
+    // اگر در حالت ویرایش از طریق ?edit=ID هستیم، ابتدا تلاش برای بازیابی پیش‌نویس اختصاصی همین آیتم
+    const tryLoadEditTarget = async () => {
+      if (!editId) return false
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)) {
             setTreeData(parsed.treeData)
             setOriginalPostId(parsed.originalPostId ?? null)
             setIsLoading(false)
-            return
+            return true
           } else {
-            // اگر پیش‌نویس صرفاً «نود شروع» است، آن را نادیده بگیریم تا نمودار اصلی بارگذاری شود
-            // و همان‌جا نیز پاکش کنیم تا مزاحم دفعات بعدی نشود
-            try { localStorage.removeItem(DRAFT_KEY) } catch {}
+            try { localStorage.removeItem(draftKey) } catch {}
           }
         }
+      } catch (e) {
+        console.warn('Failed to restore edit draft from localStorage', e)
       }
-    } catch (e) {
-      console.warn('Failed to restore draft from localStorage', e)
+
+      // در صورت نبود پیش‌نویس محلی، دادهٔ پست مورد نظر را واکشی کن
+      try {
+        const resp = await fetch('/api/editor/posts')
+        if (!resp.ok) throw new Error('Failed to fetch editor posts')
+        const posts = await resp.json()
+        const target = Array.isArray(posts) ? posts.find((p: any) => p.id === editId) : null
+        if (target) {
+          try {
+            const parsedContent = JSON.parse(target.content)
+            setTreeData(parsedContent)
+          } catch (e) {
+            console.error('Invalid target post content JSON', e)
+          }
+          setOriginalPostId(target.originalPost?.id ?? null)
+          setIsLoading(false)
+          return true
+        }
+      } catch (e) {
+        console.warn('Failed to load target edit post:', e)
+      }
+      return false
     }
 
     const loadTopPost = async () => {
@@ -90,8 +111,33 @@ export default function CreatePost() {
       }
     }
 
-    loadTopPost()
-  }, [status])
+    // تلاش برای لود مسیر ویرایش؛ در صورت عدم موفقیت، روال قبلی
+    ;(async () => {
+      const handled = await tryLoadEditTarget()
+      if (!handled) {
+        // تلاش برای بازیابی پیش‌نویس عمومی قدیمی (بدون edit) فقط اگر در حالت غیر ویرایشی هستیم
+        if (!editId) {
+          try {
+            const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
+            if (saved) {
+              const parsed = JSON.parse(saved)
+              if (parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)) {
+                setTreeData(parsed.treeData)
+                setOriginalPostId(parsed.originalPostId ?? null)
+                setIsLoading(false)
+                return
+              } else {
+                try { localStorage.removeItem(draftKey) } catch {}
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to restore draft from localStorage', e)
+          }
+        }
+        await loadTopPost()
+      }
+    })()
+  }, [status, editId, draftKey])
 
   // ذخیره خودکار پیش‌نویس در localStorage با هر تغییر
   useEffect(() => {
@@ -101,11 +147,11 @@ export default function CreatePost() {
     if (isTrivialTree(treeData)) return
     try {
       const payload = { treeData, originalPostId }
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload))
+      localStorage.setItem(draftKey, JSON.stringify(payload))
     } catch (e) {
       console.warn('Failed to persist draft into localStorage', e)
     }
-  }, [treeData, originalPostId, status])
+  }, [treeData, originalPostId, status, draftKey])
 
   if (status === 'loading' || isLoading) {
     return (
@@ -154,7 +200,7 @@ export default function CreatePost() {
 
         // پاک کردن پیش‌نویس ذخیره شده پس از ارسال موفق و جلوگیری از ذخیره مجدد حالت پیش‌فرض
         skipAutoSaveRef.current = true
-        try { localStorage.removeItem(DRAFT_KEY) } catch {}
+        try { localStorage.removeItem(draftKey) } catch {}
 
         setTreeData({
           nodes: [
