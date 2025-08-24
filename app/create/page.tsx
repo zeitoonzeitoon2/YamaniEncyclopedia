@@ -116,25 +116,53 @@ function CreatePost() {
     ;(async () => {
       const handled = await tryLoadEditTarget()
       if (!handled) {
-        // تلاش برای بازیابی پیش‌نویس عمومی قدیمی (بدون edit) فقط اگر در حالت غیر ویرایشی هستیم
-        if (!editId) {
-          try {
-            const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
-            if (saved) {
-              const parsed = JSON.parse(saved)
-              if (parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)) {
-                setTreeData(parsed.treeData)
-                setOriginalPostId(parsed.originalPostId ?? null)
-                setIsLoading(false)
-                return
-              } else {
-                try { localStorage.removeItem(draftKey) } catch {}
+        // سناریو: حالت غیر ویرایشی. ابتدا آخرین نسخه منتشرشده را بگیر، سپس تصمیم بگیر آیا پیش‌نویس محلی معتبر است یا خیر
+        try {
+          const resp = await fetch('/api/posts/latest')
+          const latest = resp.ok ? await resp.json() : null
+
+          if (!editId) {
+            try {
+              const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
+              if (saved) {
+                const parsed = JSON.parse(saved)
+                const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)
+                if (validDraft) {
+                  const sameBase = !!latest && (parsed.originalPostId === latest.id)
+                  if (sameBase) {
+                    setTreeData(parsed.treeData)
+                    setOriginalPostId(parsed.originalPostId ?? null)
+                    setIsLoading(false)
+                    return
+                  } else {
+                    // پیش‌نویس برای نسخه قدیمی است؛ پاک شود تا نسخه جدید لود گردد
+                    try { localStorage.removeItem(draftKey) } catch {}
+                  }
+                } else {
+                  try { localStorage.removeItem(draftKey) } catch {}
+                }
               }
+            } catch (e) {
+              console.warn('Failed to restore draft from localStorage', e)
             }
-          } catch (e) {
-            console.warn('Failed to restore draft from localStorage', e)
           }
+
+          if (latest) {
+            setOriginalPostId(latest.id)
+            try {
+              const parsedContent = JSON.parse(latest.content)
+              setTreeData(parsedContent)
+            } catch (e) {
+              console.error('Invalid latest post content JSON', e)
+            }
+            setIsLoading(false)
+            return
+          }
+        } catch (e) {
+          console.warn('Failed to fetch latest approved post', e)
         }
+
+        // در صورت عدم موفقیت، روال fallback
         await loadTopPost()
       }
     })()
