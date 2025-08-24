@@ -40,7 +40,9 @@ export async function GET() {
 
     // اگر پست با رای مثبت وجود ندارد، آخرین پست APPROVED را به عنوانfallback برگردان
     if (!topPost && posts.length > 0) {
-      topPost = posts[0]
+      const p = posts[0]
+      const pTotal = p.votes.reduce((sum, vote) => sum + vote.score, 0)
+      topPost = { ...p, totalScore: pTotal }
     }
     
     return NextResponse.json(topPost || null)
