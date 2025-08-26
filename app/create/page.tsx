@@ -43,6 +43,7 @@ function CreatePost() {
 
   // بارگذاری نمودار اصلی با بیشترین امتیاز یا بازیابی پیش‌نویس ذخیره‌شده
   const hasLoadedRef = useRef(false)
+  const skipAutoSaveRef = useRef(false)
   useEffect(() => {
     if (status !== 'authenticated') {
       setIsLoading(false)
