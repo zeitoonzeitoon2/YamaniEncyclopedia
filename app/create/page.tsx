@@ -9,6 +9,17 @@ import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
 import { Node, Edge } from 'reactflow'
 
+// Helper: تشخیص نمودار «بدیهی/تهی» برای جلوگیری از ذخیرهٔ پیش‌فرض
+type TreeData = { nodes: Node[]; edges: Edge[] }
+function isTrivialTree(data: Partial<TreeData> | null | undefined): boolean {
+  if (!data || !Array.isArray((data as any).nodes) || !Array.isArray((data as any).edges)) return true
+  const nodes = (data as any).nodes as Node[]
+  const edges = (data as any).edges as Edge[]
+  if (edges.length > 0) return false
+  if (nodes.length <= 1) return true
+  return false
+}
+
 function CreatePost() {
   const { data: session, status } = useSession()
   const router = useRouter()
