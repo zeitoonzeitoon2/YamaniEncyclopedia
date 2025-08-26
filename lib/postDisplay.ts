@@ -1,4 +1,4 @@
-// Pure client-safe utilities related to posts display
+// أدوات عميل آمنة تتعلّق بعرض المنشورات
 
 export interface PostWithVersion {
   id: string
@@ -11,26 +11,26 @@ export interface PostWithVersion {
 }
 
 /**
- * تولید شناسه نمایشی برای نمودار
- * @param post - پست با اطلاعات ورژن
- * @returns شناسه نمایشی (مثل "123" یا "123/3")
+ * توليد معرّف عرض للمخطط
+ * @param post - منشور يحوي معلومات النسخة
+ * @returns معرّف للعرض (مثل "123" أو "123/3")
  */
 export function getPostDisplayId(post: PostWithVersion): string {
-  // اگر پست دارای شماره نسخه باشد (چه تایید شده چه آرشیوشده)، همان شماره نسخه نمایش داده شود
+  // إذا كان للمنشور رقم نسخة (سواء مُعتمد أو مؤرشف) فاعرض رقم النسخة
   if (post.version != null) {
     return String(post.version)
   }
 
-  // اگر پست طرح پیشنهادی باشد یا به حالت قابل بررسی تغییر کرده باشد، شناسه ویرایش حفظ شود
+  // إذا كان المنشور مقترحًا جديدًا أو أصبح قابلًا للمراجعة، فاحتفظ بهوية المراجعة
   if ((post.status === 'PENDING' || post.status === 'REVIEWABLE') && post.originalPost?.version && post.revisionNumber != null) {
     return `${post.originalPost.version}/${post.revisionNumber}`
   }
 
-  // اگر پست جدید باشد (هنوز ورژن نگرفته)
+  // إذا كان المنشور جديدًا (لم يحصل على نسخة بعد)
   if (post.status === 'PENDING' && !post.originalPost) {
-    return 'جدید'
+    return 'جديد'
   }
 
-  // حالت پیش‌فرض
-  return 'نامشخص'
+  // الحالة الافتراضية
+  return 'غير محدد'
 }

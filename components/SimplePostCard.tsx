@@ -53,17 +53,17 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
   const getStatusText = () => {
     switch (post.status) {
       case 'PENDING':
-        return 'در انتظار'
+        return 'قيد الانتظار'
       case 'APPROVED':
-        return 'تأیید شده'
+        return 'تمت الموافقة'
       case 'REJECTED':
-        return 'رد شده'
+        return 'مرفوض'
       case 'REVIEWABLE':
-        return 'قابل بررسی'
+        return 'قابل للمراجعة'
       case 'ARCHIVED':
-        return 'نسخه سابق'
+        return 'إصدار سابق'
       default:
-        return 'نامشخص'
+        return 'غير محدد'
     }
   }
 
@@ -76,12 +76,12 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
       } p-4 mb-2`}
       onClick={onClick}
     >
-      {/* Header with author info */}
+      {/* ترويسة مع معلومات المؤلف */}
       <div className="flex items-center gap-3 mb-3">
         {post.author.image ? (
           <Image
             src={post.author.image}
-            alt={post.author.name || 'نویسنده'}
+            alt={post.author.name || 'المؤلف'}
             width={32}
             height={32}
             className="rounded-full"
@@ -89,40 +89,55 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         ) : (
           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-bold">
-              {(post.author.name || 'N').charAt(0).toUpperCase()}
+              {(post.author.name || 'م').charAt(0).toUpperCase()}
             </span>
           </div>
         )}
         <div className="flex-1">
-          <p className="text-dark-text font-medium text-sm">{post.author.name || 'نویسنده ناشناس'}</p>
+          <p className="text-dark-text font-medium text-sm">{post.author.name || 'مؤلف مجهول'}</p>
           <p className="text-dark-muted text-xs">
-            {createdDate.toLocaleDateString('fa-IR')}
+            {createdDate.toLocaleDateString('ar')}
           </p>
         </div>
-        {/* نشان کامنت‌های جدید */}
+        {/* شارة التعليقات الجديدة */}
         {post.unreadComments && post.unreadComments > 0 && (
           <div className="ml-2 px-2 py-1 rounded bg-red-600 text-white text-xs font-bold whitespace-nowrap">
-            {post.unreadComments} کامنت جدید
+            {post.unreadComments} تعليق جديد
           </div>
         )}
       </div>
 
-      {/* Post ID */}
+      {/* معرّف المنشور */}
       <div className="mb-2">
         <h4 className="text-dark-text font-semibold text-sm">
-          شناسه: {getPostDisplayId(post)}
+          المعرّف: {getPostDisplayId(post)}
         </h4>
       </div>
 
-      {/* Status and Score */}
+      {/* الحالة والنقاط */}
       <div className="flex items-center justify-between">
         <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor()}`}>
-          {getStatusText()}
+          {(() => {
+            switch (post.status) {
+              case 'PENDING':
+                return 'قيد الانتظار'
+              case 'APPROVED':
+                return 'تمت الموافقة'
+              case 'REJECTED':
+                return 'مرفوض'
+              case 'REVIEWABLE':
+                return 'قابل للمراجعة'
+              case 'ARCHIVED':
+                return 'إصدار سابق'
+              default:
+                return 'غير محدد'
+            }
+          })()}
         </span>
 
         {post.totalScore !== undefined && (
           <div className="flex items-center gap-1">
-            <span className="text-dark-muted text-xs">امتیاز:</span>
+            <span className="text-dark-muted text-xs">النقاط:</span>
             <span className={`font-bold text-xs ${
               post.totalScore > 0 ? 'text-green-400' :
               post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'
@@ -133,7 +148,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         )}
       </div>
 
-      {/* removed type indicator */}
+      {/* تمت إزالة مؤشر النوع */}
     </div>
   )
 }

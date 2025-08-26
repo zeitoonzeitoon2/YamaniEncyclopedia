@@ -26,12 +26,12 @@ export default function SignUp() {
     e.preventDefault()
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error('رمز عبور و تکرار آن یکسان نیستند')
+      toast.error('كلمة المرور وتأكيدها غير متطابقين')
       return
     }
 
     if (formData.password.length < 6) {
-      toast.error('رمز عبور باید حداقل ۶ کاراکتر باشد')
+      toast.error('يجب أن تكون كلمة المرور 6 أحرف على الأقل')
       return
     }
 
@@ -53,13 +53,13 @@ export default function SignUp() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('حساب شما با موفقیت ایجاد شد')
+        toast.success('تم إنشاء حسابك بنجاح')
         router.push('/auth/signin')
       } else {
-        toast.error(data.message || 'خطا در ایجاد حساب')
+        toast.error(data.message || 'خطأ في إنشاء الحساب')
       }
     } catch (error) {
-      toast.error('خطا در ایجاد حساب')
+      toast.error('خطأ في إنشاء الحساب')
     } finally {
       setIsLoading(false)
     }
@@ -70,17 +70,17 @@ export default function SignUp() {
       <div className="card max-w-md w-full mx-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-dark-text mb-2">
-            ایجاد حساب جدید
+            إنشاء حساب جديد
           </h1>
           <p className="text-dark-muted">
-            اطلاعات خود را برای ثبت نام وارد کنید
+            أدخل بياناتك للتسجيل
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-dark-text font-medium mb-2">
-              نام
+              الاسم
             </label>
             <input
               type="text"
@@ -89,14 +89,14 @@ export default function SignUp() {
               value={formData.name}
               onChange={handleChange}
               className="input w-full"
-              placeholder="نام خود را وارد کنید"
+              placeholder="أدخل اسمك"
               required
             />
           </div>
 
           <div>
             <label htmlFor="email" className="block text-dark-text font-medium mb-2">
-              ایمیل
+              البريد الإلكتروني
             </label>
             <input
               type="email"
@@ -105,14 +105,14 @@ export default function SignUp() {
               value={formData.email}
               onChange={handleChange}
               className="input w-full"
-              placeholder="example@email.com"
+              placeholder="أدخل بريدك الإلكتروني"
               required
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-dark-text font-medium mb-2">
-              رمز عبور
+              كلمة المرور
             </label>
             <input
               type="password"
@@ -121,14 +121,14 @@ export default function SignUp() {
               value={formData.password}
               onChange={handleChange}
               className="input w-full"
-              placeholder="حداقل ۶ کاراکتر"
+              placeholder="ستة أحرف على الأقل"
               required
             />
           </div>
 
           <div>
             <label htmlFor="confirmPassword" className="block text-dark-text font-medium mb-2">
-              تکرار رمز عبور
+              تأكيد كلمة المرور
             </label>
             <input
               type="password"
@@ -137,7 +137,7 @@ export default function SignUp() {
               value={formData.confirmPassword}
               onChange={handleChange}
               className="input w-full"
-              placeholder="رمز عبور را دوباره وارد کنید"
+              placeholder="أدخل كلمة المرور مرة أخرى"
               required
             />
           </div>
@@ -147,15 +147,15 @@ export default function SignUp() {
             disabled={isLoading}
             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'در حال ایجاد حساب...' : 'ثبت نام'}
+            {isLoading ? 'جارٍ إنشاء الحساب...' : 'تسجيل'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-dark-muted text-sm">
-            قبلاً حساب دارید؟{' '}
+            لديك حساب مسبقاً؟{' '}
             <Link href="/auth/signin" className="text-warm-accent hover:text-warm-primary">
-              وارد شوید
+              سجّل الدخول
             </Link>
           </p>
         </div>

@@ -1,5 +1,7 @@
 // Utility functions for post version management
 
+// دوال مساعدة لإدارة إصدارات المنشورات
+
 export interface PostWithVersion {
   id: string;
   version?: number | null;
@@ -10,7 +12,7 @@ export interface PostWithVersion {
   } | null;
 }
 
-// getPostDisplayId moved to postDisplay.ts (client-safe)
+// تم نقل getPostDisplayId إلى postDisplay.ts (آمن على جهة العميل)
 
 /**
  * تولید ورژن جدید برای نمودار منتشر شده

@@ -74,7 +74,7 @@ export async function GET() {
       }
     })
 
-    // Calculate total score for each post
+    // حساب مجموع النقاط لكل منشور
     const postsWithScores = posts.map(post => {
       const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
       return {

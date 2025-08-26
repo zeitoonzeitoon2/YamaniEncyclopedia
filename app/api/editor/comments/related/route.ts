@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 
-// GET /api/editor/comments/related
+// GET /api/editor/comments/related - جلب التعليقات ذات الصلة للمحرّر
 // بازگرداندن لیست پست‌هایی که کامنت‌های مرتبط با کاربر فعلی دارند
 // معیار «مرتبط»:
 // 1) کامنت‌هایی روی پست‌های من که توسط دیگران نوشته شده باشد

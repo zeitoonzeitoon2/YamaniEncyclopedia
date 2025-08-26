@@ -40,12 +40,12 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
 
   const getScoreText = (score: number) => {
     switch (score) {
-      case -2: return 'کاملاً مخالف'
-      case -1: return 'مخالف'
-      case 0: return 'بی‌نظر'
-      case 1: return 'موافق'
-      case 2: return 'کاملاً موافق'
-      default: return 'بی‌نظر'
+      case -2: return 'معارض بشدة'
+      case -1: return 'معارض'
+      case 0: return 'محايد'
+      case 1: return 'مؤيد'
+      case 2: return 'مؤيد بشدة'
+      default: return 'محايد'
     }
   }
 
@@ -62,41 +62,44 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* اسلایدر با توضیح کناری */}
+      {/* منزلق مع شرح جانبي */}
       <div className="flex items-center gap-3">
-        {/* توضیح سمت چپ */}
-        <div className="min-w-[120px] text-sm">
-          <span className={`font-medium ${getScoreColor(value)}`}>
-            {getScoreText(value)}
-          </span>
-        </div>
-        
-        {/* اسلایدر */}
-        <div className="flex-1">
-          <input
-            type="range"
-            min="-2"
-            max="2"
-            step="1"
-            value={value}
-            onChange={handleSliderChange}
-            onMouseDown={handleSliderMouseDown}
-            onMouseUp={handleSliderMouseUp}
-            onTouchStart={handleSliderMouseDown}
-            onTouchEnd={handleSliderMouseUp}
-            disabled={disabled}
-            className="w-full h-2 rounded-lg appearance-none cursor-pointer slider-custom"
-            style={{
-              background: getSliderBackground()
-            }}
-          />
-          {/* نشانگرهای امتیاز */}
-          <div className="flex justify-between text-xs text-dark-muted mt-1 px-1">
-            <span className="text-red-600 font-medium">-2</span>
-            <span className="text-red-400">-1</span>
-            <span className="text-gray-500">0</span>
-            <span className="text-green-400">+1</span>
-            <span className="text-green-600 font-medium">+2</span>
+        {/* منزلق مع شرح جانبي */}
+        <div className="flex items-center gap-3">
+          {/* الشرح على اليسار */}
+          <div className="min-w-[120px] text-sm">
+            <span className={`font-medium ${getScoreColor(value)}`}>
+              {getScoreText(value)}
+            </span>
+          </div>
+          
+          {/* منزلق */}
+          <div className="flex-1">
+            <input
+              type="range"
+              min="-2"
+              max="2"
+              step="1"
+              value={value}
+              onChange={handleSliderChange}
+              onMouseDown={handleSliderMouseDown}
+              onMouseUp={handleSliderMouseUp}
+              onTouchStart={handleSliderMouseDown}
+              onTouchEnd={handleSliderMouseUp}
+              disabled={disabled}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer slider-custom"
+              style={{
+                background: getSliderBackground()
+              }}
+            />
+            {/* مؤشرات النقاط */}
+            <div className="flex justify-between text-xs text-dark-muted mt-1 px-1">
+              <span className="text-red-600 font-medium">-2</span>
+              <span className="text-red-400">-1</span>
+              <span className="text-gray-500">0</span>
+              <span className="text-green-400">+1</span>
+              <span className="text-green-600 font-medium">+2</span>
+            </div>
           </div>
         </div>
       </div>

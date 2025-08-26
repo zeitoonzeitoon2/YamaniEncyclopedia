@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
           const updatedNodes = (treeData.nodes || []).map((node: any) => {
             let working: any = { ...node }
 
-            // 1) Finalize main articleDraft -> articleLink
+            // 1) إنهاء articleDraft الرئيسي -> articleLink
             if (working?.data?.articleDraft) {
               const { articleDraft, draftId, ...restData } = working.data
               working = {
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
                 }
               }
             } else if (working?.data?.draftId) {
-              // 2) Backward compatibility for top-level draftId
+              // 2) التوافق العكسي لحقل draftId على المستوى الأعلى
               const raw = String(working.data.draftId || '')
               let path = raw.trim()
               try {
@@ -194,12 +194,12 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // 3) Finalize extraItems links and strip draft metadata
+            // 3) إنهاء روابط extraItems وإزالة بيانات المسودة
             if (Array.isArray(working?.data?.extraItems)) {
               const updatedItems = (working.data.extraItems as any[]).map((it: any) => {
                 if (it?.type !== 'link') return it
 
-                // If we have draft metadata with slug, convert to final link and drop draft field
+                // إذا كانت لدينا بيانات مسودة تحتوي على slug، حوّلها إلى رابط نهائي واحذف حقل draft
                 if (it?.draft?.slug) {
                   const { draft, ...restItem } = it
                   return {
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
                   }
                 }
 
-                // Backward compatibility: item-level draftId normalization
+                // توافقًا مع الإصدارات السابقة: توحيد draftId على مستوى العنصر
                 if (it?.draftId) {
                   let path = String(it.draftId).trim()
                   try {

@@ -55,13 +55,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
 
       if (response.ok) {
         onStatusChange()
-        toast.success('رای شما ثبت شد')
+        toast.success('تم تسجيل تصويتك')
       } else {
-        toast.error('خطا در ثبت رای')
+        toast.error('خطأ في تسجيل التصويت')
       }
     } catch (error) {
       console.error('Error voting:', error)
-      toast.error('خطا در ثبت رای')
+      toast.error('خطأ في تسجيل التصويت')
     } finally {
       setIsVoting(false)
     }
@@ -89,7 +89,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
       } catch (error) {
         return (
           <p className="text-red-400 text-sm mb-6">
-            خطا در نمایش نمودار درختی
+            خطأ في عرض مخطط الشجرة
           </p>
         )
       }
@@ -108,7 +108,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
           {post.author.image ? (
             <img
               src={post.author.image}
-              alt={post.author.name || 'نویسنده'}
+              alt={post.author.name || 'المؤلف'}
               className="w-10 h-10 rounded-full"
             />
           ) : (
@@ -117,17 +117,17 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
             </div>
           )}
           <div>
-            <p className="text-dark-text font-medium">{post.author.name || 'کاربر ناشناس'}</p>
+            <p className="text-dark-text font-medium">{post.author.name || 'مستخدم مجهول'}</p>
             <p className="text-dark-muted text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {new Date(post.createdAt).toLocaleDateString('fa-IR')}
+              {new Date(post.createdAt).toLocaleDateString('ar')}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {post.totalScore !== undefined && (
             <div className="flex items-center gap-1 px-2 py-1 bg-dark-card rounded-lg">
-              <span className="text-dark-muted text-sm">امتیاز:</span>
+              <span className="text-dark-muted text-sm">النقاط:</span>
               <span className={`font-bold ${post.totalScore > 0 ? 'text-green-400' : post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'}`}>
                 {post.totalScore}
               </span>
@@ -136,13 +136,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-dark-text mb-3">شناسه: {getPostDisplayId(post)}</h3>
+      <h3 className="text-xl font-bold text-dark-text mb-3">المعرّف: {getPostDisplayId(post)}</h3>
       {renderContent()}
 
-      {/* سیستم رای‌گیری */}
+      {/* نظام التصويت */}
       {currentAdminId && !votingFinalized && (
         <div className="mb-6 p-4 bg-dark-card rounded-lg">
-          <h4 className="text-dark-text font-medium mb-3">رای‌گیری ناظر</h4>
+          <h4 className="text-dark-text font-medium mb-3">تصويت المشرف</h4>
           <div className="flex items-center gap-2 mb-3">
             {[-2, -1, 0, 1, 2].map((score) => (
               <button
@@ -161,7 +161,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
           </div>
           {currentVote !== null && (
             <p className="text-dark-muted text-sm">
-              رای فعلی شما: {currentVote > 0 ? `+${currentVote}` : currentVote}
+              تصويتك الحالي: {currentVote > 0 ? `+${currentVote}` : currentVote}
             </p>
           )}
         </div>
@@ -169,7 +169,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
 
       {currentAdminId && votingFinalized && post.status === 'APPROVED' && (
         <div className="mb-6 p-4 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
-          این طرح به حد نصاب مشارکت و امتیاز رسیده و منتشر شده است برای همین نظرسنجی متوقف شده است. اگر نقدی به این طرح دارید در کامنت ها مطرح کنید و ایده های خود را در یک طرح جدید ارسال کنید.
+          تمّ بلوغ هذا المقترح حدّ المشاركة والنقاط ونُشر، لذلك تمّ إيقاف التصويت. إذا كانت لديك ملاحظات على هذا المقترح، فاطرحها في التعليقات وأرسل أفكارك في مقترح جديد.
         </div>
       )}
 

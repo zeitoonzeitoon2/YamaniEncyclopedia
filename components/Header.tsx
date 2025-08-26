@@ -11,12 +11,12 @@ export function Header() {
   return (
     <header className="bg-dark-card border-b border-dark-border relative">
       <div className="absolute top-2 right-4 text-xs text-dark-muted">
-        درخت علم
+        شجرة العلم
       </div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold text-dark-text heading">
-            درخت علم
+            شجرة العلم
           </Link>
 
           <nav className="flex items-center gap-4">
@@ -29,7 +29,7 @@ export function Header() {
                   className="btn-primary flex items-center gap-2"
                 >
                   <Edit size={16} />
-                  ویرایش جدید
+                  تحرير جديد
                 </Link>
                 
                 {(session.user?.role === 'SUPERVISOR' || session.user?.role === 'ADMIN') && (
@@ -38,7 +38,7 @@ export function Header() {
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Settings size={16} />
-                    داشبورد ناظر
+                    لوحة المشرف
                   </Link>
                 )}
 
@@ -48,17 +48,17 @@ export function Header() {
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Settings size={16} />
-                    داشبورد ادمین
+                    لوحة المدير
                   </Link>
                 )}
 
-                {(session /* previously role-gated */) && (
+                {(session /* كان سابقًا مشروطًا بالدور */) && (
                   <Link 
                     href="/dashboard/editor" 
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Edit size={16} />
-                    داشبورد ویرایشگر
+                    لوحة المحرر
                   </Link>
                 )}
 
@@ -76,7 +76,7 @@ export function Header() {
                   <button
                     onClick={() => signOut()}
                     className="text-dark-muted hover:text-red-400 transition-colors"
-                    title="خروج"
+                    title="تسجيل الخروج"
                   >
                     <LogOut size={20} />
                   </button>
@@ -88,7 +88,7 @@ export function Header() {
                 className="btn-primary flex items-center gap-2"
               >
                 <User size={16} />
-                ورود
+                تسجيل الدخول
               </Link>
             )}
           </nav>

@@ -1,6 +1,6 @@
 'use client'
 
-// حذف وابستگی به date-fns و استفاده از JavaScript داخلی
+// إزالة الاعتماد على date-fns والاكتفاء بجافاسكربت المدمجة
 import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
@@ -25,7 +25,7 @@ interface Post {
 interface PostCardProps {
   post: Post
   fullWidth?: boolean
-  // برای کنترل پنهان‌سازی کادرهای لینک مقاله در حالت نمایش صفحه اصلی
+  // للتحكّم في إخفاء حقول رابط المقال عند العرض في الصفحة الرئيسية
   hideArticleLinkInputs?: boolean
   hideAuthorName?: boolean
 }
@@ -48,13 +48,13 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
       } catch (error) {
         return (
           <p className="text-red-400 text-sm">
-            خطا در نمایش نمودار درختی
+            خطأ في عرض مخطط الشجرة
           </p>
         )
       }
     }
     
-    // برای پست‌های متنی قدیمی
+    // للمنشورات النصية القديمة
     return (
       <p className="text-dark-muted leading-relaxed">
         {post.content.length > 150 
@@ -82,13 +82,13 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
             <p className="text-dark-text font-medium">{post.author.name}</p>
           )}
           <p className="text-dark-muted text-sm">
-            {new Date(post.createdAt).toLocaleDateString('fa-IR')}
+            {new Date(post.createdAt).toLocaleDateString('ar')}
           </p>
         </div>
       </div>
       
       <h3 className="text-xl font-semibold text-dark-text mb-3">
-        شناسه: {getPostDisplayId(post)}
+        المعرّف: {getPostDisplayId(post)}
       </h3>
       
       {renderContent()}

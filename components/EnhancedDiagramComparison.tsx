@@ -42,7 +42,7 @@ export default function EnhancedDiagramComparison({
   const [originalArticle, setOriginalArticle] = useState<any>(null)
   const [loadingOriginal, setLoadingOriginal] = useState(false)
 
-  // پارس کردن داده‌های مقالات
+  // تحليل بيانات المقالات
   const parsedArticlesData: ArticlesData | null = React.useMemo(() => {
     if (!articlesData) return null
     try {
@@ -52,25 +52,25 @@ export default function EnhancedDiagramComparison({
     }
   }, [articlesData])
 
-  // ابزار کمکی برای استخراج اسلاگ از لینک های /articles/...
+  // أداة مساعدة لاستخراج الslug من الروابط /articles/...
   const extractSlug = React.useCallback((link?: string | null) => {
     if (!link) return null
     try {
-      // حذف کوئری‌استرینگ و هَش
+      // إزالة معلمات الاستعلام والهاش
       const clean = link.split('?')[0].split('#')[0]
-      // اگر به صورت کامل آمده باشد (مثلاً http://.../articles/slug)
+      // إذا جاء بشكل كامل (مثلاً http://.../articles/slug)
       const idx = clean.indexOf('/articles/')
       if (idx !== -1) {
         return decodeURIComponent(clean.substring(idx + '/articles/'.length))
       }
-      // اگر صرفاً خود اسلاگ باشد
+      // إذا كان مجرد الslug نفسه
       return decodeURIComponent(clean.replace(/^\/+/, ''))
     } catch {
       return null
     }
   }, [])
 
-  // دریافت مقاله اصلی برای مقایسه
+  // جلب المقال الأصلي للمقارنة
   const fetchOriginalArticle = React.useCallback(async (slug: string) => {
     setLoadingOriginal(true)
     try {
@@ -79,11 +79,11 @@ export default function EnhancedDiagramComparison({
         const article = await response.json()
         setOriginalArticle(article)
       } else {
-        console.error('خطا در دریافت مقاله اصلی')
+        console.error('خطأ في جلب المقالة الأصلية')
         setOriginalArticle(null)
       }
     } catch (error) {
-      console.error('خطا در دریافت مقاله اصلی:', error)
+      console.error('خطأ في جلب المقالة الأصلية:', error)
       setOriginalArticle(null)
     } finally {
       setLoadingOriginal(false)
@@ -98,23 +98,23 @@ export default function EnhancedDiagramComparison({
     setShowArticleComparison(true)
   }, [fetchOriginalArticle])
 
-  // تابع برای نمایش مقایسه مقاله از طریق diagram
+  // الدالة لعرض مقارنة المقال عبر المخطط
   const handleShowArticleComparison = React.useCallback((originalLink?: string, proposedLink?: string) => {
     console.log('handleShowArticleComparison called with:', { originalLink, proposedLink })
 
     const originalLinkStr = originalLink ?? ''
     const proposedLinkStr = proposedLink ?? ''
 
-    // تلاش برای دریافت مقاله اصلی با استفاده از لینک فعلی
+    // محاولة جلب المقال الأصلي باستخدام الرابط الحالي
     const originalSlug = extractSlug(originalLinkStr)
     if (originalSlug) {
       fetchOriginalArticle(originalSlug)
     }
     
-    // proposedLink اکنون ممکن است previousArticleLink (یک لینک مقاله قدیمی) باشد
+    // proposedLink قد يكون الآن previousArticleLink (رابط مقال قديم)
     const cleanedProposed = (proposedLinkStr || '').split('?')[0].split('#')[0]
 
-    // 1) ابتدا در داده‌های drafts به دنبال id/slug بگردیم (سازگاری عقب‌رو)
+    // 1) أولاً ابحث عن id/slug ضمن بيانات drafts (توافق رجعي)
     if (parsedArticlesData?.drafts && cleanedProposed) {
       const draft = parsedArticlesData.drafts.find(d => d.id === cleanedProposed || d.slug === cleanedProposed)
       if (draft) {
@@ -124,7 +124,7 @@ export default function EnhancedDiagramComparison({
       }
     }
 
-    // 2) اگر proposedLink شبیه شناسه پیش‌نویس است (بدون /articles/)
+    // 2) إذا كان proposedLink مشابهاً لمعرّف مسودة (بدون /articles/)
     if (cleanedProposed && !cleanedProposed.includes('/articles/')) {
       (async () => {
         try {
@@ -143,7 +143,7 @@ export default function EnhancedDiagramComparison({
           console.warn('Failed to fetch draft by id, will try as published article slug.', e)
         }
 
-        // اگر نشد، به عنوان مقاله منتشر شده امتحان کن
+        // إذا لم ينجح، جرّبه كمقال منشور
         const proposedSlug = extractSlug(cleanedProposed)
         if (proposedSlug) {
           try {
@@ -160,11 +160,11 @@ export default function EnhancedDiagramComparison({
               }
               setSelectedDraft(draftLike)
             } else {
-              console.warn('مقاله پیشنهادی یافت نشد یا منتشر نشده است')
+              console.warn('المقالة المقترحة غير موجودة أو غير منشورة')
               setSelectedDraft(null)
             }
-          } catch (e2) {
-            console.error('خطا در دریافت مقاله پیشنهادی:', e2)
+          } catch (e) {
+            console.error('خطأ في جلب المقالة المقترحة:', e)
             setSelectedDraft(null)
           } finally {
             setShowArticleComparison(true)
@@ -176,7 +176,7 @@ export default function EnhancedDiagramComparison({
       return
     }
 
-    // 3) اگر previousArticleLink باشد (شامل /articles/)، آن را به عنوان مقاله قبلی واکشی کن
+    // 3) إذا كان previousArticleLink (يتضمن /articles/)، فاجلبه كمقالٍ سابق
     const proposedSlug = extractSlug(proposedLinkStr)
     if (proposedSlug) {
       (async () => {
@@ -194,11 +194,11 @@ export default function EnhancedDiagramComparison({
             }
             setSelectedDraft(draftLike)
           } else {
-            console.warn('مقاله پیشنهادی یافت نشد یا منتشر نشده است')
+            console.warn('المقالة المقترحة غير موجودة أو غير منشورة')
             setSelectedDraft(null)
           }
         } catch (e) {
-          console.error('خطا در دریافت مقاله پیشنهادی:', e)
+          console.error('خطأ في جلب المقالة المقترحة:', e)
           setSelectedDraft(null)
         } finally {
           setShowArticleComparison(true)
@@ -209,7 +209,7 @@ export default function EnhancedDiagramComparison({
     }
   }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect])
 
-  // ارتقای آمار مقالات بر اساس drafts برای شمارش ویرایش‌ها
+  // ترقية إحصاءات المقالات بالاعتماد على المسودات لحساب التعديلات
   const handleStatsFromDiagram = React.useCallback((incomingStats: {
     nodes: { added: number; removed: number; unchanged: number; total: number }
     flashcards: { added: number; removed: number; edited: number }
@@ -217,7 +217,7 @@ export default function EnhancedDiagramComparison({
   }) => {
     if (!onStatsChange) return
 
-    // 1) جمع‌آوری ویرایش‌های مقاله از روی drafts (وجود originalArticleSlug)
+    // 1) جمع تعديلات المقالات من المسودات (وجود originalArticleSlug)
     const editedDraftSlugs = new Set<string>()
     if (parsedArticlesData?.drafts && Array.isArray(parsedArticlesData.drafts)) {
       parsedArticlesData.drafts.forEach((d) => {
@@ -226,7 +226,7 @@ export default function EnhancedDiagramComparison({
       })
     }
 
-    // 2) محاسبه تغییر لینک مقاله روی نودها و استخراج slug برای جلوگیری از شمارش دوباره
+    // 2) احتساب تغيّر روابط المقال على العُقَد واستخراج المعرّف (slug) لتجنّب العدّ المكرر
     const getSlugFromNodeData = (data: any): string => {
       try {
         const d = data || {}
@@ -234,7 +234,7 @@ export default function EnhancedDiagramComparison({
         if (typeof draft?.slug === 'string' && draft.slug.trim()) return draft.slug.trim()
         if (typeof draft?.id === 'string' && draft.id.trim()) return draft.id.trim()
         if (typeof d.articleLink === 'string' && d.articleLink.trim()) return extractSlug(d.articleLink.trim()) || ''
-        // توجه: دیگر previousArticleLink را به‌عنوان fallback لحاظ نمی‌کنیم تا آمار وضعیت فعلی را منعکس کند
+        // ملاحظة: لم نعد نعتمد previousArticleLink كخيار احتياطي لكي تعكس الإحصاءات الحالة الحالية
         return ''
       } catch {
         return ''
@@ -250,12 +250,12 @@ export default function EnhancedDiagramComparison({
       const o = (originalLinks.get(id) || '')
       const p = (proposedLinks.get(id) || '')
       if (o && p && o !== p) {
-        // تغییر اتصال مقاله برای این نود
+        // تغيير اتصال المقال لهذه العقدة
         editedByLinkSlugs.add(o)
       }
     })
 
-    // 3) اتحاد دو مجموعه برای به‌دست آوردن آمار نهایی «ویرایش مقالات»
+    // 3) توحيد المجموعتين للحصول على الإحصاءات النهائية «تعديل المقالات»
     const unionEditedCount = new Set<string>([
       ...Array.from(editedByLinkSlugs),
       ...Array.from(editedDraftSlugs),
@@ -274,7 +274,7 @@ export default function EnhancedDiagramComparison({
 
   return (
     <div>
-      {/* مقایسه نمودارها */}
+      {/* مقارنة المخططات */}
       <DiagramComparison
         originalData={originalData}
         proposedData={proposedData}
@@ -282,10 +282,10 @@ export default function EnhancedDiagramComparison({
         onStatsChange={handleStatsFromDiagram}
       />
 
-      {/* لیست پیش‌نویس‌ها (فقط در صورت وجود داده‌ها) */}
+      {/* قائمة المسودات (فقط عند توفّر البيانات) */}
       {parsedArticlesData && parsedArticlesData.drafts && parsedArticlesData.drafts.length > 0 && (
         <div className="mt-8">
-          <h4 className="font-bold text-lg text-dark-text mb-4">مقالات پیشنهادی</h4>
+          <h4 className="font-bold text-lg text-dark-text mb-4">المقالات المقترحة</h4>
           <div className="grid gap-4 mb-6">
             {parsedArticlesData.drafts.map((draft) => (
               <div key={draft.id} className="card border border-gray-600">
@@ -293,7 +293,7 @@ export default function EnhancedDiagramComparison({
                   <div className="flex-1">
                     <h5 className="font-semibold text-dark-text">{draft.title}</h5>
                     <p className="text-sm text-dark-muted mt-1">
-                      Slug: {draft.slug}
+                      الاسم المميز: {draft.slug}
                     </p>
                     {draft.description && (
                       <p className="text-sm text-dark-muted mt-1">
@@ -302,7 +302,7 @@ export default function EnhancedDiagramComparison({
                     )}
                     {draft.originalArticleSlug && (
                       <p className="text-xs text-blue-400 mt-1">
-                        ویرایش مقاله: {draft.originalArticleSlug}
+                        تعديل المقال: {draft.originalArticleSlug}
                       </p>
                     )}
                   </div>
@@ -310,7 +310,7 @@ export default function EnhancedDiagramComparison({
                     onClick={() => handleDraftSelect(draft)}
                     className="btn-primary text-sm"
                   >
-                    مقایسه
+                    مقارنة
                   </button>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function EnhancedDiagramComparison({
         </div>
       )}
 
-      {/* مودال مقایسه مقاله */}
+      {/* نافذة مقارنة المقال */}
       {showArticleComparison && (
         <EmbeddedArticleViewer
           originalArticleLink={selectedDraft?.originalArticleSlug}

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already exists
+    // التحقق مما إذا كان المستخدم موجودًا مسبقًا
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail }
     })
@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash password
+    // تجزئة كلمة المرور
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
+    // إنشاء المستخدم
     const user = await prisma.user.create({
       data: {
         name: normalizedName,
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Remove password from response
+    // إزالة كلمة المرور من الاستجابة
     const { password: _, ...userWithoutPassword } = user as any
 
     return NextResponse.json(
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error: unknown) {
-    // Handle unique constraint violation explicitly
+    // معالجة انتهاك القيد الفريد بشكل صريح
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'

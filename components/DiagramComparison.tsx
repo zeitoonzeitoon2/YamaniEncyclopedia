@@ -29,7 +29,7 @@ const DiffNode = ({ data, isConnectable }: any) => {
       ? 'bg-red-100 text-red-800'
       : 'bg-warm-cream text-gray-800'
 
-    // به صورت پیش‌فرض هیچ استروکی نداشته باشد
+    // بشكل افتراضي لا يوجد أي إطار (stroke)
     let borderClass = ''
 
     // رنگ استروک بر اساس وضعیت فلش‌کارت؛ فقط زمانی اعمال شود که فلش‌کارت دارد
@@ -66,10 +66,10 @@ const DiffNode = ({ data, isConnectable }: any) => {
         <div className="text-sm font-bold">{data.label}</div>
         {/* نشانگر وجود فلش‌کارت - حذف و به‌جای آن استروک رنگی بر اساس وضعیت فلش‌کارت اعمال شد */}
         {data.status === 'added' && (
-          <div className="text-xs text-green-600 mt-1">جدید</div>
+          <div className="text-xs text-green-600 mt-1">جديد</div>
         )}
         {data.status === 'removed' && (
-          <div className="text-xs text-red-600 mt-1">حذف شده</div>
+          <div className="text-xs text-red-600 mt-1">محذوف</div>
         )}
       </div>
       <Handle
@@ -115,7 +115,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
   const originalFlowRef = useRef<any>(null)
   const proposedFlowRef = useRef<any>(null)
 
-  // وضعیت هایلایت موقت گره‌های مرتبط
+  // حالة تمييز مؤقت للعُقَد المرتبطة
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([])
 
   // کمکی: نرمال‌سازی لینک‌های اضافه برای کلیک‌پذیری
@@ -123,7 +123,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     try {
       let link = (raw || '').trim()
       if (!link) return ''
-      // اگر شبیه شناسهٔ پیش‌نویس (طولانی و حروف/عدد) بود، همان را برگردان
+      // إذا كان مشابهاً لمعرّف مسودة (طويل وحروف/أرقام)، فأعده كما هو
       if (/^[a-z0-9]{20,}$/i.test(link)) return link
       // اگر لینک کامل خارجی است
       if (/^https?:\/\//i.test(link)) return link
@@ -133,7 +133,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
       if (link.startsWith('/articles/')) return link
       // اگر بدون اسلش شروع می‌شود، به عنوان اسلاگ مقاله در نظر بگیر
       link = link.replace(/^\/+/, '')
-      // اگر بعد از پاک‌سازی شبیه شناسهٔ پیش‌نویس بود، همان را برگردان
+      // إذا كان بعد التنظيف مشابهاً لمعرّف مسودة، فأعده كما هو
       if (/^[a-z0-9]{20,}$/i.test(link)) return link
       if (link.startsWith('articles/')) return `/${link}`
       return `/articles/${link}`
@@ -164,12 +164,12 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
         link = `/articles/${draft.slug.trim()}`
       } else if (typeof draft?.id === 'string' && draft.id.trim()) {
         const id = draft.id.trim()
-        // اگر ID شبیه شناسهٔ پیش‌نویس است، همان را پاس بده تا از مسیر /api/drafts واکشی شود
+        // إذا كان المعرّف مشابهاً لمعرّف مسودة، فمرّره كما هو ليُجلب من المسار /api/drafts
         link = /^[a-z0-9]{20,}$/i.test(id) ? id : `/articles/${id}`
       } else if (typeof d.articleLink === 'string' && d.articleLink.trim()) {
         link = d.articleLink.trim()
       }
-      // توجه: دیگر به previousArticleLink به‌عنوان fallback اتکا نمی‌کنیم تا وضعیت فعلی به‌درستی نمایش داده شود
+      // توجه: دیگر به previousArticleLink به‌عنوان fallback اتکا نمی‌کنیم تا وضعیت فعلی نمایش داده شود
       return link
     } catch {
       return ''
@@ -310,16 +310,16 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     return { originalWithDiff, proposedWithDiff, stats }
   }, [originalData, proposedData, hasFlash, buildFlashSignature])
 
-  // Compute aggregated flashcard/article stats and notify parent
+  // حساب الإحصاءات المجمَّعة للبطاقات التعليمية/المقالات وإشعار المكوّن الأب
   useEffect(() => {
     if (!onStatsChange) return
 
-    // Flashcards stats from node borders
+    // إحصاءات بطاقات التعلّم من حدود العُقَد
     const flashAdded = proposedWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'green').length
     const flashRemoved = originalWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'red').length
     const flashEdited = proposedWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'blue').length
 
-    // Articles stats by comparing normalized links
+    // إحصاءات المقالات عبر مقارنة الروابط المُطبَّعة
     const getLink = (d: any) => {
       try {
         const link = getNormalizedLink(d)
@@ -362,7 +362,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     }
     const hasAnything = (typeof data.flashText === 'string' && data.flashText.trim()) || primaryLink || (items && items.some((it: any) => (it?.content || '').trim())) || (related && related.length > 0)
     if (!hasAnything) return (
-      <div className="text-sm text-dark-muted">فلش کارت ندارد</div>
+      <div className="text-sm text-dark-muted">لا توجد بطاقة تعليمية</div>
     )
     return (
       <div className="bg-stone-900/40 border border-amber-700/40 rounded-lg p-3">
@@ -370,7 +370,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
 
         {data.flashText && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">متن فلش‌کارت</div>
+            <div className="text-xs text-amber-300 mb-1">نصّ البطاقة التعليمية</div>
             <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
               {String(data.flashText)}
             </div>
@@ -379,7 +379,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
 
         {primaryLink && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">لینک اول</div>
+            <div className="text-xs text-amber-300 mb-1">الرابط الأول</div>
             <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
               <a href={primaryLink} target="_blank" className="text-blue-300 underline break-all">{primaryLink}</a>
               {onCompareArticle ? (
@@ -388,10 +388,10 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
                   onClick={() => onCompareArticle(side, primaryLink)}
                   className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
                 >
-                  مشاهده
+                  عرض
                 </button>
               ) : (
-                <a href={primaryLink} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">مشاهده</a>
+                <a href={primaryLink} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">عرض</a>
               )}
             </div>
           </div>
@@ -407,11 +407,11 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
                         const base = primaryLink ? 1 : 0
                         const linkOrder = items.slice(0, idx + 1).filter((x: any) => x?.type === 'link').length
                         const linkNumber = base + linkOrder
-                        const ord = ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم', 'نهم', 'دهم']
-                        const ordLabel = ord[linkNumber - 1] || `${linkNumber}م`
-                        return `لینک ${ordLabel}`
+                        const ord = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر']
+                        const ordLabel = ord[linkNumber - 1] || `رقم ${linkNumber}`
+                        return `الرابط ${ordLabel}`
                       })()
-                    : `متن اضافه ${idx + 1}`
+                    : `نص إضافي ${idx + 1}`
                 }</div>
                 {it.type === 'link' ? (
                   <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
@@ -424,10 +424,10 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
                         onClick={() => onCompareArticle(side, normalizeExtraLink(String(it.content || '')), idx)}
                         className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
                       >
-                        مشاهده
+                        عرض
                        </button>
                     ) : (
-                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">مشاهده</a>
+                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">عرض</a>
                     )}
                   </div>
                 ) : (
@@ -442,7 +442,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
 
         {related && related.length > 0 && (
           <div className="mt-3 pt-3 border-t border-amber-700/40">
-            <div className="text-xs text-amber-300 mb-1">مرتبط است با</div>
+            <div className="text-xs text-amber-300 mb-1">مرتبط بـ</div>
             <div className="flex flex-wrap gap-2">
               {related.map((rid) => (
                 <button
@@ -509,7 +509,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     try { return getNormalizedLink(d || {}) } catch { return '' }
   }, [getNormalizedLink])
 
-  // Helper: collect extra links array (normalized) for a node's data
+  // مُساعِد: تجميع مصفوفة الروابط الإضافية (مُنمطّة) لبيانات العقدة
   const collectExtraLinks = useCallback((d: any): string[] => {
     const items = buildExtraItems(d || {})
     return (items || [])
@@ -527,24 +527,25 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     const oPrimary = buildPrimaryLink(oData)
     const pPrimary = buildPrimaryLink(pData)
 
-    // Default counterpart links are primaries
+    // الروابط المقابِلة الافتراضية هي الروابط الأساسية
+    // الروابط النظيرة الافتراضية هي الروابط الأساسية
     let originalLinkToUse = oPrimary
     let proposedLinkToUse = pPrimary
 
     if (typeof extraIndex === 'number') {
-      // If clicking on an extra link, try pairing with the counterpart at same index
+      // عند النقر على رابط إضافي، حاول مطابقته مع النظير في الفهرس نفسه
       const oExtras = collectExtraLinks(oData)
       const pExtras = collectExtraLinks(pData)
       if (side === 'original') {
         originalLinkToUse = link || oPrimary
         proposedLinkToUse = pExtras[extraIndex] || pPrimary
       } else {
-        // side === 'proposed'
+        // side === 'proposed' (الجانب المقترَح)
         proposedLinkToUse = link || pPrimary
         originalLinkToUse = oExtras[extraIndex] || oPrimary
       }
     } else {
-      // Primary link clicked: keep existing behavior, but ensure we use provided link on the clicked side
+      // عند النقر على الرابط الأساسي: حافظ على السلوك الحالي، وتأكد من استخدام الرابط الممرَّر في جهة النقر
       if (side === 'original') {
         originalLinkToUse = link || oPrimary
         proposedLinkToUse = pPrimary
@@ -614,7 +615,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeOriginalNode as any)?.data}
-                title={`فلش کارت (نمودار فعلی) ${ (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' }`}
+                title={`البطاقة التعليمية (المخطط الحالي) ${ (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' }`}
                 allNodes={originalWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="original"
@@ -625,7 +626,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeProposedNode as any)?.data}
-                title={`فلش کارت (نمودار پیشنهادی) ${ (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' }`}
+                title={`البطاقة التعليمية (المخطط المقترح) ${ (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' }`}
                 allNodes={proposedWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="proposed"

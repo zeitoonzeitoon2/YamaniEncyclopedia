@@ -32,13 +32,13 @@ export default function SignIn() {
       })
 
       if (result?.error) {
-        toast.error('ایمیل یا رمز عبور اشتباه است')
+        toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة')
       } else {
-        toast.success('با موفقیت وارد شدید')
+        toast.success('تم تسجيل الدخول بنجاح')
         router.push('/')
       }
     } catch (error) {
-      toast.error('خطا در ورود')
+      toast.error('خطأ في تسجيل الدخول')
     } finally {
       setIsLoading(false)
     }
@@ -49,17 +49,17 @@ export default function SignIn() {
       <div className="card max-w-md w-full mx-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-dark-text mb-2">
-            ورود به حساب
+            تسجيل الدخول
           </h1>
           <p className="text-dark-muted">
-            ایمیل و رمز عبور خود را وارد کنید
+            أدخل بريدك الإلكتروني وكلمة المرور
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-dark-text font-medium mb-2">
-              ایمیل
+              البريد الإلكتروني
             </label>
             <input
               type="email"
@@ -67,14 +67,14 @@ export default function SignIn() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input w-full"
-              placeholder="example@email.com"
+              placeholder="أدخل بريدك الإلكتروني"
               required
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-dark-text font-medium mb-2">
-              رمز عبور
+              كلمة المرور
             </label>
             <input
               type="password"
@@ -82,7 +82,7 @@ export default function SignIn() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input w-full"
-              placeholder="رمز عبور خود را وارد کنید"
+              placeholder="أدخل كلمة المرور"
               required
             />
           </div>
@@ -92,15 +92,15 @@ export default function SignIn() {
             disabled={isLoading}
             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'در حال ورود...' : 'ورود'}
+            {isLoading ? 'جارٍ تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-dark-muted text-sm">
-            حساب کاربری ندارید؟{' '}
+            لا تملك حساباً؟{' '}
             <Link href="/auth/signup" className="text-warm-accent hover:text-warm-primary">
-              ثبت نام کنید
+              أنشئ حساباً
             </Link>
           </p>
         </div>

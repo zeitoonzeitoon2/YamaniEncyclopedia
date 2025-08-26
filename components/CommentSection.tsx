@@ -140,11 +140,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'ناظر'
+        return 'مدير'
+      case 'SUPERVISOR':
+        return 'مشرف'
       case 'EDITOR':
-        return <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">ویرایشگر</span>
+        return <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">محرر</span>
       case 'USER':
-        return <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">کاربر</span>
+        return <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">مستخدم</span>
       default:
         return null
     }
@@ -153,7 +155,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   // فرمت تاریخ
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('fa-IR', {
+    return date.toLocaleDateString('ar', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -165,8 +167,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   if (isLoading) {
     return (
       <div className="bg-stone-800 rounded-lg p-6 border border-amber-700/40">
-        <h3 className="text-lg font-semibold text-amber-100 mb-4 heading">کامنت‌ها</h3>
-        <div className="text-amber-200">در حال بارگذاری...</div>
+        <h3 className="text-lg font-semibold text-amber-100 mb-4 heading">التعليقات</h3>
+        <div className="text-amber-200">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -174,7 +176,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   return (
     <div className="bg-stone-800 rounded-lg p-6 border border-amber-700/40">
       <h3 className="text-lg font-semibold text-amber-100 mb-4">
-        کامنت‌ها ({comments.length})
+        التعليقات ({comments.length})
       </h3>
 
       {/* فرم کامنت جدید */}
@@ -183,7 +185,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="کامنت خود را بنویسید..."
+            placeholder="اكتب تعليقك..."
             className="w-full p-3 bg-stone-900 text-amber-50 placeholder:opacity-60 rounded-lg border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none"
             rows={3}
           />
@@ -193,7 +195,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               disabled={isSubmitting || !newComment.trim()}
               className="px-4 py-2 bg-warm-primary text-white rounded-lg hover:bg-warm-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'در حال ارسال...' : 'ارسال کامنت'}
+              {isSubmitting ? 'جارٍ الإرسال...' : 'إرسال التعليق'}
             </button>
           </div>
         </form>
@@ -203,7 +205,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       <div className="space-y-4">
         {comments.length === 0 ? (
           <div className="text-amber-200 text-center py-8">
-            هنوز کامنتی ثبت نشده است
+            لا توجد تعليقات بعد
           </div>
         ) : (
           comments.map((comment) => (
@@ -227,7 +229,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
                   className="text-sm text-amber-300 hover:text-amber-200"
                 >
-                  پاسخ
+                  ردّ
                 </button>
               )}
 
@@ -240,7 +242,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   <textarea
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="پاسخ خود را بنویسید..."
+                    placeholder="اكتب ردّك..."
                     className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none"
                     rows={2}
                   />
@@ -253,14 +255,14 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                       }}
                       className="px-3 py-1 text-sm text-amber-300 hover:text-amber-100"
                     >
-                      انصراف
+                      إلغاء
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting || !replyContent.trim()}
                       className="px-3 py-1 text-sm bg-warm-primary text-white rounded hover:bg-warm-accent disabled:opacity-50"
                     >
-                      ارسال
+                      إرسال
                     </button>
                   </div>
                 </form>

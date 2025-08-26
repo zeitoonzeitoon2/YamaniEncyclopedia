@@ -22,23 +22,13 @@ function CreatePost() {
         id: '1',
         type: 'custom',
         position: { x: 400, y: 200 },
-        data: { label: 'شروع' },
+        data: { label: 'ابدأ' },
       },
     ],
     edges: [],
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Guard to temporarily disable autosave (e.g., right after successful submit)
-  const skipAutoSaveRef = useRef(false)
-
-  // Helper: determine if a draft is trivial (only start node, no edges)
-  const isTrivialTree = (data?: { nodes: Node[]; edges: Edge[] } | null) => {
-    if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) return true
-    const { nodes, edges } = data
-    return (edges.length === 0 && nodes.length <= 1)
-  }
 
   // بارگذاری نمودار اصلی با بیشترین امتیاز یا بازیابی پیش‌نویس ذخیره‌شده
   const hasLoadedRef = useRef(false)
@@ -105,8 +95,8 @@ function CreatePost() {
           }
         }
       } catch (error) {
-        console.error('خطا در بارگذاری نمودار اصلی:', error)
-        toast.error('خطا در بارگذاری نمودار اصلی')
+        console.error('خطأ في تحميل المخطط الرئيسي:', error)
+        toast.error('خطأ في تحميل المخطط الرئيسي')
       } finally {
         setIsLoading(false)
       }
@@ -185,7 +175,7 @@ function CreatePost() {
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+        <div className="text-dark-text">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -193,7 +183,7 @@ function CreatePost() {
   if (!session) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">لطفاً وارد شوید</div>
+        <div className="text-dark-text">يرجى تسجيل الدخول</div>
       </div>
     )
   }
@@ -237,7 +227,7 @@ function CreatePost() {
               id: '1',
               type: 'custom',
               position: { x: 400, y: 200 },
-              data: { label: 'شروع' },
+              data: { label: 'ابدأ' },
             },
           ],
           edges: [],
@@ -263,7 +253,7 @@ function CreatePost() {
       <main className="px-4 py-8">
         <div className="max-w-none">
           <h1 className="text-3xl font-bold text-dark-text mb-8 text-center">
-            {originalPostId ? 'ویرایش نمودار اصلی' : 'ایجاد نمودار درختی جدید'}
+            {originalPostId ? 'تحرير المخطط الرئيسي' : 'إنشاء مخطط شجري جديد'}
           </h1>
 
           {/* نوار اقدامات بالا */}
@@ -273,7 +263,7 @@ function CreatePost() {
               onClick={() => router.push('/')}
               className="btn-secondary"
             >
-              انصراف
+              إلغاء
             </button>
             <button
               type="button"
@@ -281,19 +271,19 @@ function CreatePost() {
               onClick={(e) => handleSubmit(e as any)}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'در حال ارسال...' : (originalPostId ? 'ارسال تغییرات' : 'ارسال نمودار')}
+              {isSubmitting ? 'جارٍ الإرسال...' : (originalPostId ? 'إرسال التغييرات' : 'إرسال المخطط')}
             </button>
           </div>
 
           <div className="card">
             <div className="mb-6">
               <label className="block text-dark-text font-medium mb-2">
-                نمودار درختی
+                المخطط الشجري
               </label>
               <div className="text-sm text-gray-400 mb-4">
                 {originalPostId 
-                  ? 'نمودار اصلی بارگذاری شده است. می‌توانید نودهای جدید اضافه کنید، موجودی‌ها را ویرایش یا حذف کنید.'
-                  : 'برای ایجاد نمودار، نودهای جدید اضافه کنید و آنها را به هم متصل کنید. برای اتصال دو نود، از دایره‌های کناری نودها استفاده کنید.'
+                  ? 'تم تحميل المخطط الرئيسي. يمكنك إضافة عقد جديدة، وتحرير أو حذف الموجودة.'
+                  : 'لإنشاء مخطط، أضف عقداً جديدة وقم بربطها ببعضها. لربط عقدتين، استخدم الدوائر الموجودة على جوانب العقد.'
                 }
               </div>
               <div className="w-full min-h-[150vh]">
@@ -317,7 +307,7 @@ function CreatePost() {
 
 export default function CreatePostPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-dark-bg flex items-center justify-center"><div className="text-dark-text">در حال بارگذاری...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-dark-bg flex items-center justify-center"><div className="text-dark-text">جارٍ التحميل...</div></div>}>
       <CreatePost />
     </Suspense>
   )

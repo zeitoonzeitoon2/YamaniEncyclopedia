@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// POST /api/comments/mark-read
+// POST /api/comments/mark-read - تحديد تعليقات منشور ما كمقروءة للمستخدم الحالي
 // علامت‌زدن کامنت‌های یک پست به عنوان خوانده شده برای کاربر فعلی
 export async function POST(request: NextRequest) {
   try {

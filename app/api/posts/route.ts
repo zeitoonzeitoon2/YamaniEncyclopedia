@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextRevisionNumber } from '@/lib/postUtils'
 
-// API endpoint for posts
+// واجهة برمجة التطبيقات (API) الخاصة بالمنشورات
 
 export async function POST(request: NextRequest) {
   console.log('POST /api/posts called - NEW VERSION')
@@ -154,3 +154,5 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+// واجهة برمجة التطبيقات (API) الخاصة بالمنشورات

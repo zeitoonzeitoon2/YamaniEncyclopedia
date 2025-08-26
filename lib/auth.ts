@@ -8,19 +8,19 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'ایمیل', type: 'email' },
-        password: { label: 'رمز عبور', type: 'password' }
+        email: { label: 'البريد الإلكتروني', type: 'email' },
+        password: { label: 'كلمة المرور', type: 'password' }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
-        // Normalize email to be case-insensitive while still supporting existing records
+        // تطبيع البريد الإلكتروني ليكون غير حساس لحالة الأحرف مع دعم السجلات الحالية
         const rawEmail = credentials.email.trim()
         const normalizedEmail = rawEmail.toLowerCase()
 
-        // DEBUG: log lookup attempt (no sensitive data)
+        // تصحيح (DEBUG): تسجيل محاولة البحث (دون بيانات حساسة)
         try {
           console.log('Auth: lookup start', { rawEmail, normalizedEmail })
         } catch {}
@@ -97,7 +97,8 @@ export const authOptions: NextAuthOptions = {
             token.role = dbUser.role
           }
         } catch {
-          // ignore and keep existing token.role
+          // تطبيع البريد الإلكتروني ليكون غير حساس لحالة الأحرف مع دعم السجلات الحالية
+          // تصحيح (DEBUG): تسجيل محاولة البحث (دون بيانات حساسة)
         }
       }
       return token

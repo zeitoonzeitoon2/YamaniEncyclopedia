@@ -189,7 +189,7 @@ export default function SupervisorDashboard() {
 
     if (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN') {
       console.log('User role not authorized:', session.user?.role)
-      toast.error('شما دسترسی ناظر ندارید')
+      toast.error('ليست لديك صلاحية المشرف')
       router.push('/')
       return
     }
@@ -246,7 +246,7 @@ export default function SupervisorDashboard() {
         setPosts(postsWithScores)
       } else {
         console.error('Failed to fetch posts:', postsResponse.status, postsResponse.statusText)
-        toast.error(`خطا در بارگذاری پست‌ها: ${postsResponse.status}`)
+        toast.error('خطأ في تحميل البيانات')
       }
 
       // دریافت آمار ناظرها
@@ -268,7 +268,7 @@ export default function SupervisorDashboard() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+        <div className="text-dark-text">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -523,7 +523,7 @@ export default function SupervisorDashboard() {
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('fa-IR')}</span>
+                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-dark-text line-clamp-2">

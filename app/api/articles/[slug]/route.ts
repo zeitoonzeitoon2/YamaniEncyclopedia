@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    // Decode the slug to handle URL encoded characters
+    // فك ترميز الـ slug للتعامل مع المحارف المُرمَّزة في عنوان URL
     const decodedSlug = decodeURIComponent(params.slug)
     
     const article = await prisma.article.findUnique({
@@ -66,7 +66,7 @@ export async function PATCH(
       )
     }
 
-    // Decode the slug to handle URL encoded characters
+    // فك ترميز الـ slug للتعامل مع المحارف المُرمَّزة في عنوان URL
     const decodedSlug = decodeURIComponent(params.slug)
 
     // بررسی وجود مقاله و مالکیت
@@ -82,10 +82,8 @@ export async function PATCH(
       )
     }
 
-    // Wikipedia-like model: allow any authenticated user to submit an edit
-    // Ownership check removed to enable collaborative editing.
-
-    // تولید slug یکتا از روی عنوان جدید
+    // نموذج شبيه بويكيبيديا: السماح لأي مستخدم مُوثَّق بتقديم تعديل
+    // فك ترميز الـ slug للتعامل مع المحارف المُرمَّزة في عنوان URL
     const slugify = (text: string) => {
       const normalized = (text || '')
         .toLowerCase()

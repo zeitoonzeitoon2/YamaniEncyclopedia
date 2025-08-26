@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       unreadCounts[postId] = count
     }
 
-    // Aggregate latest comment time and total comments per post
+    // تجميع وقت أحدث تعليق وإجمالي التعليقات لكل منشور
     const commentsAgg = postIds.length > 0 ? await prisma.comment.groupBy({
       by: ['postId'],
       where: { postId: { in: postIds } },

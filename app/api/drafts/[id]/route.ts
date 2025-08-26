@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// Helper: extract slug from various article links like /articles/slug or full URLs
+// مُساعِد: استخراج الـ slug من روابط المقالات المتنوعة مثل /articles/slug أو الروابط الكاملة
 function extractSlug(link?: string | null): string | null {
   if (!link) return null
   try {
@@ -34,7 +34,7 @@ export async function GET(
 
     const idOrSlug = params.id
 
-    // Search drafts stored inside posts (articlesData or node.data.articleDraft)
+    // البحث عن المسودّات المخزّنة داخل المنشورات (articlesData أو node.data.articleDraft)
     const posts = await prisma.post.findMany({
       where: { status: { in: ['PENDING', 'REVIEWABLE'] } },
       select: {
@@ -59,14 +59,14 @@ export async function GET(
     let found: { draft: DraftLike; originalSlug?: string; authorId: string; author: any } | null = null
 
     for (const p of posts) {
-      // 1) Look into articlesData.drafts
+      // 1) تفحّص articlesData.drafts
       try {
         if (p.articlesData) {
           const parsed = JSON.parse(p.articlesData)
           if (parsed?.drafts && Array.isArray(parsed.drafts)) {
             const d = parsed.drafts.find((x: any) => x?.id === idOrSlug || x?.slug === idOrSlug)
             if (d) {
-              // Try to infer original article slug from diagram nodes
+              // محاولة استنتاج الـ slug للمقال الأصلي من عُقَد المخطط
               let originalSlug: string | undefined
               try {
                 if (p.content) {
@@ -91,7 +91,7 @@ export async function GET(
 
       if (found) break
 
-      // 2) Look into node.data.articleDraft inside post.content
+      // 2) تفحّص node.data.articleDraft داخل post.content
       try {
         if (p.content) {
           const tree = JSON.parse(p.content)
@@ -115,7 +115,7 @@ export async function GET(
       return NextResponse.json({ error: 'پیش‌نویس یافت نشد' }, { status: 404 })
     }
 
-    // Permission check: supervisors/admins can view all, authors can view their own
+    // التحقق من الصلاحيات: يمكن للمشرفين/المديرين رؤية كل شيء، ويمكن للمؤلفين رؤية مسودّاتهم الخاصة
     const canView =
       session.user.role === 'SUPERVISOR' ||
       session.user.role === 'ADMIN' ||

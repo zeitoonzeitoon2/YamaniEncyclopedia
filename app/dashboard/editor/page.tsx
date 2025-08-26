@@ -267,7 +267,7 @@ export default function EditorDashboard() {
   // فرمت تاریخ
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('fa-IR', {
+    return date.toLocaleDateString('ar', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -474,7 +474,7 @@ export default function EditorDashboard() {
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('fa-IR')}</span>
+                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-dark-text line-clamp-2">

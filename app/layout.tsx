@@ -2,8 +2,8 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata = {
-  title: 'درخت علم - پلتفرم هم اندیشی',
-  description: 'سامانهٔ مدیریت دانش مبتنی بر نمودارهای مفهومی',
+  title: 'شجرة العلم - منصة للتفكير المشترك',
+  description: 'نظام لإدارة المعرفة قائم على المخططات المفاهيمية',
 }
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fa" dir="rtl" className="dark">
+    <html lang="ar" dir="rtl" className="dark">
       <body className="font-sans">
         <Providers>
           {children}

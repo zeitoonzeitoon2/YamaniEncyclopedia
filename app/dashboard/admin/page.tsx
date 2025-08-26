@@ -40,7 +40,7 @@ export default function AdminDashboard() {
     }
 
     if (session.user?.role !== 'ADMIN') {
-      toast.error('شما دسترسی ادمین ندارید')
+      toast.error('ليست لديك صلاحية المدير')
       router.push('/')
       return
     }
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error('ابتدا فایل را انتخاب کنید')
+      toast.error('يرجى اختيار ملف أولاً')
       return
     }
     try {
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/settings', { method: 'POST', body: form })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'آپلود ناموفق بود')
+        throw new Error(err.error || 'فشل الرفع')
       }
       const data = await res.json()
       setHeaderUrl(data.url)
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
 
   const updateUserRole = async (userId: string, newRole: string) => {
     if (userId === session?.user?.id) {
-      toast.error('نمی‌توانید نقش خود را تغییر دهید')
+      toast.error('لا يمكنك تغيير دورك')
       return
     }
 
@@ -131,15 +131,15 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-        toast.success('نقش کاربر با موفقیت تغییر یافت')
+        toast.success('تم تغيير دور المستخدم بنجاح')
         fetchUsers() // بروزرسانی لیست
       } else {
         const errorData = await response.json()
-        toast.error(errorData.error || 'خطا در تغییر نقش')
+        toast.error(errorData.error || 'خطأ في تغيير الدور')
       }
     } catch (error) {
       console.error('Update role error:', error)
-      toast.error('خطا در تغییر نقش کاربر')
+      toast.error('خطأ في تغيير دور المستخدم')
     } finally {
       setUpdatingRole(null)
     }
@@ -147,10 +147,10 @@ export default function AdminDashboard() {
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'ADMIN': return 'ادمین'
-      case 'SUPERVISOR': return 'ناظر'
-      case 'EDITOR': return 'ویرایشگر'
-      case 'USER': return 'کاربر'
+      case 'ADMIN': return 'مدير'
+      case 'SUPERVISOR': return 'مشرف'
+      case 'EDITOR': return 'محرر'
+      case 'USER': return 'مستخدم'
       default: return role
     }
   }
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('fa-IR', {
+    return date.toLocaleDateString('ar', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+        <div className="text-dark-text">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -197,8 +197,8 @@ export default function AdminDashboard() {
 
         {/* Site Settings: Header image */}
         <div className="card mb-8">
-          <h2 className="text-xl font-bold text-dark-text mb-4 heading">تنظیمات سایت - تصویر هدر</h2>
-          <p className="text-dark-muted text-sm mb-3">سایز پیشنهادی: 1920×480 پیکسل (نسبت 4:1)، حداکثر حجم 5 مگابایت، فرمت‌های JPG/PNG/WebP</p>
+          <h2 className="text-xl font-bold text-dark-text mb-4 heading">إعدادات الموقع - صورة الترويسة</h2>
+          <p className="text-dark-muted text-sm mb-3">المقاس المقترح: 1920×480 (نسبة 4:1)، الحد الأقصى للحجم 5 ميجابايت، الصيغ: JPG/PNG/WebP</p>
           {headerUrl && (
             <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
               <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" unoptimized />
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
           <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
             <input type="file" accept="image/*" onChange={handleFileChange} className="text-dark-text" />
             <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
-              {uploading ? 'در حال آپلود...' : 'بارگذاری تصویر هدر'}
+              {uploading ? 'جارٍ الرفع...' : 'رفع صورة الترويسة'}
             </button>
           </div>
         </div>
@@ -224,37 +224,37 @@ export default function AdminDashboard() {
             <p className="text-2xl font-bold text-warm-primary">{users.length}</p>
           </div>
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">ناظران</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">المشرفون</h3>
             <p className="text-2xl font-bold text-purple-400">{supervisorCount}</p>
           </div>
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">ویرایشگران</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">المحررون</h3>
             <p className="text-2xl font-bold text-blue-400">{editorCount}</p>
           </div>
         </div>
 
         {/* Users Table */}
         <div className="card">
-          <h2 className="text-xl font-bold text-dark-text mb-6 heading">لیست کاربران</h2>
+          <h2 className="text-xl font-bold text-dark-text mb-6 heading">قائمة المستخدمين</h2>
           
           <div className="overflow-x-auto">
             <table className="w-full table-auto">
               <thead>
                 <tr className="border-b border-dark-border">
-                  <th className="text-right py-3 px-4 text-dark-text font-semibold">نام</th>
-                  <th className="text-right py-3 px-4 text-dark-text font-semibold">ایمیل</th>
-                  <th className="text-right py-3 px-4 text-dark-text font-semibold">نقش فعلی</th>
-                  <th className="text-right py-3 px-4 text-dark-text font-semibold">فعالیت</th>
-                  <th className="text-right py-3 px-4 text-dark-text font-semibold">عملیات</th>
+                  <th className="text-right py-3 px-4 text-dark-text font-semibold">الاسم</th>
+                  <th className="text-right py-3 px-4 text-dark-text font-semibold">البريد</th>
+                  <th className="text-right py-3 px-4 text-dark-text font-semibold">الدور الحالي</th>
+                  <th className="text-right py-3 px-4 text-dark-text font-semibold">النشاط</th>
+                  <th className="text-right py-3 px-4 text-dark-text font-semibold">إجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id} className="border-b border-dark-border hover:bg-dark-card/50">
                     <td className="py-4 px-4 text-dark-text">
-                      {user.name || 'بدون نام'}
+                      {user.name || 'بدون اسم'}
                       {user.id === session?.user?.id && (
-                        <span className="text-warm-accent text-sm mr-2">(شما)</span>
+                        <span className="text-warm-accent text-sm mr-2">(أنت)</span>
                       )}
                     </td>
                     <td className="py-4 px-4 text-dark-text">{user.email}</td>
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-4 px-4">
                       {user.id === session?.user?.id ? (
-                        <span className="text-sm text-gray-500">خودتان</span>
+                        <span className="text-sm text-gray-500">نفسك</span>
                       ) : (
                         <div className="flex gap-2">
                           {user.role !== 'SUPERVISOR' && (
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
                               disabled={updatingRole === user.id}
                               className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 disabled:opacity-50"
                             >
-                              {updatingRole === user.id ? '...' : 'ناظر'}
+                              {updatingRole === user.id ? '...' : 'مشرف'}
                             </button>
                           )}
                           {user.role !== 'EDITOR' && (
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
                               disabled={updatingRole === user.id}
                               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
                             >
-                              {updatingRole === user.id ? '...' : 'ویرایشگر'}
+                              {updatingRole === user.id ? '...' : 'محرر'}
                             </button>
                           )}
                           {/* Removed USER role option */}

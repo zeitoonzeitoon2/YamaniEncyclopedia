@@ -4,7 +4,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Production safety check: ensure pooled Supabase connection is used
+// فحص أمان الإنتاج: التأكد من استخدام اتصال Supabase المُجمَّع
 const dbUrl = process.env.DATABASE_URL
 if (process.env.NODE_ENV === 'production' && dbUrl) {
   try {

@@ -12,6 +12,8 @@ dist/
 .cache/
 .turbo/
 .eslintcache
+# TypeScript
+*.tsbuildinfo
 
 # Logs
 npm-debug.log*
