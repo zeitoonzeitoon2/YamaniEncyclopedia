@@ -4,22 +4,10 @@ import { PostCard } from '@/components/PostCard'
 import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
-
-async function getTopPost() {
-  try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/posts/top`, {
-      cache: 'no-store'
-    })
-    if (!response.ok) return null
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching top post:', error)
-    return null
-  }
-}
+import { getTopVotedApprovedPost } from '@/lib/postUtils'
 
 export default async function HomePage() {
-  const topVotedPost = await getTopPost()
+  const topVotedPost = await getTopVotedApprovedPost()
 
   // به صورت امن مقدار هدر را بخوانیم تا اگر مدل Setting موجود نبود خطا ندهد
   let headerUrl: string | null = null
@@ -55,7 +43,10 @@ export default async function HomePage() {
           <div className="card rounded-xl p-6 md:p-8 space-y-4">
             <h2 className="text-2xl md:text-3xl font-extrabold text-warm-accent">حول «شجرة العلم»</h2>
             <p className="text-white leading-8">
-              «شجرة العلم» منصة للتفكير المشترك وتوظيف قوة العقل الجمعي بهدف تنمية المعرفة المبنية على الحكمة اليمانية وعلوم قائم آل محمد(ع). في هذه المنصة يطوّر الباحثون معًا، تحت إشراف المشرفين، مخططًا معرفيًا معقدًا.
+              شجرةُ العِلم منصّة تُنظِّم المعرفة في مخطّطٍ شجري من خلال التشاور والتعاون بين الباحثين. هذا المخطّط لا يقتصر على العُقَد والخطوط فحسب، بل إن كلّ عُقدة تمتلك بطاقة بيانات تحتوي على محتوياتٍ علمية، بل وحتى روابط لمقالاتٍ مُفصّلة.
+            </p>
+            <p className="text-white leading-8">
+              وهذا المخطّط وخارطة المعرفة الكبرى في تطوّرٍ دائم بفضل تشاور الباحثين، وتصدر منه نسخٌ أفضل وأكثر اكتمالًا باستمرار. يتوزّع المساهمون في هذا المشروع إلى فئتين: المحرّرون الذين يقدّمون مقترحاتهم فحسب، ويمكنهم الدفاع عنها في التعليقات أو إبداء الرأي في مقترحات الآخرين. أمّا الفئة الثانية فهم المشرفون، وهم نخبةٌ علميّة تمتاز بالعمق والبصيرة والالتزام بتعاليم دعوة اليماني (ع)، وتقوم هذه المجموعة، عبر عملية تصويتٍ بعد النقاش والحوار، بالمصادقة على المقترحات المناسبة.
             </p>
             <h3 className="text-xl font-bold text-warm-accent mt-2">لماذا «شجرة العلم» مهمة؟</h3>
             <p className="text-white leading-7">
