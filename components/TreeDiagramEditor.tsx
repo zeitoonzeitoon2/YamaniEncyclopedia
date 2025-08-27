@@ -133,6 +133,8 @@ export default function TreeDiagramEditor({
 
   // حفظ مرجع كائن ReactFlow
   const reactFlowInstanceRef = useRef<any>(null)
+  // فقط یکبار initialData را به state داخلی Hydrate کنیم
+  const hasHydratedInitialData = useRef(false)
   
   // تركيز المنظور ليشمل العقدتين ثم تمييزهما
   const focusNodesAndHighlight = useCallback((sourceId: string, targetId: string) => {
@@ -371,10 +373,33 @@ export default function TreeDiagramEditor({
         ...links.map((l: string) => ({ id: createFieldId(), type: 'link' as const, content: l || '' })),
       ]
     }
+
+    // اگر هیچ فیلدی نیست، یک «کادر متن» پیش‌فرض بساز و با setNodes تابعی ذخیره کن
+    if (items.length === 0) {
+      items = [{ id: createFieldId(), type: 'text', content: '' }]
+      setNodes((prev) => {
+        const newNodes = prev.map((n) =>
+          n.id === node.id
+            ? {
+                ...n,
+                data: {
+                  ...(n.data as any),
+                  extraItems: items,
+                  extraTexts: [],
+                  extraLinks: [],
+                },
+              }
+            : n
+        )
+        onDataChange?.({ nodes: newNodes, edges })
+        return newNodes
+      })
+    }
+
     setFlashcardFields(items)
     setRelatedNodeIds(Array.isArray(dataAny.relatedNodeIds) ? dataAny.relatedNodeIds : [])
     setRelationToAddId('')
-  }, [])
+  }, [onDataChange, edges, createFieldId])
 
   const handlePaneClick = useCallback(() => {
     setSelectedNodeId(null)
@@ -483,7 +508,7 @@ export default function TreeDiagramEditor({
       if (target === 'main') {
         setArticleLink(link)
         updateArticleLink(link)
-        toast.success('تم ربط مسودة المقال بالبطاقة التعليمية')
+        toast.success('تم ربط مسودة المقال ببطاقة البيانات')
       } else {
         const next = flashcardFields.map((f) => (f.id === target ? { ...f, content: link } : f))
         setFlashcardFields(next)
@@ -517,7 +542,7 @@ export default function TreeDiagramEditor({
         })
         setNodes(next)
         onDataChange?.({ nodes: next, edges })
-        toast.success('تم ربط مسودة المقال بالبطاقة التعليمية')
+        toast.success('تم ربط مسودة المقال ببطاقة البيانات')
       } else {
         const nodeLabel = (() => {
           try {
@@ -539,7 +564,7 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, setNodes, onDataChange, edges, flashcardFields, updateFlashcardFields, nodes]
+    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes]
   )
 
   const openCreateArticleModal = useCallback((nodeId: string) => {
@@ -618,6 +643,8 @@ export default function TreeDiagramEditor({
   // مزامنة الحالة الداخلية مع initialData الواردة عند تغيّرها
   useEffect(() => {
     if (!initialData) return
+    if (hasHydratedInitialData.current) return
+
     const nextNodes = (initialData.nodes || []).map((n: any) => ({
       ...n,
       data: { ...(n.data || {}), _readOnly: readOnly },
@@ -629,6 +656,7 @@ export default function TreeDiagramEditor({
       setSelectedNodeId(null)
       setPanelOpen(false)
     }
+    hasHydratedInitialData.current = true
   }, [initialData, readOnly])
 
   return (
@@ -685,7 +713,7 @@ export default function TreeDiagramEditor({
 
         {selectedNode && (
           <div className="w-full lg:w-1/3 h-full overflow-y-auto p-4 bg-stone-800 border border-amber-700/40 rounded-lg">
-            <h4 className="font-semibold text-amber-100">البطاقة التعليمية للعقدة: {selectedNode?.data?.label}</h4>
+            <h4 className="font-semibold text-amber-100">بطاقة البيانات للعقدة: {selectedNode?.data?.label}</h4>
 
             {isCreatePage && !readOnly && (
               <div className="mt-3">
@@ -711,7 +739,11 @@ export default function TreeDiagramEditor({
                    <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setModalTarget('main')}
+                      onClick={() => {
+                        setQuickArticleModalEditMode(false)
+                        setQuickArticleExistingDraft(undefined)
+                        setModalTarget('main')
+                      }}
                       className="text-xs text-amber-400 hover:text-amber-300 underline bg-transparent border-none cursor-pointer"
                     >
                       + إنشاء وربط تلقائي
@@ -1109,6 +1141,8 @@ export default function TreeDiagramEditor({
         isOpen={!readOnly && modalTarget !== null}
         onClose={() => {
           setModalTarget(null)
+          setQuickArticleModalEditMode(false)
+          setQuickArticleExistingDraft(undefined)
         }}
         onArticleCreated={(slug) => handleArticleCreated(slug, modalTarget!)}
         createViaAPI={!collectDrafts}

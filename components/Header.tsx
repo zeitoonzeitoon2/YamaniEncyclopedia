@@ -11,7 +11,7 @@ export function Header() {
   return (
     <header className="bg-dark-card border-b border-dark-border relative">
       <div className="absolute top-2 right-4 text-xs text-dark-muted">
-        شجرة العلم
+        Tree of Knowledge
       </div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">

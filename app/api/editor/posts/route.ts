@@ -19,12 +19,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // بررسی دسترسی ویرایشگر
-    if (user.role !== 'EDITOR' && user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-    }
+    // Editors/Admins can view all posts; regular users see only their own posts by default
+    const isPrivileged = user.role === 'EDITOR' || user.role === 'ADMIN'
+    const url = new URL(request.url)
+    const scope = url.searchParams.get('scope')
+    const forceAll = scope === 'all'
 
     const posts = await prisma.post.findMany({
+      where: (isPrivileged || forceAll) ? {} : { authorId: user.id },
       select: {
         id: true,
         content: true,

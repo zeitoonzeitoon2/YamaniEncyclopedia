@@ -1,7 +1,7 @@
-// Prisma schema for SITEMAN (PostgreSQL)
+// Prisma schema for SITEMAN (SQLite for local development)
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 

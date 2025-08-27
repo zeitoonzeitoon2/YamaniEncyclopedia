@@ -16,14 +16,14 @@ interface QuickArticleModalProps {
   existingDraft?: { title: string; description?: string; content: string; slug: string }
 }
 
-export default function QuickArticleModal({ 
-  isOpen, 
-  onClose, 
-  onArticleCreated, 
-  createViaAPI = true, 
+export default function QuickArticleModal({
+  isOpen,
+  onClose,
+  onArticleCreated,
+  createViaAPI,
   onDraftCreated,
-  editMode = false,
-  existingDraft
+  editMode,
+  existingDraft,
 }: QuickArticleModalProps) {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
@@ -120,7 +120,7 @@ export default function QuickArticleModal({
   
         if (response.ok) {
           const result = await response.json()
-          toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها بالبطاقة التعليمية')
+          toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها ببطاقة البيانات')
           if (editMode) {
             const slug = result?.newSlug || result?.article?.slug || existingDraft?.slug
             if (slug) onArticleCreated(slug)
@@ -148,7 +148,7 @@ export default function QuickArticleModal({
         }
         onDraftCreated?.(draftData)
         onArticleCreated(slug)
-        toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها بالبطاقة التعليمية')
+        toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها ببطاقة البيانات')
         setFormData({ title: '', description: '', content: '' })
         onClose()
       }
@@ -247,7 +247,7 @@ export default function QuickArticleModal({
                   ? (editMode ? 'جارٍ التحرير...' : 'جارٍ الإنشاء...') 
                   : editMode 
                     ? 'حفظ التغييرات'
-                    : (createViaAPI ? 'إنشاء وربط بالبطاقة التعليمية' : 'إنشاء مسودة وربط')
+                    : (createViaAPI ? 'إنشاء وربط ببطاقة البيانات' : 'إنشاء مسودة وربط')
                 }
               </button>
               
@@ -263,7 +263,7 @@ export default function QuickArticleModal({
 
           <div className="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700/40">
             <p className="text-xs text-blue-300 break-words">
-              💡 سيتم إنشاء عنوان URL (الاسم المميز) تلقائيًا من العنوان، وسيتم ربط المقال فورًا بالبطاقة التعليمية.
+              💡 سيتم إنشاء عنوان URL (الاسم المميز) تلقائيًا من العنوان، وسيتم ربط المقال فورًا ببطاقة البيانات.
             </p>
           </div>
         </div>

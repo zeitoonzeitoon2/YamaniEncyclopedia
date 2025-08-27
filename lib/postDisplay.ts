@@ -21,7 +21,7 @@ export function getPostDisplayId(post: PostWithVersion): string {
     return String(post.version)
   }
 
-  // إذا كان المنشور مقترحًا جديدًا أو أصبح قابلًا للمراجعة، فاحتفظ بهوية المراجعة
+  // إذا كان المنشور مقترحًا جديدًا أو أصبح قابلاً للمراجعة، فاحتفظ بهوية المراجعة
   if ((post.status === 'PENDING' || post.status === 'REVIEWABLE') && post.originalPost?.version && post.revisionNumber != null) {
     return `${post.originalPost.version}/${post.revisionNumber}`
   }

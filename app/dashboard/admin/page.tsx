@@ -192,7 +192,7 @@ export default function AdminDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          داشبورد مدیریت کاربران
+          لوحة إدارة المستخدمين
         </h1>
 
         {/* Site Settings: Header image */}
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">کل کاربران</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">إجمالي المستخدمين</h3>
             <p className="text-2xl font-bold text-warm-primary">{users.length}</p>
           </div>
           <div className="card text-center">

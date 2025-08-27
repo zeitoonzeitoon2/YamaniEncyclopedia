@@ -189,7 +189,7 @@ export default function SupervisorDashboard() {
 
     if (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN') {
       console.log('User role not authorized:', session.user?.role)
-      toast.error('ليست لديك صلاحية المشرف')
+      toast.error('لا تملك صلاحيات المشرف')
       router.push('/')
       return
     }
@@ -198,7 +198,7 @@ export default function SupervisorDashboard() {
     fetchPosts()
   }, [session, status, router])
 
-  // زمانی که در CommentSection خوانده شد، نشان لیست را صفر کن
+  // عند قراءة CommentSection، قم بإعادة تعيين شارة القائمة إلى الصفر
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { postId: string }
@@ -215,7 +215,7 @@ export default function SupervisorDashboard() {
     }
   }, [])
 
-  // دریافت رای فعلی کاربر برای پست انتخاب شده
+  // الحصول على التصويت الحالي للمستخدم للمنشور المحدد
   useEffect(() => {
     if (selectedPost && session?.user) {
       const userVote = selectedPost.votes?.find(vote => vote.adminId === session.user.id)
@@ -228,13 +228,13 @@ export default function SupervisorDashboard() {
   const fetchPosts = async () => {
     try {
       console.log('Fetching posts...')
-      // دریافت پست‌ها
+      // الحصول على المنشورات
       const postsResponse = await fetch('/api/supervisor/posts', { credentials: 'include' })
       console.log('Posts response status:', postsResponse.status)
       if (postsResponse.ok) {
         const data = await postsResponse.json()
         console.log('Posts data received:', data.length, 'posts')
-        // محاسبه امتیاز کل برای هر پست
+        // حساب النقاط الإجمالية لكل منشور
         const postsWithScores = data.map((post: Post) => {
           const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
           return {
@@ -246,10 +246,10 @@ export default function SupervisorDashboard() {
         setPosts(postsWithScores)
       } else {
         console.error('Failed to fetch posts:', postsResponse.status, postsResponse.statusText)
-        toast.error('خطأ في تحميل البيانات')
+        toast.error('خطأ في تحميل المعلومات')
       }
 
-      // دریافت آمار ناظرها
+      // الحصول على إحصائيات المشرفين
       const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
@@ -257,7 +257,7 @@ export default function SupervisorDashboard() {
       }
     } catch (error) {
       console.error('Fetch error:', error)
-      toast.error('خطا در بارگذاری اطلاعات')
+      toast.error('خطأ في تحميل المعلومات')
     } finally {
       setLoading(false)
     }
@@ -304,10 +304,10 @@ export default function SupervisorDashboard() {
       })
 
       if (response.ok) {
-        toast.success('رای شما ثبت شد')
+        toast.success('تم تسجيل تصويتك')
         setCurrentUserVote(score)
         
-        // بررسی انتشار خودکار
+        // فحص النشر التلقائي
         const autoPublishResponse = await fetch('/api/supervisor/auto-publish', {
           method: 'POST',
           headers: {
@@ -319,33 +319,33 @@ export default function SupervisorDashboard() {
         if (autoPublishResponse.ok) {
           const result = await autoPublishResponse.json()
           if (result.published) {
-            toast.success(`طرح ${result.action === 'approved' ? 'تایید و منتشر' : 'رد'} شد`)
+            toast.success(`تم ${result.action === 'approved' ? 'الموافقة والنشر' : 'الرفض'}`)
           }
         }
 
-        // بروزرسانی لیست پست‌ها
+        // تحديث قائمة المنشورات
         await fetchPosts()
         
-        // بروزرسانی selectedPost با داده‌های جدید از فهرست بروزرسانی شده
+        // تحديث selectedPost بالبيانات الجديدة من القائمة المحدّثة
         if (selectedPost) {
-          // پیدا کردن پست بروزرسانی شده در فهرست جدید
-          setTimeout(() => {
-            setPosts(currentPosts => {
-              const updatedPost = currentPosts.find(p => p.id === postId)
-              if (updatedPost) {
-                setSelectedPost(updatedPost)
-              }
-              return currentPosts
-            })
-          }, 100)
-        }
+          // العثور على المنشور المحدّث في القائمة الجديدة
+           setTimeout(() => {
+             setPosts(currentPosts => {
+               const updatedPost = currentPosts.find(p => p.id === postId)
+               if (updatedPost) {
+                 setSelectedPost(updatedPost)
+               }
+               return currentPosts
+             })
+           }, 100)
+         }
       } else {
         const errorData = await response.json()
-        toast.error(errorData.error || 'خطا در ثبت رای')
+        toast.error(errorData.error || 'خطأ في تسجيل التصويت')
       }
     } catch (error) {
       console.error('Vote error:', error)
-      toast.error('خطا در ثبت رای')
+      toast.error('خطأ في تسجيل التصويت')
     }
   }
 
@@ -356,60 +356,60 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          داشبورد ناظر
+          لوحة المشرف
         </h1>
 
-        {/* Comparison Stats - نمایش آمار تحلیلی کارت آخرین پست انتخاب شده */}
+        {/* إحصاءات المقارنة - عرض الإحصاءات التحليلية لبطاقة آخر منشور محدّد */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* کارت گره‌ها */}
-          <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">گره‌ها</h3>
+          {/* بطاقة العُقَد */}
+           <div className="card text-center">
+             <h3 className="text-lg font-semibold text-dark-text heading">العُقَد</h3>
             <div className="flex justify-around mt-3">
               <div className="text-center">
                 <p className="text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه شده</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف شده</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
             </div>
           </div>
 
-          {/* کارت فلش کارت‌ها */}
-          <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">فلش کارت‌ها</h3>
+          {/* بطاقة بطاقات التذكّر */}
+           <div className="card text-center">
+             <h3 className="text-lg font-semibold text-dark-text heading">بطاقات البيانات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
-                <p className="text-xs text-dark-muted">ویرایش</p>
+                <p className="text-xs text-dark-muted">تعديل</p>
               </div>
             </div>
           </div>
 
-          {/* کارت مقالات */}
-          <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">مقالات</h3>
+          {/* بطاقة المقالات */}
+           <div className="card text-center">
+             <h3 className="text-lg font-semibold text-dark-text heading">المقالات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
-                <p className="text-xs text-dark-muted">ویرایش</p>
+                <p className="text-xs text-dark-muted">تعديل</p>
               </div>
             </div>
           </div>
@@ -424,12 +424,12 @@ export default function SupervisorDashboard() {
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-dark-text heading">طرح‌های پیشنهادی</h2>
+                <h2 className="text-xl font-bold text-dark-text heading">التصاميم المقترحة</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
                 className="p-2 rounded-lg bg-dark-card text-dark-text hover:bg-gray-700 transition-colors"
-                title={isPostsListCollapsed ? 'نمایش لیست طرح‌ها' : 'مخفی کردن لیست طرح‌ها'}
+                title={isPostsListCollapsed ? 'عرض قائمة التصاميم' : 'إخفاء قائمة التصاميم'}
               >
                 {isPostsListCollapsed ? '📋' : '◀'}
               </button>
@@ -451,7 +451,7 @@ export default function SupervisorDashboard() {
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
                     onClick={() => setSelectedPost(post)}
-                    title={`شناسه: ${getPostDisplayId(post)}`}
+                    title={`المعرّف: ${getPostDisplayId(post)}`}
                   >
                     {getPostDisplayId(post).charAt(0)}
                   </div>
@@ -469,10 +469,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش طرح‌های جدید"
+                    title="عرض التصاميم الجديدة"
                   >
                     <span className={`${filter === 'new_designs' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{newDesignsCount}</span>
-                    <span className="whitespace-nowrap">طرح‌های جدید</span>
+                    <span className="whitespace-nowrap">تصاميم جديدة</span>
                   </button>
 
                   <button
@@ -483,10 +483,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش پست‌های دارای کامنت جدید"
+                    title="عرض المنشورات التي بها تعليقات جديدة"
                   >
                     <span className={`${filter === 'new_comments' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{totalUnreadComments}</span>
-                    <span className="whitespace-nowrap">کامنت‌های جدید</span>
+                    <span className="whitespace-nowrap">تعليقات جديدة</span>
                   </button>
 
                   <button
@@ -497,17 +497,17 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش قابل بررسی‌ها"
+                    title="عرض العناصر القابلة للمراجعة"
                   >
                     <span className={`${filter === 'reviewables' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{reviewablesCount}</span>
-                    <span className="whitespace-nowrap">قابل بررسی‌ها</span>
+                    <span className="whitespace-nowrap">قابلة للمراجعة</span>
                   </button>
                 </div>
 
                 {filter === 'new_comments' ? (
                   recentComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">هیچ کامنتی وجود ندارد</p>
+                      <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -516,14 +516,14 @@ export default function SupervisorDashboard() {
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
                           className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={`باز کردن طرح مربوط به این کامنت`}
+                          title={`فتح التصميم المرتبط بهذا التعليق`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-dark-text line-clamp-2">
@@ -538,7 +538,7 @@ export default function SupervisorDashboard() {
                     {filteredPosts.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-dark-muted text-lg">
-                          هیچ طرحی در این دسته‌بندی وجود ندارد
+                          لا توجد تصاميم في هذه الفئة
                         </p>
                       </div>
                     ) : (
@@ -564,18 +564,18 @@ export default function SupervisorDashboard() {
           <div className="flex-1">
             {selectedPost ? (
               <div>
-                <h2 className="text-xl font-bold text-dark-text mb-4 heading">جزئیات طرح</h2>
+                <h2 className="text-xl font-bold text-dark-text mb-4 heading">تفاصيل التصميم</h2>
                 <div className="card mb-6">
-                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">شناسه: {getPostDisplayId(selectedPost)}</h3>
+                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
                   <p className="text-dark-muted text-sm mb-4">
-                    نویسنده: {selectedPost.author.name || 'ناشناس'} ({selectedPost.author.role})
+                    الكاتب: {selectedPost.author.name || 'مجهول'} ({selectedPost.author.role})
                   </p>
                   
                   {/* Voting */}
                   <div className="mb-4">
                     {selectedPost.status === 'APPROVED' ? (
                       <div className="p-3 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
-                        این طرح به حد نصاب مشارکت و امتیاز رسیده و منتشر شده است برای همین نظرسنجی متوقف شده است. اگر نقدی به این طرح دارید در کامنت ها مطرح کنید و ایده های خود را در یک طرح جدید ارسال کنید.
+                        تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جديد.
                       </div>
                     ) : (
                       <VotingSlider
@@ -589,22 +589,22 @@ export default function SupervisorDashboard() {
                   <div className="flex justify-between items-center text-sm text-dark-muted">
                     {adminStats ? (
                       <div className="flex items-center gap-4">
-                        <span>آستانه امتیاز: <b>{adminStats.threshold}</b></span>
-                        <span>آستانه مشارکت: <b>{adminStats.participationThreshold}</b></span>
+                        <span>عتبة التقييم: <b>{adminStats.threshold}</b></span>
+                        <span>عتبة المشاركة: <b>{adminStats.participationThreshold}</b></span>
                       </div>
                     ) : (
                       <div />
                     )}
                     <div className="flex items-center gap-4">
                       <span>
-                        امتیاز کل: <span className={`font-bold ${
+                        إجمالي التقييم: <span className={`font-bold ${
                           (selectedPost.totalScore || 0) > 0 ? 'text-green-600' : 
                           (selectedPost.totalScore || 0) < 0 ? 'text-red-600' : 'text-gray-600'
                         }`}>
                           {selectedPost.totalScore || 0}
                         </span>
                       </span>
-                      <span>تعداد مشارکت: <b>{supervisorParticipation}</b></span>
+                      <span>عدد المشاركين: <b>{supervisorParticipation}</b></span>
                     </div>
                   </div>
                 </div>
@@ -614,38 +614,38 @@ export default function SupervisorDashboard() {
                   <div className="mb-6">
                     {selectedPost.originalPost ? (
                       <div>
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقایسه نمودارها</h4>
+                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
                         {originalDiagramData && proposedDiagramData ? (
                           <>
-                            {/* Legend: راهنمای رنگ‌ها */}
+                            {/* Legend: دليل الألوان */}
                             <div className="mb-4">
                               <div className="bg-dark-card border border-gray-700 rounded-lg p-3 text-sm text-dark-text">
-                                <div className="font-semibold mb-2 heading">راهنمای رنگ‌ها</div>
+                                <div className="font-semibold mb-2 heading">دليل الألوان</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {/* Nodes legend */}
                                   <div>
-                                    <div className="text-xs text-dark-muted mb-1">گره‌ها</div>
+                                    <div className="text-xs text-dark-muted mb-1">العُقَد</div>
                                     <div className="flex flex-wrap gap-2">
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">سبز: گره جدید</span>
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">قرمز: گره حذف‌شده</span>
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">آبی: تغییر نام</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">أخضر: عُقدة جديدة</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">أحمر: عُقدة محذوفة</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">أزرق: تغيير الاسم</span>
                                     </div>
                                   </div>
                                   {/* Stroke legend */}
                                   <div>
-                                    <div className="text-xs text-dark-muted mb-1">استروک فلش‌کارت</div>
+                                    <div className="text-xs text-dark-muted mb-1">حدود بطاقة البيانات</div>
                                     <div className="flex flex-wrap items-center gap-3">
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-green-500 bg-transparent" />
-                                        سبز: فلش‌کارت جدید
+                                        بطاقة بيانات جديدة
                                       </span>
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-red-500 bg-transparent" />
-                                        قرمز: حذف فلش‌کارت
+                                        حذف بطاقة البيانات
                                       </span>
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-blue-500 bg-transparent" />
-                                        آبی: ویرایش فلش‌کارت
+                                        تعديل بطاقة البيانات
                                       </span>
                                     </div>
                                   </div>
@@ -662,13 +662,13 @@ export default function SupervisorDashboard() {
                           </>
                         ) : (
                           <div className="text-red-400 text-center py-4">
-                            خطا در نمایش نمودارها: داده‌های نامعتبر
-                          </div>
+            خطأ في عرض المخططات: بيانات غير صالحة
+          </div>
                         )}
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">نمودار پیشنهادی</h4>
+                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
                         {proposedDiagramData ? (
                           <div className="h-96 border border-gray-300 rounded-lg overflow-hidden">
                             <TreeDiagramEditor
@@ -678,7 +678,7 @@ export default function SupervisorDashboard() {
                           </div>
                         ) : (
                           <div className="text-red-400 text-center py-4">
-                            خطا در نمایش نمودار: داده‌های نامعتبر
+                            خطأ في عرض المخططات: بيانات غير صالحة
                           </div>
                         )}
                       </div>
@@ -694,7 +694,7 @@ export default function SupervisorDashboard() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-dark-muted text-lg">
-                  یک طرح را انتخاب کنید تا جزئیات آن نمایش داده شود
+                  يرجى اختيار تصميم لعرض التفاصيل
                 </p>
               </div>
             )}

@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
 
     if (!normalizedName || !normalizedEmail || !password) {
       return NextResponse.json(
-        { message: 'تمام فیلدها الزامی هستند' },
+        { message: 'جميع الحقول مطلوبة' },
         { status: 400 }
       )
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' },
+        { message: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل' },
         { status: 400 }
       )
     }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'کاربری با این ایمیل قبلاً ثبت نام کرده است' },
+        { message: 'يوجد مستخدم مسجل بهذا البريد الإلكتروني' },
         { status: 400 }
       )
     }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'حساب کاربری با موفقیت ایجاد شد',
+        message: 'تم إنشاء الحساب بنجاح',
         user: userWithoutPassword
       },
       { status: 201 }
@@ -65,14 +65,14 @@ export async function POST(request: NextRequest) {
       error.code === 'P2002'
     ) {
       return NextResponse.json(
-        { message: 'این ایمیل قبلاً استفاده شده است' },
+        { message: 'تم استخدام هذا البريد الإلكتروني مسبقاً' },
         { status: 400 }
       )
     }
 
     console.error('Registration error:', error)
     return NextResponse.json(
-      { message: 'خطا در ایجاد حساب کاربری' },
+      { message: 'خطأ في إنشاء الحساب' },
       { status: 500 }
     )
   }

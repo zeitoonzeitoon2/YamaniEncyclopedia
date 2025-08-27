@@ -227,7 +227,7 @@ function CreatePost() {
       })
 
       if (response.ok) {
-        toast.success('نمودار شما با موفقیت ارسال شد و در انتظار تایید است')
+        toast.success('تم إرسال مخططك بنجاح وهو بانتظار الموافقة')
 
         // پاک کردن پیش‌نویس ذخیره شده پس از ارسال موفق و جلوگیری از ذخیره مجدد حالت پیش‌فرض
         skipAutoSaveRef.current = true
@@ -246,9 +246,11 @@ function CreatePost() {
         })
         router.push('/')
       } else {
-        const err = await response.json().catch(() => ({}))
-        console.error('ارسال نمودار ناموفق:', err)
-        toast.error('خطا در ارسال نمودار')
+        const text = await response.text()
+        let err: any = {}
+        try { err = JSON.parse(text) } catch { err = { error: text } }
+        console.error('ارسال نمودار ناموفق:', response.status, err)
+        toast.error(err?.error ? `خطا: ${err.error}` : `خطا در ارسال (${response.status})`)
       }
     } catch (error) {
       console.error('خطا در ارسال نمودار:', error)
@@ -258,10 +260,35 @@ function CreatePost() {
     }
   }
 
+  // وقتی کاربر «إلغاء» می‌زند، پیش‌نویس ذخیره‌شده پاک شود تا دفعه بعد صفحه CREATE از نمودار اصلی منتشر‌شده بارگذاری گردد
+  const handleCancel = () => {
+    try {
+      // جلوگیری از ذخیره‌سازی خودکار بلافاصله بعد از پاکسازی
+      skipAutoSaveRef.current = true
+      // حذف پیش‌نویس فعلی
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(draftKey)
+      }
+    } catch {}
+    // اختیاری: ریست موقت state محلی همین صفحه
+    setTreeData({
+      nodes: [
+        {
+          id: '1',
+          type: 'custom',
+          position: { x: 400, y: 200 },
+          data: { label: 'ابدأ' },
+        },
+      ],
+      edges: [],
+    })
+    // بازگشت
+    router.push('/')
+  }
+
   return (
     <div className="min-h-screen bg-dark-bg">
       <Header />
-      
       <main className="px-4 py-8">
         <div className="max-w-none">
           <h1 className="text-3xl font-bold text-dark-text mb-8 text-center">
@@ -272,7 +299,7 @@ function CreatePost() {
           <div className="flex gap-4 mb-4 justify-end">
             <button
               type="button"
-              onClick={() => router.push('/')}
+              onClick={handleCancel}
               className="btn-secondary"
             >
               إلغاء

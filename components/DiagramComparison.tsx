@@ -103,7 +103,13 @@ interface DiagramComparisonProps {
   }) => void
 }
 
-export default function DiagramComparison({ originalData, proposedData, onShowArticleComparison, onStatsChange }: DiagramComparisonProps) {
+export default function DiagramComparison(props: any) {
+  const {
+    originalData = { nodes: [], edges: [] },
+    proposedData = { nodes: [], edges: [] },
+    onShowArticleComparison,
+    onStatsChange,
+  } = props || {}
   // مموایز کردن nodeTypes برای جلوگیری از هشدار React Flow
   const memoizedNodeTypes = useMemo(() => nodeTypes, [])
   
@@ -362,7 +368,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
     }
     const hasAnything = (typeof data.flashText === 'string' && data.flashText.trim()) || primaryLink || (items && items.some((it: any) => (it?.content || '').trim())) || (related && related.length > 0)
     if (!hasAnything) return (
-      <div className="text-sm text-dark-muted">لا توجد بطاقة تعليمية</div>
+      <div className="text-sm text-dark-muted">لا توجد بطاقة بيانات</div>
     )
     return (
       <div className="bg-stone-900/40 border border-amber-700/40 rounded-lg p-3">
@@ -370,7 +376,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
 
         {data.flashText && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">نصّ البطاقة التعليمية</div>
+            <div className="text-xs text-amber-300 mb-1">نصّ بطاقة البيانات</div>
             <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
               {String(data.flashText)}
             </div>
@@ -615,7 +621,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeOriginalNode as any)?.data}
-                title={`البطاقة التعليمية (المخطط الحالي) ${ (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' }`}
+                title={`بطاقة البيانات (المخطط الحالي) ${ (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' }`}
                 allNodes={originalWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="original"
@@ -626,7 +632,7 @@ export default function DiagramComparison({ originalData, proposedData, onShowAr
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeProposedNode as any)?.data}
-                title={`البطاقة التعليمية (المخطط المقترح) ${ (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' }`}
+                title={`بطاقة البيانات (المخطط المقترح) ${ (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' }`}
                 allNodes={proposedWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="proposed"

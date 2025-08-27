@@ -144,16 +144,16 @@ export default function EditorDashboard() {
   // بارگذاری پست‌ها
   const loadPosts = async () => {
     try {
-      const response = await fetch('/api/editor/posts', { credentials: 'include' })
+      const response = await fetch(`/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`, { credentials: 'include' })
       if (response.ok) {
         const data = await response.json()
         setPosts(data)
       } else {
-        toast.error('خطا در بارگذاری پست‌ها')
+        toast.error('خطأ في تحميل المشاركات')
       }
     } catch (error) {
       console.error('Error loading posts:', error)
-      toast.error('خطا در بارگذاری پست‌ها')
+      toast.error('خطأ في تحميل المشاركات')
     } finally {
       setIsLoading(false)
     }
@@ -163,7 +163,7 @@ export default function EditorDashboard() {
     if (session) {
       loadPosts()
     }
-  }, [session])
+  }, [session, filter])
 
   // دریافت پست‌های دارای «کامنت‌های مربوط به من»
   const loadRelated = async () => {
@@ -247,13 +247,6 @@ export default function EditorDashboard() {
     }
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  // محاسبه میانگین امتیاز
-  // const getAverageScore = (votes: Post['votes']) => {
-  //   if (votes.length === 0) return 0
-  //   const sum = votes.reduce((acc, vote) => acc + vote.score, 0)
-  //   return (sum / votes.length).toFixed(1)
-  // }
-
   // رنگ وضعیت
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -277,7 +270,7 @@ export default function EditorDashboard() {
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+        <div className="text-dark-text">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -296,16 +289,15 @@ export default function EditorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          داشبورد ویرایشگر
+          لوحة المحرور
         </h1>
-
         {reviewableNoticePost && (
           <div role="alert" className="mb-6 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-4 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-100">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="font-bold mb-1">پیام مهم</div>
+                <div className="font-bold mb-1">تنبيه مهم</div>
                 <p className="text-sm leading-6">
-                  طرح شماره {getPostDisplayId(reviewableNoticePost)} شما امتیاز گرفت اما ویرایش دیگری زودتر از ویرایش شما امتیاز گرفت و منتشر شد و طرح شما برچسب «قابل بررسی» خورده است. می‌توانید ایده‌های خود را بار دیگر روی طرحی که منتشر شده اعمال کنید و برای ما بفرستید.
+                  حصل تصميمك رقم {getPostDisplayId(reviewableNoticePost)} على نقاط، لكن تعديلًا آخر سبق تعديلك ونُشر، ولذلك وُسِم تصميمك بأنه «قابل للمراجعة». يمكنك تطبيق أفكارك مجددًا على التصميم المنشور وإرساله لنا.
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
@@ -313,7 +305,7 @@ export default function EditorDashboard() {
                   onClick={handleDismissReviewableNotice}
                   className="px-3 py-1.5 text-sm rounded-lg bg-yellow-500 text-black hover:bg-yellow-400 transition-colors"
                 >
-                  متوجه شدم
+                  حسنًا
                 </button>
               </div>
             </div>
@@ -322,51 +314,52 @@ export default function EditorDashboard() {
         {/* Comparison Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">گره‌ها</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">العُقَد</h3>
             <div className="flex justify-around mt-3">
               <div className="text-center">
                 <p className="text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه شده</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف شده</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
             </div>
           </div>
 
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">فلش کارت‌ها</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">بطاقات البيانات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
-                <p className="text-xs text-dark-muted">ویرایش</p>
+                <p className="text-xs text-dark-muted">تعديل</p>
               </div>
             </div>
           </div>
 
+
           <div className="card text-center">
-            <h3 className="text-lg font-semibold text-dark-text heading">مقالات</h3>
+            <h3 className="text-lg font-semibold text-dark-text heading">المقالات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
-                <p className="text-xs text-dark-muted">اضافه</p>
+                <p className="text-xs text-dark-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حذف</p>
+                <p className="text-xs text-dark-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
-                <p className="text-xs text-dark-muted">ویرایش</p>
+                <p className="text-xs text-dark-muted">تعديل</p>
               </div>
             </div>
           </div>
@@ -377,12 +370,12 @@ export default function EditorDashboard() {
           <div className={`transition-all duration-300 ${isPostsListCollapsed ? 'w-12' : 'w-80 lg:w-96'}`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-dark-text heading">طرح‌های پیشنهادی</h2>
+                <h2 className="text-xl font-bold text-dark-text heading">التصاميم المقترحة</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
                 className="p-2 rounded-lg bg-dark-card text-dark-text hover:bg-gray-700 transition-colors"
-                title={isPostsListCollapsed ? 'نمایش لیست طرح‌ها' : 'مخفی کردن لیست طرح‌ها'}
+                title={isPostsListCollapsed ? 'عرض قائمة التصاميم' : 'إخفاء قائمة التصاميم'}
               >
                 {isPostsListCollapsed ? '📋' : '◀'}
               </button>
@@ -403,7 +396,7 @@ export default function EditorDashboard() {
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
                     onClick={() => setSelectedPost(post)}
-                    title={`شناسه: ${getPostDisplayId(post)}`}
+                    title={`المعرّف: ${getPostDisplayId(post)}`}
                   >
                     {getPostDisplayId(post).charAt(0)}
                   </div>
@@ -421,10 +414,10 @@ export default function EditorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش طرح‌های من"
+                    title="عرض تصاميمي"
                   >
                     <span className={`${filter === 'my-posts' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{myPostsCount}</span>
-                    <span className="whitespace-nowrap">طرح‌های من</span>
+                    <span className="whitespace-nowrap">تصاميمي</span>
                   </button>
 
                   <button
@@ -435,10 +428,10 @@ export default function EditorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش پست‌های دارای کامنت‌های مربوط به من"
+                    title="عرض المشاركات ذات التعليقات المتعلقة بي"
                   >
                     <span className={`${filter === 'related' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{relatedPostsCount}</span>
-                    <span className="whitespace-nowrap">کامنت‌های مربوط به من</span>
+                    <span className="whitespace-nowrap">تعليقات تخصني</span>
                   </button>
                   <button
                     onClick={() => setFilter('all')}
@@ -448,17 +441,17 @@ export default function EditorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="نمایش همه طرح‌ها"
+                    title="عرض جميع التصاميم"
                   >
                     <span className={`${filter === 'all' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{allPostsCount}</span>
-                    <span className="whitespace-nowrap">همه طرح‌ها</span>
+                    <span className="whitespace-nowrap">جميع التصاميم</span>
                   </button>
                 </div>
 
                 {filter === 'related' ? (
                   relatedComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">هیچ کامنتی وجود ندارد</p>
+                      <p className="text-dark-muted text-lg">لا توجد أي تعليقات</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -467,14 +460,14 @@ export default function EditorDashboard() {
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
                           className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={`باز کردن طرح مربوط به این کامنت`}
+                          title={`فتح التصميم المتعلق بهذا التعليق`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'ناشناس'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-dark-text line-clamp-2">
@@ -487,7 +480,7 @@ export default function EditorDashboard() {
                 ) : (
                   filteredPosts.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">هیچ طرحی یافت نشد</p>
+                      <p className="text-dark-muted text-lg">لم يتم العثور على أي تصميم</p>
                     </div>
                   ) : (
                     <div className="space-y-4 max-h-[600px] overflow-y-auto">
@@ -511,11 +504,11 @@ export default function EditorDashboard() {
           <div className="flex-1">
             {selectedPost ? (
               <div>
-                <h2 className="text-xl font-bold text-dark-text mb-4 heading">جزئیات طرح</h2>
+                <h2 className="text-xl font-bold text-dark-text mb-4 heading">تفاصيل التصميم</h2>
                 <div className="card mb-6">
-                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">شناسه: {getPostDisplayId(selectedPost)}</h3>
+                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
                   <p className="text-dark-muted text-sm mb-4">
-                    نویسنده: {selectedPost.author.name || 'ناشناس'}
+                    الكاتب: {selectedPost.author.name || 'مجهول'}
                   </p>
 
                   {/* Edit button for owner */}
@@ -525,7 +518,7 @@ export default function EditorDashboard() {
                         onClick={() => router.push(`/create?edit=${selectedPost.id}`)}
                         className="px-4 py-2 text-sm bg-warm-primary text-white rounded-lg hover:bg-warm-accent font-medium transition-all shadow-md hover:shadow-lg"
                       >
-                        ویرایش
+                        تعديل
                       </button>
                     </div>
                   )}
@@ -536,36 +529,36 @@ export default function EditorDashboard() {
                   <div className="mb-6">
                     {selectedPost.originalPost && originalDiagramData && proposedDiagramData ? (
                       <div>
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقایسه نمودارها</h4>
+                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقارنة المخططات</h4>
                         {/* Legend: راهنمای رنگ‌ها */}
                         <div className="mb-4">
                           <div className="bg-dark-card border border-gray-700 rounded-lg p-3 text-sm text-dark-text">
-                            <div className="font-semibold mb-2 heading">راهنمای رنگ‌ها</div>
+                            <div className="font-semibold mb-2 heading">دليل الألوان</div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {/* Nodes legend */}
                               <div>
-                                <div className="text-xs text-dark-muted mb-1">گره‌ها</div>
+                                <div className="text-xs text-dark-muted mb-1">العُقَد</div>
                                 <div className="flex flex-wrap gap-2">
-                                  <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">سبز: گره جدید</span>
-                                  <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">قرمز: گره حذف‌شده</span>
-                                  <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">آبی: تغییر نام</span>
+                                  <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">أخضر: عقدة جديدة</span>
+                                  <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">أحمر: عقدة محذوفة</span>
+                                  <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">أزرق: تغيير الاسم</span>
                                 </div>
                               </div>
                               {/* Stroke legend */}
                               <div>
-                                <div className="text-xs text-dark-muted mb-1">استروک فلش‌کارت</div>
+                                <div className="text-xs text-dark-muted mb-1">حدود بطاقات البيانات</div>
                                 <div className="flex flex-wrap items-center gap-3">
                                   <span className="inline-flex items-center gap-2 text-xs">
                                     <span className="inline-block w-4 h-4 rounded border-4 border-green-500 bg-transparent" />
-                                    سبز: فلش‌کارت جدید
+                                    أخضر: بطاقة جديدة
                                   </span>
                                   <span className="inline-flex items-center gap-2 text-xs">
                                     <span className="inline-block w-4 h-4 rounded border-4 border-red-500 bg-transparent" />
-                                    قرمز: حذف فلش‌کارت
+                                    أحمر: حذف بطاقة
                                   </span>
                                   <span className="inline-flex items-center gap-2 text-xs">
                                     <span className="inline-block w-4 h-4 rounded border-4 border-blue-500 bg-transparent" />
-                                    آبی: ویرایش فلش‌کارت
+                                    أزرق: تعديل بطاقة
                                   </span>
                                 </div>
                               </div>
@@ -581,7 +574,7 @@ export default function EditorDashboard() {
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">نمودار پیشنهادی</h4>
+                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
                         {proposedDiagramData ? (
                           <div className="h-96 border border-gray-300 rounded-lg overflow-hidden">
                             <TreeDiagramEditor
@@ -591,7 +584,7 @@ export default function EditorDashboard() {
                           </div>
                         ) : (
                           <div className="text-red-400 text-center py-4">
-                            خطا در نمایش نمودار: داده‌های نامعتبر
+                            خطأ في عرض المخطط: بيانات غير صالحة
                           </div>
                         )}
                       </div>
@@ -607,7 +600,7 @@ export default function EditorDashboard() {
             ) : (
               <div className="card">
                 <div className="text-center text-gray-400 py-12">
-                  لطفاً یک پست را از لیست انتخاب کنید
+                  يرجى اختيار منشور من القائمة
                 </div>
               </div>
             )}
