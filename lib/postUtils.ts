@@ -63,3 +63,36 @@ export async function generateNextRevisionNumber(originalPostId: string): Promis
   const lastRevisionNumber = lastRevision?.revisionNumber || 0;
   return lastRevisionNumber + 1;
 }
+
+/**
+ * برگرداندن «المخطط الأبرز»: بالاترین امتیاز مثبت؛ اگر نبود، آخرین پست APPROVED
+ */
+export async function getTopVotedApprovedPost() {
+  const { prisma } = await import('@/lib/prisma');
+
+  const posts = await prisma.post.findMany({
+    where: { status: 'APPROVED', version: { not: null } },
+    include: {
+      author: { select: { name: true, image: true } },
+      votes: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const postsWithScores = posts
+    .filter(p => p.votes.length > 0)
+    .map(p => ({ ...p, totalScore: p.votes.reduce((s, v) => s + v.score, 0) }))
+    .filter(p => p.totalScore > 0)
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  const topByScore = postsWithScores[0] ?? null;
+  if (topByScore) return topByScore;
+
+  if (posts.length > 0) {
+    const p = posts[0];
+    const total = p.votes.reduce((s, v) => s + v.score, 0);
+    return { ...p, totalScore: total };
+  }
+
+  return null;
+}
