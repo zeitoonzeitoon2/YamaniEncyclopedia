@@ -7,6 +7,14 @@ import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { applyFootnotes } from '@/lib/footnotes'
 
+interface Article {
+  id?: string
+  title: string
+  slug: string
+  content: string
+  description?: string | null
+}
+
 export default function ArticlePage({ params }: { params: { slug: string } }) {
   // const { data: session } = useSession()
   const router = useRouter()
