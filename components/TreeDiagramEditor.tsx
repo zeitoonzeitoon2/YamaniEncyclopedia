@@ -731,6 +731,48 @@ export default function TreeDiagramEditor({
                 />
               </div>
             )}
+            {/* نص 1 قبل الرابط الأول */}
+            {(() => {
+              const firstTextIndex = flashcardFields.findIndex((f) => f.type === 'text')
+              if (firstTextIndex < 0) return null
+              const field = flashcardFields[firstTextIndex]
+              return (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs text-amber-300">نص 1</label>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = flashcardFields.filter((_, i) => i !== firstTextIndex)
+                          setFlashcardFields(next)
+                          updateFlashcardFields(next)
+                        }}
+                        className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
+                      >
+                        حذف
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                    rows={6}
+                    value={field.content}
+                    readOnly={readOnly}
+                    disabled={readOnly}
+                    onChange={(e) => {
+                      if (readOnly) return
+                      const value = e.target.value
+                      const next = flashcardFields.map((f, i) => (i === firstTextIndex ? { ...f, content: value } : f))
+                      setFlashcardFields(next)
+                      updateFlashcardFields(next)
+                    }}
+                    placeholder="نص..."
+                  />
+                </div>
+              )
+            })()}
+
             {/* الرابط الأول (الرابط الرئيسي للمقال) */}
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1">
@@ -889,131 +931,135 @@ export default function TreeDiagramEditor({
 
 
             {flashcardFields.map((field, idx) => (
-              <div key={field.id} className="mt-2">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs text-amber-300">
-                    {field.type === 'text'
-                      ? `نص إضافي ${idx + 1}`
-                      : (() => {
-                          const linkOrder = flashcardFields
-                            .slice(0, idx + 1)
-                            .filter((f) => f.type === 'link').length
-                          const base = (articleLink && articleLink.trim()) ? 1 : 0
-                          const linkNumber = base + linkOrder
-                          const ord = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر']
-                          const ordLabel = ord[linkNumber - 1] || String(linkNumber)
-                          return `الرابط ${ordLabel}`
-                        })()}
-                  </label>
-                  {!readOnly && (
-                    <div className="flex items-center gap-2">
-                      {field.type === 'link' && (
-                        <button
-                          type="button"
-                          onClick={() => setModalTarget(field.id)}
-                          className="text-xs text-amber-400 hover:text-amber-300 underline bg-transparent border-none cursor-pointer"
-                        >
-                          + إنشاء وربط تلقائي
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = flashcardFields.filter((_, i) => i !== idx)
-                          setFlashcardFields(next)
-                          updateFlashcardFields(next)
-                          if (editingFieldId === field.id) {
-                            setEditingFieldId(null)
-                          }
-                        }}
-                        className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
-                      >
-                        حذف
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {field.type === 'text' ? (
-                  <textarea
-                    className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
-                    rows={6}
-                    value={field.content}
-                    readOnly={readOnly}
-                    disabled={readOnly}
-                    onChange={(e) => {
-                      if (readOnly) return
-                      const value = e.target.value
-                      const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
-                      setFlashcardFields(next)
-                      updateFlashcardFields(next)
-                    }}
-                    placeholder="نص إضافي..."
-                  />
-                ) : (
-                  !hideArticleLinkInputs ? (
-                    <input
-                      type="text"
-                      className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-blue-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
-                      value={field.content}
-                      readOnly={readOnly}
-                      disabled={readOnly}
-                      onChange={(e) => {
-                        if (readOnly) return
-                        const value = e.target.value
-                        const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
-                        setFlashcardFields(next)
-                        updateFlashcardFields(next)
-                      }}
-                      placeholder="رابط داخلي: /articles/اسم-المقال • رابط خارجي: https://example.com"
-                    />
-                  ) : null
-                )}
-                {field.type === 'link' && field.content ? (
-                  (() => {
-                    const isExternal = field.content.startsWith('http')
-                    const href = isExternal
-                      ? field.content
-                      : `/articles/${normalizeSlugFromLink(field.content)}`
-
-                    // احتساب وسم ودّي: فضّل عنوان المقال المُجلَب؛ وإلا فارجع إلى المعرّف/المسار
-                    let label = 'عرض المقال'
-                    if (!isExternal) {
-                      const slug = normalizeSlugFromLink(field.content)
-                      label = extraLinkTitles[field.id] || (slug ? slug.replace(/-/g, ' ') : field.content)
-                    } else {
-                      try {
-                        const u = new URL(field.content)
-                        label = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : u.hostname
-                      } catch {
-                        label = field.content
-                      }
-                    }
-
-                    return (
-                      <div className="flex items-center gap-2 mt-1">
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 underline text-xs"
-                          title={href}
-                        >
-                          {label}
-                        </a>
-                        {!readOnly && (
+              idx === flashcardFields.findIndex((f) => f.type === 'text')
+                ? null
+                : (
+                  <div key={field.id} className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs text-amber-300">
+                        {field.type === 'text'
+                          ? `نص ${flashcardFields.slice(0, idx + 1).filter((f) => f.type === 'text').length}`
+                          : (() => {
+                              const linkOrder = flashcardFields
+                                .slice(0, idx + 1)
+                                .filter((f) => f.type === 'link').length
+                              const base = (articleLink && articleLink.trim()) ? 1 : 0
+                              const linkNumber = base + linkOrder
+                              const ord = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر']
+                              const ordLabel = ord[linkNumber - 1] || String(linkNumber)
+                              return `الرابط ${ordLabel}`
+                            })()}
+                      </label>
+                      {!readOnly && (
+                        <div className="flex items-center gap-2">
+                          {field.type === 'link' && (
+                            <button
+                              type="button"
+                              onClick={() => setModalTarget(field.id)}
+                              className="text-xs text-amber-400 hover:text-amber-300 underline bg-transparent border-none cursor-pointer"
+                            >
+                              + إنشاء وربط تلقائي
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => openEditExtraLinkModal(field.id, field.content)}
-                            className="text-amber-400 hover:text-amber-300 underline text-xs"
+                            onClick={() => {
+                              const next = flashcardFields.filter((_, i) => i !== idx)
+                              setFlashcardFields(next)
+                              updateFlashcardFields(next)
+                              if (editingFieldId === field.id) {
+                                setEditingFieldId(null)
+                              }
+                            }}
+                            className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
                           >
-                            تحرير
+                            حذف
                           </button>
-                        )}
-                      </div>
-                    )
-                  })()
-                ) : null}
-              </div>
+                        </div>
+                      )}
+                    </div>
+                    {field.type === 'text' ? (
+                      <textarea
+                        className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                        rows={6}
+                        value={field.content}
+                        readOnly={readOnly}
+                        disabled={readOnly}
+                        onChange={(e) => {
+                          if (readOnly) return
+                          const value = e.target.value
+                          const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
+                          setFlashcardFields(next)
+                          updateFlashcardFields(next)
+                        }}
+                        placeholder="نص..."
+                      />
+                    ) : (
+                      !hideArticleLinkInputs ? (
+                        <input
+                          type="text"
+                          className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-blue-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                          value={field.content}
+                          readOnly={readOnly}
+                          disabled={readOnly}
+                          onChange={(e) => {
+                            if (readOnly) return
+                            const value = e.target.value
+                            const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
+                            setFlashcardFields(next)
+                            updateFlashcardFields(next)
+                          }}
+                          placeholder="رابط داخلي: /articles/اسم-المقال • رابط خارجي: https://example.com"
+                        />
+                      ) : null
+                    )}
+                    {field.type === 'link' && field.content ? (
+                      (() => {
+                        const isExternal = field.content.startsWith('http')
+                        const href = isExternal
+                          ? field.content
+                          : `/articles/${normalizeSlugFromLink(field.content)}`
+
+                        // احتساب وسم ودّي: فضّل عنوان المقال المُجلَب؛ وإلا فارجع إلى المعرّف/المسار
+                        let label = 'عرض المقال'
+                        if (!isExternal) {
+                          const slug = normalizeSlugFromLink(field.content)
+                          label = extraLinkTitles[field.id] || (slug ? slug.replace(/-/g, ' ') : field.content)
+                        } else {
+                          try {
+                            const u = new URL(field.content)
+                            label = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : u.hostname
+                          } catch {
+                            label = field.content
+                          }
+                        }
+
+                        return (
+                          <div className="flex items-center gap-2 mt-1">
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 underline text-xs"
+                              title={href}
+                            >
+                              {label}
+                            </a>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => openEditExtraLinkModal(field.id, field.content)}
+                                className="text-amber-400 hover:text-amber-300 underline text-xs"
+                              >
+                                تحرير
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })()
+                    ) : null}
+                  </div>
+                )
             ))}
 
             {!readOnly && (
