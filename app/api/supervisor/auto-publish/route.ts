@@ -72,11 +72,11 @@ export async function POST(request: NextRequest) {
         // امتیاز مثبت - تایید طرح
         // اگر ویرایش دیگری قبلا منتشر شده، این ویرایش را فقط «قابل بررسی» کن
         if (post.originalPostId) {
-          const [original, approvedSibling] = await prisma.$transaction([
-            prisma.post.findUnique({ where: { id: post.originalPostId }, select: { status: true } }),
-            prisma.post.findFirst({ where: { originalPostId: post.originalPostId, status: 'APPROVED' }, select: { id: true } })
-          ])
-          if ((original?.status === 'ARCHIVED') || approvedSibling) {
+          const approvedSibling = await prisma.post.findFirst({
+            where: { originalPostId: post.originalPostId, status: 'APPROVED' },
+            select: { id: true }
+          })
+          if (approvedSibling) {
             await prisma.post.update({
               where: { id: postId },
               data: { status: 'REVIEWABLE' }

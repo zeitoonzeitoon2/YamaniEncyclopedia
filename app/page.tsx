@@ -4,45 +4,22 @@ import { PostCard } from '@/components/PostCard'
 import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
-import { getTopVotedApprovedPost } from '@/lib/postUtils'
 
-// کمکی: گرفتن پست با بیشترین امتیاز مثبت (در صورت نبود، آخرین پست منتشرشده)
-async function getTopVotedPost() {
+async function getTopPost() {
   try {
-    const posts = await prisma.post.findMany({
-      where: { status: 'APPROVED', version: { not: null } },
-      include: {
-        author: { select: { name: true, image: true } },
-        votes: true,
-      },
-      orderBy: { createdAt: 'desc' },
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/posts/top`, {
+      cache: 'no-store'
     })
-
-    const postsWithScores = posts
-      .filter((p) => p.votes.length > 0)
-      .map((p) => ({ ...p, totalScore: p.votes.reduce((s, v) => s + v.score, 0) }))
-      .filter((p) => p.totalScore > 0)
-      .sort((a, b) => b.totalScore - a.totalScore)
-
-    const topByScore = postsWithScores[0] ?? null
-    if (topByScore) return topByScore
-
-    // اگر پست با رای مثبت وجود ندارد، آخرین پست APPROVED را به عنوان fallback برگردان
-    if (posts.length > 0) {
-      const p = posts[0]
-      const pTotal = p.votes.reduce((s, v) => s + v.score, 0)
-      return { ...p, totalScore: pTotal }
-    }
-
-    return null
-  } catch (err) {
-    console.error('[HomePage.getTopVotedPost] Failed to fetch from Prisma:', err)
+    if (!response.ok) return null
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching top post:', error)
     return null
   }
 }
 
 export default async function HomePage() {
-  const topVotedPost = await getTopVotedPost()
+  const topVotedPost = await getTopPost()
 
   // به صورت امن مقدار هدر را بخوانیم تا اگر مدل Setting موجود نبود خطا ندهد
   let headerUrl: string | null = null
