@@ -18,6 +18,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import QuickArticleModal from './QuickArticleModal'
 import toast from 'react-hot-toast'
+import { applyFootnotes } from '@/lib/footnotes'
 
 interface FlashcardField {
   id: string
@@ -808,7 +809,7 @@ export default function TreeDiagramEditor({
               {!hideArticleLinkInputs && (
                 <input
                   type="text"
-                  className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-blue-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                  className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
                   value={articleLink}
                   readOnly={readOnly}
                   disabled={readOnly}
@@ -998,7 +999,7 @@ export default function TreeDiagramEditor({
                       !hideArticleLinkInputs ? (
                         <input
                           type="text"
-                          className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-blue-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                          className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
                           value={field.content}
                           readOnly={readOnly}
                           disabled={readOnly}
@@ -1213,7 +1214,10 @@ export default function TreeDiagramEditor({
               </button>
             </div>
             {previewDraft.description && <p className="text-gray-600 mb-4 italic">{previewDraft.description}</p>}
-            <div className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-800">{previewDraft.content}</div>
+            <div
+              className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-800"
+              dangerouslySetInnerHTML={{ __html: applyFootnotes(previewDraft.content || '') }}
+            ></div>
           </div>
         </div>
       )}

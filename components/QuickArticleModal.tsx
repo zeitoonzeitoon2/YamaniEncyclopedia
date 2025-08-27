@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
+import { applyFootnotes } from '@/lib/footnotes'
 
 interface QuickArticleModalProps {
   isOpen: boolean
@@ -32,6 +33,62 @@ export default function QuickArticleModal({
     description: '',
     content: ''
   })
+
+  // ——— جدید: ref و توابع درج پاورقی ———
+  const contentRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const getNextFootnoteNumber = (text: string) => {
+    let maxNum = 0
+    // ارجاعات
+    const refRe = /\[\^(\d+)\]/g
+    // تعاریف
+    const defRe = /^\[\^(\d+)\]:/gm
+    let m: RegExpExecArray | null
+
+    while ((m = refRe.exec(text)) !== null) {
+      const n = parseInt(m[1], 10)
+      if (!isNaN(n) && n > maxNum) maxNum = n
+    }
+    while ((m = defRe.exec(text)) !== null) {
+      const n = parseInt(m[1], 10)
+      if (!isNaN(n) && n > maxNum) maxNum = n
+    }
+    return maxNum + 1
+  }
+
+  const insertFootnoteAtCursor = () => {
+    const ta = contentRef.current
+    const current = formData.content || ''
+    const nextNum = getNextFootnoteNumber(current)
+    const refText = `[^${nextNum}]`
+    const defText = `\n\n[^${nextNum}]: `
+
+    if (!ta) {
+      // اگر ref هنوز set نشده بود، به انتها اضافه کن
+      const updated = current + refText + (current.includes(`[^${nextNum}]:`) ? '' : defText)
+      setFormData(prev => ({ ...prev, content: updated }))
+      return
+    }
+
+    const start = ta.selectionStart ?? current.length
+    const end = ta.selectionEnd ?? start
+    const before = current.slice(0, start)
+    const after = current.slice(end)
+
+    let updated = before + refText + after
+    if (!updated.includes(`[^${nextNum}]:`)) {
+      updated += defText
+    }
+
+    setFormData(prev => ({ ...prev, content: updated }))
+
+    // تنظیم مکان‌نما بلافاصله بعد از ارجاع
+    setTimeout(() => {
+      const pos = before.length + refText.length
+      ta.focus()
+      ta.setSelectionRange(pos, pos)
+    }, 0)
+  }
 
   // تحميل بيانات المقالة الموجودة في وضع التحرير
   useEffect(() => {
@@ -135,7 +192,7 @@ export default function QuickArticleModal({
           toast.error(editMode ? 'خطأ في تحرير المقال' : 'خطأ في إنشاء المقال')
         }
       } else {
-        // وضع المسودة: لا تُنشئ المقال، فقط أعد البيانات إلى المكوّن الأب
+        // وضع المسودة: لا تُنشئ المقالة، فقط أعد البيانات إلى المكوّن الأب
         // للتعديلات، أبقِ على نفس المعرّف (slug) الأصلي لكي يتم تحديث نفس المقال بعد الموافقة
         const slug = editMode && existingDraft 
           ? existingDraft.slug 
@@ -223,15 +280,26 @@ export default function QuickArticleModal({
 
             {/* محتوى المقال */}
             <div>
-              <label className="block text-sm font-medium text-dark-text mb-2">
-                محتوى المقال *
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-dark-text">
+                  محتوى المقال *
+                </label>
+                <button
+                  type="button"
+                  onClick={insertFootnoteAtCursor}
+                  className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                  title="أضف حاشية في موضع المؤشر"
+                >
+                  + حاشية
+                </button>
+              </div>
               <textarea
+                ref={contentRef}
                 value={formData.content}
                 onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                 className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
                 rows={10}
-                placeholder="اكتب محتوى المقال هنا..."
+                placeholder="اكتب محتوى المقال هنا... مثال: هذا نص فيه حاشية[^1]\n\n[^1]: اكتب نص الحاشية هنا."
                 required
               />
             </div>

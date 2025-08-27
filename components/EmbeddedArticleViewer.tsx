@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react'
+import { applyFootnotes } from '@/lib/footnotes'
 
 // مكوّن عارض المقالات الداخلي لعرض مسودّات المقالات ضمنيًا
 export default function EmbeddedArticleViewer({ 
@@ -121,7 +122,7 @@ export default function EmbeddedArticleViewer({
               setOriginalError('المقال غير موجود')
               setOriginalContent('')
             } else {
-              setOriginalContent(data.content || 'لا يوجد محتوى')
+              setOriginalContent(applyFootnotes(data.content || 'لا يوجد محتوى'))
               setOriginalError('')
             }
           })
@@ -146,7 +147,7 @@ export default function EmbeddedArticleViewer({
         // جرّب أولًا البحث في المسودّات/‏articlesData
         const draftContent = await findDraftContent(proposedArticleLink)
         if (draftContent) {
-          setProposedContent(draftContent)
+          setProposedContent(applyFootnotes(draftContent))
           setProposedError('')
           return
         }
@@ -161,7 +162,7 @@ export default function EmbeddedArticleViewer({
               setProposedError('المقال غير موجود')
               setProposedContent('')
             } else {
-              setProposedContent(data.content || 'لا يوجد محتوى')
+              setProposedContent(applyFootnotes(data.content || 'لا يوجد محتوى'))
               setProposedError('')
             }
           } catch {

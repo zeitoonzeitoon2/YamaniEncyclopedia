@@ -5,20 +5,7 @@ import { useRouter } from 'next/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
-
-interface Article {
-  id: string
-  title: string
-  content: string
-  slug: string
-  description?: string
-  createdAt: string
-  author: {
-    id: string
-    name: string | null
-    image: string | null
-  }
-}
+import { applyFootnotes } from '@/lib/footnotes'
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {
   // const { data: session } = useSession()
@@ -61,10 +48,11 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             {article.description && (
               <p className="text-gray-400 mb-6">{article.description}</p>
             )}
-            {/* محتوای مقاله - به صورت ساده HTML/Markdown فرض شده */}
-            <div className="text-dark-text whitespace-pre-wrap leading-7">
-              {article.content}
-            </div>
+            {/* محتوای مقاله با پاورقی */}
+            <div
+              className="text-dark-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: applyFootnotes(article.content) }}
+            />
           </article>
         ) : null}
 

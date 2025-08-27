@@ -538,19 +538,22 @@ export default function DiagramComparison({
     let proposedLinkToUse = pPrimary
 
     if (typeof extraIndex === 'number') {
-      // عند النقر على رابط إضافي، حاول مطابقته مع النظير في الفهرس نفسه
+      // عند النقر على رابط إضافي، لا تفاضل إلى الرابط الأساسي في الجهة المقابلة إذا لم يوجد نظير في نفس الفهرس
       const oExtras = collectExtraLinks(oData)
       const pExtras = collectExtraLinks(pData)
+
       if (side === 'original') {
-        originalLinkToUse = link || oPrimary
-        proposedLinkToUse = pExtras[extraIndex] || pPrimary
+        // الجهة الأصلية: استخدم الرابط الذي نُقر عليه؛ والجهة المقابلة إمّا النظير بنفس الفهرس أو لا شيء
+        originalLinkToUse = link || (oExtras[extraIndex] ?? '')
+        proposedLinkToUse = (typeof pExtras[extraIndex] !== 'undefined') ? pExtras[extraIndex] : ''
       } else {
-        // side === 'proposed' (الجانب المقترَح)
-        proposedLinkToUse = link || pPrimary
-        originalLinkToUse = oExtras[extraIndex] || oPrimary
+        // side === 'proposed'
+        // الجهة المقترَحة: استخدم الرابط الذي نُقر عليه؛ والجهة المقابلة إمّا النظير بنفس الفهرس أو لا شيء
+        proposedLinkToUse = link || (pExtras[extraIndex] ?? '')
+        originalLinkToUse = (typeof oExtras[extraIndex] !== 'undefined') ? oExtras[extraIndex] : ''
       }
     } else {
-      // عند النقر على الرابط الأساسي: حافظ على السلوك الحالي، وتأكد من استخدام الرابط الممرَّر في جهة النقر
+      // عند النقر على الرابط الأساسي: السلوك السابق كما هو
       if (side === 'original') {
         originalLinkToUse = link || oPrimary
         proposedLinkToUse = pPrimary
