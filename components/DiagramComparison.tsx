@@ -93,8 +93,8 @@ interface DiagramData {
 }
 
 interface DiagramComparisonProps {
-  originalData: DiagramData
-  proposedData: DiagramData
+  originalData?: DiagramData
+  proposedData?: DiagramData
   onShowArticleComparison?: (originalLink?: string, proposedLink?: string) => void
   onStatsChange?: (stats: {
     nodes: { added: number; removed: number; unchanged: number; total: number }
@@ -103,13 +103,12 @@ interface DiagramComparisonProps {
   }) => void
 }
 
-export default function DiagramComparison(props: any) {
-  const {
-    originalData = { nodes: [], edges: [] },
-    proposedData = { nodes: [], edges: [] },
-    onShowArticleComparison,
-    onStatsChange,
-  } = props || {}
+export default function DiagramComparison({
+  originalData = { nodes: [], edges: [] },
+  proposedData = { nodes: [], edges: [] },
+  onShowArticleComparison,
+  onStatsChange,
+}: DiagramComparisonProps) {
   // مموایز کردن nodeTypes برای جلوگیری از هشدار React Flow
   const memoizedNodeTypes = useMemo(() => nodeTypes, [])
   
