@@ -1,12 +1,60 @@
+// imports and type definitions
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/react'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
+import { getToken } from 'next-auth/jwt'  // NEW: needed for reading JWT
 
 interface RouteParams {
   params: { id: string }
+}
+
+// NEW: GET post details for supervisor
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    const session = await getServerSession(authOptions)
+    const email = (token as any)?.email || session?.user?.email
+
+    if (!email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        version: true,
+        revisionNumber: true,
+        createdAt: true,
+        content: true,            // include heavy field for details view
+        articlesData: true,       // include articles meta if any
+        author: { select: { id: true, name: true, email: true, image: true, role: true } },
+        originalPost: { select: { id: true, content: true, type: true, version: true } }, // include original content
+        votes: { select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } } },
+        _count: { select: { comments: true } },
+      },
+    })
+
+    if (!post) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const totalScore = post.votes ? post.votes.reduce((sum, v) => sum + v.score, 0) : 0
+    return NextResponse.json({ ...post, totalScore })
+  } catch (error) {
+    console.error('Error fetching supervisor post details:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
