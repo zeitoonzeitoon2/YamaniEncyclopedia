@@ -147,7 +147,9 @@ export default function EditorDashboard() {
       const response = await fetch(`/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`, { credentials: 'include' })
       if (response.ok) {
         const data = await response.json()
-        setPosts(data)
+        // سازگار با هر دو حالت: آرایه قدیمی یا آبجکت صفحه‌بندی جدید
+        const items = Array.isArray(data) ? data : data?.items
+        setPosts(Array.isArray(items) ? items : [])
       } else {
         toast.error('خطأ في تحميل المشاركات')
       }
@@ -289,7 +291,7 @@ export default function EditorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          لوحة المحرر
+          لوحة المحرور
         </h1>
         {reviewableNoticePost && (
           <div role="alert" className="mb-6 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-4 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-100">
