@@ -480,7 +480,7 @@ export default function SupervisorDashboard() {
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
-                    onClick={() => setSelectedPost(post)}
+                    onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
                     title={`المعرّف: ${getPostDisplayId(post)}`}
                   >
                     {getPostDisplayId(post).charAt(0)}
@@ -575,10 +575,10 @@ export default function SupervisorDashboard() {
                       <div className="space-y-4 max-h-[600px] overflow-y-auto">
                         {filteredPosts.map((post) => (
                           <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
-                            <SimplePostCard 
-                              post={{...post, createdAt: new Date(post.createdAt) } as any} 
+                            <SimplePostCard
+                              post={{ ...post, createdAt: new Date(post.createdAt) } as any}
                               isSelected={selectedPost?.id === post.id}
-                              onClick={() => setSelectedPost(post)}
+                              onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
                             />
                           </div>
                         ))}
