@@ -66,7 +66,6 @@ export default function EditorDashboard() {
     flashcards: { added: number; removed: number; edited: number }
     articles: { added: number; removed: number; edited: number }
   } | null>(null)
-  // پیام قابل بررسی برای طرح‌های کاربر
   const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
 
   // هندل بستن پیام و ذخیره در localStorage تا بعد از رفرش هم نمایش داده نشود
@@ -182,6 +181,7 @@ export default function EditorDashboard() {
     }
   }
 
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false)
   const openPostById = useCallback(async (postId: string) => {
     const found = posts.find(p => p.id === postId)
     if (found) {
@@ -552,7 +552,9 @@ export default function EditorDashboard() {
                 {/* Diagram Comparison */}
                 {selectedPost.type === 'TREE' && (
                   <div className="mb-6">
-                    {selectedPost.originalPost && originalDiagramData && proposedDiagramData ? (
+                    {isDetailsLoading ? (
+                      <div className="text-center py-4 text-dark-text">جارِ التحميل...</div>
+                    ) : selectedPost.originalPost && originalDiagramData && proposedDiagramData ? (
                       <div>
                         <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقارنة المخططات</h4>
                         {/* Legend: راهنمای رنگ‌ها */}
