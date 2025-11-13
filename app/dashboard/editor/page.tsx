@@ -186,26 +186,48 @@ export default function EditorDashboard() {
     const found = posts.find(p => p.id === postId)
     if (found) {
       setSelectedPost(found)
+      // اگر داده‌ی سنگین وجود ندارد، جزئیات را از API جدید بگیر
+      if (!found.content || (found.originalPost && !found.originalPost.content)) {
+        try {
+          const res = await fetch(`/api/editor/posts/${postId}`, { credentials: 'include' })
+          if (res.ok) {
+            const full = await res.json()
+            setSelectedPost(full)
+            // لیست را هم با داده‌ی کامل به‌روزرسانی کن تا کانتست هماهنگ بماند
+            setPosts(prev => prev.map(p => p.id === postId ? full : p))
+          }
+        } catch (e) {
+          console.error('Failed to load full post details', e)
+        }
+      }
       setTimeout(() => {
         const el = document.getElementById('comments')
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 50)
       return
     }
+    // اگر در لیست نبود، لیست را بارگذاری کن و سپس تلاش برای انتخاب
     try {
       await loadPosts()
-      setTimeout(() => {
-        setPosts(curr => {
-          const f = curr.find(p => p.id === postId)
-          if (f) {
-            setSelectedPost(f)
-            setTimeout(() => {
-              const el = document.getElementById('comments')
-              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 50)
+      setTimeout(async () => {
+        const f = posts.find(p => p.id === postId)
+        if (f) {
+          setSelectedPost(f)
+          try {
+            const res = await fetch(`/api/editor/posts/${postId}`, { credentials: 'include' })
+            if (res.ok) {
+              const full = await res.json()
+              setSelectedPost(full)
+              setPosts(prev => prev.map(p => p.id === postId ? full : p))
+            }
+          } catch (e) {
+            console.error('Failed to load full post details after reload', e)
           }
-          return curr
-        })
+          setTimeout(() => {
+            const el = document.getElementById('comments')
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 50)
+        }
       }, 200)
     } catch (e) {
       console.error('Failed to open post by id', e)
@@ -492,7 +514,7 @@ export default function EditorDashboard() {
                           <SimplePostCard 
                             post={{...post, createdAt: new Date(post.createdAt) } as any}
                             isSelected={selectedPost?.id === post.id}
-                            onClick={() => setSelectedPost(post)}
+                            onClick={() => openPostById(post.id)}
                           />
                         </div>
                       ))}
