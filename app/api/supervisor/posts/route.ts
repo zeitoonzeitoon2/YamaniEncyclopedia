@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
     const posts = await prisma.post.findMany({
       select: {
         id: true,
-        content: true,
-        articlesData: true,
+        // حذف فیلدهای سنگین از لیست
+        // content: true,
+        // articlesData: true,
         type: true,
         status: true,
         version: true,
@@ -34,7 +35,8 @@ export async function GET(request: NextRequest) {
           select: { id: true, name: true, email: true, image: true, role: true },
         },
         originalPost: {
-          select: { id: true, content: true, type: true, version: true },
+          // حذف محتوا برای کاهش حجم پاسخ
+          select: { id: true, /* content: true, */ type: true, version: true },
         },
         votes: {
           select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } },

@@ -142,10 +142,35 @@ export default function SupervisorDashboard() {
     }
   }, [filter, fetchRecentComments])
 
+  const fetchPostDetails = useCallback(async (postId: string) => {
+    try {
+      const res = await fetch(`/api/supervisor/posts/${postId}`, { credentials: 'include' })
+      if (!res.ok) {
+        console.error('Failed to fetch post details:', res.status, await res.text())
+        toast.error('خطأ في تحميل المعلومات')
+        return null
+      }
+      const post = await res.json()
+      // به‌روزرسانی selectedPost و به‌روزرسانی آیتم در لیست
+      setSelectedPost(post)
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...post } : p))
+      return post
+    } catch (e) {
+      console.error('Failed to fetch post details', e)
+      toast.error('خطأ في تحميل المعلومات')
+      return null
+    }
+  }, [])
+
   const openPostById = useCallback(async (postId: string) => {
     const found = posts.find(p => p.id === postId)
     if (found) {
-      setSelectedPost(found)
+      // اگر محتوا در لیست وجود ندارد، جزییات را Lazy بارگذاری کن
+      if (!found.content || !found.originalPost?.content) {
+        await fetchPostDetails(postId)
+      } else {
+        setSelectedPost(found)
+      }
       setTimeout(() => {
         const el = document.getElementById('comments')
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -156,11 +181,16 @@ export default function SupervisorDashboard() {
     try {
       // Ensure posts are loaded, then select
       await fetchPosts()
-      setTimeout(() => {
+      setTimeout(async () => {
         setPosts(curr => {
           const f = curr.find(p => p.id === postId)
           if (f) {
-            setSelectedPost(f)
+            // همان چک Lazy بعد از رفرش لیست
+            if (!f.content || !f.originalPost?.content) {
+              fetchPostDetails(postId)
+            } else {
+              setSelectedPost(f)
+            }
             setTimeout(() => {
               const el = document.getElementById('comments')
               el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -172,7 +202,7 @@ export default function SupervisorDashboard() {
     } catch (e) {
       console.error('Failed to open post by id', e)
     }
-  }, [posts])
+  }, [posts, fetchPostDetails])
 
   useEffect(() => {
     console.log('useEffect triggered - status:', status, 'session:', !!session, 'role:', session?.user?.role)
