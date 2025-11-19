@@ -521,23 +521,9 @@ export default function EditorDashboard() {
                         </div>
                       ))}
                     </div>
-                    {/* دقت کن بعد از این بلوک، دیگر “) : (” و بلوک تکراری Filters شروع نشود */}
-                  ) : (
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                      {filteredPosts.map((post) => (
-                        <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
-                          <SimplePostCard 
-                            post={{ ...post, createdAt: new Date(post.createdAt) } as any}
-                            isSelected={selectedPost?.id === post.id}
-                            onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
-                            title={`المعرّف: ${getPostDisplayId(post)}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
                   )
                 )}
-                </div>
+              </div>
 
                 {filter === 'related' ? (
                   relatedComments.length === 0 ? (

@@ -7,7 +7,7 @@ import { getToken } from 'next-auth/jwt'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export async function GET(req: Request) {
+export async function GET(request: NextRequest) {
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const session = await getServerSession(authOptions)
