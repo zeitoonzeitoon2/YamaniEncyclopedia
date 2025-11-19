@@ -755,106 +755,106 @@ export default function EditorDashboard() {
                                             post={{...post, createdAt: new Date(post.createdAt) } as any}
                                             isSelected={selectedPost?.id === post.id}
                                             onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )
-                                )}
-                              </>
-                            )}
-                          </div>
-
-                          {/* Post Details */}
-                          <div className="flex-1">
-                            {selectedPost ? (
-                              <div>
-                                <h2 className="text-xl font-bold text-dark-text mb-4 heading">تفاصيل التصميم</h2>
-                                <div className="card mb-6">
-                                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
-                                  <p className="text-dark-muted text-sm mb-4">
-                                    الكاتب: {selectedPost.author.name || 'مجهول'}
-                                  </p>
-
-                                  {/* Edit button for owner */}
-                                  {selectedPost.author.id === session.user?.id && (
-                                    <div className="mb-4">
-                                      <button
-                                        onClick={() => router.push(`/create?edit=${selectedPost.id}`)}
-                                        className="px-4 py-2 text-sm bg-warm-primary text-white rounded-lg hover:bg-warm-accent font-medium transition-all shadow-md hover:shadow-lg"
-                                      >
-                                        تعديل
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Diagram Comparison */}
-                                {selectedPost.type === 'TREE' && (
-                                  <div className="mb-6">
-                                    {isDetailsLoading ? (
-                                      <div className="text-center py-4 text-dark-text">جارٍ التحميل...</div>
-                                    ) : selectedPost.originalPost && originalDiagramData && proposedDiagramData ? (
-                                      <div>
-                                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقارنة المخططات</h4>
-                                        {/* Legend: راهنمای رنگ‌ها */}
-                                        <div className="mb-4">
-                                          <div className="bg-dark-card border border-gray-700 rounded-lg p-3 text-sm text-dark-text">
-                                            <div className="font-semibold mb-2 heading">دليل الألوان</div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                              {/* Nodes legend */}
-                                              <div>
-                                                <div className="text-xs text-dark-muted mb-1">العُقَد</div>
-                                                <div className="flex flex-wrap gap-2">
-                                                  <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">أخضر: عقدة جديدة</span>
-                                                  <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">أحمر: عقدة محذوفة</span>
-                                                  <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">أزرق: تغيير الاسم</span>
-                                                </div>
-                                              </div>
-                                              {/* Stroke legend */}
-                                              <div>
-                                                <div className="text-xs text-dark-muted mb-1">حدود بطاقات البيانات</div>
-                                                <div className="flex flex-wrap items-center gap-3">
-                                                  <span className="inline-flex items-center gap-2 text-xs">
-                                                    <span className="inline-block w-4 h-4 rounded border-4 border-green-500 bg-transparent" />
-                                                    أخضر: بطاقة جديدة
-                                                  </span>
-                                                  <span className="inline-flex items-center gap-2 text-xs">
-                                                    <span className="inline-block w-4 h-4 rounded border-4 border-red-500 bg-transparent" />
-                                                    أحمر: حذف بطاقة
-                                                  </span>
-                                                  <span className="inline-flex items-center gap-2 text-xs">
-                                                    <span className="inline-block w-4 h-4 rounded border-4 border-blue-500 bg-transparent" />
-                                                    أزرق: تعديل بطاقة
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            </div>
+                                          >
+                                            {getPostDisplayId(post).charAt(0)}
                                           </div>
-                                        </div>
-                                        <EnhancedDiagramComparison
-                                          originalData={originalDiagramData}
-                                          proposedData={proposedDiagramData}
-                                          articlesData={selectedPost.articlesData || undefined}
-                                          onStatsChange={handleStatsChange}
-                                        />
+                                        ))}
                                       </div>
                                     ) : (
-                                      <div>
-                                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
-                                        {proposedDiagramData ? (
-                                          <div className="h-96 border border-gray-300 rounded-lg overflow-hidden">
-                                            <TreeDiagramEditor
-                                              initialData={proposedDiagramData}
-                                              readOnly={true}
-                                            />
-                                          </div>
+                                      <>
+                                        {/* Filters */}
+                                        <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                          <button
+                                            onClick={() => setFilter('my-posts')}
+                                            aria-pressed={filter === 'my-posts'}
+                                            className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                                              filter === 'my-posts'
+                                                ? 'bg-warm-primary text-black border-warm-primary shadow'
+                                                : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                                            }`}
+                                            title="عرض تصاميمي"
+                                          >
+                                            <span className={`${filter === 'my-posts' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{myPostsCount}</span>
+                                            <span className="whitespace-nowrap">تصاميمي</span>
+                                          </button>
+
+                                          <button
+                                            onClick={() => setFilter('related')}
+                                            aria-pressed={filter === 'related'}
+                                            className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                                              filter === 'related'
+                                                ? 'bg-warm-primary text-black border-warm-primary shadow'
+                                                : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                                            }`}
+                                            title="عرض المشاركات ذات التعليقات المتعلقة بي"
+                                          >
+                                            <span className={`${filter === 'related' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{relatedPostsCount}</span>
+                                            <span className="whitespace-nowrap">تعليقات تخصني</span>
+                                          </button>
+                                          <button
+                                            onClick={() => setFilter('all')}
+                                            aria-pressed={filter === 'all'}
+                                            className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                                              filter === 'all'
+                                                ? 'bg-warm-primary text-black border-warm-primary shadow'
+                                                : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                                            }`}
+                                            title="عرض جميع التصاميم"
+                                          >
+                                            <span className={`${filter === 'all' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{allPostsCount}</span>
+                                            <span className="whitespace-nowrap">جميع التصاميم</span>
+                                          </button>
+                                        </div>
+
+                                        {filter === 'related' ? (
+                                          relatedComments.length === 0 ? (
+                                            <div className="text-center py-12">
+                                              <p className="text-dark-muted text-lg">لا توجد أي تعليقات</p>
+                                            </div>
+                                          ) : (
+                                            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                                              {relatedComments.map((c) => (
+                                                <button
+                                                  key={c.id}
+                                                  onClick={() => openPostById(c.post.id)}
+                                                  className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                                                  title={`فتح التصميم المتعلق بهذا التعليق`}
+                                                >
+                                                  <div className="flex items-center justify-between mb-1">
+                                                    <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                                                      <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                                        {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                                                      </span>
+                                                      <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                                                    </span>
+                                                  </div>
+                                                  <div className="text-sm text-dark-text line-clamp-2">
+                                                    {c.content}
+                                                  </div>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )
                                         ) : (
-                                          <div className="text-red-400 text-center py-4">
-                                            خطأ في عرض المخطط: بيانات غير صالحة
-                                          </div>
+                                          filteredPosts.length === 0 ? (
+                                            <div className="text-center py-12">
+                                              <p className="text-dark-muted text-lg">لم يتم العثور على أي تصميم</p>
+                                            </div>
+                                          ) : (
+                                            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                                              {filteredPosts.map((post) => (
+                                                <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
+                                                  <SimplePostCard 
+                                                    post={{...post, createdAt: new Date(post.createdAt) } as any}
+                                                    isSelected={selectedPost?.id === post.id}
+                                                    onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
+                                                  />
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )
                                         )}
-                                      </div>
+                                      </>
                                     )}
                                   </div>
                                 )}
