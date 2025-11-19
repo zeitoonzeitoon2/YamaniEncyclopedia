@@ -513,6 +513,71 @@ export default function EditorDashboard() {
                       {filteredPosts.map((post) => (
                         <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
                           <SimplePostCard 
+                            post={{ ...post, createdAt: new Date(post.createdAt) } as any}
+                            isSelected={selectedPost?.id === post.id}
+                            onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
+                            title={`المعرّف: ${getPostDisplayId(post)}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {/* دقت کن بعد از این بلوک، دیگر “) : (” و بلوک تکراری Filters شروع نشود */}
+                  ) : (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {filteredPosts.map((post) => (
+                        <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
+                          <SimplePostCard 
+                            post={{ ...post, createdAt: new Date(post.createdAt) } as any}
+                            isSelected={selectedPost?.id === post.id}
+                            onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
+                            title={`المعرّف: ${getPostDisplayId(post)}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+                </div>
+
+                {filter === 'related' ? (
+                  relatedComments.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-dark-muted text-lg">لا توجد أي تعليقات</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                      {relatedComments.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => openPostById(c.post.id)}
+                          className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                          title={`فتح التصميم المتعلق بهذا التعليق`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                              <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                              </span>
+                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                            </span>
+                          </div>
+                          <div className="text-sm text-dark-text line-clamp-2">
+                            {c.content}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  filteredPosts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-dark-muted text-lg">لم يتم العثور على أي تصميم</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {filteredPosts.map((post) => (
+                        <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
+                          <SimplePostCard 
                             post={{...post, createdAt: new Date(post.createdAt) } as any}
                             isSelected={selectedPost?.id === post.id}
                             onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost

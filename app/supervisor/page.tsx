@@ -85,6 +85,8 @@ export default function SupervisorDashboard() {
     articles: { added: number; removed: number; edited: number }
   } | null>(null)
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
+  const [isPostsLoading, setIsPostsLoading] = useState(false)
+  const [postsPagination, setPostsPagination] = useState({ page: 1, pageSize: 20, totalCount: 0 })
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -255,17 +257,23 @@ export default function SupervisorDashboard() {
     }
   }, [selectedPost, session?.user])
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (page?: number, pageSize?: number) => {
+    setIsPostsLoading(true)
     try {
-      console.log('Fetching posts...')
-      // الحصول على المنشورات
-      const postsResponse = await fetch('/api/supervisor/posts', { credentials: 'include' })
+      const p = page ?? postsPagination.page
+      const ps = pageSize ?? postsPagination.pageSize
+      console.log('Fetching posts...', p, ps)
+      const params = new URLSearchParams({ page: String(p), pageSize: String(ps) })
+      // الحصول على المنشورات (صفحة مُقسّمة)
+      const postsResponse = await fetch(`/api/editor/posts?${params.toString()}`, { credentials: 'include', cache: 'no-store' })
       console.log('Posts response status:', postsResponse.status)
       if (postsResponse.ok) {
         const data = await postsResponse.json()
-        console.log('Posts data received:', data.length, 'posts')
+        const items = Array.isArray(data) ? data : (data.items || [])
+        const totalCount = Array.isArray(data) ? items.length : Number((data.totalCount || items.length))
+        console.log('Posts data received:', items.length, 'items')
         // حساب النقاط الإجمالية لكل منشور
-        const postsWithScores = data.map((post: Post) => {
+        const postsWithScores = (items as Post[]).map((post: Post) => {
           const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
           return {
             ...post,
@@ -274,6 +282,7 @@ export default function SupervisorDashboard() {
         })
         console.log('Setting posts:', postsWithScores.length)
         setPosts(postsWithScores)
+        setPostsPagination(prev => ({ ...prev, page: p, pageSize: ps, totalCount }))
       } else {
         console.error('Failed to fetch posts:', postsResponse.status, postsResponse.statusText)
         toast.error('خطأ في تحميل المعلومات')
@@ -289,6 +298,7 @@ export default function SupervisorDashboard() {
       console.error('Fetch error:', error)
       toast.error('خطأ في تحميل المعلومات')
     } finally {
+      setIsPostsLoading(false)
       setLoading(false)
     }
   }
@@ -534,55 +544,63 @@ export default function SupervisorDashboard() {
                   </button>
                 </div>
 
-                {filter === 'new_comments' ? (
-                  recentComments.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                      {recentComments.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => openPostById(c.post.id)}
-                          className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={`فتح التصميم المرتبط بهذا التعليق`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
-                              <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
-                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
-                              </span>
-                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
-                            </span>
-                          </div>
-                          <div className="text-sm text-dark-text line-clamp-2">
-                            {c.content}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )
+                {isPostsLoading ? (
+                  <div className="text-center py-12">
+                    <p className="text-dark-muted">جارٍ التحميل...</p>
+                  </div>
                 ) : (
                   <>
-                    {filteredPosts.length === 0 ? (
-                      <div className="text-center py-12">
-                        <p className="text-dark-muted text-lg">
-                          لا توجد تصاميم في هذه الفئة
-                        </p>
-                      </div>
+                    {filter === 'new_comments' ? (
+                      recentComments.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                          {recentComments.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => openPostById(c.post.id)}
+                              className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                              title={`فتح التصميم المرتبط بهذا التعليق`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                                  <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                    {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                                  </span>
+                                  <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                                </span>
+                              </div>
+                              <div className="text-sm text-dark-text line-clamp-2">
+                                {c.content}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )
                     ) : (
-                      <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                        {filteredPosts.map((post) => (
-                          <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
-                            <SimplePostCard
-                              post={{ ...post, createdAt: new Date(post.createdAt) } as any}
-                              isSelected={selectedPost?.id === post.id}
-                              onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
-                            />
+                      <>
+                        {filteredPosts.length === 0 ? (
+                          <div className="text-center py-12">
+                            <p className="text-dark-muted text-lg">
+                              لا توجد تصاميم في هذه الفئة
+                            </p>
                           </div>
-                        ))}
-                      </div>
+                        ) : (
+                          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                            {filteredPosts.map((post) => (
+                              <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
+                                <SimplePostCard
+                                  post={{ ...post, createdAt: new Date(post.createdAt) } as any}
+                                  isSelected={selectedPost?.id === post.id}
+                                  onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}
