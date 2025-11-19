@@ -3,7 +3,6 @@
   publish = ".next"
 [build.environment]
   NODE_VERSION = "18"
-
 [dev]
   command = "npm run dev"
   port = 3002

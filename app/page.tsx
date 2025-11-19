@@ -1,12 +1,3 @@
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
-import { PostCard } from '@/components/PostCard'
-import { prisma } from '@/lib/prisma'
-import { Header } from '@/components/Header'
-import Image from 'next/image'
-import { getTopVotedApprovedPost } from '@/lib/postUtils'
-
 export default async function HomePage() {
   const topVotedPost = await getTopVotedApprovedPost()
 
@@ -80,3 +71,5 @@ export default async function HomePage() {
     </>
   )
 }
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
