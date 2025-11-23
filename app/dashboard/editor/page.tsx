@@ -849,7 +849,14 @@ export default function EditorDashboard() {
                                                   <SimplePostCard 
                                                     post={{...post, createdAt: new Date(post.createdAt) } as any}
                                                     isSelected={selectedPost?.id === post.id}
-                                                    onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
+
+
+
+
+
+
+
++                                                    onClick={() => openPostById(post.id)} // FIX: به‌جای setSelectedPost
                                                     title={`المعرّف: ${getPostDisplayId(post)}`}
                                                   >
                                                     {getPostDisplayId(post).charAt(0)}
