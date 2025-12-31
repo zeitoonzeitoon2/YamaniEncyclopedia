@@ -64,15 +64,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           </article>
         ) : null}
 
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={() => router.back()}
-            className="btn-secondary"
-          >
-            بازگشت
-          </button>
-          {/* دکمه ویرایش مقاله حذف شد چون ویرایش از طریق مودال در صفحه create انجام می‌شود */}
-        </div>
+        {/* دکمه بازگشت حذف شد */}
         
 
       </main>
