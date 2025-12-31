@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { SimplePostCard } from '@/components/SimplePostCard'
+import { getPostDisplayId } from '@/lib/postDisplay'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 
@@ -30,6 +32,12 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [posts, setPosts] = useState<any[]>([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [postsPage, setPostsPage] = useState(1)
+  const [postsPageSize, setPostsPageSize] = useState(20)
+  const [postsTotalCount, setPostsTotalCount] = useState(0)
+  const [postsTotalPages, setPostsTotalPages] = useState(1)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -47,6 +55,9 @@ export default function AdminDashboard() {
 
     fetchUsers()
     fetchHeader()
+    const ac = new AbortController()
+    fetchAdminPosts(ac.signal)
+    return () => ac.abort()
   }, [session, status, router])
 
   const fetchUsers = async () => {
@@ -75,6 +86,36 @@ export default function AdminDashboard() {
       console.error(e)
     }
   }
+
+  const fetchAdminPosts = useCallback(async (signal?: AbortSignal) => {
+    try {
+      setPostsLoading(true)
+      const res = await fetch(`/api/admin/posts?page=${postsPage}&pageSize=${postsPageSize}`, { credentials: 'include', signal })
+      if (!res.ok) {
+        toast.error('خطأ في تحميل المعلومات')
+        return
+      }
+      const data = await res.json()
+      setPosts(Array.isArray(data?.items) ? data.items : [])
+      setPostsTotalCount(data?.totalCount || 0)
+      setPostsTotalPages(data?.totalPages || 1)
+    } catch (e: any) {
+      if ((e as any)?.name !== 'AbortError') {
+        console.error(e)
+        toast.error('خطأ في تحميل المعلومات')
+      }
+    } finally {
+      setPostsLoading(false)
+    }
+  }, [postsPage, postsPageSize])
+
+  useEffect(() => {
+    if (session?.user?.role === 'ADMIN') {
+      const ac = new AbortController()
+      fetchAdminPosts(ac.signal)
+      return () => ac.abort()
+    }
+  }, [postsPage, postsPageSize, session?.user?.role, fetchAdminPosts])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -302,6 +343,56 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="card mt-8">
+          <h2 className="text-xl font-bold text-dark-text mb-6 heading">قائمة التصاميم</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm text-dark-muted">
+              الصفحة {postsPage} من {postsTotalPages} • المجموع {postsTotalCount}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPostsPage(p => Math.max(1, p - 1))}
+                disabled={postsPage <= 1 || postsLoading}
+                className="px-3 py-1.5 rounded bg-dark-card text-dark-text border border-dark-border disabled:opacity-50"
+              >
+                السابق
+              </button>
+              <button
+                onClick={() => setPostsPage(p => Math.min(postsTotalPages, p + 1))}
+                disabled={postsPage >= postsTotalPages || postsLoading}
+                className="px-3 py-1.5 rounded bg-dark-card text-dark-text border border-dark-border disabled:opacity-50"
+              >
+                التالي
+              </button>
+            </div>
+          </div>
+          {postsLoading ? (
+            <div className="text-center py-6 text-dark-text">جارٍ التحميل...</div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-6 text-dark-muted">لا توجد منشورات</div>
+          ) : (
+            <div className="space-y-3">
+              {posts.map((post) => (
+                <SimplePostCard
+                  key={post.id}
+                  post={{
+                    id: post.id,
+                    version: post.version ?? null,
+                    revisionNumber: post.revisionNumber ?? null,
+                    status: post.status,
+                    content: '',
+                    type: post.type,
+                    createdAt: post.createdAt,
+                    author: { name: post.author?.name || null, image: post.author?.image || null },
+                    originalPost: { version: post.originalPost?.version ?? null },
+                    totalScore: post.totalScore,
+                  } as any}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

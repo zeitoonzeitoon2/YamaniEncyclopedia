@@ -169,7 +169,7 @@ export default function EditorDashboard() {
       loadPosts(ac.signal)
       return () => ac.abort()
     }
-  }, [session, filter])
+  }, [session, filter, loadPosts])
 
   // دریافت پست‌های دارای «کامنت‌های مربوط به من»
   const loadRelated = useCallback(async (signal?: AbortSignal) => {
@@ -240,7 +240,7 @@ export default function EditorDashboard() {
     } catch (e) {
       console.error('Failed to open post by id', e)
     }
-  }, [posts])
+  }, [posts, loadPosts])
 
   useEffect(() => {
     if (filter === 'related') {
@@ -248,7 +248,7 @@ export default function EditorDashboard() {
       loadRelated(ac.signal)
       return () => ac.abort()
     }
-  }, [filter])
+  }, [filter, loadRelated])
 
   // Sync unread badge after comments read (مشابه ناظر)
   useEffect(() => {
