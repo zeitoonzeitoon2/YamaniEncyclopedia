@@ -141,9 +141,9 @@ export default function EditorDashboard() {
   }, [posts, session])
 
   // بارگذاری پست‌ها
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch(`/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`, { credentials: 'include' })
+      const response = await fetch(`/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`, { credentials: 'include', signal })
       if (response.ok) {
         const data = await response.json()
         // سازگار با هر دو حالت: آرایه قدیمی یا آبجکت صفحه‌بندی جدید
@@ -153,23 +153,28 @@ export default function EditorDashboard() {
         toast.error('خطأ في تحميل المشاركات')
       }
     } catch (error) {
-      console.error('Error loading posts:', error)
-      toast.error('خطأ في تحميل المشاركات')
+      const name = (error as any)?.name
+      if (name !== 'AbortError') {
+        console.error('Error loading posts:', error)
+        toast.error('خطأ في تحميل المشاركات')
+      }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filter])
 
   useEffect(() => {
     if (session) {
-      loadPosts()
+      const ac = new AbortController()
+      loadPosts(ac.signal)
+      return () => ac.abort()
     }
   }, [session, filter])
 
   // دریافت پست‌های دارای «کامنت‌های مربوط به من»
-  const loadRelated = async () => {
+  const loadRelated = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/editor/comments/related', { credentials: 'include' })
+      const res = await fetch('/api/editor/comments/related', { credentials: 'include', signal })
       if (res.ok) {
         const items: RecentComment[] = await res.json()
         setRelatedComments(items)
@@ -177,9 +182,12 @@ export default function EditorDashboard() {
         setRelatedPostIds(ids)
       }
     } catch (e) {
-      console.error('Failed to load related comments', e)
+      const name = (e as any)?.name
+      if (name !== 'AbortError') {
+        console.error('Failed to load related comments', e)
+      }
     }
-  }
+  }, [])
 
   const [isDetailsLoading, setIsDetailsLoading] = useState(false)
   const openPostById = useCallback(async (postId: string) => {
@@ -236,7 +244,9 @@ export default function EditorDashboard() {
 
   useEffect(() => {
     if (filter === 'related') {
-      loadRelated()
+      const ac = new AbortController()
+      loadRelated(ac.signal)
+      return () => ac.abort()
     }
   }, [filter])
 
@@ -258,18 +268,21 @@ export default function EditorDashboard() {
   }, [])
 
   // فیلتر کردن پست‌ها
-  const filteredPosts = posts.filter(post => {
-    switch (filter) {
-      case 'my-posts':
-        return post.author.id === session?.user?.id
-      case 'related':
-        return relatedPostIds.has(post.id)
-      case 'all':
-        return true
-      default:
-        return true
-    }
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  const filteredPosts = useMemo(() => {
+    const list = posts.filter(post => {
+      switch (filter) {
+        case 'my-posts':
+          return post.author.id === session?.user?.id
+        case 'related':
+          return relatedPostIds.has(post.id)
+        case 'all':
+          return true
+        default:
+          return true
+      }
+    })
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [posts, filter, session?.user?.id, relatedPostIds])
 
   // رنگ وضعیت
   const getStatusColor = (status: string) => {

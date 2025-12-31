@@ -7,23 +7,18 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  console.log('Admin route called - REWRITTEN VERSION')
   try {
     const session = await getServerSession(authOptions)
-    console.log('Admin route session:', session)
     
     if (!session?.user?.email) {
-      console.log('No session or email in admin route')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
-    console.log('User from DB:', user)
 
     if (!user) {
-      console.log('User not found')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 

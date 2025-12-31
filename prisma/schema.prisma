@@ -48,6 +48,12 @@ model Post {
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([authorId])
+  @@index([originalPostId])
+  @@index([version])
 }
 
 model Vote {
@@ -60,6 +66,9 @@ model Vote {
   createdAt DateTime @default(now())
 
   @@unique([postId, adminId])
+  @@index([postId])
+  @@index([adminId])
+  @@index([createdAt])
 }
 
 model Comment {
@@ -77,6 +86,11 @@ model Comment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([createdAt])
+  @@index([authorId])
+  @@index([parentId])
 }
 
 // Track last read time of a post per user (برای شمارش کامنت‌های خوانده‌نشده)
@@ -102,6 +116,9 @@ model Article {
   author      User     @relation(fields: [authorId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 // Key-value settings storage (e.g., homepage header image url)

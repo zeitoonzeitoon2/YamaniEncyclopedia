@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 
 export async function GET(request: NextRequest) {
-  console.log('Supervisor route called - REWRITTEN VERSION')
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const session = await getServerSession(authOptions)
