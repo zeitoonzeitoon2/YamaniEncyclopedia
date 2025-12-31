@@ -211,6 +211,7 @@ export default function EditorDashboard() {
       // اگر داده‌ی سنگین وجود ندارد، جزئیات را از API جدید بگیر
       if (!found.content || (found.originalPost && !found.originalPost.content)) {
         try {
+          setIsDetailsLoading(true)
           const res = await fetch(`/api/editor/posts/${postId}`, { credentials: 'include' })
           if (res.ok) {
             const full = await res.json()
@@ -220,6 +221,8 @@ export default function EditorDashboard() {
           }
         } catch (e) {
           console.error('Failed to load full post details', e)
+        } finally {
+          setIsDetailsLoading(false)
         }
       }
       setTimeout(() => {
@@ -230,6 +233,7 @@ export default function EditorDashboard() {
     }
     // اگر در لیست نبود، لیست را بارگذاری کن و سپس تلاش برای انتخاب
     try {
+      setIsDetailsLoading(true)
       await loadPosts()
       setTimeout(async () => {
         const f = posts.find(p => p.id === postId)
@@ -244,6 +248,8 @@ export default function EditorDashboard() {
             }
           } catch (e) {
             console.error('Failed to load full post details after reload', e)
+          } finally {
+            setIsDetailsLoading(false)
           }
           setTimeout(() => {
             const el = document.getElementById('comments')
@@ -340,7 +346,7 @@ export default function EditorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          لوحة المحرور
+          لوحة المحرر
         </h1>
         {reviewableNoticePost && (
           <div role="alert" className="mb-6 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-4 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-100">
@@ -447,7 +453,7 @@ export default function EditorDashboard() {
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
-                    onClick={() => setSelectedPost(post)}
+                    onClick={() => openPostById(post.id)}
                     title={`المعرّف: ${getPostDisplayId(post)}`}
                   >
                     {getPostDisplayId(post).charAt(0)}
