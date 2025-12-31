@@ -67,6 +67,9 @@ export default function SupervisorDashboard() {
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(5)
+  const [hasNext, setHasNext] = useState(false)
   const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables'>('new_designs')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   
@@ -255,27 +258,18 @@ export default function SupervisorDashboard() {
     }
   }, [selectedPost, session?.user])
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (signal?: AbortSignal, append: boolean = false) => {
     try {
-      console.log('Fetching posts...')
-      // الحصول على المنشورات
-      const postsResponse = await fetch('/api/supervisor/posts', { credentials: 'include' })
-      console.log('Posts response status:', postsResponse.status)
+      const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+      url.searchParams.set('page', String(page))
+      url.searchParams.set('pageSize', String(pageSize))
+      const postsResponse = await fetch(url.toString(), { credentials: 'include', signal })
       if (postsResponse.ok) {
         const data = await postsResponse.json()
-        console.log('Posts data received:', data.length, 'posts')
-        // حساب النقاط الإجمالية لكل منشور
-        const postsWithScores = data.map((post: Post) => {
-          const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
-          return {
-            ...post,
-            totalScore
-          }
-        })
-        console.log('Setting posts:', postsWithScores.length)
-        setPosts(postsWithScores)
+        const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []
+        setPosts(prev => append ? [...prev, ...items] : items)
+        setHasNext(!!data?.hasNext)
       } else {
-        console.error('Failed to fetch posts:', postsResponse.status, postsResponse.statusText)
         toast.error('خطأ في تحميل المعلومات')
       }
 
@@ -286,12 +280,21 @@ export default function SupervisorDashboard() {
         setAdminStats(statsData)
       }
     } catch (error) {
-      console.error('Fetch error:', error)
       toast.error('خطأ في تحميل المعلومات')
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const ac = new AbortController()
+      setPage(1)
+      setPosts([])
+      fetchPosts(ac.signal, false)
+      return () => ac.abort()
+    }
+  }, [status, pageSize, filter])
 
 
 
@@ -573,15 +576,29 @@ export default function SupervisorDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                        {filteredPosts.map((post) => (
-                          <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
-                            <SimplePostCard
-                              post={{ ...post, createdAt: new Date(post.createdAt) } as any}
-                              isSelected={selectedPost?.id === post.id}
-                              onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
-                            />
-                          </div>
-                        ))}
+                      {filteredPosts.slice(0, filteredPosts.length).map((post) => (
+                        <div key={post.id} className={`${selectedPost?.id === post.id ? 'ring-2 ring-warm-primary rounded-xl' : ''}`}>
+                          <SimplePostCard
+                            post={{ ...post, createdAt: new Date(post.createdAt) } as any}
+                            isSelected={selectedPost?.id === post.id}
+                            onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
+                          />
+                        </div>
+                      ))}
+                      {hasNext && (
+                        <div className="flex justify-center pt-2">
+                          <button
+                            onClick={() => {
+                              const ac = new AbortController()
+                              setPage(p => p + 1)
+                              setTimeout(() => fetchPosts(ac.signal, true), 0)
+                            }}
+                            className="px-4 py-2 rounded bg-dark-card text-dark-text border border-dark-border hover:bg-gray-800/60"
+                          >
+                            مشاهده قبلی‌ها
+                          </button>
+                        </div>
+                      )}
                       </div>
                     )}
                   </>

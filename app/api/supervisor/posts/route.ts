@@ -15,16 +15,21 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
+
+    const url = new URL(request.url)
+    const pageParam = parseInt(url.searchParams.get('page') || '1', 10)
+    const pageSizeParam = parseInt(url.searchParams.get('pageSize') || '20', 10)
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
+    const pageSize = Number.isNaN(pageSizeParam) ? 20 : Math.min(Math.max(pageSizeParam, 1), 50)
+
+    const totalCount = await prisma.post.count()
 
     const posts = await prisma.post.findMany({
       select: {
         id: true,
-        // حذف فیلدهای سنگین از لیست
-        // content: true,
-        // articlesData: true,
         type: true,
         status: true,
         version: true,
@@ -34,8 +39,7 @@ export async function GET(request: NextRequest) {
           select: { id: true, name: true, email: true, image: true, role: true },
         },
         originalPost: {
-          // حذف محتوا برای کاهش حجم پاسخ
-          select: { id: true, /* content: true, */ type: true, version: true },
+          select: { id: true, type: true, version: true },
         },
         votes: {
           select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } },
@@ -43,11 +47,12 @@ export async function GET(request: NextRequest) {
         _count: { select: { comments: true } },
       },
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     })
 
     const postIds = posts.map(p => p.id)
 
-    // دریافت آخرین زمان خواندن کاربر برای هر پست
     const reads = postIds.length ? await prisma.commentRead.findMany({
       where: { userId: user.id, postId: { in: postIds } },
       select: { postId: true, lastReadAt: true },
@@ -55,7 +60,6 @@ export async function GET(request: NextRequest) {
     const readMap = new Map<string, Date>()
     for (const r of reads) readMap.set(r.postId, r.lastReadAt)
 
-    // محاسبه تعداد کامنت‌های جدید برای هر پست (نویسنده خودش حساب نشود)
     const unreadCounts: Record<string, number> = {}
     for (const postId of postIds) {
       const lastReadAt = readMap.get(postId)
@@ -69,7 +73,6 @@ export async function GET(request: NextRequest) {
       unreadCounts[postId] = count
     }
 
-    // تجميع وقت أحدث تعليق وإجمالي التعليقات لكل منشور
     const commentsAgg = postIds.length > 0 ? await prisma.comment.groupBy({
       by: ['postId'],
       where: { postId: { in: postIds } },
@@ -85,7 +88,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const postsWithMeta = posts.map(post => {
+    const items = posts.map(post => {
       const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
       const cm = commentsMap.get(post.id)
       return {
@@ -97,7 +100,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(postsWithMeta)
+    return NextResponse.json({
+      items,
+      page,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      hasNext: page * pageSize < totalCount,
+    })
   } catch (error) {
     console.error('Error fetching supervisor posts:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

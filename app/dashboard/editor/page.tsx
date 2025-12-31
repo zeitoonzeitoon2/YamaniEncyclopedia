@@ -59,6 +59,9 @@ export default function EditorDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [isPostsListCollapsed, setIsPostsListCollapsed] = useState(false)
   const [filter, setFilter] = useState<'my-posts' | 'related' | 'all'>('my-posts')
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(5)
+  const [hasNext, setHasNext] = useState(false)
   const [relatedPostIds, setRelatedPostIds] = useState<Set<string>>(new Set())
   const [relatedComments, setRelatedComments] = useState<RecentComment[]>([])
   const [comparisonStats, setComparisonStats] = useState<{
@@ -141,14 +144,23 @@ export default function EditorDashboard() {
   }, [posts, session])
 
   // بارگذاری پست‌ها
-  const loadPosts = useCallback(async (signal?: AbortSignal) => {
+  const loadPosts = useCallback(async (signal?: AbortSignal, append: boolean = false) => {
     try {
-      const response = await fetch(`/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`, { credentials: 'include', signal })
+      const base = `/api/editor/posts${filter === 'all' ? '?scope=all' : ''}`
+      const url = new URL(base, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+      url.searchParams.set('page', String(page))
+      url.searchParams.set('pageSize', String(pageSize))
+      const response = await fetch(url.toString(), { credentials: 'include', signal })
       if (response.ok) {
         const data = await response.json()
-        // سازگار با هر دو حالت: آرایه قدیمی یا آبجکت صفحه‌بندی جدید
-        const items = Array.isArray(data) ? data : data?.items
-        setPosts(Array.isArray(items) ? items : [])
+        if (Array.isArray(data)) {
+          setPosts(prev => append ? [...prev, ...data] : data)
+          setHasNext(false)
+        } else {
+          const items = Array.isArray(data?.items) ? data.items : []
+          setPosts(prev => append ? [...prev, ...items] : items)
+          setHasNext(!!data?.hasNext)
+        }
       } else {
         toast.error('خطأ في تحميل المشاركات')
       }
@@ -161,12 +173,14 @@ export default function EditorDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [filter])
+  }, [filter, page, pageSize])
 
   useEffect(() => {
     if (session) {
       const ac = new AbortController()
-      loadPosts(ac.signal)
+      setPage(1)
+      setPosts([])
+      loadPosts(ac.signal, false)
       return () => ac.abort()
     }
   }, [session, filter])
@@ -531,6 +545,20 @@ export default function EditorDashboard() {
                           />
                         </div>
                       ))}
+                      {hasNext && (
+                        <div className="flex justify-center pt-2">
+                          <button
+                            onClick={() => {
+                              const ac = new AbortController()
+                              setPage(p => p + 1)
+                              setTimeout(() => loadPosts(ac.signal, true), 0)
+                            }}
+                            className="px-4 py-2 rounded bg-dark-card text-dark-text border border-dark-border hover:bg-gray-800/60"
+                          >
+                            مشاهده قبلی‌ها
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 )}
