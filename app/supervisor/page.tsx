@@ -595,7 +595,7 @@ export default function SupervisorDashboard() {
                             }}
                             className="px-4 py-2 rounded bg-dark-card text-dark-text border border-dark-border hover:bg-gray-800/60"
                           >
-                            مشاهده قبلی‌ها
+                            عرض المزيد
                           </button>
                         </div>
                       )}
