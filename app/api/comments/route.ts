@@ -13,51 +13,67 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 })
     }
 
-    const commentsRaw = await prisma.comment.findMany({
-      where: {
-        postId: postId,
-        parentId: null,
-      },
-      select: {
-        id: true,
-        content: true,
-        createdAt: true,
-        author: {
-          select: {
-            id: true,
-            name: true,
-            role: true,
-          },
-        },
-        replies: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                role: true,
-              },
+    try {
+      const commentsRaw = await prisma.comment.findMany({
+        where: { postId: postId, parentId: null },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          tag: true,
+          author: { select: { id: true, name: true, role: true } },
+          replies: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              tag: true,
+              author: { select: { id: true, name: true, role: true } },
             },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+        orderBy: { createdAt: 'desc' },
+      })
 
-    const comments = commentsRaw.map(c => ({
-      ...c,
-      replies: [...(c.replies || [])].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-    }))
+      const comments = commentsRaw.map(c => ({
+        ...c,
+        category: c.tag || undefined,
+        replies: [...(c.replies || [])]
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          .map(r => ({ ...r, category: r.tag || undefined })),
+      }))
 
-    return NextResponse.json(comments)
+      return NextResponse.json(comments)
+    } catch (dbErr) {
+      console.error('GET /api/comments with tag failed, retrying without tag:', dbErr)
+      const commentsRaw = await prisma.comment.findMany({
+        where: { postId: postId, parentId: null },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          author: { select: { id: true, name: true, role: true } },
+          replies: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              author: { select: { id: true, name: true, role: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      const comments = commentsRaw.map(c => ({
+        ...c,
+        replies: [...(c.replies || [])].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      }))
+      return NextResponse.json(comments)
+    }
   } catch (error) {
     console.error('Error fetching comments:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const msg = (error as any)?.message || 'Internal server error'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 
@@ -71,13 +87,19 @@ export async function POST(request: NextRequest) {
     }
 
     // اجازه ارسال کامنت به تمام کاربران لاگین کرده
-    const body = await request.json()
+    let body: any
+    try {
+      body = await request.json()
+    } catch (e) {
+      console.error('Invalid JSON body for comment:', e)
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
     const content = body?.content
     const postId = body?.postId
     const parentId = body?.parentId
-    let category: string | null = body?.category || null
+    let tag: string | null = body?.tag ?? body?.category ?? null
 
-    const mapCategory = (val: any): string | null => {
+    const mapTag = (val: any): string | null => {
       const v = String(val || '').trim().toUpperCase()
       const dict: Record<string, string> = {
         QUESTION: 'QUESTION',
@@ -94,7 +116,7 @@ export async function POST(request: NextRequest) {
       }
       return dict[v] || dict[val] || null
     }
-    category = mapCategory(category)
+    tag = mapTag(tag)
 
     if (!content?.trim() || !postId) {
       return NextResponse.json({ error: 'Content and postId are required' }, { status: 400 })
@@ -120,28 +142,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        content: content.trim(),
-        postId,
-        authorId: session.user.id,
-        parentId: parentId || null,
-        ...(category ? { category } : {}),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            role: true,
-          },
+    try {
+      const comment = await prisma.comment.create({
+        data: {
+          content: content.trim(),
+          postId,
+          authorId: session.user.id,
+          parentId: parentId || null,
+          ...(tag ? { tag } : {}),
         },
-      },
-    })
-
-    return NextResponse.json(comment, { status: 201 })
+        include: {
+          author: { select: { id: true, name: true, role: true } },
+        },
+      })
+      return NextResponse.json(comment, { status: 201 })
+    } catch (dbErr) {
+      console.error('Primary create comment failed, trying without tag:', dbErr)
+      try {
+        const comment = await prisma.comment.create({
+          data: {
+            content: content.trim(),
+            postId,
+            authorId: session.user.id,
+            parentId: parentId || null,
+          },
+          include: {
+            author: { select: { id: true, name: true, role: true } },
+          },
+        })
+        return NextResponse.json(comment, { status: 201 })
+      } catch (fallbackErr) {
+        console.error('Fallback create comment failed:', fallbackErr)
+        const msg = (fallbackErr as any)?.message || (dbErr as any)?.message || 'Internal server error'
+        return NextResponse.json({ error: msg }, { status: 500 })
+      }
+    }
   } catch (error) {
     console.error('Error creating comment:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const msg = (error as any)?.message || 'Internal server error'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

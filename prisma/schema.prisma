@@ -75,6 +75,7 @@ model Comment {
   id        String   @id @default(cuid())
   content   String
   category  String?
+  tag       String?
   postId    String
   post      Post     @relation(fields: [postId], references: [id])
   authorId  String
@@ -90,6 +91,7 @@ model Comment {
 
   @@index([postId])
   @@index([category])
+  @@index([tag])
   @@index([createdAt])
   @@index([authorId])
   @@index([parentId])
