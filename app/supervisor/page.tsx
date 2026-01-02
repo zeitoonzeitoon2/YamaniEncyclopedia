@@ -661,6 +661,12 @@ export default function SupervisorDashboard() {
                   <div className="mb-6">
                     {selectedPost.originalPost ? (
                       <div>
+                        {proposedDiagramData?.changeSummary && (
+                          <div className="mb-4 p-4 rounded-lg border border-blue-700 bg-blue-900/20 text-blue-200 text-sm">
+                            <div className="font-semibold mb-1 heading">ملخص التغييرات المرسلة من المحرر</div>
+                            <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
+                          </div>
+                        )}
                         <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
                         {originalDiagramData && proposedDiagramData ? (
                           <>

@@ -603,6 +603,12 @@ export default function EditorDashboard() {
                       <div className="text-center py-4 text-dark-text">جارِ التحميل...</div>
                     ) : selectedPost.originalPost && originalDiagramData && proposedDiagramData ? (
                       <div>
+                        {proposedDiagramData?.changeSummary && (
+                          <div className="mb-4 p-4 rounded-lg border border-blue-700 bg-blue-900/20 text-blue-200 text-sm">
+                            <div className="font-semibold mb-1 heading">ملخص التغييرات التي أرسلتها</div>
+                            <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
+                          </div>
+                        )}
                         <h4 className="font-bold text-lg text-dark-text mb-4 heading">مقارنة المخططات</h4>
                         {/* Legend: راهنمای رنگ‌ها */}
                         <div className="mb-4">

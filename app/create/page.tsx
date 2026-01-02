@@ -40,6 +40,8 @@ function CreatePost() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false)
+  const [summaryText, setSummaryText] = useState('')
 
   // بارگذاری نمودار اصلی با بیشترین امتیاز یا بازیابی پیش‌نویس ذخیره‌شده
   const hasLoadedRef = useRef(false)
@@ -200,50 +202,35 @@ function CreatePost() {
     )
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  const doSubmit = async (summary: string) => {
     if (treeData.nodes.length === 0) {
       toast.error('لطفاً حداقل یک نود در نمودار ایجاد کنید')
       return
     }
-
     setIsSubmitting(true)
-
     try {
-      // ارسال صرفاً محتوای نمودار؛ مقالات از طریق API همان لحظه ایجاد می‌شوند
       const body: any = {
-        content: JSON.stringify(treeData),
+        content: JSON.stringify({ ...treeData, changeSummary: summary?.trim() ? summary.trim() : undefined }),
         type: 'TREE',
       }
       if (originalPostId) body.originalPostId = originalPostId
-
       const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-
       if (response.ok) {
         toast.success('تم إرسال مخططك بنجاح وهو بانتظار الموافقة')
-
-        // پاک کردن پیش‌نویس ذخیره شده پس از ارسال موفق و جلوگیری از ذخیره مجدد حالت پیش‌فرض
         skipAutoSaveRef.current = true
         try { localStorage.removeItem(draftKey) } catch {}
-
         setTreeData({
           nodes: [
-            {
-              id: '1',
-              type: 'custom',
-              position: { x: 400, y: 200 },
-              data: { label: 'ابدأ' },
-            },
+            { id: '1', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'ابدأ' } },
           ],
           edges: [],
         })
+        setSummaryText('')
+        setIsSummaryOpen(false)
         router.push('/')
       } else {
         const text = await response.text()
@@ -258,6 +245,12 @@ function CreatePost() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    setIsSummaryOpen(true)
   }
 
   // وقتی کاربر «إلغاء» می‌زند، پیش‌نویس ذخیره‌شده پاک شود تا دفعه بعد صفحه CREATE از نمودار اصلی منتشر‌شده بارگذاری گردد
@@ -340,6 +333,41 @@ function CreatePost() {
           </div>
         </div>
       </main>
+      {isSummaryOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="px-6 py-4 border-b border-gray-700/50">
+              <h2 className="text-xl font-bold text-dark-text heading">فضلاً اكتب ملخصاً للتغييرات وأي إيضاحات تراها مناسبة</h2>
+            </div>
+            <div className="p-6">
+              <textarea
+                value={summaryText}
+                onChange={(e) => setSummaryText(e.target.value)}
+                className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                rows={6}
+                placeholder="مثال: أضفت عقدة فرعية لتوضيح الخطوة الثانية، وعدّلت اسم العقدة الرئيسية لتكون أوضح."
+              />
+              <div className="flex items-center justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => { setIsSummaryOpen(false) }}
+                  className="btn-secondary"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => doSubmit(summaryText)}
+                  className="btn-primary"
+                >
+                  تأكيد الإرسال
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
