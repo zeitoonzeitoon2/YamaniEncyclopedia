@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 interface Comment {
   id: string
   content: string
+  category?: string
   createdAt: string
   author: {
     id: string
@@ -18,6 +19,7 @@ interface Comment {
 interface Reply {
   id: string
   content: string
+  category?: string
   createdAt: string
   author: {
     id: string
@@ -34,7 +36,9 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const { data: session } = useSession()
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
+  const [newCategory, setNewCategory] = useState<'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>('QUESTION')
   const [replyContent, setReplyContent] = useState('')
+  const [replyCategory, setReplyCategory] = useState<'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>('QUESTION')
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -91,6 +95,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         body: JSON.stringify({
           content: newComment.trim(),
           postId,
+          category: newCategory,
         }),
       })
 
@@ -121,6 +126,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           content: replyContent.trim(),
           postId,
           parentId: commentId,
+          category: replyCategory,
         }),
       })
 
@@ -164,6 +170,23 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     })
   }
 
+  const categoryLabel = (cat?: string) => {
+    switch (cat) {
+      case 'QUESTION': return 'سؤال'
+      case 'CRITIQUE': return 'نقد'
+      case 'SUPPORT': return 'دعم'
+      case 'SUGGESTION': return 'اقتراح تعديل'
+      default: return null
+    }
+  }
+
+  const categoryBadge = (cat?: string) => {
+    const label = categoryLabel(cat)
+    if (!label) return null
+    const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'
+    return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>
+  }
+
   if (isLoading) {
     return (
       <div className="bg-stone-800 rounded-lg p-6 border border-amber-700/40">
@@ -182,6 +205,19 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       {/* فرم کامنت جدید */}
       {canComment && (
         <form onSubmit={handleSubmitComment} className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <label className="text-amber-200 text-sm">وسم التعليق:</label>
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value as any)}
+              className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
+            >
+              <option value="QUESTION">سؤال</option>
+              <option value="CRITIQUE">نقد</option>
+              <option value="SUPPORT">دعم</option>
+              <option value="SUGGESTION">اقتراح تعديل</option>
+            </select>
+          </div>
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
@@ -215,6 +251,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-amber-100">{comment.author.name}</span>
                   {getRoleBadge(comment.author.role)}
+                  {categoryBadge(comment.category)}
                 </div>
                 <span className="text-sm text-amber-300">
                   {formatDate(comment.createdAt)}
@@ -239,6 +276,19 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   onSubmit={(e) => handleSubmitReply(e, comment.id)}
                   className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3"
                 >
+                  <div className="flex items-center gap-3 mb-2">
+                    <label className="text-amber-200 text-sm">وسم الرد:</label>
+                    <select
+                      value={replyCategory}
+                      onChange={(e) => setReplyCategory(e.target.value as any)}
+                      className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
+                    >
+                      <option value="QUESTION">سؤال</option>
+                      <option value="CRITIQUE">نقد</option>
+                      <option value="SUPPORT">دعم</option>
+                      <option value="SUGGESTION">اقتراح تعديل</option>
+                    </select>
+                  </div>
                   <textarea
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
@@ -277,6 +327,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-amber-100">{reply.author.name}</span>
                           {getRoleBadge(reply.author.role)}
+                          {categoryBadge(reply.category)}
                         </div>
                         <span className="text-sm text-amber-300">
                           {formatDate(reply.createdAt)}

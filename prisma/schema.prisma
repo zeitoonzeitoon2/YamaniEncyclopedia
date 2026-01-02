@@ -74,6 +74,7 @@ model Vote {
 model Comment {
   id        String   @id @default(cuid())
   content   String
+  category  String?
   postId    String
   post      Post     @relation(fields: [postId], references: [id])
   authorId  String
@@ -88,6 +89,7 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   @@index([postId])
+  @@index([category])
   @@index([createdAt])
   @@index([authorId])
   @@index([parentId])

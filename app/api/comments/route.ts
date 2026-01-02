@@ -63,7 +63,30 @@ export async function POST(request: NextRequest) {
     }
 
     // اجازه ارسال کامنت به تمام کاربران لاگین کرده
-    const { content, postId, parentId } = await request.json()
+    const body = await request.json()
+    const content = body?.content
+    const postId = body?.postId
+    const parentId = body?.parentId
+    let category: string | null = body?.category || null
+
+    const mapCategory = (val: any): string | null => {
+      const v = String(val || '').trim().toUpperCase()
+      const dict: Record<string, string> = {
+        QUESTION: 'QUESTION',
+        CRITIQUE: 'CRITIQUE',
+        SUPPORT: 'SUPPORT',
+        SUGGESTION: 'SUGGESTION',
+        'سؤال': 'QUESTION',
+        'نقد': 'CRITIQUE',
+        'دعم': 'SUPPORT',
+        'اقتراح تعديل': 'SUGGESTION',
+        'پرسش': 'QUESTION',
+        'حمایت': 'SUPPORT',
+        'پیشنهاد اصلاح': 'SUGGESTION',
+      }
+      return dict[v] || dict[val] || null
+    }
+    category = mapCategory(category)
 
     if (!content?.trim() || !postId) {
       return NextResponse.json({ error: 'Content and postId are required' }, { status: 400 })
@@ -95,6 +118,7 @@ export async function POST(request: NextRequest) {
         postId,
         authorId: session.user.id,
         parentId: parentId || null,
+        ...(category ? { category } : {}),
       },
       include: {
         author: {
