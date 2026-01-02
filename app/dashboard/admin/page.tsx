@@ -105,7 +105,7 @@ export default function AdminDashboard() {
       setHeaderUrl(data.url)
       setPreviewUrl(null)
       setSelectedFile(null)
-      toast.success('هدر با موفقیت به‌روزرسانی شد')
+      toast.success('تم تحديث صورة الترويسة بنجاح')
     } catch (e: any) {
       console.error(e)
       toast.error(e.message || 'خطا در آپلود')
