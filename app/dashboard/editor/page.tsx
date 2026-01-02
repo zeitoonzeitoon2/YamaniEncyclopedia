@@ -448,62 +448,7 @@ export default function EditorDashboard() {
           </div>
         </div>
 
-        {/* My Profile */}
-        <div className="card mb-8">
-          <h3 className="text-lg font-semibold text-dark-text heading mb-3">ملفي الشخصي</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label className="block text-sm text-dark-muted mb-1">الاسم</label>
-              <input
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text"
-                placeholder="اسم العرض"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-dark-muted mb-1">رابط صورة الملف</label>
-              <input
-                value={profileImage}
-                onChange={(e) => setProfileImage(e.target.value)}
-                className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text"
-                placeholder="https://.../avatar.png"
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={async () => {
-                  setIsSavingProfile(true)
-                  try {
-                    const res = await fetch('/api/profile', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ name: profileName, image: profileImage }),
-                      credentials: 'include',
-                    })
-                    if (res.ok) {
-                      toast.success('تم تحديث الملف الشخصي')
-                    } else {
-                      const t = await res.text()
-                      let err: any = {}
-                      try { err = JSON.parse(t) } catch { err = { error: t } }
-                      toast.error(err?.error || 'فشل تحديث الملف')
-                    }
-                  } catch (e) {
-                    console.error('Failed to save profile', e)
-                    toast.error('خطأ في تحديث الملف')
-                  } finally {
-                    setIsSavingProfile(false)
-                  }
-                }}
-                disabled={isSavingProfile || isProfileLoading}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isSavingProfile ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Removed My Profile section; now profile is a dedicated public page */}
 
         <div className="flex gap-6">
           {/* Posts List (collapsible) */}

@@ -64,13 +64,15 @@ export function Header() {
 
                 <div className="flex items-center gap-3">
                   {session.user?.image && (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || ''}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
+                    <Link href={`/profile/${session.user.id}`} title="ملفي الشخصي">
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name || ''}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    </Link>
                   )}
                   <span className="text-dark-text">{session.user?.name}</span>
                   <button

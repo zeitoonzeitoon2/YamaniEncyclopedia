@@ -36,6 +36,7 @@ export async function PUT(request: NextRequest) {
     }
     const name: string | undefined = body?.name
     const image: string | undefined = body?.image
+    const bio: string | undefined = body?.bio
     const data: any = {}
     if (typeof name === 'string') {
       data.name = name.trim().slice(0, 120)
@@ -50,19 +51,24 @@ export async function PUT(request: NextRequest) {
           }
         } catch {
           return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 })
-        }
-        data.image = trimmed
-      } else {
-        data.image = null
       }
+      data.image = trimmed
+    } else {
+      data.image = null
+    }
+    }
+    if (typeof bio === 'string') {
+      data.bio = bio.trim().slice(0, 2000)
     }
     if (!('name' in data) && !('image' in data)) {
-      return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 })
+      if (!('bio' in data)) {
+        return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 })
+      }
     }
     const updated = await prisma.user.update({
       where: { id: session.user.id },
       data,
-      select: { id: true, email: true, name: true, image: true, role: true },
+      select: { id: true, email: true, name: true, image: true, role: true, bio: true },
     })
     return NextResponse.json(updated)
   } catch (error: any) {

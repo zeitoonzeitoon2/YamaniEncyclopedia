@@ -17,6 +17,9 @@ model User {
   password     String?
   name         String?
   image        String?
+  bio          String?
+  avatarBytes  Bytes?
+  avatarMime   String?
   role         String        @default("USER")
   posts        Post[]
   adminVotes   Vote[]
