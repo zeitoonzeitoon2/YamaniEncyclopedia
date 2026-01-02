@@ -92,28 +92,23 @@ export async function POST(request: NextRequest) {
             })
           }
         }
-        let version: number | null = null
+        const version = await generateNextVersion()
 
-        if (post.originalPostId) {
-          // ویرایش پیشنهادی است: طرح قبلی را آرشیو کن
-          await prisma.post.update({
-            where: { id: post.originalPostId },
-            data: { status: 'ARCHIVED' }
-          })
-          // اختصاص ورژن جدید
-          version = await generateNextVersion()
-        } else {
-          // نمودار جدید: تولید ورژن جدید
-          version = await generateNextVersion()
-        }
-
-        await prisma.post.update({
-          where: { id: postId },
-          data: {
-            status: 'APPROVED',
-            version: version,
-            revisionNumber: null
+        await prisma.$transaction(async (tx) => {
+          if (post.originalPostId) {
+            await tx.post.update({
+              where: { id: post.originalPostId },
+              data: { status: 'ARCHIVED' }
+            })
           }
+          await tx.post.update({
+            where: { id: postId },
+            data: {
+              status: 'APPROVED',
+              version: version,
+              revisionNumber: null
+            }
+          })
         })
 
         // پردازش داده‌های مقالات (در صورت وجود) و پاکسازی لینک‌های نمودار

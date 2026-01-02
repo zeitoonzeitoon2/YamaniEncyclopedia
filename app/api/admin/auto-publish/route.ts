@@ -78,15 +78,14 @@ export async function POST(request: NextRequest) {
             })
           }
         }
-        let version: number | null = null
-        if (post.originalPostId) {
-          await prisma.post.update({ where: { id: post.originalPostId }, data: { status: 'ARCHIVED' } })
-          version = await generateNextVersion()
-        } else {
-          version = await generateNextVersion()
-        }
+        const version = await generateNextVersion()
 
-        await prisma.post.update({ where: { id: postId }, data: { status: 'APPROVED', version, revisionNumber: null } })
+        await prisma.$transaction(async (tx) => {
+          if (post.originalPostId) {
+            await tx.post.update({ where: { id: post.originalPostId }, data: { status: 'ARCHIVED' } })
+          }
+          await tx.post.update({ where: { id: postId }, data: { status: 'APPROVED', version, revisionNumber: null } })
+        })
 
         // پردازش داده‌های مقالات و پاکسازی
         try {

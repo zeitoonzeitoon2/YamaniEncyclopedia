@@ -24,15 +24,14 @@ export async function generateUniqueSlug(title: string): Promise<string> {
   let uniqueSlug = base
   let counter = 1
 
-  // بررسی یکتا بودن و افزودن شمارنده در صورت تکراری بودن
-  while (true) {
+  for (let i = 0; i < 10; i++) {
     const exists = await prisma.article.findUnique({ where: { slug: uniqueSlug } })
-    if (!exists) break
+    if (!exists) return uniqueSlug
     counter += 1
     uniqueSlug = `${base}-${counter}`
   }
 
-  return uniqueSlug
+  return `${base}-${Date.now()}`
 }
 
 // نوع پیش‌نویس مقاله
