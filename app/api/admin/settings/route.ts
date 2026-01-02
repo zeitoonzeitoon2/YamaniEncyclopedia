@@ -20,73 +20,78 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || session.user?.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Env Vars')
+    }
+
+    const reqContentType = request.headers.get('content-type') || ''
+    if (!reqContentType.includes('multipart/form-data')) {
+      return NextResponse.json({ error: 'Invalid content type' }, { status: 400 })
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+    if (!file) {
+      return NextResponse.json({ error: 'فایل ارسال نشده است' }, { status: 400 })
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    if ((file as any).size > MAX_SIZE) {
+      return NextResponse.json({ error: 'حجم فایل باید حداکثر 5 مگابایت باشد' }, { status: 400 })
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const contentType = (file as any).type || 'application/octet-stream'
+    const originalName = (file as any).name || 'upload'
+    const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const ext = safeName.includes('.') ? safeName.split('.').pop() : undefined
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext ? '.' + ext : ''}`
+    const path = `header-images/${filename}`
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from(BUCKET_NAME)
+      .upload(path, buffer, { contentType })
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'Upload failed')
+    }
+
+    const { data } = supabase
+      .storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(path)
+
+    const publicUrl = data.publicUrl
+
+    await prisma.$transaction([
+      prisma.setting.upsert({
+        where: { key: HEADER_KEY },
+        create: { key: HEADER_KEY, value: publicUrl },
+        update: { value: publicUrl },
+      }),
+      prisma.setting.upsert({
+        where: { key: LEGACY_HEADER_KEY },
+        create: { key: LEGACY_HEADER_KEY, value: publicUrl },
+        update: { value: publicUrl },
+      }),
+    ])
+
+    return NextResponse.json({ url: publicUrl })
+  } catch (error) {
+    console.error('Admin settings upload error:', error)
+    const message = error instanceof Error ? error.message : (typeof error === 'string' ? error : 'Unknown error')
+    return NextResponse.json({ error: message }, { status: 500 })
   }
-
-  const reqContentType = request.headers.get('content-type') || ''
-  if (!reqContentType.includes('multipart/form-data')) {
-    return NextResponse.json({ error: 'Invalid content type' }, { status: 400 })
-  }
-
-  const formData = await request.formData()
-  const file = formData.get('file') as File | null
-  if (!file) {
-    return NextResponse.json({ error: 'فایل ارسال نشده است' }, { status: 400 })
-  }
-
-  // محدودیت‌ها
-  const MAX_SIZE = 5 * 1024 * 1024 // 5MB
-  if ((file as any).size > MAX_SIZE) {
-    return NextResponse.json({ error: 'حجم فایل باید حداکثر 5 مگابایت باشد' }, { status: 400 })
-  }
-
-  const SUPABASE_URL = process.env.SUPABASE_URL
-  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return NextResponse.json({ error: 'Supabase credentials are not configured' }, { status: 500 })
-  }
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  const contentType = (file as any).type || 'application/octet-stream'
-  const originalName = (file as any).name || 'upload'
-  const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const ext = safeName.includes('.') ? safeName.split('.').pop() : undefined
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext ? '.' + ext : ''}`
-  const path = `header-images/${filename}`
-
-  const { error: uploadError } = await supabase
-    .storage
-    .from(BUCKET_NAME)
-    .upload(path, buffer, { contentType })
-
-  if (uploadError) {
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
-  }
-
-  const { data } = supabase
-    .storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(path)
-
-  const publicUrl = data.publicUrl
-
-  await prisma.$transaction([
-    prisma.setting.upsert({
-      where: { key: HEADER_KEY },
-      create: { key: HEADER_KEY, value: publicUrl },
-      update: { value: publicUrl },
-    }),
-    prisma.setting.upsert({
-      where: { key: LEGACY_HEADER_KEY },
-      create: { key: LEGACY_HEADER_KEY, value: publicUrl },
-      update: { value: publicUrl },
-    }),
-  ])
-
-  return NextResponse.json({ url: publicUrl })
 }
