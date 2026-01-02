@@ -13,12 +13,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 })
     }
 
-    const comments = await prisma.comment.findMany({
+    const commentsRaw = await prisma.comment.findMany({
       where: {
         postId: postId,
-        parentId: null, // فقط کامنت‌های اصلی
+        parentId: null,
       },
-      include: {
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
         author: {
           select: {
             id: true,
@@ -27,7 +30,10 @@ export async function GET(request: NextRequest) {
           },
         },
         replies: {
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
             author: {
               select: {
                 id: true,
@@ -36,15 +42,17 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-          orderBy: {
-            createdAt: 'asc',
-          },
         },
       },
       orderBy: {
         createdAt: 'desc',
       },
     })
+
+    const comments = commentsRaw.map(c => ({
+      ...c,
+      replies: [...(c.replies || [])].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    }))
 
     return NextResponse.json(comments)
   } catch (error) {

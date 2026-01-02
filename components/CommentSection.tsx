@@ -36,9 +36,9 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const { data: session } = useSession()
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
-  const [newCategory, setNewCategory] = useState<'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>('QUESTION')
+  const [newCategory, setNewCategory] = useState<null | 'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>(null)
   const [replyContent, setReplyContent] = useState('')
-  const [replyCategory, setReplyCategory] = useState<'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>('QUESTION')
+  const [replyCategory, setReplyCategory] = useState<null | 'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>(null)
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -95,7 +95,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         body: JSON.stringify({
           content: newComment.trim(),
           postId,
-          category: newCategory,
+          ...(newCategory ? { category: newCategory } : {}),
         }),
       })
 
@@ -126,7 +126,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           content: replyContent.trim(),
           postId,
           parentId: commentId,
-          category: replyCategory,
+          ...(replyCategory ? { category: replyCategory } : {}),
         }),
       })
 
@@ -208,10 +208,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <div className="flex items-center gap-3 mb-2">
             <label className="text-amber-200 text-sm">وسم التعليق:</label>
             <select
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as any)}
+              value={newCategory ?? ''}
+              onChange={(e) => setNewCategory(e.target.value ? (e.target.value as any) : null)}
               className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
             >
+              <option value="">بدون وسم</option>
               <option value="QUESTION">سؤال</option>
               <option value="CRITIQUE">نقد</option>
               <option value="SUPPORT">دعم</option>
@@ -279,10 +280,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   <div className="flex items-center gap-3 mb-2">
                     <label className="text-amber-200 text-sm">وسم الرد:</label>
                     <select
-                      value={replyCategory}
-                      onChange={(e) => setReplyCategory(e.target.value as any)}
+                      value={replyCategory ?? ''}
+                      onChange={(e) => setReplyCategory(e.target.value ? (e.target.value as any) : null)}
                       className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
                     >
+                      <option value="">بدون وسم</option>
                       <option value="QUESTION">سؤال</option>
                       <option value="CRITIQUE">نقد</option>
                       <option value="SUPPORT">دعم</option>
