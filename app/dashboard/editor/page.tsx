@@ -70,6 +70,10 @@ export default function EditorDashboard() {
     articles: { added: number; removed: number; edited: number }
   } | null>(null)
   const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
+  const [profileName, setProfileName] = useState<string>('')
+  const [profileImage, setProfileImage] = useState<string>('')
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(false)
+  const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false)
 
   // هندل بستن پیام و ذخیره در localStorage تا بعد از رفرش هم نمایش داده نشود
   const handleDismissReviewableNotice = useCallback(() => {
@@ -184,6 +188,27 @@ export default function EditorDashboard() {
       return () => ac.abort()
     }
   }, [session, filter])
+
+  const loadProfile = useCallback(async () => {
+    if (!session) return
+    setIsProfileLoading(true)
+    try {
+      const res = await fetch('/api/profile', { credentials: 'include' })
+      if (res.ok) {
+        const u = await res.json()
+        setProfileName(u?.name || '')
+        setProfileImage(u?.image || '')
+      }
+    } catch (e) {
+      console.error('Failed to load profile', e)
+    } finally {
+      setIsProfileLoading(false)
+    }
+  }, [session])
+
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
 
   // دریافت پست‌های دارای «کامنت‌های مربوط به من»
   const loadRelated = useCallback(async (signal?: AbortSignal) => {
@@ -419,6 +444,63 @@ export default function EditorDashboard() {
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
                 <p className="text-xs text-dark-muted">تعديل</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* My Profile */}
+        <div className="card mb-8">
+          <h3 className="text-lg font-semibold text-dark-text heading mb-3">ملفي الشخصي</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="block text-sm text-dark-muted mb-1">الاسم</label>
+              <input
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text"
+                placeholder="اسم العرض"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-dark-muted mb-1">رابط صورة الملف</label>
+              <input
+                value={profileImage}
+                onChange={(e) => setProfileImage(e.target.value)}
+                className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text"
+                placeholder="https://.../avatar.png"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={async () => {
+                  setIsSavingProfile(true)
+                  try {
+                    const res = await fetch('/api/profile', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ name: profileName, image: profileImage }),
+                      credentials: 'include',
+                    })
+                    if (res.ok) {
+                      toast.success('تم تحديث الملف الشخصي')
+                    } else {
+                      const t = await res.text()
+                      let err: any = {}
+                      try { err = JSON.parse(t) } catch { err = { error: t } }
+                      toast.error(err?.error || 'فشل تحديث الملف')
+                    }
+                  } catch (e) {
+                    console.error('Failed to save profile', e)
+                    toast.error('خطأ في تحديث الملف')
+                  } finally {
+                    setIsSavingProfile(false)
+                  }
+                }}
+                disabled={isSavingProfile || isProfileLoading}
+                className="btn-primary disabled:opacity-50"
+              >
+                {isSavingProfile ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
+              </button>
             </div>
           </div>
         </div>

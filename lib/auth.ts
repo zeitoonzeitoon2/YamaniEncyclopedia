@@ -66,9 +66,11 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { role: true }
+            select: { role: true, image: true, name: true }
           })
           session.user.role = dbUser?.role || (token.role as string)
+          if (typeof dbUser?.image === 'string') session.user.image = dbUser.image
+          if (typeof dbUser?.name === 'string') session.user.name = dbUser.name
         } catch {
           session.user.role = token.role as string
         }

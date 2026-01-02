@@ -12,6 +12,7 @@ interface Comment {
     id: string
     name: string
     role: string
+    image?: string | null
   }
   replies: Reply[]
 }
@@ -25,6 +26,7 @@ interface Reply {
     id: string
     name: string
     role: string
+    image?: string | null
   }
 }
 
@@ -250,6 +252,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               {/* کامنت اصلی */}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
+                  {comment.author.image ? (
+                    <img src={comment.author.image} alt={comment.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                      {(comment.author.name || '؟').charAt(0)}
+                    </span>
+                  )}
                   <span className="font-medium text-amber-100">{comment.author.name}</span>
                   {getRoleBadge(comment.author.role)}
                   {categoryBadge(comment.category)}
@@ -327,6 +336,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                     <div key={reply.id} className="bg-stone-900 border border-amber-700/30 rounded-lg p-3 mr-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
+                          {reply.author.image ? (
+                            <img src={reply.author.image} alt={reply.author.name || ''} className="w-6 h-6 rounded-full object-cover" />
+                          ) : (
+                            <span className="w-6 h-6 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-[10px]">
+                              {(reply.author.name || '؟').charAt(0)}
+                            </span>
+                          )}
                           <span className="font-medium text-amber-100">{reply.author.name}</span>
                           {getRoleBadge(reply.author.role)}
                           {categoryBadge(reply.category)}

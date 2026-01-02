@@ -21,14 +21,14 @@ export async function GET(request: NextRequest) {
           content: true,
           createdAt: true,
           tag: true,
-          author: { select: { id: true, name: true, role: true } },
+          author: { select: { id: true, name: true, role: true, image: true } },
           replies: {
             select: {
               id: true,
               content: true,
               createdAt: true,
               tag: true,
-              author: { select: { id: true, name: true, role: true } },
+              author: { select: { id: true, name: true, role: true, image: true } },
             },
           },
         },
@@ -52,13 +52,13 @@ export async function GET(request: NextRequest) {
           id: true,
           content: true,
           createdAt: true,
-          author: { select: { id: true, name: true, role: true } },
+          author: { select: { id: true, name: true, role: true, image: true } },
           replies: {
             select: {
               id: true,
               content: true,
               createdAt: true,
-              author: { select: { id: true, name: true, role: true } },
+              author: { select: { id: true, name: true, role: true, image: true } },
             },
           },
         },
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           ...(tag ? { tag } : {}),
         },
         include: {
-          author: { select: { id: true, name: true, role: true } },
+          author: { select: { id: true, name: true, role: true, image: true } },
         },
       })
       return NextResponse.json(comment, { status: 201 })
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
             parentId: parentId || null,
           },
           include: {
-            author: { select: { id: true, name: true, role: true } },
+            author: { select: { id: true, name: true, role: true, image: true } },
           },
         })
         return NextResponse.json(comment, { status: 201 })
