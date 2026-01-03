@@ -314,6 +314,26 @@ export default function SupervisorDashboard() {
     }
   }
 
+  const handleDeletePost = useCallback(async (postId: string) => {
+    try {
+      const ok = typeof window !== 'undefined' ? window.confirm('هل تريد حذف هذا التصميم نهائيًا؟ هذا الإجراء غير قابل للاسترجاع.') : true
+      if (!ok) return
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE', credentials: 'include' })
+      if (res.ok) {
+        toast.success('تم حذف التصميم')
+        setSelectedPost(null)
+        const ac = new AbortController()
+        setPage(1)
+        setTimeout(() => fetchPosts(ac.signal, false), 0)
+      } else {
+        const data = await res.json().catch(() => ({} as any))
+        toast.error(data?.error || 'تعذّر حذف التصميم')
+      }
+    } catch (e) {
+      console.error('Delete post error:', e)
+      toast.error('خطأ في حذف التصميم')
+    }
+  }, [fetchPosts])
   useEffect(() => {
     if (status === 'authenticated') {
       const ac = new AbortController()
@@ -731,6 +751,17 @@ export default function SupervisorDashboard() {
                   <p className="text-dark-muted text-sm mb-4">
                     الكاتب: {selectedPost.author.name || 'مجهول'} ({selectedPost.author.role})
                   </p>
+                  {selectedPost.author.id === session?.user?.id && selectedPost.status === 'PENDING' && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => handleDeletePost(selectedPost.id)}
+                        className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-all shadow-md hover:shadow-lg"
+                        title="حذف قبل الوصول إلى العتبات"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Voting */}
                   <div className="mb-4">
