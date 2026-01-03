@@ -311,9 +311,10 @@ export default function SupervisorDashboard() {
       return
     }
 
-    if (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN' && session.user?.role !== 'EDITOR') {
-      console.log('User role not authorized:', session.user?.role)
-      toast.error('لا تملك صلاحيات المشرف')
+    const role = session.user?.role
+    if (role && role !== 'SUPERVISOR' && role !== 'ADMIN' && role !== 'EDITOR') {
+      console.log('User role not authorized:', role)
+      toast.error('لا تملك صلاحيات هذه الصفحة')
       router.push('/')
       return
     }
