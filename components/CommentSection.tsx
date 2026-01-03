@@ -247,7 +247,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
           <div className="text-amber-200 text-center py-8">لا توجد تعليقات بعد</div>
         ) : (
           comments.map((c) => (
-            <div key={c.id}>{renderNode(c, 0, postId)}</div>
+            <div key={c.id}>{renderNode(c, 0, postId, onPickUser)}</div>
           ))
         )}
       </div>
@@ -374,7 +374,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser }: { node: Com
       {node.replies?.length > 0 && (
         <div className="mt-4 space-y-3">
           {node.replies.map((child) => (
-            <div key={child.id}>{renderNode(child, depth + 1, postId)}</div>
+            <div key={child.id}>{renderNode(child, depth + 1, postId, onPickUser)}</div>
           ))}
         </div>
       )}
