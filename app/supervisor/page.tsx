@@ -73,6 +73,8 @@ export default function SupervisorDashboard() {
   const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search'>('new_designs')
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+  const isEditor = session?.user?.role === 'EDITOR'
+  const isSupervisor = session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN'
   
   console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
   
@@ -281,7 +283,7 @@ export default function SupervisorDashboard() {
       return
     }
 
-    if (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN') {
+    if (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN' && session.user?.role !== 'EDITOR') {
       console.log('User role not authorized:', session.user?.role)
       toast.error('لا تملك صلاحيات المشرف')
       router.push('/')
@@ -501,7 +503,7 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          {session.user?.role === 'EDITOR' ? 'لوحة المحرر' : 'لوحة الناظر'}
+          {isEditor ? 'لوحة المحرر' : 'لوحة الناظر'}
         </h1>
 
         {reviewableNoticePost && (
@@ -842,29 +844,24 @@ export default function SupervisorDashboard() {
                     </button>
                   )}
                   
-                  {/* Voting */}
-                  <div className="mb-4">
-                    {selectedPost.status === 'APPROVED' ? (
-                      <div className="p-3 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
-                        تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جديد.
-                      </div>
-                    ) : (
-                      {session.user?.role === 'SUPERVISOR' ? (
-          <VotingSlider
-            currentVote={currentUserVote}
-            onVote={(score) => handleVote(selectedPost.id, score)}
-            disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
-          />
-        ) : (
-          <div className="p-3 rounded-lg border border-gray-700 bg-gray-900/20 text-gray-300 text-sm">
-            تعداد رای‌دهندگان: <b>{supervisorParticipation}</b> | مجموع امتیازات: <b>{selectedPost.totalScore || 0}</b>
-          </div>
-        )}
-                    )}
-                  </div>
+                  {isSupervisor && (
+                    <div className="mb-4">
+                      {selectedPost.status === 'APPROVED' ? (
+                        <div className="p-3 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
+                          تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جدید.
+                        </div>
+                      ) : (
+                        <VotingSlider
+                          currentVote={currentUserVote}
+                          onVote={(score) => handleVote(selectedPost.id, score)}
+                          disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
+                        />
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex justify-between items-center text-sm text-dark-muted">
-                    {adminStats ? (
+                    {isSupervisor && adminStats ? (
                       <div className="flex items-center gap-4">
                         <span>عتبة التقييم: <b>{adminStats.threshold}</b></span>
                         <span>عتبة المشاركة: <b>{adminStats.participationThreshold}</b></span>
