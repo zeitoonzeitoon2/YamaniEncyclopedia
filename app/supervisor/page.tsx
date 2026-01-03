@@ -746,21 +746,19 @@ export default function SupervisorDashboard() {
             {selectedPost ? (
               <div>
                 <h2 className="text-xl font-bold text-dark-text mb-4 heading">تفاصيل التصميم</h2>
-                <div className="card mb-6">
+                <div className="card mb-6 relative">
                   <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
                   <p className="text-dark-muted text-sm mb-4">
                     الكاتب: {selectedPost.author.name || 'مجهول'} ({selectedPost.author.role})
                   </p>
                   {selectedPost.author.id === session?.user?.id && selectedPost.status === 'PENDING' && (
-                    <div className="mb-4">
-                      <button
-                        onClick={() => handleDeletePost(selectedPost.id)}
-                        className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-all shadow-md hover:shadow-lg"
-                        title="حذف قبل الوصول إلى العتبات"
-                      >
-                        حذف
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleDeletePost(selectedPost.id)}
+                      className="absolute top-3 left-3 z-10 px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md"
+                      title="حذف قبل الوصول إلى العتبات"
+                    >
+                      حذف
+                    </button>
                   )}
                   
                   {/* Voting */}
