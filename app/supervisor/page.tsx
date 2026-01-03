@@ -105,6 +105,14 @@ export default function SupervisorDashboard() {
   const [selectedResearcher, setSelectedResearcher] = useState<{ id: string; name: string | null; role: string; image: string | null; bio: string | null } | null>(null)
   const [researcherPosts, setResearcherPosts] = useState<Post[]>([])
   const [isResearcherDetailLoading, setIsResearcherDetailLoading] = useState(false)
+
+  const pickUserAndShowPosts = useCallback((id: string) => {
+    setSelectedResearcherId(id)
+    setFilter('researchers')
+    setPage(1)
+    setPosts([])
+    fetchResearcherDetail(id)
+  }, [fetchResearcherDetail])
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -989,7 +997,16 @@ export default function SupervisorDashboard() {
                 <div className="card mb-6 relative">
                   <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
                   <p className="text-dark-muted text-sm mb-4">
-                    الكاتب: {selectedPost.author.name || 'مجهول'} ({selectedPost.author.role})
+                    الكاتب:
+                    <button
+                      type="button"
+                      onClick={() => pickUserAndShowPosts(selectedPost.author.id)}
+                      className="ml-1 text-dark-text hover:underline"
+                      title="عرض منشورات هذا الباحث"
+                    >
+                      {selectedPost.author.name || 'مجهول'}
+                    </button>
+                    <span className="ml-1">({selectedPost.author.role})</span>
                   </p>
                   {selectedPost.author.id === session?.user?.id && selectedPost.status === 'PENDING' && (
                     <button
@@ -1125,7 +1142,7 @@ export default function SupervisorDashboard() {
 
                 {/* Comments Section */}
                 <div id="comments">
-                  <CommentSection postId={selectedPost.id} />
+                  <CommentSection postId={selectedPost.id} onPickUser={pickUserAndShowPosts} />
                 </div>
               </div>
             ) : (

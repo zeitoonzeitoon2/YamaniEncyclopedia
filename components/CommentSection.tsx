@@ -20,9 +20,10 @@ interface CommentNode {
 
 interface CommentSectionProps {
   postId: string
+  onPickUser?: (id: string) => void
 }
 
-export default function CommentSection({ postId }: CommentSectionProps) {
+export default function CommentSection({ postId, onPickUser }: CommentSectionProps) {
   const { data: session } = useSession()
   const [comments, setComments] = useState<CommentNode[]>([])
   const [newComment, setNewComment] = useState('')
@@ -254,14 +255,14 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   )
 }
 
-function renderNode(node: CommentNode, depth: number, postId: string) {
+function renderNode(node: CommentNode, depth: number, postId: string, onPickUser?: (id: string) => void) {
   const margin = Math.min(depth * 16, 96)
   return (
-    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} />
+    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} onPickUser={onPickUser} />
   )
 }
 
-function CommentNodeView({ node, depth, postId, style }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties }) {
+function CommentNodeView({ node, depth, postId, style, onPickUser }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties; onPickUser?: (id: string) => void }) {
   const { data: session } = useSession()
   const canComment = !!session?.user
   const [replyToLocal, setReplyToLocal] = useState<string | null>(null)
@@ -296,16 +297,44 @@ function CommentNodeView({ node, depth, postId, style }: { node: CommentNode; de
     <div className="bg-stone-900 border border-amber-700/30 rounded-lg p-4" style={style}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Link href={`/profile/${node.author.id}`} title="عرض الملف الشخصي">
-            {node.author.image ? (
-              <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
-            ) : (
-              <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
-                {(node.author.name || '؟').charAt(0)}
-              </span>
-            )}
-          </Link>
-          <span className="font-medium text-amber-100">{node.author.name}</span>
+          {onPickUser ? (
+            <button
+              type="button"
+              onClick={() => onPickUser(node.author.id)}
+              className="rounded-full focus:outline-none"
+              title="عرض منشورات هذا الباحث"
+            >
+              {node.author.image ? (
+                <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                  {(node.author.name || '؟').charAt(0)}
+                </span>
+              )}
+            </button>
+          ) : (
+            <Link href={`/profile/${node.author.id}`} title="عرض الملف الشخصي">
+              {node.author.image ? (
+                <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                  {(node.author.name || '؟').charAt(0)}
+                </span>
+              )}
+            </Link>
+          )}
+          {onPickUser ? (
+            <button
+              type="button"
+              onClick={() => onPickUser(node.author.id)}
+              className="font-medium text-amber-100 hover:underline"
+              title="عرض منشورات هذا الباحث"
+            >
+              {node.author.name}
+            </button>
+          ) : (
+            <span className="font-medium text-amber-100">{node.author.name}</span>
+          )}
           {node.author.role === 'ADMIN' ? 'مدير' : node.author.role === 'SUPERVISOR' ? 'مشرف' : node.author.role === 'EDITOR' ? <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">محرر</span> : <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">مستخدم</span>}
           {(() => { const cat = node.category; const label = cat === 'QUESTION' ? 'سؤال' : cat === 'CRITIQUE' ? 'نقد' : cat === 'SUPPORT' ? 'دعم' : cat === 'SUGGESTION' ? 'اقتراح تعديل' : null; if (!label) return null; const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'; return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>; })()}
         </div>
