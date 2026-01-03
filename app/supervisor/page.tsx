@@ -928,8 +928,8 @@ export default function SupervisorDashboard() {
           <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-md">
             <div className="px-6 py-4 border-b border-gray-700/50">
               <h2 className="text-xl font-bold text-dark-text heading">اختر إجراءً:</h2>
-              <p className="text-sm text-dark-muted mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
-              <p className="text-sm mt-2 text-yellow-300">نکته: اگر «تعديل» را انتخاب کنید، طرح شما از القائمة حذف می‌شود و به صفحة التحریر جدید منتقل می‌شوید و فقط یک‌بار فرصت دارید که آن را تکمیل و ارسال کنید.</p>
+              <p className="text-sm text-dark-text mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
+              <p className="text-sm text-dark-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من القائمة وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-end gap-3">
