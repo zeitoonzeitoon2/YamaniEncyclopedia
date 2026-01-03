@@ -501,7 +501,7 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          لوحة المشرف
+          {session.user?.role === 'EDITOR' ? 'لوحة المحرر' : 'لوحة الناظر'}
         </h1>
 
         {reviewableNoticePost && (
@@ -849,11 +849,17 @@ export default function SupervisorDashboard() {
                         تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جديد.
                       </div>
                     ) : (
-                      <VotingSlider
-                        currentVote={currentUserVote}
-                        onVote={(score) => handleVote(selectedPost.id, score)}
-                        disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
-                      />
+                      {session.user?.role === 'SUPERVISOR' ? (
+          <VotingSlider
+            currentVote={currentUserVote}
+            onVote={(score) => handleVote(selectedPost.id, score)}
+            disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
+          />
+        ) : (
+          <div className="p-3 rounded-lg border border-gray-700 bg-gray-900/20 text-gray-300 text-sm">
+            تعداد رای‌دهندگان: <b>{supervisorParticipation}</b> | مجموع امتیازات: <b>{selectedPost.totalScore || 0}</b>
+          </div>
+        )}
                     )}
                   </div>
                   
