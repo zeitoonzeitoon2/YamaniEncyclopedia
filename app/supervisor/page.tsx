@@ -106,6 +106,19 @@ export default function SupervisorDashboard() {
   const [researcherPosts, setResearcherPosts] = useState<Post[]>([])
   const [isResearcherDetailLoading, setIsResearcherDetailLoading] = useState(false)
 
+  const fetchResearcherDetail = useCallback(async (id: string) => {
+    try {
+      setIsResearcherDetailLoading(true)
+      const res = await fetch(`/api/researchers/${id}`, { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setSelectedResearcher(data)
+      }
+    } finally {
+      setIsResearcherDetailLoading(false)
+    }
+  }, [])
+
   const pickUserAndShowPosts = useCallback((id: string) => {
     setSelectedResearcherId(id)
     setFilter('researchers')
@@ -234,18 +247,6 @@ export default function SupervisorDashboard() {
     }
   }, [])
 
-  const fetchResearcherDetail = useCallback(async (id: string) => {
-    try {
-      setIsResearcherDetailLoading(true)
-      const res = await fetch(`/api/researchers/${id}`, { credentials: 'include' })
-      if (res.ok) {
-        const data = await res.json()
-        setSelectedResearcher(data)
-      }
-    } finally {
-      setIsResearcherDetailLoading(false)
-    }
-  }, [])
 
   const fetchResearcherPosts = useCallback(async (id: string) => {
     try {
