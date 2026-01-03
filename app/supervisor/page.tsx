@@ -70,7 +70,7 @@ export default function SupervisorDashboard() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(5)
   const [hasNext, setHasNext] = useState(false)
-  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search'>('new_designs')
+  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search' | 'researchers'>('new_designs')
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const isEditor = session?.user?.role === 'EDITOR'
@@ -96,6 +96,9 @@ export default function SupervisorDashboard() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
+  const [researchers, setResearchers] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [researcherQuery, setResearcherQuery] = useState('')
+  const [isResearchersLoading, setIsResearchersLoading] = useState(false)
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -185,11 +188,36 @@ export default function SupervisorDashboard() {
     }
   }, [])
 
+  const fetchResearchers = useCallback(async (q?: string) => {
+    try {
+      setIsResearchersLoading(true)
+      const url = new URL('/api/researchers', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+      if (q && q.trim()) url.searchParams.set('q', q.trim())
+      const res = await fetch(url.toString(), { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setResearchers(Array.isArray(data) ? data : [])
+      } else {
+        console.error('Failed to fetch researchers:', await res.text())
+      }
+    } catch (e) {
+      console.error('Failed to fetch researchers', e)
+    } finally {
+      setIsResearchersLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (filter === 'related') {
       fetchRelatedComments()
     }
   }, [filter, fetchRelatedComments])
+
+  useEffect(() => {
+    if (filter === 'researchers') {
+      fetchResearchers(researcherQuery)
+    }
+  }, [filter, fetchResearchers, researcherQuery])
 
   useEffect(() => {
     if (!session) return
@@ -339,11 +367,13 @@ export default function SupervisorDashboard() {
         toast.error('خطأ في تحميل المعلومات')
       }
 
-      // الحصول على إحصائيات المشرفين
-      const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setAdminStats(statsData)
+      // الحصول على إحصائيات المشرفين للناظر فقط
+      if (isSupervisor) {
+        const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json()
+          setAdminStats(statsData)
+        }
       }
     } catch (error) {
       toast.error('خطأ في تحميل المعلومات')
@@ -700,30 +730,54 @@ export default function SupervisorDashboard() {
                     <span className="whitespace-nowrap">تعليقات تخصني</span>
                   </button>
 
-                  <div className="flex items-center gap-2">
-                    <input
-                      value={userQuery}
-                      onChange={(e) => setUserQuery(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') setFilter('user-search') }}
-                      className="w-full rounded-full border text-xs py-2 px-3 bg-dark-card text-dark-text border-gray-700"
-                      placeholder="ابحث عن مساهم"
-                      title="ابحث باسم أو بريد الكاتب"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFilter('user-search')}
-                      aria-pressed={filter === 'user-search'}
-                      className={`w-auto rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
-                        filter === 'user-search'
-                          ? 'bg-warm-primary text-black border-warm-primary shadow'
-                          : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
-                      }`}
-                      title="بحث عن مشارك وعرض منشوراته"
-                    >
-                      بحث
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setFilter('researchers')}
+                    aria-pressed={filter === 'researchers'}
+                    className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                      filter === 'researchers'
+                        ? 'bg-warm-primary text-black border-warm-primary shadow'
+                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                    }`}
+                    title="عرض الباحثين والبحث عنهم"
+                  >
+                    <span className="whitespace-nowrap">الباحثون</span>
+                  </button>
                 </div>
+
+                {filter === 'researchers' && (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        value={researcherQuery}
+                        onChange={(e) => setResearcherQuery(e.target.value)}
+                        className="w-full rounded-full border text-xs py-2 px-3 bg-dark-card text-dark-text border-gray-700"
+                        placeholder="ابحث عن الباحث باسم"
+                        title="ابحث باسم الباحث"
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto bg-dark-card border border-gray-700 rounded-lg p-2">
+                      {isResearchersLoading ? (
+                        <div className="text-dark-muted text-sm">جارٍ التحميل...</div>
+                      ) : researchers.length === 0 ? (
+                        <div className="text-dark-muted text-sm">لا توجد نتائج</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {researchers.map(r => (
+                            <button
+                              key={r.id}
+                              onClick={() => { setUserQuery(r.name || ''); setFilter('user-search') }}
+                              className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-dark-text"
+                              title="عرض منشورات هذا الباحث"
+                            >
+                              {r.name || 'بدون اسم'}
+                              <span className="ml-2 text-xs text-dark-muted">({r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role})</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {filter === 'new_comments' ? (
                   recentComments.length === 0 ? (
