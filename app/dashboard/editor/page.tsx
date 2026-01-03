@@ -69,28 +69,10 @@ export default function EditorDashboard() {
     flashcards: { added: number; removed: number; edited: number }
     articles: { added: number; removed: number; edited: number }
   } | null>(null)
-  const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
   const [profileName, setProfileName] = useState<string>('')
   const [profileImage, setProfileImage] = useState<string>('')
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(false)
   const [isSavingProfile, setIsSavingProfile] = useState<boolean>(false)
-
-  // هندل بستن پیام و ذخیره در localStorage تا بعد از رفرش هم نمایش داده نشود
-  const handleDismissReviewableNotice = useCallback(() => {
-    if (!session || !reviewableNoticePost) return
-    try {
-      const key = `reviewableDismissed:${session.user?.id}`
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null
-      const arr: string[] = raw ? JSON.parse(raw) : []
-      if (!arr.includes(reviewableNoticePost.id)) {
-        arr.push(reviewableNoticePost.id)
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(key, JSON.stringify(arr))
-        }
-      }
-    } catch {}
-    setReviewableNoticePost(null)
-  }, [session, reviewableNoticePost])
 
   // Parse diagram data for comparison
   const originalDiagramData = useMemo(() => {
@@ -132,22 +114,6 @@ export default function EditorDashboard() {
 
     // Previously restricted to EDITOR/ADMIN; now allow all authenticated users
   }, [session, status, router])
-
-  // زمانی که لیست پست‌ها به‌روزرسانی شد، اگر طرح قابل بررسی مربوط به کاربر وجود داشت پیام را نشان بده
-  useEffect(() => {
-    if (!session) return
-    try {
-      const key = `reviewableDismissed:${session.user?.id}`
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null
-      const dismissed: string[] = raw ? JSON.parse(raw) : []
-      const dismissedSet = new Set(dismissed)
-      const reviewable = posts.find(p => p.author.id === session.user?.id && p.status === 'REVIEWABLE' && !dismissedSet.has(p.id))
-      setReviewableNoticePost(reviewable || null)
-    } catch {
-      const reviewable = posts.find(p => p.author.id === session.user?.id && p.status === 'REVIEWABLE')
-      setReviewableNoticePost(reviewable || null)
-    }
-  }, [posts, session])
 
   // بارگذاری پست‌ها
   const loadPosts = useCallback(async (signal?: AbortSignal, append: boolean = false) => {
@@ -396,26 +362,6 @@ export default function EditorDashboard() {
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
           لوحة المحرر
         </h1>
-        {reviewableNoticePost && (
-          <div role="alert" className="mb-6 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-4 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-100">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="font-bold mb-1">تنبيه مهم</div>
-                <p className="text-sm leading-6">
-                  حصل تصميمك رقم {getPostDisplayId(reviewableNoticePost)} على نقاط، لكن تعديلًا آخر سبق تعديلك ونُشر، ولذلك وُسِم تصميمك بأنه «قابل للمراجعة». يمكنك تطبيق أفكارك مجددًا على التصميم المنشور وإرساله لنا.
-                </p>
-              </div>
-              <div className="shrink-0 flex items-center gap-2">
-                <button
-                  onClick={handleDismissReviewableNotice}
-                  className="px-3 py-1.5 text-sm rounded-lg bg-yellow-500 text-black hover:bg-yellow-400 transition-colors"
-                >
-                  حسنًا
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         {/* Comparison Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
