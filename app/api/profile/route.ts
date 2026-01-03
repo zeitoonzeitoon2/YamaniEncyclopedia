@@ -53,7 +53,18 @@ export async function PUT(request: NextRequest) {
         if (!isWeb && !isRelative && !isData && !isBlob) {
           return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 })
         }
-        data.image = trimmed
+        let finalUrl = trimmed
+        const ts = String(Date.now())
+        if (/^\/api\/profile\/avatar\/[^?]+$/i.test(finalUrl)) {
+          finalUrl = `${finalUrl}?v=${ts}`
+        } else if (isWeb) {
+          try {
+            const u = new URL(finalUrl)
+            u.searchParams.set('v', ts)
+            finalUrl = u.toString()
+          } catch {}
+        }
+        data.image = finalUrl
       }
     }
     if (typeof bio === 'string') {

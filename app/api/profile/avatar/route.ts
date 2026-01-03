@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     try {
       const u = await prisma.user.update({
         where: { id: session.user.id },
-        data: { avatarBytes: buf, avatarMime: type, image: `/api/profile/avatar/${session.user.id}` },
+        data: { avatarBytes: buf, avatarMime: type, image: `/api/profile/avatar/${session.user.id}?v=${Date.now()}` },
         select: { id: true, image: true },
       })
       return NextResponse.json({ ok: true, image: u.image })
