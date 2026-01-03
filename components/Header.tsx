@@ -32,10 +32,10 @@ export function Header() {
                   تحرير جديد
                 </Link>
                 
-                {(session?.user?.role === 'EDITOR' || session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN') && (
+                {session && (
                   <Link 
                     href="/supervisor" 
-                    className="btn-primary flex items-center gap-2"
+                    className="btn-secondary flex items-center gap-2"
                   >
                     {session.user?.role === 'EDITOR' ? <Edit size={16} /> : <Settings size={16} />}
                     {session.user?.role === 'EDITOR' ? 'لوحة المحرر' : 'لوحة المشرف'}
