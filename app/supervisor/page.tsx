@@ -485,7 +485,7 @@ export default function SupervisorDashboard() {
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-dark-text heading">التصاميم المقترحة</h2>
+                <h2 className="text-xl font-bold text-dark-text heading">القائمة</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
@@ -521,7 +521,7 @@ export default function SupervisorDashboard() {
             ) : (
               <>
                 {/* Compact filter toolbar above posts list */}
-                <div className="mb-3 grid grid-cols-1 sm:grid-cols-5 gap-2">
+                <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     onClick={() => setFilter('new_designs')}
                     aria-pressed={filter === 'new_designs'}
@@ -563,6 +563,8 @@ export default function SupervisorDashboard() {
                     <span className={`${filter === 'reviewables' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{reviewablesCount}</span>
                     <span className="whitespace-nowrap">قابلة للمراجعة</span>
                   </button>
+                </div>
+                <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => setFilter('my-posts')}
                     aria-pressed={filter === 'my-posts'}
