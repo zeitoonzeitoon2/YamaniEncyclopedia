@@ -70,7 +70,8 @@ export default function SupervisorDashboard() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(5)
   const [hasNext, setHasNext] = useState(false)
-  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related'>('new_designs')
+  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search'>('new_designs')
+  const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   
   console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
@@ -287,6 +288,9 @@ export default function SupervisorDashboard() {
       const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
       url.searchParams.set('page', String(page))
       url.searchParams.set('pageSize', String(pageSize))
+      if (filter === 'user-search' && userQuery.trim()) {
+        url.searchParams.set('authorQuery', userQuery.trim())
+      }
       const postsResponse = await fetch(url.toString(), { credentials: 'include', signal })
       if (postsResponse.ok) {
         const data = await postsResponse.json()
@@ -564,7 +568,7 @@ export default function SupervisorDashboard() {
                     <span className="whitespace-nowrap">قابلة للمراجعة</span>
                   </button>
                 </div>
-                <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     onClick={() => setFilter('my-posts')}
                     aria-pressed={filter === 'my-posts'}
@@ -592,6 +596,30 @@ export default function SupervisorDashboard() {
                     <span className={`${filter === 'related' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{relatedCount}</span>
                     <span className="whitespace-nowrap">تعليقات تخصني</span>
                   </button>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={userQuery}
+                      onChange={(e) => setUserQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setFilter('user-search') }}
+                      className="w-full rounded-full border text-xs py-2 px-3 bg-dark-card text-dark-text border-gray-700"
+                      placeholder="ابحث عن مساهم"
+                      title="ابحث باسم أو بريد الكاتب"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFilter('user-search')}
+                      aria-pressed={filter === 'user-search'}
+                      className={`w-auto rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                        filter === 'user-search'
+                          ? 'bg-warm-primary text-black border-warm-primary shadow'
+                          : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                      }`}
+                      title="بحث عن مشارك وعرض منشوراته"
+                    >
+                      بحث
+                    </button>
+                  </div>
                 </div>
 
                 {filter === 'new_comments' ? (

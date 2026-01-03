@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
+import { Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,10 +25,22 @@ export async function GET(request: NextRequest) {
     const pageSizeParam = parseInt(url.searchParams.get('pageSize') || '20', 10)
     const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
     const pageSize = Number.isNaN(pageSizeParam) ? 20 : Math.min(Math.max(pageSizeParam, 1), 50)
+    const authorQueryRaw = url.searchParams.get('authorQuery')
+    const authorQuery = authorQueryRaw ? authorQueryRaw.trim() : ''
 
-    const totalCount = await prisma.post.count()
+    const whereClause: Prisma.PostWhereInput = authorQuery
+      ? {
+          OR: [
+            { author: { is: { name: { contains: authorQuery, mode: 'insensitive' as const } } } },
+            { author: { is: { email: { contains: authorQuery, mode: 'insensitive' as const } } } },
+          ],
+        }
+      : {}
+
+    const totalCount = await prisma.post.count({ where: whereClause })
 
     const posts = await prisma.post.findMany({
+      where: whereClause,
       select: {
         id: true,
         type: true,
