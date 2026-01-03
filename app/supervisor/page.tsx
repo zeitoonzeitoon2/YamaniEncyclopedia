@@ -98,6 +98,7 @@ export default function SupervisorDashboard() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
   const [researchers, setResearchers] = useState<Array<{ id: string; name: string | null; role: string; image: string | null }>>([])
+  const [allResearchers, setAllResearchers] = useState<Array<{ id: string; name: string | null; role: string; image: string | null }>>([])
   const [researcherQuery, setResearcherQuery] = useState('')
   const [isResearchersLoading, setIsResearchersLoading] = useState(false)
   const [selectedResearcherId, setSelectedResearcherId] = useState<string | null>(null)
@@ -212,6 +213,19 @@ export default function SupervisorDashboard() {
     }
   }, [])
 
+  const fetchAllResearchers = useCallback(async () => {
+    try {
+      setIsResearchersLoading(true)
+      const res = await fetch('/api/researchers', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setAllResearchers(Array.isArray(data) ? data : [])
+      }
+    } finally {
+      setIsResearchersLoading(false)
+    }
+  }, [])
+
   const fetchResearcherDetail = useCallback(async (id: string) => {
     try {
       setIsResearcherDetailLoading(true)
@@ -244,9 +258,18 @@ export default function SupervisorDashboard() {
 
   useEffect(() => {
     if (filter === 'researchers') {
-      fetchResearchers(researcherQuery)
+      // Always have full list ready as fallback
+      fetchAllResearchers()
     }
-  }, [filter, fetchResearchers, researcherQuery])
+  }, [filter, fetchAllResearchers])
+
+  useEffect(() => {
+    if (filter === 'researchers') {
+      const q = researcherQuery.trim()
+      if (q) fetchResearchers(q)
+      else setResearchers([]) // clear query results to rely on full list
+    }
+  }, [filter, researcherQuery, fetchResearchers])
 
   useEffect(() => {
     if (!session) return
@@ -786,7 +809,7 @@ export default function SupervisorDashboard() {
                         <div className="text-dark-muted text-sm">لا توجد نتائج</div>
                       ) : (
                         <div className="space-y-1">
-                          {researchers.map(r => (
+                          {(researchers.length ? researchers : allResearchers).map(r => (
                             <button
                               key={r.id}
                               onClick={() => { setSelectedResearcherId(r.id); fetchResearcherDetail(r.id); fetchResearcherPosts(r.id) }}
@@ -799,7 +822,7 @@ export default function SupervisorDashboard() {
                                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-700 text-white text-xs">{(r.name||'?').charAt(0)}</span>
                               )}
                               <span className="flex-1">
-                                {r.name || 'بدون اسم'}
+                                {(r.name && !r.name.includes('@')) ? r.name : 'بدون اسم'}
                                 <span className="ml-2 text-xs text-dark-muted">{r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role}</span>
                               </span>
                             </button>

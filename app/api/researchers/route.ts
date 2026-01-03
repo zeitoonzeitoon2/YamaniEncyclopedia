@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
         role: { in: ['EDITOR', 'SUPERVISOR'] },
         ...(q
           ? {
-              name: { startsWith: q, mode: 'insensitive' },
+              OR: [
+                { name: { startsWith: q, mode: 'insensitive' } },
+                { email: { startsWith: q, mode: 'insensitive' } },
+              ],
             }
           : {}),
       },
