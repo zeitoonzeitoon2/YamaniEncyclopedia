@@ -1,12 +1,32 @@
 'use client'
 
 import { useSession, signIn, signOut } from 'next-auth/react'
+import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { User, LogOut, Edit, Settings } from 'lucide-react'
 
 export function Header() {
   const { data: session, status } = useSession()
+  const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
+
+  React.useEffect(() => {
+    if (status !== 'authenticated') return
+    // Sync role label with server to avoid stale client token
+    ;(async () => {
+      try {
+        const res = await fetch('/api/profile', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setDisplayRole(data?.role)
+        } else {
+          setDisplayRole(session?.user?.role)
+        }
+      } catch {
+        setDisplayRole(session?.user?.role)
+      }
+    })()
+  }, [status, session?.user?.role])
 
   return (
     <header className="bg-dark-card border-b border-dark-border relative">
@@ -37,8 +57,8 @@ export function Header() {
                     href="/supervisor" 
                     className="btn-secondary flex items-center gap-2"
                   >
-                    {session.user?.role === 'EDITOR' ? <Edit size={16} /> : <Settings size={16} />}
-                    {session.user?.role === 'EDITOR' ? 'لوحة المحرر' : 'لوحة المشرف'}
+                    {(['EDITOR','USER'].includes((displayRole || session.user?.role) || '') ) ? <Edit size={16} /> : <Settings size={16} />}
+                    {(['EDITOR','USER'].includes((displayRole || session.user?.role) || '') ) ? 'لوحة المحرر' : 'لوحة المشرف'}
                   </Link>
                 )}
 

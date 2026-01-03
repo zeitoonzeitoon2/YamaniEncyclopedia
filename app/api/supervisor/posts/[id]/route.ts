@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN' && user.role !== 'EDITOR')) {
+    if (!user) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

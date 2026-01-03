@@ -19,9 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (me.role !== 'SUPERVISOR' && me.role !== 'ADMIN' && me.role !== 'EDITOR') {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-    }
+    // Allow all logged-in users to see comments related to them
 
     const relatedComments = await prisma.comment.findMany({
       where: {

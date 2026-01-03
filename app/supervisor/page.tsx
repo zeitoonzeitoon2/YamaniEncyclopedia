@@ -311,13 +311,7 @@ export default function SupervisorDashboard() {
       return
     }
 
-    const role = session.user?.role
-    if (role && role !== 'SUPERVISOR' && role !== 'ADMIN' && role !== 'EDITOR') {
-      console.log('User role not authorized:', role)
-      toast.error('لا تملك صلاحيات هذه الصفحة')
-      router.push('/')
-      return
-    }
+    // Allow any logged-in user to enter; visibility inside page is role-based
 
     console.log('Calling fetchPosts')
     fetchPosts()
