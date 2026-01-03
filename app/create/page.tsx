@@ -86,8 +86,8 @@ function CreatePost() {
             } catch (e) {
               console.error('Invalid target post content JSON', e)
             }
-            // در حالت ویرایش بازنشر، مبنا باید خودِ طرح قبلی کاربر باشد، نه مخطط رئيسي منشور
-            setOriginalPostId(null)
+            // محتوا از طرح قبلی کاربر؛ مبنای شناسۀ ویرایش از نسخه منتشرشده
+            setOriginalPostId(target?.originalPost?.id ?? null)
             setIsLoading(false)
             return true
           }

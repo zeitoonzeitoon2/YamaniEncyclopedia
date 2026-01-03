@@ -535,7 +535,7 @@ export default function SupervisorDashboard() {
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-dark-text heading">القائمة</h2>
+                <h2 className="text-xl font-bold text-dark-text heading">قائمة المخططات</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
@@ -929,7 +929,7 @@ export default function SupervisorDashboard() {
             <div className="px-6 py-4 border-b border-gray-700/50">
               <h2 className="text-xl font-bold text-dark-text heading">اختر إجراءً:</h2>
               <p className="text-sm text-dark-text mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
-              <p className="text-sm text-dark-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من القائمة وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
+              <p className="text-sm text-dark-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من قائمة المخططات وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-end gap-3">
