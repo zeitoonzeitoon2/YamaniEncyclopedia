@@ -91,6 +91,8 @@ export default function SupervisorDashboard() {
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
   const [relatedComments, setRelatedComments] = useState<RecentComment[]>([])
   const [relatedPostIds, setRelatedPostIds] = useState<Set<string>>(new Set())
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -314,42 +316,50 @@ export default function SupervisorDashboard() {
     }
   }
 
-  const handleDeletePost = useCallback(async (postId: string) => {
+  const handleDeletePost = useCallback((postId: string) => {
+    setDeleteTargetId(postId)
+    setDeleteModalOpen(true)
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTargetId) return
     try {
-      if (typeof window !== 'undefined') {
-        const choice = window.confirm('هل تريد حذف هذا التصميم نهائيًا؟\n- موافق: حذف نهائي\n- إلغاء: متابعة التحرير وإرسال جديد')
-        if (choice) {
-          const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE', credentials: 'include' })
-          if (res.ok) {
-            toast.success('تم حذف التصميم')
-            setSelectedPost(null)
-            const ac = new AbortController()
-            setPage(1)
-            setTimeout(() => fetchPosts(ac.signal, false), 0)
-          } else {
-            const data = await res.json().catch(() => ({} as any))
-            toast.error(data?.error || 'تعذّر حذف التصميم')
-          }
-        } else {
-          const res = await fetch(`/api/posts/${postId}/withdraw`, { method: 'POST', credentials: 'include' })
-          if (res.ok) {
-            toast.success('تم سحب التصميم من قائمة المراجعة. يمكنك متابعة التحرير')
-            setSelectedPost(null)
-            setTimeout(() => {
-              // انتقال إلى صفحة التحرير مع تحميل محتوى المستخدم السابق
-              router.push(`/create?edit=${postId}`)
-            }, 0)
-          } else {
-            const data = await res.json().catch(() => ({} as any))
-            toast.error(data?.error || 'تعذّر سحب التصميم للتحرير')
-          }
-        }
+      const res = await fetch(`/api/posts/${deleteTargetId}`, { method: 'DELETE', credentials: 'include' })
+      if (res.ok) {
+        toast.success('تم حذف التصميم')
+        setDeleteModalOpen(false)
+        setSelectedPost(null)
+        const ac = new AbortController()
+        setPage(1)
+        setTimeout(() => fetchPosts(ac.signal, false), 0)
+      } else {
+        const data = await res.json().catch(() => ({} as any))
+        toast.error(data?.error || 'تعذّر حذف التصميم')
       }
     } catch (e) {
-      console.error('Delete/withdraw post error:', e)
-      toast.error('خطأ في العملية')
+      console.error('Delete post error:', e)
+      toast.error('خطأ في حذف التصميم')
     }
-  }, [fetchPosts, router])
+  }, [deleteTargetId, fetchPosts])
+
+  const confirmWithdrawEdit = useCallback(async () => {
+    if (!deleteTargetId) return
+    try {
+      const res = await fetch(`/api/posts/${deleteTargetId}/withdraw`, { method: 'POST', credentials: 'include' })
+      if (res.ok) {
+        toast.success('تم سحب التصميم من قائمة المراجعة. يمكنك متابعة التحرير')
+        setDeleteModalOpen(false)
+        setSelectedPost(null)
+        router.push(`/create?edit=${deleteTargetId}`)
+      } else {
+        const data = await res.json().catch(() => ({} as any))
+        toast.error(data?.error || 'تعذّر سحب التصميم للتحرير')
+      }
+    } catch (e) {
+      console.error('Withdraw post error:', e)
+      toast.error('خطأ في سحب التصميم')
+    }
+  }, [deleteTargetId, router])
   useEffect(() => {
     if (status === 'authenticated') {
       const ac = new AbortController()
@@ -913,6 +923,23 @@ export default function SupervisorDashboard() {
           </div>
         </div>
       </main>
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-gray-700/50">
+              <h2 className="text-xl font-bold text-dark-text heading">اختر إجراءً:</h2>
+              <p className="text-sm text-dark-muted mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-end gap-3">
+                <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">إلغاء</button>
+                <button type="button" onClick={confirmWithdrawEdit} className="btn-primary">تعديل</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md">حذف</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
