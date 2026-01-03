@@ -74,22 +74,23 @@ function CreatePost() {
         console.warn('Failed to restore edit draft from localStorage', e)
       }
 
-      // در صورت نبود پیش‌نویس محلی، دادهٔ پست مورد نظر را واکشی کن
+      // در صورت نبود پیش‌نویس محلی، دادهٔ پست مورد نظر را واکشی کن (نسخه کامل)
       try {
-        const resp = await fetch('/api/editor/posts')
-        if (!resp.ok) throw new Error('Failed to fetch editor posts')
-        const posts = await resp.json()
-        const target = Array.isArray(posts) ? posts.find((p: any) => p.id === editId) : null
-        if (target) {
-          try {
-            const parsedContent = JSON.parse(target.content)
-            setTreeData(parsedContent)
-          } catch (e) {
-            console.error('Invalid target post content JSON', e)
+        const resp = await fetch(`/api/editor/posts/${editId}`)
+        if (resp.ok) {
+          const target = await resp.json()
+          if (target?.content) {
+            try {
+              const parsedContent = JSON.parse(target.content)
+              setTreeData(parsedContent)
+            } catch (e) {
+              console.error('Invalid target post content JSON', e)
+            }
+            // در حالت ویرایش بازنشر، مبنا باید خودِ طرح قبلی کاربر باشد، نه مخطط رئيسي منشور
+            setOriginalPostId(null)
+            setIsLoading(false)
+            return true
           }
-          setOriginalPostId(target.originalPost?.id ?? null)
-          setIsLoading(false)
-          return true
         }
       } catch (e) {
         console.warn('Failed to load target edit post:', e)

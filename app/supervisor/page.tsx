@@ -316,24 +316,40 @@ export default function SupervisorDashboard() {
 
   const handleDeletePost = useCallback(async (postId: string) => {
     try {
-      const ok = typeof window !== 'undefined' ? window.confirm('هل تريد حذف هذا التصميم نهائيًا؟ هذا الإجراء غير قابل للاسترجاع.') : true
-      if (!ok) return
-      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE', credentials: 'include' })
-      if (res.ok) {
-        toast.success('تم حذف التصميم')
-        setSelectedPost(null)
-        const ac = new AbortController()
-        setPage(1)
-        setTimeout(() => fetchPosts(ac.signal, false), 0)
-      } else {
-        const data = await res.json().catch(() => ({} as any))
-        toast.error(data?.error || 'تعذّر حذف التصميم')
+      if (typeof window !== 'undefined') {
+        const choice = window.confirm('هل تريد حذف هذا التصميم نهائيًا؟\n- موافق: حذف نهائي\n- إلغاء: متابعة التحرير وإرسال جديد')
+        if (choice) {
+          const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE', credentials: 'include' })
+          if (res.ok) {
+            toast.success('تم حذف التصميم')
+            setSelectedPost(null)
+            const ac = new AbortController()
+            setPage(1)
+            setTimeout(() => fetchPosts(ac.signal, false), 0)
+          } else {
+            const data = await res.json().catch(() => ({} as any))
+            toast.error(data?.error || 'تعذّر حذف التصميم')
+          }
+        } else {
+          const res = await fetch(`/api/posts/${postId}/withdraw`, { method: 'POST', credentials: 'include' })
+          if (res.ok) {
+            toast.success('تم سحب التصميم من قائمة المراجعة. يمكنك متابعة التحرير')
+            setSelectedPost(null)
+            setTimeout(() => {
+              // انتقال إلى صفحة التحرير مع تحميل محتوى المستخدم السابق
+              router.push(`/create?edit=${postId}`)
+            }, 0)
+          } else {
+            const data = await res.json().catch(() => ({} as any))
+            toast.error(data?.error || 'تعذّر سحب التصميم للتحرير')
+          }
+        }
       }
     } catch (e) {
-      console.error('Delete post error:', e)
-      toast.error('خطأ في حذف التصميم')
+      console.error('Delete/withdraw post error:', e)
+      toast.error('خطأ في العملية')
     }
-  }, [fetchPosts])
+  }, [fetchPosts, router])
   useEffect(() => {
     if (status === 'authenticated') {
       const ac = new AbortController()

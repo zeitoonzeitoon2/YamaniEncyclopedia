@@ -28,14 +28,20 @@ export async function GET(request: NextRequest) {
     const authorQueryRaw = url.searchParams.get('authorQuery')
     const authorQuery = authorQueryRaw ? authorQueryRaw.trim() : ''
 
+    const baseWhere: Prisma.PostWhereInput = { NOT: { status: { in: ['DRAFT'] } } }
     const whereClause: Prisma.PostWhereInput = authorQuery
       ? {
-          OR: [
-            { author: { is: { name: { contains: authorQuery, mode: 'insensitive' as const } } } },
-            { author: { is: { email: { contains: authorQuery, mode: 'insensitive' as const } } } },
+          AND: [
+            baseWhere,
+            {
+              OR: [
+                { author: { is: { name: { contains: authorQuery, mode: 'insensitive' as const } } } },
+                { author: { is: { email: { contains: authorQuery, mode: 'insensitive' as const } } } },
+              ],
+            },
           ],
         }
-      : {}
+      : baseWhere
 
     const totalCount = await prisma.post.count({ where: whereClause })
 
