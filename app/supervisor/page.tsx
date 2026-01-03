@@ -503,7 +503,7 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
-          {isEditor ? 'لوحة المحرر' : 'لوحة الناظر'}
+          {isEditor ? 'لوحة المحرر' : 'لوحة المشرف'}
         </h1>
 
         {reviewableNoticePost && (

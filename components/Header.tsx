@@ -32,13 +32,13 @@ export function Header() {
                   تحرير جديد
                 </Link>
                 
-                {(session.user?.role === 'SUPERVISOR' || session.user?.role === 'ADMIN') && (
+                {(session.user?.role === 'SUPERVISOR' || session.user?.role === 'ADMIN' || session.user?.role === 'EDITOR') && (
                   <Link 
                     href="/supervisor" 
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Settings size={16} />
-                    لوحة المشرف
+                    {session.user?.role === 'EDITOR' ? 'لوحة المحرر' : 'لوحة المشرف'}
                   </Link>
                 )}
 
@@ -52,15 +52,7 @@ export function Header() {
                   </Link>
                 )}
 
-                {(session /* كان سابقًا مشروطًا بالدور */) && (
-                  <Link 
-                    href="/dashboard/editor" 
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    <Edit size={16} />
-                    لوحة المحرر
-                  </Link>
-                )}
+                {/* حذف لوحة المحرر القديمة و ادغام با لوحة المشرف */}
 
                 <div className="flex items-center gap-3">
                   {session.user?.image && (
