@@ -24,13 +24,11 @@ export async function GET(request: NextRequest) {
         role: { in: ['EDITOR', 'SUPERVISOR'] },
         ...(q
           ? {
-              OR: [
-                { name: { contains: q, mode: 'insensitive' } },
-              ],
+              name: { startsWith: q, mode: 'insensitive' },
             }
           : {}),
       },
-      select: { id: true, name: true, role: true },
+      select: { id: true, name: true, role: true, image: true },
       orderBy: [{ role: 'desc' }, { name: 'asc' }],
       take: 200,
     })

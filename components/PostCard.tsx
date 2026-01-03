@@ -28,9 +28,10 @@ interface PostCardProps {
   // للتحكّم في إخفاء حقول رابط المقال عند العرض في الصفحة الرئيسية
   hideArticleLinkInputs?: boolean
   hideAuthorName?: boolean
+  hideAuthorAvatar?: boolean
 }
 
-export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false }: PostCardProps) {
+export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false }: PostCardProps) {
   const renderContent = () => {
     if (post.type === 'TREE') {
       try {
@@ -68,7 +69,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
   return (
     <div className={`card hover:shadow-lg transition-shadow ${fullWidth ? 'h-full flex flex-col' : ''}`}>
       <div className="flex items-center gap-3 mb-4">
-        {post.author.image && (
+        {post.author.image && !hideAuthorAvatar && (
           <Image
             src={post.author.image}
             alt={post.author.name || ''}

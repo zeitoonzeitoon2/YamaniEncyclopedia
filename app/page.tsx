@@ -32,7 +32,7 @@ export default async function HomePage() {
         <h1 className="text-2xl font-bold mb-6 text-dark-text">المخطط الأبرز</h1>
         <div className="mb-12">
           {topVotedPost ? (
-            <PostCard post={topVotedPost as any} fullWidth={true} hideArticleLinkInputs={true} hideAuthorName={true} />
+            <PostCard post={topVotedPost as any} fullWidth={true} hideArticleLinkInputs={true} hideAuthorName={true} hideAuthorAvatar={true} />
           ) : (
             <p className="text-dark-muted">لا توجد منشورات بعد.</p>
           )}

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
@@ -73,7 +74,7 @@ export default function SupervisorDashboard() {
   const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search' | 'researchers'>('new_designs')
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
-  const isEditor = session?.user?.role === 'EDITOR'
+  const isEditor = session?.user?.role === 'EDITOR' || session?.user?.role === 'USER'
   const isSupervisor = session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN'
   
   console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
@@ -96,9 +97,13 @@ export default function SupervisorDashboard() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [reviewableNoticePost, setReviewableNoticePost] = useState<Post | null>(null)
-  const [researchers, setResearchers] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [researchers, setResearchers] = useState<Array<{ id: string; name: string | null; role: string; image: string | null }>>([])
   const [researcherQuery, setResearcherQuery] = useState('')
   const [isResearchersLoading, setIsResearchersLoading] = useState(false)
+  const [selectedResearcherId, setSelectedResearcherId] = useState<string | null>(null)
+  const [selectedResearcher, setSelectedResearcher] = useState<{ id: string; name: string | null; role: string; image: string | null; bio: string | null } | null>(null)
+  const [researcherPosts, setResearcherPosts] = useState<Post[]>([])
+  const [isResearcherDetailLoading, setIsResearcherDetailLoading] = useState(false)
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -205,6 +210,30 @@ export default function SupervisorDashboard() {
     } finally {
       setIsResearchersLoading(false)
     }
+  }, [])
+
+  const fetchResearcherDetail = useCallback(async (id: string) => {
+    try {
+      setIsResearcherDetailLoading(true)
+      const res = await fetch(`/api/researchers/${id}`, { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setSelectedResearcher(data)
+      }
+    } finally {
+      setIsResearcherDetailLoading(false)
+    }
+  }, [])
+
+  const fetchResearcherPosts = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/researchers/${id}/posts?page=1&pageSize=20`, { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        const items = Array.isArray(data?.items) ? data.items : []
+        setResearcherPosts(items as any)
+      }
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -746,8 +775,8 @@ export default function SupervisorDashboard() {
                         value={researcherQuery}
                         onChange={(e) => setResearcherQuery(e.target.value)}
                         className="w-full rounded-full border text-xs py-2 px-3 bg-dark-card text-dark-text border-gray-700"
-                        placeholder="ابحث عن الباحث باسم"
-                        title="ابحث باسم الباحث"
+                        placeholder="ابحث بأول الحروف من الاسم"
+                        title="اكتب أول حروف الاسم"
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto bg-dark-card border border-gray-700 rounded-lg p-2">
@@ -760,17 +789,61 @@ export default function SupervisorDashboard() {
                           {researchers.map(r => (
                             <button
                               key={r.id}
-                              onClick={() => { setUserQuery(r.name || ''); setFilter('user-search') }}
-                              className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-dark-text"
-                              title="عرض منشورات هذا الباحث"
+                              onClick={() => { setSelectedResearcherId(r.id); fetchResearcherDetail(r.id); fetchResearcherPosts(r.id) }}
+                              className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-dark-text flex items-center gap-2"
+                              title="عرض معلومات وبحوث الباحث"
                             >
-                              {r.name || 'بدون اسم'}
-                              <span className="ml-2 text-xs text-dark-muted">({r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role})</span>
+                              {r.image ? (
+                                <Image src={r.image} alt={r.name || ''} width={24} height={24} className="rounded-full" />
+                              ) : (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-700 text-white text-xs">{(r.name||'?').charAt(0)}</span>
+                              )}
+                              <span className="flex-1">
+                                {r.name || 'بدون اسم'}
+                                <span className="ml-2 text-xs text-dark-muted">{r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role}</span>
+                              </span>
                             </button>
                           ))}
                         </div>
                       )}
                     </div>
+                    {selectedResearcherId && selectedResearcher && (
+                      <div className="mt-3 space-y-3">
+                        <div className="card p-3">
+                          <div className="flex items-center gap-3">
+                            {selectedResearcher.image ? (
+                              <Image src={selectedResearcher.image} alt={selectedResearcher.name || ''} width={48} height={48} className="rounded-full" />
+                            ) : (
+                              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm">{(selectedResearcher.name||'?').charAt(0)}</span>
+                            )}
+                            <div>
+                              <div className="text-dark-text font-semibold">
+                                {selectedResearcher.name || 'بدون اسم'}
+                              </div>
+                              <div className="text-xs text-dark-muted">{selectedResearcher.role === 'SUPERVISOR' ? 'مشرف' : selectedResearcher.role === 'EDITOR' ? 'محرر' : selectedResearcher.role}</div>
+                            </div>
+                          </div>
+                          {selectedResearcher.bio && (
+                            <div className="mt-2 text-sm text-dark-text leading-6">{selectedResearcher.bio}</div>
+                          )}
+                        </div>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                          {researcherPosts.length === 0 ? (
+                            <div className="text-dark-muted text-sm">لا توجد منشورات لهذا الباحث</div>
+                          ) : (
+                            researcherPosts.map((post) => (
+                              <div key={post.id}>
+                                <SimplePostCard
+                                  post={{ ...post, createdAt: new Date(post.createdAt) } as any}
+                                  isSelected={selectedPost?.id === post.id}
+                                  onClick={() => openPostById(post.id)}
+                                />
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
