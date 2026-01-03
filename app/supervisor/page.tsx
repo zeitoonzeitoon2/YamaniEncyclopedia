@@ -241,14 +241,15 @@ export default function SupervisorDashboard() {
 
   const fetchResearcherPosts = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/researchers/${id}/posts?page=1&pageSize=20`, { credentials: 'include' })
+      const res = await fetch(`/api/researchers/${id}/posts?page=${page}&pageSize=${pageSize}`, { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         const items = Array.isArray(data?.items) ? data.items : []
-        setResearcherPosts(items as any)
+        setPosts(prev => page === 1 ? (items as any) : ([...prev, ...items] as any))
+        setHasNext(page < (data?.totalPages || 1))
       }
     } catch {}
-  }, [])
+  }, [page, pageSize])
 
   useEffect(() => {
     if (filter === 'related') {
@@ -398,20 +399,36 @@ export default function SupervisorDashboard() {
 
   const fetchPosts = async (signal?: AbortSignal, append: boolean = false) => {
     try {
-      const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
-      url.searchParams.set('page', String(page))
-      url.searchParams.set('pageSize', String(pageSize))
-      if (filter === 'user-search' && userQuery.trim()) {
-        url.searchParams.set('authorQuery', userQuery.trim())
-      }
-      const postsResponse = await fetch(url.toString(), { credentials: 'include', signal })
-      if (postsResponse.ok) {
-        const data = await postsResponse.json()
-        const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []
-        setPosts(prev => append ? [...prev, ...items] : items)
-        setHasNext(!!data?.hasNext)
+      if (filter === 'researchers' && selectedResearcherId) {
+        const url = new URL(`/api/researchers/${selectedResearcherId}/posts`, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+        url.searchParams.set('page', String(page))
+        url.searchParams.set('pageSize', String(pageSize))
+        const resp = await fetch(url.toString(), { credentials: 'include', signal })
+        if (resp.ok) {
+          const data = await resp.json()
+          const items = Array.isArray(data?.items) ? data.items : []
+          setPosts(prev => append ? [...prev, ...items] : items)
+          const totalPages = Number(data?.totalPages || 1)
+          setHasNext(page < totalPages)
+        } else {
+          toast.error('خطأ في تحميل المعلومات')
+        }
       } else {
-        toast.error('خطأ في تحميل المعلومات')
+        const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+        url.searchParams.set('page', String(page))
+        url.searchParams.set('pageSize', String(pageSize))
+        if (filter === 'user-search' && userQuery.trim()) {
+          url.searchParams.set('authorQuery', userQuery.trim())
+        }
+        const postsResponse = await fetch(url.toString(), { credentials: 'include', signal })
+        if (postsResponse.ok) {
+          const data = await postsResponse.json()
+          const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []
+          setPosts(prev => append ? [...prev, ...items] : items)
+          setHasNext(!!data?.hasNext)
+        } else {
+          toast.error('خطأ في تحميل المعلومات')
+        }
       }
 
       // الحصول على إحصائيات المشرفين للناظر فقط
@@ -482,6 +499,16 @@ export default function SupervisorDashboard() {
       return () => ac.abort()
     }
   }, [status, pageSize, filter])
+
+  useEffect(() => {
+    if (status === 'authenticated' && filter === 'researchers' && selectedResearcherId) {
+      const ac = new AbortController()
+      setPage(1)
+      setPosts([])
+      fetchPosts(ac.signal, false)
+      return () => ac.abort()
+    }
+  }, [status, filter, selectedResearcherId])
 
 
 
@@ -848,21 +875,6 @@ export default function SupervisorDashboard() {
                           </div>
                           {selectedResearcher.bio && (
                             <div className="mt-2 text-sm text-dark-text leading-6">{selectedResearcher.bio}</div>
-                          )}
-                        </div>
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                          {researcherPosts.length === 0 ? (
-                            <div className="text-dark-muted text-sm">لا توجد منشورات لهذا الباحث</div>
-                          ) : (
-                            researcherPosts.map((post) => (
-                              <div key={post.id}>
-                                <SimplePostCard
-                                  post={{ ...post, createdAt: new Date(post.createdAt) } as any}
-                                  isSelected={selectedPost?.id === post.id}
-                                  onClick={() => openPostById(post.id)}
-                                />
-                              </div>
-                            ))
                           )}
                         </div>
                       </div>
