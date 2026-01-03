@@ -21,7 +21,7 @@ body {
   }
 
   .btn-secondary {
-    @apply bg-warm-cream text-warm-primary hover:bg-warm-primary hover:text-white border border-warm-primary transition-colors rounded-xl px-6 py-3 font-medium shadow-md;
+    @apply bg-warm-secondary text-white hover:bg-warm-primary border border-warm-secondary transition-colors rounded-xl px-6 py-3 font-medium shadow-md;
   }
 
   /* کارت‌ها */
