@@ -74,7 +74,7 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
           </div>
           
           {/* منزلق */}
-          <div className="flex-1">
+          <div className="flex-1" dir="ltr">
             <input
               type="range"
               min="-2"
