@@ -308,13 +308,21 @@ function CommentNodeView({ node, depth, postId, style }: { node: CommentNode; de
           <span className="font-medium text-amber-100">{node.author.name}</span>
           {node.author.role === 'ADMIN' ? 'مدير' : node.author.role === 'SUPERVISOR' ? 'مشرف' : node.author.role === 'EDITOR' ? <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">محرر</span> : <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">مستخدم</span>}
           {(() => { const cat = node.category; const label = cat === 'QUESTION' ? 'سؤال' : cat === 'CRITIQUE' ? 'نقد' : cat === 'SUPPORT' ? 'دعم' : cat === 'SUGGESTION' ? 'اقتراح تعديل' : null; if (!label) return null; const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'; return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>; })()}
-      </div>
+        </div>
         <span className="text-sm text-amber-300">{new Date(node.createdAt).toLocaleDateString('ar')}</span>
       </div>
-      <p className="text-amber-50 mb-3">{node.content}</p>
-      {canComment && (
-        <button onClick={() => setReplyToLocal(replyToLocal === node.id ? null : node.id)} className="text-sm text-amber-300 hover:text-amber-200">ردّ</button>
-      )}
+      <div className="flex items-baseline gap-2">
+        {canComment && (
+          <button
+            onClick={() => setReplyToLocal(replyToLocal === node.id ? null : node.id)}
+            className="px-2 py-0.5 text-xs rounded-full border border-amber-700/50 text-amber-300 hover:bg-gray-800/60"
+            title="ردّ"
+          >
+            ردّ
+          </button>
+        )}
+        <p className="text-amber-50 flex-1">{node.content}</p>
+      </div>
       {replyToLocal === node.id && (
         <form onSubmit={handleSubmitLocal} className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
