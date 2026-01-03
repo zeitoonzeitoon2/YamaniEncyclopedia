@@ -119,6 +119,8 @@ export default function EditorDashboard() {
     setComparisonStats(stats)
   }, [])
 
+  
+
   // بررسی دسترسی
   useEffect(() => {
     if (status === 'loading') return
@@ -178,6 +180,27 @@ export default function EditorDashboard() {
       setIsLoading(false)
     }
   }, [filter, page, pageSize])
+
+  const handleDeletePost = useCallback(async (postId: string) => {
+    try {
+      const ok = typeof window !== 'undefined' ? window.confirm('آیا مطمئن هستید که می‌خواهید این طرح را حذف کنید؟ این عمل غیرقابل بازگشت است.') : true
+      if (!ok) return
+      const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE', credentials: 'include' })
+      if (res.ok) {
+        toast.success('طرح حذف شد')
+        setSelectedPost(null)
+        const ac = new AbortController()
+        setPage(1)
+        setTimeout(() => loadPosts(ac.signal, false), 0)
+      } else {
+        const data = await res.json().catch(() => ({} as any))
+        toast.error(data?.error || 'امکان حذف وجود ندارد')
+      }
+    } catch (e) {
+      console.error('Delete post error:', e)
+      toast.error('خطا در حذف طرح')
+    }
+  }, [loadPosts])
 
   useEffect(() => {
     if (session) {
@@ -610,15 +633,26 @@ export default function EditorDashboard() {
                     الكاتب: {selectedPost.author.name || 'مجهول'}
                   </p>
 
-                  {/* Edit button for owner */}
+                  {/* Owner actions */}
                   {selectedPost.author.id === session.user?.id && (
-                    <div className="mb-4">
+                    <div className="mb-4 flex items-center gap-2">
                       <button
                         onClick={() => router.push(`/create?edit=${selectedPost.id}`)}
                         className="px-4 py-2 text-sm bg-warm-primary text-white rounded-lg hover:bg-warm-accent font-medium transition-all shadow-md hover:shadow-lg"
+                        disabled={selectedPost.status !== 'PENDING'}
+                        title={selectedPost.status !== 'PENDING' ? 'لا يمكن تعديل بعد الوصول إلى العتبات' : 'تعديل'}
                       >
                         تعديل
                       </button>
+                      {selectedPost.status === 'PENDING' && (
+                        <button
+                          onClick={() => handleDeletePost(selectedPost.id)}
+                          className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-all shadow-md hover:shadow-lg"
+                          title="حذف المنشور قبل الوصول إلى العتبات"
+                        >
+                          حذف
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
