@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 
-interface Comment {
+interface CommentNode {
   id: string
   content: string
   category?: string
@@ -15,20 +15,7 @@ interface Comment {
     role: string
     image?: string | null
   }
-  replies: Reply[]
-}
-
-interface Reply {
-  id: string
-  content: string
-  category?: string
-  createdAt: string
-  author: {
-    id: string
-    name: string
-    role: string
-    image?: string | null
-  }
+  replies: CommentNode[]
 }
 
 interface CommentSectionProps {
@@ -37,7 +24,7 @@ interface CommentSectionProps {
 
 export default function CommentSection({ postId }: CommentSectionProps) {
   const { data: session } = useSession()
-  const [comments, setComments] = useState<Comment[]>([])
+  const [comments, setComments] = useState<CommentNode[]>([])
   const [newComment, setNewComment] = useState('')
   const [newCategory, setNewCategory] = useState<null | 'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>(null)
   const [replyContent, setReplyContent] = useState('')
@@ -81,6 +68,18 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   useEffect(() => {
     loadComments()
+  }, [loadComments])
+
+  useEffect(() => {
+    const handler = () => loadComments()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('comments:reload', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('comments:reload', handler as EventListener)
+      }
+    }
   }, [loadComments])
 
   // ارسال کامنت جدید
@@ -244,127 +243,104 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       {/* لیست کامنت‌ها */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <div className="text-amber-200 text-center py-8">
-            لا توجد تعليقات بعد
-          </div>
+          <div className="text-amber-200 text-center py-8">لا توجد تعليقات بعد</div>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="bg-stone-900 border border-amber-700/30 rounded-lg p-4">
-              {/* کامنت اصلی */}
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Link href={`/profile/${comment.author.id}`} title="عرض الملف الشخصي">
-                    {comment.author.image ? (
-                      <img src={comment.author.image} alt={comment.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
-                    ) : (
-                      <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
-                        {(comment.author.name || '؟').charAt(0)}
-                      </span>
-                    )}
-                  </Link>
-                  <span className="font-medium text-amber-100">{comment.author.name}</span>
-                  {getRoleBadge(comment.author.role)}
-                  {categoryBadge(comment.category)}
-                </div>
-                <span className="text-sm text-amber-300">
-                  {formatDate(comment.createdAt)}
-                </span>
-              </div>
-              
-              <p className="text-amber-50 mb-3">{comment.content}</p>
-
-              {/* دکمه پاسخ */}
-              {canComment && (
-                <button
-                  onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                  className="text-sm text-amber-300 hover:text-amber-200"
-                >
-                  ردّ
-                </button>
-              )}
-
-              {/* فرم پاسخ */}
-              {replyTo === comment.id && (
-                <form
-                  onSubmit={(e) => handleSubmitReply(e, comment.id)}
-                  className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <label className="text-amber-200 text-sm">وسم الرد:</label>
-                    <select
-                      value={replyCategory ?? ''}
-                      onChange={(e) => setReplyCategory(e.target.value ? (e.target.value as any) : null)}
-                      className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
-                    >
-                      <option value="">بدون وسم</option>
-                      <option value="QUESTION">سؤال</option>
-                      <option value="CRITIQUE">نقد</option>
-                      <option value="SUPPORT">دعم</option>
-                      <option value="SUGGESTION">اقتراح تعديل</option>
-                    </select>
-                  </div>
-                  <textarea
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="اكتب ردّك..."
-                    className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none"
-                    rows={2}
-                  />
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplyTo(null)
-                        setReplyContent('')
-                      }}
-                      className="px-3 py-1 text-sm text-amber-300 hover:text-amber-100"
-                    >
-                      إلغاء
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || !replyContent.trim()}
-                      className="px-3 py-1 text-sm bg-warm-primary text-white rounded hover:bg-warm-accent disabled:opacity-50"
-                    >
-                      إرسال
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* پاسخ‌ها */}
-              {comment.replies.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  {comment.replies.map((reply) => (
-                    <div key={reply.id} className="bg-stone-900 border border-amber-700/30 rounded-lg p-3 mr-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Link href={`/profile/${reply.author.id}`} title="عرض الملف الشخصي">
-                            {reply.author.image ? (
-                              <img src={reply.author.image} alt={reply.author.name || ''} className="w-6 h-6 rounded-full object-cover" />
-                            ) : (
-                              <span className="w-6 h-6 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-[10px]">
-                                {(reply.author.name || '؟').charAt(0)}
-                              </span>
-                            )}
-                          </Link>
-                          <span className="font-medium text-amber-100">{reply.author.name}</span>
-                          {getRoleBadge(reply.author.role)}
-                          {categoryBadge(reply.category)}
-                        </div>
-                        <span className="text-sm text-amber-300">
-                          {formatDate(reply.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-amber-50">{reply.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          comments.map((c) => (
+            <div key={c.id}>{renderNode(c, 0, postId)}</div>
           ))
         )}
       </div>
+    </div>
+  )
+}
+
+function renderNode(node: CommentNode, depth: number, postId: string) {
+  const margin = Math.min(depth * 16, 96)
+  return (
+    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} />
+  )
+}
+
+function CommentNodeView({ node, depth, postId, style }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties }) {
+  const { data: session } = useSession()
+  const canComment = !!session?.user
+  const [replyToLocal, setReplyToLocal] = useState<string | null>(null)
+  const [replyContentLocal, setReplyContentLocal] = useState('')
+  const [replyCategoryLocal, setReplyCategoryLocal] = useState<null | 'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>(null)
+  const [isSubmittingLocal, setIsSubmittingLocal] = useState(false)
+
+  const handleSubmitLocal = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canComment || !replyContentLocal.trim() || isSubmittingLocal) return
+    setIsSubmittingLocal(true)
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: replyContentLocal.trim(), postId, parentId: node.id, ...(replyCategoryLocal ? { category: replyCategoryLocal } : {}) }),
+      })
+      if (res.ok) {
+        setReplyToLocal(null)
+        setReplyContentLocal('')
+        if (typeof window !== 'undefined') {
+          const ev = new CustomEvent('comments:reload')
+          window.dispatchEvent(ev)
+        }
+      }
+    } finally {
+      setIsSubmittingLocal(false)
+    }
+  }
+
+  return (
+    <div className="bg-stone-900 border border-amber-700/30 rounded-lg p-4" style={style}>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Link href={`/profile/${node.author.id}`} title="عرض الملف الشخصي">
+            {node.author.image ? (
+              <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+            ) : (
+              <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                {(node.author.name || '؟').charAt(0)}
+              </span>
+            )}
+          </Link>
+          <span className="font-medium text-amber-100">{node.author.name}</span>
+          {node.author.role === 'ADMIN' ? 'مدير' : node.author.role === 'SUPERVISOR' ? 'مشرف' : node.author.role === 'EDITOR' ? <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">محرر</span> : <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">مستخدم</span>}
+          {(() => { const cat = node.category; const label = cat === 'QUESTION' ? 'سؤال' : cat === 'CRITIQUE' ? 'نقد' : cat === 'SUPPORT' ? 'دعم' : cat === 'SUGGESTION' ? 'اقتراح تعديل' : null; if (!label) return null; const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'; return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>; })()}
+      </div>
+        <span className="text-sm text-amber-300">{new Date(node.createdAt).toLocaleDateString('ar')}</span>
+      </div>
+      <p className="text-amber-50 mb-3">{node.content}</p>
+      {canComment && (
+        <button onClick={() => setReplyToLocal(replyToLocal === node.id ? null : node.id)} className="text-sm text-amber-300 hover:text-amber-200">ردّ</button>
+      )}
+      {replyToLocal === node.id && (
+        <form onSubmit={handleSubmitLocal} className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3">
+          <div className="flex items-center gap-3 mb-2">
+            <label className="text-amber-200 text-sm">وسم الرد:</label>
+            <select value={replyCategoryLocal ?? ''} onChange={(e) => setReplyCategoryLocal(e.target.value ? (e.target.value as any) : null)} className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40">
+              <option value="">بدون وسم</option>
+              <option value="QUESTION">سؤال</option>
+              <option value="CRITIQUE">نقد</option>
+              <option value="SUPPORT">دعم</option>
+              <option value="SUGGESTION">اقتراح تعديل</option>
+            </select>
+          </div>
+          <textarea value={replyContentLocal} onChange={(e) => setReplyContentLocal(e.target.value)} placeholder="اكتب ردّك..." className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none" rows={2} />
+          <div className="flex justify-end gap-2 mt-2">
+            <button type="button" onClick={() => { setReplyToLocal(null); setReplyContentLocal('') }} className="px-3 py-1 text-sm text-amber-300 hover:text-amber-100">إلغاء</button>
+            <button type="submit" disabled={isSubmittingLocal || !replyContentLocal.trim()} className="px-3 py-1 text-sm bg-warm-primary text-white rounded hover:bg-warm-accent disabled:opacity-50">إرسال</button>
+          </div>
+        </form>
+      )}
+      {node.replies?.length > 0 && (
+        <div className="mt-4 space-y-3">
+          {node.replies.map((child) => (
+            <div key={child.id}>{renderNode(child, depth + 1, postId)}</div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

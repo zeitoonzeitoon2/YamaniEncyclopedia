@@ -13,62 +13,66 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 })
     }
 
+    const buildTree = (items: any[]) => {
+      const byId: Record<string, any> = {}
+      const roots: any[] = []
+      for (const it of items) {
+        byId[it.id] = { ...it, replies: [] }
+      }
+      for (const it of items) {
+        const node = byId[it.id]
+        if (it.parentId) {
+          const parent = byId[it.parentId]
+          if (parent) parent.replies.push(node)
+          else roots.push(node)
+        } else {
+          roots.push(node)
+        }
+      }
+      // sort children by createdAt ascending for each node
+      const sortRec = (n: any) => {
+        n.replies.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        n.replies.forEach(sortRec)
+      }
+      roots.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      roots.forEach(sortRec)
+      return roots
+    }
+
     try {
-      const commentsRaw = await prisma.comment.findMany({
-        where: { postId: postId, parentId: null },
+      const all = await prisma.comment.findMany({
+        where: { postId },
         select: {
           id: true,
           content: true,
           createdAt: true,
           tag: true,
+          parentId: true,
           author: { select: { id: true, name: true, role: true, image: true } },
-          replies: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              tag: true,
-              author: { select: { id: true, name: true, role: true, image: true } },
-            },
-          },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
       })
-
-      const comments = commentsRaw.map(c => ({
+      const normalized = all.map(c => ({
         ...c,
         category: c.tag || undefined,
-        replies: [...(c.replies || [])]
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          .map(r => ({ ...r, category: r.tag || undefined })),
       }))
-
-      return NextResponse.json(comments)
+      const tree = buildTree(normalized)
+      return NextResponse.json(tree)
     } catch (dbErr) {
       console.error('GET /api/comments with tag failed, retrying without tag:', dbErr)
-      const commentsRaw = await prisma.comment.findMany({
-        where: { postId: postId, parentId: null },
+      const all = await prisma.comment.findMany({
+        where: { postId },
         select: {
           id: true,
           content: true,
           createdAt: true,
+          parentId: true,
           author: { select: { id: true, name: true, role: true, image: true } },
-          replies: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              author: { select: { id: true, name: true, role: true, image: true } },
-            },
-          },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
       })
-      const comments = commentsRaw.map(c => ({
-        ...c,
-        replies: [...(c.replies || [])].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-      }))
-      return NextResponse.json(comments)
+      const tree = buildTree(all)
+      return NextResponse.json(tree)
     }
   } catch (error) {
     console.error('Error fetching comments:', error)
