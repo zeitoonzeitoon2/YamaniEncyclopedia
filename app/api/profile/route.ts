@@ -43,19 +43,18 @@ export async function PUT(request: NextRequest) {
     }
     if (typeof image === 'string') {
       const trimmed = image.trim()
-      if (trimmed) {
-        try {
-          const u = new URL(trimmed)
-          if (!/^https?:$/i.test(u.protocol)) {
-            return NextResponse.json({ error: 'Only http/https URLs are allowed' }, { status: 400 })
-          }
-        } catch {
+      if (trimmed.length === 0) {
+        data.image = null
+      } else {
+        const isWeb = /^https?:\/\/.+/i.test(trimmed)
+        const isRelative = /^\/.+/.test(trimmed)
+        const isData = /^data:image\/(png|jpeg|webp);base64,/i.test(trimmed)
+        const isBlob = /^blob:/i.test(trimmed)
+        if (!isWeb && !isRelative && !isData && !isBlob) {
           return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 })
+        }
+        data.image = trimmed
       }
-      data.image = trimmed
-    } else {
-      data.image = null
-    }
     }
     if (typeof bio === 'string') {
       data.bio = bio.trim().slice(0, 2000)
