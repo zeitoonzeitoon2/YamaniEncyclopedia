@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // اجازه دسترسی: محرر، مشرف، مدیر
+    // اجازه دسترسی برای همه کاربران واردشده
     const me = await prisma.user.findUnique({ where: { id: session.user.id } })
-    if (!me || !['EDITOR', 'SUPERVISOR', 'ADMIN'].includes(me.role)) {
+    if (!me) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -21,19 +21,21 @@ export async function GET(request: NextRequest) {
 
     const users = await prisma.user.findMany({
       where: {
-        role: { in: ['EDITOR', 'SUPERVISOR'] },
+        role: { in: ['EDITOR', 'SUPERVISOR', 'ADMIN'] },
         ...(q
           ? {
               OR: [
                 { name: { startsWith: q, mode: 'insensitive' } },
+                { name: { contains: q, mode: 'insensitive' } },
                 { email: { startsWith: q, mode: 'insensitive' } },
+                { email: { contains: q, mode: 'insensitive' } },
               ],
             }
           : {}),
       },
       select: { id: true, name: true, role: true, image: true },
       orderBy: [{ role: 'desc' }, { name: 'asc' }],
-      take: 200,
+      take: 500,
     })
 
     return NextResponse.json(users)
