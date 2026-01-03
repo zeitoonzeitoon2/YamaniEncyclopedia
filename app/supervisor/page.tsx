@@ -70,7 +70,7 @@ export default function SupervisorDashboard() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(5)
   const [hasNext, setHasNext] = useState(false)
-  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables'>('new_designs')
+  const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related'>('new_designs')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   
   console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
@@ -88,6 +88,8 @@ export default function SupervisorDashboard() {
     articles: { added: number; removed: number; edited: number }
   } | null>(null)
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
+  const [relatedComments, setRelatedComments] = useState<RecentComment[]>([])
+  const [relatedPostIds, setRelatedPostIds] = useState<Set<string>>(new Set())
   
   const supervisorParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
@@ -144,6 +146,28 @@ export default function SupervisorDashboard() {
       fetchRecentComments()
     }
   }, [filter, fetchRecentComments])
+
+  const fetchRelatedComments = useCallback(async () => {
+    try {
+      const res = await fetch('/api/supervisor/comments/related', { credentials: 'include' })
+      if (res.ok) {
+        const data: RecentComment[] = await res.json()
+        setRelatedComments(data)
+        const ids = new Set(data.map(i => (i as any).postId || i.post.id))
+        setRelatedPostIds(ids)
+      } else {
+        console.error('Failed to fetch related comments: ', await res.text())
+      }
+    } catch (e) {
+      console.error('Failed to fetch related comments', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (filter === 'related') {
+      fetchRelatedComments()
+    }
+  }, [filter, fetchRelatedComments])
 
   const fetchPostDetails = useCallback(async (postId: string) => {
     try {
@@ -314,6 +338,8 @@ export default function SupervisorDashboard() {
         return (post.unreadComments || 0) > 0
       case 'reviewables':
         return post.status === 'REVIEWABLE'
+      case 'my-posts':
+        return post.author.id === session?.user?.id
       default:
         return true
     }
@@ -322,6 +348,8 @@ export default function SupervisorDashboard() {
   const newDesignsCount = posts.length
   const totalUnreadComments = posts.reduce((sum, p) => sum + (p.unreadComments || 0), 0)
   const reviewablesCount = posts.filter(p => p.status === 'REVIEWABLE').length
+  const myPostsCount = posts.filter(p => p.author.id === session?.user?.id).length
+  const relatedCount = relatedPostIds.size
   const pendingCount = posts.filter(p => p.status === 'PENDING').length
   const approvedCount = posts.filter(p => p.status === 'APPROVED').length
   const rejectedCount = posts.filter(p => p.status === 'REJECTED').length
@@ -493,7 +521,7 @@ export default function SupervisorDashboard() {
             ) : (
               <>
                 {/* Compact filter toolbar above posts list */}
-                <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="mb-3 grid grid-cols-1 sm:grid-cols-5 gap-2">
                   <button
                     onClick={() => setFilter('new_designs')}
                     aria-pressed={filter === 'new_designs'}
@@ -535,6 +563,33 @@ export default function SupervisorDashboard() {
                     <span className={`${filter === 'reviewables' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{reviewablesCount}</span>
                     <span className="whitespace-nowrap">قابلة للمراجعة</span>
                   </button>
+                  <button
+                    onClick={() => setFilter('my-posts')}
+                    aria-pressed={filter === 'my-posts'}
+                    className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                      filter === 'my-posts'
+                        ? 'bg-warm-primary text-black border-warm-primary shadow'
+                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                    }`}
+                    title="عرض تصاميمي"
+                  >
+                    <span className={`${filter === 'my-posts' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{myPostsCount}</span>
+                    <span className="whitespace-nowrap">تصاميمي</span>
+                  </button>
+
+                  <button
+                    onClick={() => setFilter('related')}
+                    aria-pressed={filter === 'related'}
+                    className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
+                      filter === 'related'
+                        ? 'bg-warm-primary text-black border-warm-primary shadow'
+                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                    }`}
+                    title="عرض المشاركات ذات التعليقات المتعلقة بي"
+                  >
+                    <span className={`${filter === 'related' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{relatedCount}</span>
+                    <span className="whitespace-nowrap">تعليقات تخصني</span>
+                  </button>
                 </div>
 
                 {filter === 'new_comments' ? (
@@ -550,6 +605,35 @@ export default function SupervisorDashboard() {
                           onClick={() => openPostById(c.post.id)}
                           className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
                           title={`فتح التصميم المرتبط بهذا التعليق`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                              <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                              </span>
+                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                            </span>
+                          </div>
+                          <div className="text-sm text-dark-text line-clamp-2">
+                            {c.content}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : filter === 'related' ? (
+                  relatedComments.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                      {relatedComments.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => openPostById(c.post.id)}
+                          className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                          title={`فتح التصميم المتعلق بهذا التعليق`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
