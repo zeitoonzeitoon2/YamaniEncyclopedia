@@ -26,6 +26,8 @@ model User {
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
+  createdCommentPolls CommentPoll[]
+  commentPollVotes    CommentPollVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
