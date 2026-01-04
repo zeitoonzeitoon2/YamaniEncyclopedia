@@ -294,7 +294,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
           <div className="text-amber-200 text-center py-8">لا توجد تعليقات بعد</div>
         ) : (
           comments.map((c) => (
-            <div key={c.id}>{renderNode(c, 0, postId, onPickUser)}</div>
+            <div key={c.id}>{renderNode(c, 0, postId, onPickUser, canVotePoll)}</div>
           ))
         )}
       </div>
@@ -302,14 +302,14 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
   )
 }
 
-function renderNode(node: CommentNode, depth: number, postId: string, onPickUser?: (id: string) => void) {
+function renderNode(node: CommentNode, depth: number, postId: string, onPickUser?: (id: string) => void, canVotePoll?: boolean) {
   const margin = Math.min(depth * 16, 96)
   return (
-    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} onPickUser={onPickUser} />
+    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} onPickUser={onPickUser} canVotePoll={canVotePoll} />
   )
 }
 
-function CommentNodeView({ node, depth, postId, style, onPickUser }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties; onPickUser?: (id: string) => void }) {
+function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties; onPickUser?: (id: string) => void; canVotePoll?: boolean }) {
   const { data: session } = useSession()
   const canComment = !!session?.user
   const [replyToLocal, setReplyToLocal] = useState<string | null>(null)
@@ -452,7 +452,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser }: { node: Com
       {node.replies?.length > 0 && (
         <div className="mt-4 space-y-3">
           {node.replies.map((child) => (
-            <div key={child.id}>{renderNode(child, depth + 1, postId, onPickUser)}</div>
+            <div key={child.id}>{renderNode(child, depth + 1, postId, onPickUser, canVotePoll)}</div>
           ))}
         </div>
       )}
