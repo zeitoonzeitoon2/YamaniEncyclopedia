@@ -49,14 +49,39 @@ export async function GET(request: NextRequest) {
           tag: true,
           parentId: true,
           author: { select: { id: true, name: true, role: true, image: true } },
+          poll: {
+            select: {
+              id: true,
+              question: true,
+              options: { select: { id: true, text: true } },
+              votes: { select: { optionId: true } },
+            }
+          },
         },
         orderBy: { createdAt: 'asc' },
       })
-      const normalized = all.map(c => ({
-        ...c,
-        category: c.tag || undefined,
-      }))
-      const tree = buildTree(normalized)
+      const normalized = all.map(c => {
+        const poll = c.poll ? (() => {
+          const counts: Record<string, number> = {}
+          for (const v of c.poll.votes) counts[v.optionId] = (counts[v.optionId] || 0) + 1
+          return {
+            id: c.poll.id,
+            question: c.poll.question,
+            options: c.poll.options.map(o => ({ id: o.id, text: o.text, count: counts[o.id] || 0 })),
+            totalVotes: c.poll.votes.length,
+          }
+        })() : undefined
+        return {
+          id: c.id,
+          content: c.content,
+          createdAt: c.createdAt,
+          parentId: c.parentId,
+          author: c.author,
+          category: c.tag || undefined,
+          ...(poll ? { poll } : {}),
+        }
+      })
+      const tree = buildTree(normalized as any)
       return NextResponse.json(tree)
     } catch (dbErr) {
       console.error('GET /api/comments with tag failed, retrying without tag:', dbErr)
@@ -68,10 +93,38 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           parentId: true,
           author: { select: { id: true, name: true, role: true, image: true } },
+          poll: {
+            select: {
+              id: true,
+              question: true,
+              options: { select: { id: true, text: true } },
+              votes: { select: { optionId: true } },
+            }
+          },
         },
         orderBy: { createdAt: 'asc' },
       })
-      const tree = buildTree(all)
+      const normalized = all.map(c => {
+        const poll = c.poll ? (() => {
+          const counts: Record<string, number> = {}
+          for (const v of c.poll.votes) counts[v.optionId] = (counts[v.optionId] || 0) + 1
+          return {
+            id: c.poll.id,
+            question: c.poll.question,
+            options: c.poll.options.map(o => ({ id: o.id, text: o.text, count: counts[o.id] || 0 })),
+            totalVotes: c.poll.votes.length,
+          }
+        })() : undefined
+        return {
+          id: c.id,
+          content: c.content,
+          createdAt: c.createdAt,
+          parentId: c.parentId,
+          author: c.author,
+          ...(poll ? { poll } : {}),
+        }
+      })
+      const tree = buildTree(normalized as any)
       return NextResponse.json(tree)
     }
   } catch (error) {

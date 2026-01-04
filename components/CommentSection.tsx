@@ -15,6 +15,12 @@ interface CommentNode {
     role: string
     image?: string | null
   }
+  poll?: {
+    id: string
+    question?: string | null
+    options: Array<{ id: string; text: string; count: number }>
+    totalVotes: number
+  }
   replies: CommentNode[]
 }
 
@@ -33,9 +39,14 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [createPoll, setCreatePoll] = useState(false)
+  const [pollQuestion, setPollQuestion] = useState('')
+  const [pollOptions, setPollOptions] = useState<string[]>(['',''])
 
   // همه کاربران لاگین کرده مجاز به ارسال کامنت هستند
   const canComment = !!session?.user
+  const canCreatePoll = (session?.user?.role === 'EDITOR' || session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
+  const canVotePoll = (session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
 
   // بارگذاری کامنت‌ها
   const loadComments = useCallback(async () => {
@@ -103,7 +114,21 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
       })
 
       if (response.ok) {
+        const created = await response.json()
         setNewComment('')
+        if (createPoll && canCreatePoll) {
+          const opts = pollOptions.map(o => o.trim()).filter(Boolean)
+          if (opts.length >= 2) {
+            await fetch('/api/comments/poll', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ commentId: created.id, question: pollQuestion.trim() || null, options: opts }),
+            })
+          }
+        }
+        setCreatePoll(false)
+        setPollQuestion('')
+        setPollOptions(['',''])
         await loadComments()
       }
     } catch (error) {
@@ -229,6 +254,28 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
             className="w-full p-3 bg-stone-900 text-amber-50 placeholder:opacity-60 rounded-lg border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none"
             rows={3}
           />
+          {canCreatePoll && (
+            <div className="mt-3 p-3 border border-amber-700/40 rounded-lg bg-stone-900">
+              <label className="inline-flex items-center gap-2 text-amber-200 text-sm">
+                <input type="checkbox" checked={createPoll} onChange={(e) => setCreatePoll(e.target.checked)} />
+                إضافة استطلاع للرأي
+              </label>
+              {createPoll && (
+                <div className="mt-2 space-y-2">
+                  <input value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="السؤال (اختياري)" className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40" />
+                  {pollOptions.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input value={opt} onChange={(e) => setPollOptions(p => { const a=[...p]; a[idx]=e.target.value; return a })} placeholder={`الخيار ${idx+1}`} className="flex-1 p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40" />
+                      <button type="button" onClick={() => setPollOptions(p => p.filter((_,i)=>i!==idx))} className="px-2 py-1 text-xs rounded bg-red-700 text-white">حذف</button>
+                    </div>
+                  ))}
+                  <div>
+                    <button type="button" onClick={() => setPollOptions(p => [...p, ''])} className="px-3 py-1 text-sm rounded bg-warm-primary text-white">إضافة خيار</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex justify-end mt-2">
             <button
               type="submit"
@@ -352,6 +399,37 @@ function CommentNodeView({ node, depth, postId, style, onPickUser }: { node: Com
         )}
         <p className="text-amber-50 flex-1">{node.content}</p>
       </div>
+      {node.poll && (
+        <div className="mt-3 p-3 bg-stone-900 border border-amber-700/40 rounded-lg">
+          {node.poll.question && (
+            <div className="text-amber-100 mb-2">{node.poll.question}</div>
+          )}
+          <div className="space-y-2">
+            {node.poll.options.map(opt => (
+              <div key={opt.id} className="flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={!canVotePoll}
+                  onClick={async () => {
+                    try {
+                      if (!canVotePoll) return
+                      const res = await fetch('/api/comments/poll/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pollId: node.poll!.id, optionId: opt.id }) })
+                      if (res.ok) {
+                        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('comments:reload'))
+                      }
+                    } catch {}
+                  }}
+                  className={`px-3 py-1 rounded ${canVotePoll ? 'bg-warm-primary text-white hover:bg-warm-accent' : 'bg-stone-800 text-amber-300'}`}
+                >
+                  {opt.text}
+                </button>
+                <span className="text-sm text-amber-200">{opt.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs text-amber-300 mt-2">إجمالي الأصوات: {node.poll.totalVotes}</div>
+        </div>
+      )}
       {replyToLocal === node.id && (
         <form onSubmit={handleSubmitLocal} className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">

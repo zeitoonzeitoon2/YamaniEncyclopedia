@@ -89,6 +89,9 @@ model Comment {
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")
 
+  // Optional poll attached to this comment
+  poll      CommentPoll?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -132,4 +135,47 @@ model Article {
 model Setting {
   key   String @id
   value String
+}
+
+// Poll models for comments
+model CommentPoll {
+  id           String              @id @default(cuid())
+  commentId    String              @unique
+  comment      Comment             @relation(fields: [commentId], references: [id])
+  question     String?
+  options      CommentPollOption[]
+  votes        CommentPollVote[]
+  createdById  String
+  createdBy    User                @relation(fields: [createdById], references: [id])
+  createdAt    DateTime            @default(now())
+
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+model CommentPollOption {
+  id      String       @id @default(cuid())
+  text    String
+  pollId  String
+  poll    CommentPoll  @relation(fields: [pollId], references: [id])
+  votes   CommentPollVote[]
+
+  @@index([pollId])
+}
+
+model CommentPollVote {
+  id        String             @id @default(cuid())
+  pollId    String
+  poll      CommentPoll        @relation(fields: [pollId], references: [id])
+  optionId  String
+  option    CommentPollOption  @relation(fields: [optionId], references: [id])
+  voterId   String
+  voter     User               @relation(fields: [voterId], references: [id])
+  createdAt DateTime           @default(now())
+
+  @@unique([pollId, voterId])
+  @@index([pollId])
+  @@index([optionId])
+  @@index([voterId])
+  @@index([createdAt])
 }
