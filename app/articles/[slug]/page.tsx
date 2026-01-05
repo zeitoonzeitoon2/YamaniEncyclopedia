@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
-import { AiOutlineZoomIn, AiOutlineZoomOut } from 'react-icons/ai'
-import { createRoot } from 'react-dom/client'
+// حذف رندر ری‌اکتی دکمه‌ها؛ از هندلرهای سراسری استفاده می‌کنیم
 import { applyArticleTransforms } from '@/lib/footnotes'
 
 interface Article {
@@ -26,39 +25,22 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const [fontScale, setFontScale] = useState(1)
   const [html, setHtml] = useState('')
 
-  const FontControls = ({ onInc, onDec }: { onInc: () => void; onDec: () => void }) => (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={onDec}
-        className="px-2 py-1 rounded text-amber-200"
-        style={{ border: '1px solid #E67E22' }}
-        aria-label="کوچک‌کردن فونت"
-        title="کوچک‌کردن"
-      >
-        <AiOutlineZoomOut />
-      </button>
-      <button
-        onClick={onInc}
-        className="px-2 py-1 rounded text-amber-200"
-        style={{ border: '1px solid #E67E22' }}
-        aria-label="بزرگ‌کردن فونت"
-        title="بزرگ‌کردن"
-      >
-        <AiOutlineZoomIn />
-      </button>
-    </div>
-  )
-
   useEffect(() => {
-    const mount = document.getElementById('article-font-controls')
-    if (mount) {
-      const root = createRoot(mount)
-      const inc = () => setFontScale((s) => Math.min(1.6, parseFloat((s + 0.1).toFixed(2))))
-      const dec = () => setFontScale((s) => Math.max(0.8, parseFloat((s - 0.1).toFixed(2))))
-      root.render(<FontControls onInc={inc} onDec={dec} />)
-      return () => root.unmount()
+    const clamp = (n: number) => Math.max(0.8, Math.min(1.6, n))
+    const setScale = (val: number) => {
+      const v = clamp(parseFloat(val.toFixed(2)))
+      setFontScale(v)
+      const body = document.getElementById('article-content-body')
+      if (body) body.style.setProperty('--article-scale', String(v))
     }
-  }, [])
+    ;(window as any).__articleResize = {
+      inc: () => setScale(fontScale + 0.1),
+      dec: () => setScale(fontScale - 0.1),
+    }
+    // مقدار اولیه را اعمال کن
+    const body = document.getElementById('article-content-body')
+    if (body) body.style.setProperty('--article-scale', String(fontScale))
+  }, [fontScale])
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -97,7 +79,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             )}
             <div
               className="text-dark-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
-              style={{ ['--article-scale' as any]: `${fontScale}` }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
           </article>

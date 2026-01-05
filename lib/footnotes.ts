@@ -191,13 +191,14 @@ export function applyArticleTransforms(input: string): string {
   if (headings.length) {
     const items = headings
       .map((h) => {
-        // سلسله‌مراتب فاصله به‌صورت margin-right
         const mr = h.level === 3 ? 15 : h.level === 4 ? 30 : 0
         const size = h.level === 2 ? 'text-lg font-semibold' : h.level === 3 ? 'text-base font-medium' : 'text-sm'
         return `<li class="mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:text-orange-400 hover:underline underline-offset-2 ${size}" style="margin-right:${mr}px">${escapeHtml(h.text)}</a></li>`
       })
       .join('')
-    toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl" style="padding-right:15px"><div class="font-semibold text-amber-300 mb-2 flex items-center justify-between"><span class="text-xl md:text-2xl">المحتويات</span><div id="article-font-controls" class="absolute top-2 left-2"></div></div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
+    const controls = `<div id="article-font-controls" class="absolute top-2 left-2 z-10" style="background:#222;border:1px solid #E67E22;border-radius:8px;padding:4px;display:flex;gap:6px"><button onclick="window.__articleResize && window.__articleResize.dec && window.__articleResize.dec()" title="کوچک‌کردن" aria-label="کوچک‌کردن" style="background:#222;color:#ffd7a3;border:1px solid #E67E22;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">−</button><button onclick="window.__articleResize && window.__articleResize.inc && window.__articleResize.inc()" title="بزرگ‌کردن" aria-label="بزرگ‌کردن" style="background:#222;color:#ffd7a3;border:1px solid #E67E22;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">＋</button></div>`
+    const title = `<div class="font-semibold mb-2 flex items-center justify-between"><span style="color:#E67E22;font-size:1.35rem">المحتويات</span>${controls}</div><div class="mt-1" style="border-top:1px solid #E67E22;opacity:.6"></div>`
+    toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl" style="padding-right:20px">${title}<ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
   }
 
   const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 1rem)">${out.join('\n')}</div>`
