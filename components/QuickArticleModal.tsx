@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
-import { applyFootnotes } from '@/lib/footnotes'
 
 interface QuickArticleModalProps {
   isOpen: boolean
@@ -36,6 +35,26 @@ export default function QuickArticleModal({
 
   // ——— جدید: ref و توابع درج پاورقی ———
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const insertAtCursor = (text: string) => {
+    const ta = contentRef.current
+    const current = formData.content || ''
+    if (!ta) {
+      setFormData(prev => ({ ...prev, content: current + text }))
+      return
+    }
+    const start = ta.selectionStart ?? current.length
+    const end = ta.selectionEnd ?? start
+    const before = current.slice(0, start)
+    const after = current.slice(end)
+    const updated = before + text + after
+    setFormData(prev => ({ ...prev, content: updated }))
+    setTimeout(() => {
+      const pos = before.length + text.length
+      ta.focus()
+      ta.setSelectionRange(pos, pos)
+    }, 0)
+  }
 
   const getNextFootnoteNumber = (text: string) => {
     let maxNum = 0
@@ -292,6 +311,56 @@ export default function QuickArticleModal({
                 >
                   + حاشية
                 </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n## ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="أدخل عنوان H2"
+                  >
+                    + H2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n### ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="أدخل عنوان H3"
+                  >
+                    + H3
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n#### ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="أدخل عنوان H4"
+                  >
+                    + H4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !hadith ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="اقتباس حديث"
+                  >
+                    + حديث
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !ayah ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="اقتباس آية"
+                  >
+                    + آية
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !quote: ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="اقتباس قول"
+                  >
+                    + قول
+                  </button>
+                </div>
               </div>
               <textarea
                 ref={contentRef}

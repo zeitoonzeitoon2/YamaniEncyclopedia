@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
@@ -16,6 +16,71 @@ export default function NewArticlePage() {
     description: '',
     content: ''
   })
+
+  const contentRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const getNextFootnoteNumber = (text: string) => {
+    let maxNum = 0
+    const refRe = /\[\^(\d+)\]/g
+    const defRe = /^\[\^(\d+)\]:/gm
+    let m: RegExpExecArray | null
+    while ((m = refRe.exec(text)) !== null) {
+      const n = parseInt(m[1], 10)
+      if (!isNaN(n) && n > maxNum) maxNum = n
+    }
+    while ((m = defRe.exec(text)) !== null) {
+      const n = parseInt(m[1], 10)
+      if (!isNaN(n) && n > maxNum) maxNum = n
+    }
+    return maxNum + 1
+  }
+
+  const insertFootnoteAtCursor = () => {
+    const ta = contentRef.current
+    const current = formData.content || ''
+    const nextNum = getNextFootnoteNumber(current)
+    const refText = `[^${nextNum}]`
+    const defText = `\n\n[^${nextNum}]: `
+    if (!ta) {
+      const updated = current + refText + (current.includes(`[^${nextNum}]:`) ? '' : defText)
+      setFormData(prev => ({ ...prev, content: updated }))
+      return
+    }
+    const start = ta.selectionStart ?? current.length
+    const end = ta.selectionEnd ?? start
+    const before = current.slice(0, start)
+    const after = current.slice(end)
+    let updated = before + refText + after
+    if (!updated.includes(`[^${nextNum}]:`)) {
+      updated += defText
+    }
+    setFormData(prev => ({ ...prev, content: updated }))
+    setTimeout(() => {
+      const pos = before.length + refText.length
+      ta?.focus()
+      ta?.setSelectionRange(pos, pos)
+    }, 0)
+  }
+
+  const insertAtCursor = (text: string) => {
+    const ta = contentRef.current
+    const current = formData.content || ''
+    if (!ta) {
+      setFormData(prev => ({ ...prev, content: current + text }))
+      return
+    }
+    const start = ta.selectionStart ?? current.length
+    const end = ta.selectionEnd ?? start
+    const before = current.slice(0, start)
+    const after = current.slice(end)
+    const updated = before + text + after
+    setFormData(prev => ({ ...prev, content: updated }))
+    setTimeout(() => {
+      const pos = before.length + text.length
+      ta?.focus()
+      ta?.setSelectionRange(pos, pos)
+    }, 0)
+  }
 
   // تولید خودکار slug از عنوان
   const generateSlug = (title: string) => {
@@ -167,7 +232,66 @@ export default function NewArticlePage() {
                 <label className="block text-sm font-medium text-dark-text mb-2">
                   محتوای مقاله *
                 </label>
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={insertFootnoteAtCursor}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="افزودن پاورقی"
+                  >
+                    + پاورقی
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n## ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="افزودن عنوان H2"
+                  >
+                    + H2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n### ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="افزودن عنوان H3"
+                  >
+                    + H3
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n#### ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="افزودن عنوان H4"
+                  >
+                    + H4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !hadith ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="نقل حدیث"
+                  >
+                    + حدیث
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !ayah ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="نقل آیه"
+                  >
+                    + آیه
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('\n> !quote: ')}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title="نقل قول"
+                  >
+                    + قول
+                  </button>
+                </div>
                 <textarea
+                  ref={contentRef}
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"

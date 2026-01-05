@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
-import { applyFootnotes } from '@/lib/footnotes'
+import { applyArticleTransforms } from '@/lib/footnotes'
 
 interface Article {
   id?: string
@@ -59,7 +59,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             {/* محتوای مقاله با پاورقی */}
             <div
               className="text-dark-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: applyFootnotes(article.content) }}
+              dangerouslySetInnerHTML={{ __html: applyArticleTransforms(article.content) }}
             />
           </article>
         ) : null}

@@ -69,3 +69,132 @@ function autoLink(text: string): string {
 
   return out
 }
+
+function escapeHtml(text: string): string {
+  return (text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function slugifyHeading(text: string): string {
+  const normalized = (text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[ی]/g, 'ي')
+    .replace(/[ک]/g, 'ك')
+    .replace(/[\u200c\u200f\u202a-\u202e]/g, ' ')
+  const slug = normalized
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-\u0600-\u06FF]/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'section'
+}
+
+export function applyArticleTransforms(input: string): string {
+  const raw = input || ''
+  const lines = raw.split(/\r?\n/)
+
+  const used = new Set<string>()
+  const uniq = (base: string) => {
+    let id = base
+    let n = 2
+    while (used.has(id) || id === '') {
+      id = base ? `${base}-${n++}` : `section-${n++}`
+    }
+    used.add(id)
+    return id
+  }
+
+  const headings: { level: number; text: string; id: string }[] = []
+  const out: string[] = []
+
+  const renderQuote = (start: number): { html: string; next: number } => {
+    let j = start
+    const q: string[] = []
+    while (j < lines.length && /^>/.test(lines[j])) {
+      q.push(lines[j].replace(/^>\s?/, ''))
+      j += 1
+    }
+    let first = q[0] || ''
+    let t = ''
+    let person = ''
+    if (/^!\s*hadith\b/.test(first)) {
+      t = 'hadith'
+      first = first.replace(/^!\s*hadith\b\s*/, '')
+    } else if (/^!\s*ayah\b/.test(first)) {
+      t = 'ayah'
+      first = first.replace(/^!\s*ayah\b\s*/, '')
+    } else if (/^!\s*quote\b/.test(first)) {
+      t = 'quote'
+      const m = first.match(/^!\s*quote\s*:\s*([^]+?)\s*(.*)$/)
+      if (m) {
+        person = m[1].trim()
+        first = m[2] || ''
+      } else {
+        first = first.replace(/^!\s*quote\b\s*/, '')
+      }
+    }
+    const body = [first, ...q.slice(1)].join('\n')
+    const content = autoLink(body)
+    let cls = 'border-l-4 border-cyan-600 bg-cyan-800/20 text-cyan-100 italic my-3 px-3 py-2 rounded'
+    if (t === 'hadith') {
+      cls = 'border-l-4 border-amber-600 bg-amber-800/20 text-amber-100 italic my-3 px-3 py-2 rounded'
+    } else if (t === 'ayah') {
+      cls = 'border-l-4 border-emerald-600 bg-emerald-800/20 text-emerald-100 italic my-3 px-3 py-2 rounded'
+    }
+    const footer = person ? `<div class="text-xs text-amber-300 mt-1">— ${escapeHtml(person)}</div>` : ''
+    const html = `<blockquote class="${cls}">${content}</blockquote>${footer}`
+    return { html, next: j }
+  }
+
+  let i = 0
+  let sectionOpen = false
+  while (i < lines.length) {
+    const line = lines[i]
+    const m = line.match(/^(#{2,4})\s+(.*)$/)
+    if (m) {
+      const level = m[1].length
+      const text = m[2].trim()
+      const id = uniq(slugifyHeading(text))
+      headings.push({ level, text, id })
+      if (level === 2) {
+        if (sectionOpen) out.push('</div></details>')
+        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
+        sectionOpen = true
+      } else if (level === 3) {
+        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold">${escapeHtml(text)}</h3>`)
+      } else {
+        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200">${escapeHtml(text)}</h4>`)
+      }
+      i += 1
+      continue
+    }
+    if (/^>/.test(line)) {
+      const { html, next } = renderQuote(i)
+      out.push(html)
+      i = next
+      continue
+    }
+    out.push(autoLink(line))
+    i += 1
+  }
+  if (sectionOpen) out.push('</div></details>')
+
+  let toc = ''
+  if (headings.length) {
+    const items = headings
+      .map((h) => {
+        const indent = h.level === 2 ? '' : h.level === 3 ? 'ms-4' : 'ms-8'
+        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:underline">${escapeHtml(h.text)}</a></li>`
+      })
+      .join('')
+    toc = `<nav class="mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3"><div class="font-semibold text-amber-300 mb-2">فهرست</div><ol class="list-none m-0 p-0">${items}</ol></nav>`
+  }
+
+  const combined = toc + out.join('\n')
+  return applyFootnotes(combined)
+}

@@ -18,7 +18,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import QuickArticleModal from './QuickArticleModal'
 import toast from 'react-hot-toast'
-import { applyFootnotes } from '@/lib/footnotes'
+import { applyArticleTransforms } from '@/lib/footnotes'
 
 interface FlashcardField {
   id: string
@@ -1216,7 +1216,7 @@ export default function TreeDiagramEditor({
             {previewDraft.description && <p className="text-gray-600 mb-4 italic">{previewDraft.description}</p>}
             <div
               className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-800"
-              dangerouslySetInnerHTML={{ __html: applyFootnotes(previewDraft.content || '') }}
+              dangerouslySetInnerHTML={{ __html: applyArticleTransforms(previewDraft.content || '') }}
             ></div>
           </div>
         </div>
