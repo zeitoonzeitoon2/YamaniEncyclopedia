@@ -21,6 +21,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [fontScale, setFontScale] = useState(1)
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -56,9 +57,25 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             {article.description && (
               <p className="text-gray-400 mb-6">{article.description}</p>
             )}
-            {/* محتوای مقاله با پاورقی */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setFontScale((s) => Math.min(1.6, parseFloat((s + 0.1).toFixed(2))))}
+                className="px-2 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                aria-label="بزرگ‌کردن فونت"
+              >
+                +
+              </button>
+              <button
+                onClick={() => setFontScale((s) => Math.max(0.8, parseFloat((s - 0.1).toFixed(2))))}
+                className="px-2 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                aria-label="کوچک‌کردن فونت"
+              >
+                -
+              </button>
+            </div>
             <div
               className="text-dark-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
+              style={{ fontSize: `${fontScale}em` }}
               dangerouslySetInnerHTML={{ __html: applyArticleTransforms(article.content) }}
             />
           </article>

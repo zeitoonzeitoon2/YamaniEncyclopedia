@@ -140,14 +140,17 @@ export function applyArticleTransforms(input: string): string {
     }
     const body = [first, ...q.slice(1)].join('\n')
     const content = autoLink(body)
-    let cls = 'border-l-4 border-cyan-600 bg-cyan-800/20 text-cyan-100 italic my-3 px-3 py-2 rounded'
+    let cls = 'border-r-4 border-amber-500 bg-gradient-to-l from-black to-stone-900 text-amber-100 italic my-3 px-4 py-3 rounded text-right text-lg md:text-xl'
+    let styleAttr = `style="font-family: 'Amiri','Lateef',serif"`
     if (t === 'hadith') {
-      cls = 'border-l-4 border-amber-600 bg-amber-800/20 text-amber-100 italic my-3 px-3 py-2 rounded'
+      cls = 'border-r-2 border-orange-500 bg-[#1a1a1a] text-amber-200 italic my-3 px-4 py-3 rounded text-right'
+      styleAttr = `style="font-family: 'Amiri','Lateef',serif"`
     } else if (t === 'ayah') {
-      cls = 'border-l-4 border-emerald-600 bg-emerald-800/20 text-emerald-100 italic my-3 px-3 py-2 rounded'
+      cls = 'text-emerald-300 my-4 px-2 py-2 rounded text-center text-2xl md:text-3xl'
+      styleAttr = `style="font-family: 'Amiri','Lateef',serif; text-shadow: 0 0 14px rgba(52,211,153,.4)"`
     }
-    const footer = person ? `<div class="text-xs text-amber-300 mt-1">— ${escapeHtml(person)}</div>` : ''
-    const html = `<blockquote class="${cls}">${content}</blockquote>${footer}`
+    const footer = person ? `<div class="text-xs text-amber-300 mt-1 text-right">— ${escapeHtml(person)}</div>` : ''
+    const html = `<blockquote class="${cls}" ${styleAttr} dir="rtl">${content}</blockquote>${footer}`
     return { html, next: j }
   }
 
@@ -163,12 +166,12 @@ export function applyArticleTransforms(input: string): string {
       headings.push({ level, text, id })
       if (level === 2) {
         if (sectionOpen) out.push('</div></details>')
-        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
+        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline text-2xl md:text-3xl">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
         sectionOpen = true
       } else if (level === 3) {
-        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold">${escapeHtml(text)}</h3>`)
+        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold text-xl">${escapeHtml(text)}</h3>`)
       } else {
-        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200">${escapeHtml(text)}</h4>`)
+        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200 text-lg font-medium">${escapeHtml(text)}</h4>`)
       }
       i += 1
       continue
@@ -189,10 +192,11 @@ export function applyArticleTransforms(input: string): string {
     const items = headings
       .map((h) => {
         const indent = h.level === 2 ? '' : h.level === 3 ? 'ms-4' : 'ms-8'
-        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:underline">${escapeHtml(h.text)}</a></li>`
+        const size = h.level === 2 ? 'text-lg font-semibold' : h.level === 3 ? 'text-base font-medium' : 'text-sm'
+        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:underline ${size}">${escapeHtml(h.text)}</a></li>`
       })
       .join('')
-    toc = `<nav class="mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3"><div class="font-semibold text-amber-300 mb-2">فهرست</div><ol class="list-none m-0 p-0">${items}</ol></nav>`
+    toc = `<nav class="mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl"><div class="font-semibold text-amber-300 mb-2">المحتويات</div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
   }
 
   const combined = toc + out.join('\n')
