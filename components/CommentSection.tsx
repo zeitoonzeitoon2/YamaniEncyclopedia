@@ -45,7 +45,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
 
   // همه کاربران لاگین کرده مجاز به ارسال کامنت هستند
   const canComment = !!session?.user
-  const canCreatePoll = (session?.user?.role === 'EDITOR' || session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
+  const canCreatePoll = (session?.user?.role === 'USER' || session?.user?.role === 'EDITOR' || session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
   const canVotePoll = (session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
 
   // بارگذاری کامنت‌ها
