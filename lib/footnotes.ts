@@ -166,12 +166,12 @@ export function applyArticleTransforms(input: string): string {
       headings.push({ level, text, id })
       if (level === 2) {
         if (sectionOpen) out.push('</div></details>')
-        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline text-2xl md:text-3xl">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
+        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline text-2xl md:text-3xl" style="font-size: calc(var(--article-scale,1) * 1.75rem)">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
         sectionOpen = true
       } else if (level === 3) {
-        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold text-xl">${escapeHtml(text)}</h3>`)
+        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold text-xl" style="font-size: calc(var(--article-scale,1) * 1.25rem)">${escapeHtml(text)}</h3>`)
       } else {
-        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200 text-lg font-medium">${escapeHtml(text)}</h4>`)
+        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200 text-lg font-medium" style="font-size: calc(var(--article-scale,1) * 1.125rem)">${escapeHtml(text)}</h4>`)
       }
       i += 1
       continue
@@ -191,12 +191,13 @@ export function applyArticleTransforms(input: string): string {
   if (headings.length) {
     const items = headings
       .map((h) => {
-        const indent = h.level === 2 ? '' : h.level === 3 ? 'ms-4' : 'ms-8'
+        const indent = h.level === 2 ? 'pr-0' : h.level === 3 ? 'pr-4' : 'pr-8'
         const size = h.level === 2 ? 'text-lg font-semibold' : h.level === 3 ? 'text-base font-medium' : 'text-sm'
-        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:underline ${size}">${escapeHtml(h.text)}</a></li>`
+        const base = h.level === 2 ? '1.125rem' : h.level === 3 ? '1rem' : '0.875rem'
+        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:text-orange-400 hover:underline underline-offset-2 ${size}" style="font-size: calc(var(--article-scale,1) * ${base})">${escapeHtml(h.text)}</a></li>`
       })
       .join('')
-    toc = `<nav class="mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl"><div class="font-semibold text-amber-300 mb-2">المحتويات</div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
+    toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl"><div class="font-semibold text-amber-300 mb-2 flex items-center justify-between"><span class="text-xl md:text-2xl" style="font-size: calc(var(--article-scale,1) * 1.5rem)">المحتويات</span><div id="article-font-controls" class="absolute top-2 left-2"></div></div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
   }
 
   const combined = toc + out.join('\n')
