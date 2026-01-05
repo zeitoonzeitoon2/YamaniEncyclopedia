@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
     const comment = await prisma.comment.findUnique({ where: { id: commentId }, select: { id: true, authorId: true, poll: { select: { id: true } } } })
     if (!comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     if (comment.poll) return NextResponse.json({ error: 'Poll already exists for this comment' }, { status: 409 })
-    if (comment.authorId !== me.id && me.role === 'EDITOR') {
-      return NextResponse.json({ error: 'Editors can only poll their own comments' }, { status: 403 })
-    }
+    // Editors and supervisors can create polls on any comment
 
     const poll = await prisma.commentPoll.create({
       data: {
