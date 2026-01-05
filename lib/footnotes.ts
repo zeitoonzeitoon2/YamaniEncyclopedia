@@ -140,17 +140,17 @@ export function applyArticleTransforms(input: string): string {
     }
     const body = [first, ...q.slice(1)].join('\n')
     const content = autoLink(body)
-    let cls = 'border-r-4 border-amber-500 bg-gradient-to-l from-black to-stone-900 text-amber-100 italic my-3 px-4 py-3 rounded text-right text-lg md:text-xl'
-    let styleAttr = `style="font-family: 'Amiri','Lateef',serif"`
+    let style = "box-sizing:border-box;max-width:100%;background:#151515;border-right:4px solid #E67E22;padding:20px;border-radius:8px;line-height:1.8;font-family:'Amiri','Lateef',serif;color:#ffd7a3;position:relative;overflow:hidden;"
+    let extra = ''
     if (t === 'hadith') {
-      cls = 'border-r-2 border-orange-500 bg-[#1a1a1a] text-amber-200 italic my-3 px-4 py-3 rounded text-right'
-      styleAttr = `style="font-family: 'Amiri','Lateef',serif"`
+      style = "box-sizing:border-box;max-width:100%;background:#1a1a1a;border-right:2px solid #E67E22;padding:20px;border-radius:8px;line-height:1.8;font-family:'Amiri','Lateef',serif;color:#ffd7a3;position:relative;overflow:hidden;"
     } else if (t === 'ayah') {
-      cls = 'text-emerald-300 my-4 px-2 py-2 rounded text-center text-2xl md:text-3xl'
-      styleAttr = `style="font-family: 'Amiri','Lateef',serif; text-shadow: 0 0 14px rgba(52,211,153,.4)"`
+      style = "box-sizing:border-box;max-width:100%;background:#151515;padding:20px;border-radius:8px;line-height:1.8;font-family:'Amiri','Lateef',serif;color:#d1fae5;text-align:center;position:relative;overflow:hidden;text-shadow:0 0 14px rgba(52,211,153,.4);"
+    } else {
+      extra = `<span aria-hidden=\"true\" style=\"position:absolute;left:12px;top:6px;font-size:48px;color:#E67E22;opacity:.25;line-height:1;pointer-events:none\">“</span>`
     }
-    const footer = person ? `<div class="text-xs text-amber-300 mt-1 text-right">— ${escapeHtml(person)}</div>` : ''
-    const html = `<blockquote class="${cls}" ${styleAttr} dir="rtl">${content}</blockquote>${footer}`
+    const footer = person ? `<div class=\"text-xs text-amber-300 mt-1 text-right\">— ${escapeHtml(person)}</div>` : ''
+    const html = `<blockquote style=\"${style}\" dir=\"rtl\">${extra}${content}</blockquote>${footer}`
     return { html, next: j }
   }
 
