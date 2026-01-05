@@ -336,14 +336,7 @@ export default function QuickArticleModal({
                   >
                     + H4
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n> !hadith ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="اقتباس حديث"
-                  >
-                    + حديث
-                  </button>
+                  
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n> !ayah ')}
