@@ -24,12 +24,14 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fontScale, setFontScale] = useState(1)
+  const [html, setHtml] = useState('')
 
   const FontControls = ({ onInc, onDec }: { onInc: () => void; onDec: () => void }) => (
     <div className="flex items-center gap-1">
       <button
         onClick={onDec}
-        className="px-2 py-1 rounded border border-amber-700/60 text-amber-200 hover:bg-stone-700/50"
+        className="px-2 py-1 rounded text-amber-200"
+        style={{ border: '1px solid #E67E22' }}
         aria-label="کوچک‌کردن فونت"
         title="کوچک‌کردن"
       >
@@ -37,7 +39,8 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       </button>
       <button
         onClick={onInc}
-        className="px-2 py-1 rounded border border-amber-700/60 text-amber-200 hover:bg-stone-700/50"
+        className="px-2 py-1 rounded text-amber-200"
+        style={{ border: '1px solid #E67E22' }}
         aria-label="بزرگ‌کردن فونت"
         title="بزرگ‌کردن"
       >
@@ -55,7 +58,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       root.render(<FontControls onInc={inc} onDec={dec} />)
       return () => root.unmount()
     }
-  }, [article])
+  }, [])
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -67,6 +70,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         }
         const data = await res.json()
         setArticle(data)
+        setHtml(applyArticleTransforms(data.content || ''))
       } catch (e) {
         setError(e instanceof Error ? e.message : 'مقاله یافت نشد')
       } finally {
@@ -93,8 +97,8 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             )}
             <div
               className="text-dark-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
-              style={{ ['--article-scale' as any]: `${fontScale}`, fontSize: 'calc(var(--article-scale, 1) * 1rem)' }}
-              dangerouslySetInnerHTML={{ __html: applyArticleTransforms(article.content) }}
+              style={{ ['--article-scale' as any]: `${fontScale}` }}
+              dangerouslySetInnerHTML={{ __html: html }}
             />
           </article>
         ) : null}

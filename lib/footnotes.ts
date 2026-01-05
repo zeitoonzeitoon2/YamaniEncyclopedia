@@ -191,15 +191,16 @@ export function applyArticleTransforms(input: string): string {
   if (headings.length) {
     const items = headings
       .map((h) => {
-        const indent = h.level === 2 ? 'pr-0' : h.level === 3 ? 'pr-4' : 'pr-8'
+        // سلسله‌مراتب فاصله به‌صورت margin-right
+        const mr = h.level === 3 ? 15 : h.level === 4 ? 30 : 0
         const size = h.level === 2 ? 'text-lg font-semibold' : h.level === 3 ? 'text-base font-medium' : 'text-sm'
-        const base = h.level === 2 ? '1.125rem' : h.level === 3 ? '1rem' : '0.875rem'
-        return `<li class="${indent} mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:text-orange-400 hover:underline underline-offset-2 ${size}" style="font-size: calc(var(--article-scale,1) * ${base})">${escapeHtml(h.text)}</a></li>`
+        return `<li class="mb-1"><a href="#h-${h.id}" class="text-amber-200 hover:text-orange-400 hover:underline underline-offset-2 ${size}" style="margin-right:${mr}px">${escapeHtml(h.text)}</a></li>`
       })
       .join('')
-    toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl"><div class="font-semibold text-amber-300 mb-2 flex items-center justify-between"><span class="text-xl md:text-2xl" style="font-size: calc(var(--article-scale,1) * 1.5rem)">المحتويات</span><div id="article-font-controls" class="absolute top-2 left-2"></div></div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
+    toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl" style="padding-right:15px"><div class="font-semibold text-amber-300 mb-2 flex items-center justify-between"><span class="text-xl md:text-2xl">المحتويات</span><div id="article-font-controls" class="absolute top-2 left-2"></div></div><ol class="list-none m-0 p-0 text-right">${items}</ol></nav>`
   }
 
-  const combined = toc + out.join('\n')
+  const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 1rem)">${out.join('\n')}</div>`
+  const combined = toc + body
   return applyFootnotes(combined)
 }
