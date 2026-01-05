@@ -140,14 +140,9 @@ export function applyArticleTransforms(input: string): string {
     }
     const body = [first, ...q.slice(1)].join('\n')
     const content = autoLink(body)
-    let style = "box-sizing:border-box;max-width:100%;background:#151515;border-right:4px solid #E67E22;padding:25px 40px;border-radius:8px;line-height:1.8;font-family:'Amiri','Lateef',serif;color:#ffd7a3;position:relative;overflow:hidden;font-size:22px;"
-    let extra = `<span aria-hidden=\"true\" style=\"position:absolute;left:12px;top:6px;font-size:48px;color:#E67E22;opacity:.25;line-height:1;pointer-events:none\">“</span>`
-    if (t === 'ayah') {
-      style = "box-sizing:border-box;max-width:100%;background:#151515;border-right:4px solid #E67E22;padding:25px 40px;border-radius:8px;line-height:1.8;font-family:'Amiri','Lateef',serif;color:#FFD700;position:relative;overflow:hidden;text-align:center;font-size:26px;text-shadow:0 0 14px rgba(255,215,0,.25);"
-      extra = ''
-    }
+    const cls = t === 'ayah' ? 'q-ayah' : 'q-quote'
     const footer = person ? `<div class=\"text-xs text-amber-300 mt-1 text-right\">— ${escapeHtml(person)}</div>` : ''
-    const html = `<blockquote style=\"${style}\" dir=\"rtl\">${extra}${content}</blockquote>${footer}`
+    const html = `<blockquote class=\"${cls}\" dir=\"rtl\">${content}</blockquote>${footer}`
     return { html, next: j }
   }
 
@@ -198,7 +193,7 @@ export function applyArticleTransforms(input: string): string {
     toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl">${title}<ol class="list-none m-0 p-0 text-right" style="padding-right:20px">${items}</ol></nav>`
   }
 
-  const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 19px)">${out.join('\n')}</div>`
+  const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 20px)">${out.join('\n')}</div>`
   const combined = toc + body
   return applyFootnotes(combined)
 }

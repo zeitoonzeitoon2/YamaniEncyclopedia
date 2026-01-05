@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Head from 'next/head'
 import { useRouter } from 'next/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
@@ -67,11 +66,6 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   return (
     <div className="min-h-screen bg-dark-bg">
       <Header />
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
-      </Head>
       <main className="container mx-auto px-4 py-8">
         {loading ? (
           <div className="text-dark-text">در حال بارگذاری...</div>
