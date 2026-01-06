@@ -41,6 +41,10 @@ body {
 }
 .article-content-body blockquote p:first-child::before,
 .article-content-body blockquote p:first-child::after { content: none !important; }
+.article-content-body blockquote p:first-of-type::before,
+.article-content-body blockquote p:first-of-type::after { content: none !important; }
+.article-content-body blockquote:not(.q-quote)::before,
+.article-content-body blockquote:not(.q-quote)::after { content: none !important; }
 
 .article-content-body blockquote.q-quote::before {
   content: '“';

@@ -132,8 +132,16 @@ export function applyArticleTransforms(input: string): string {
       t = 'quote'
       const m = first.match(/^!\s*quote\s*:\s*([^]+?)\s*(.*)$/)
       if (m) {
-        person = m[1].trim()
-        first = m[2] || ''
+        const maybePerson = (m[1] || '').trim()
+        const rest = (m[2] || '').trim()
+        if (rest) {
+          person = maybePerson
+          first = rest
+        } else {
+          // اگر پس از دونقطه محتوایی وجود نداشت، عبارتِ پس از دونقطه را متنِ نقل‌قول در نظر بگیر
+          person = ''
+          first = maybePerson
+        }
       } else {
         first = first.replace(/^!\s*quote\b\s*/, '')
       }
