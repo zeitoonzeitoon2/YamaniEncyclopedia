@@ -149,7 +149,9 @@ export function applyArticleTransforms(input: string): string {
     const body = [first, ...q.slice(1)].join('\n')
     const content = autoLink(body)
     const cls = t === 'ayah' ? 'q-ayah' : 'q-quote'
-    const footer = person && person.trim() ? `<div class=\"text-xs text-amber-300 mt-1 text-right\">— ${escapeHtml(person.trim())}</div>` : ''
+    const footer = person && person.trim().length > 0
+      ? `<div class=\"text-xs text-amber-300 mt-1 text-right\">— ${escapeHtml(person.trim())}</div>`
+      : ''
     const html = `<blockquote class=\"${cls}\" dir=\"rtl\">${content}</blockquote>${footer}`
     return { html, next: j }
   }

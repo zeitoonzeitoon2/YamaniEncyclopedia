@@ -52,11 +52,21 @@ body {
   content: none !important;
 }
 
-/* Ensure the text stays inside */
+/* FIX: Force paragraph inside blockquote to respect the border */
+.article-content-body blockquote p {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  text-indent: 0 !important;
+  display: block !important;
+}
+
+/* Ensure the blockquote itself has padding from the border */
 .article-content-body blockquote {
   display: block;
   width: 100%;
   box-sizing: border-box;
+  padding-right: 1.5rem !important;
+  border-right-width: 4px !important;
 }
 
 .article-content-body blockquote.q-quote::before {
