@@ -68,7 +68,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       <Header />
       <main className="container mx-auto px-4 py-8">
         {loading ? (
-          <div className="text-dark-text">در حال بارگذاری...</div>
+          <div className="text-dark-text">جاري التحميل...</div>
         ) : error ? (
           <div className="text-red-500">{error}</div>
         ) : article ? (
