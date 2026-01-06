@@ -46,6 +46,19 @@ body {
 .article-content-body blockquote:not(.q-quote)::before,
 .article-content-body blockquote:not(.q-quote)::after { content: none !important; }
 
+/* Reset default typography quotes that break RTL text */
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: none !important;
+}
+
+/* Ensure the text stays inside */
+.article-content-body blockquote {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .article-content-body blockquote.q-quote::before {
   content: '“';
   position: absolute;
