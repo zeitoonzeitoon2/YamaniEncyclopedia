@@ -146,3 +146,6 @@ body {
   }
 }
 
+.article-content-body blockquote {
+    border-right-color: blue !important; /* تغییر رنگ خط سمت راست به آبی */
+}
