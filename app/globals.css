@@ -16,6 +16,16 @@ body {
   @apply bg-dark-bg text-dark-text font-sans;
 }
 
+/* Custom Highlight (Marker) Styling */
+mark {
+  background-color: rgba(230, 126, 34, 0.3); /* Transparent Orange */
+  color: #fff; /* Readable text */
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 /* Article content base sizing for readability */
 .article-content-body { font-size: calc(var(--article-scale,1) * 20px); text-align: justify; }
 .article-content-body h3, .article-content-body h4, .article-content-body details > summary { text-align: right; }

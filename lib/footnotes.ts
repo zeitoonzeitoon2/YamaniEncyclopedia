@@ -59,6 +59,7 @@ function autoLink(text: string): string {
   let out = text
 
   // لینک به سبک Markdown: [متن](https://...)
+  out = out.replace(/==([^=]+)==/g, '<mark>$1</mark>')
   out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-300 underline hover:text-blue-200">$1</a>')
 
   // URL های ساده http/https
