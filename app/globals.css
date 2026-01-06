@@ -21,7 +21,7 @@ mark {
   background-color: rgba(230, 126, 34, 0.3); /* Transparent Orange */
   color: #fff; /* Readable text */
   border-radius: 4px;
-  padding: 0.1em 0.3em;
+  padding: 0 0.3em; /* Reduced vertical padding */
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
