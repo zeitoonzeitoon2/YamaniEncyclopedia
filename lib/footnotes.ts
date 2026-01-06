@@ -172,6 +172,22 @@ export function applyArticleTransforms(input: string): string {
       i = next
       continue
     }
+
+    // پردازش تگ تصویر: !image[url|caption]
+    const imgMatch = line.match(/^!image\[([^|\]]+)(?:\|([^\]]*))?\]$/)
+    if (imgMatch) {
+      const url = imgMatch[1]
+      const caption = imgMatch[2] || ''
+      const imgHtml = `
+<figure class="my-6">
+  <img src="${url}" alt="${escapeHtml(caption)}" class="w-full rounded-lg shadow-lg border border-amber-700/20" />
+  ${caption ? `<figcaption class="mt-2 text-center text-sm text-amber-300/80 italic">${escapeHtml(caption)}</figcaption>` : ''}
+</figure>`
+      out.push(imgHtml)
+      i += 1
+      continue
+    }
+
     out.push(autoLink(line))
     i += 1
   }

@@ -10,6 +10,7 @@ export default function NewArticlePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -18,6 +19,42 @@ export default function NewArticlePage() {
   })
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const caption = prompt('لطفاً کپشن تصویر را وارد کنید (اختیاری):') || ''
+
+    setIsUploadingImage(true)
+    const toastId = toast.loading('در حال آپلود تصویر...')
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+
+      const res = await fetch('/api/articles/upload', {
+        method: 'POST',
+        body: fd
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'خطا در آپلود تصویر')
+      }
+
+      const { url } = await res.json()
+      insertAtCursor(`\n!image[${url}|${caption}]\n`)
+      toast.success('تصویر با موفقیت آپلود شد', { id: toastId })
+    } catch (error: any) {
+      console.error('Image upload error:', error)
+      toast.error(error.message || 'خطا در آپلود تصویر', { id: toastId })
+    } finally {
+      setIsUploadingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const getNextFootnoteNumber = (text: string) => {
     let maxNum = 0
@@ -282,6 +319,24 @@ export default function NewArticlePage() {
                   >
                     + قول
                   </button>
+
+                  {/* آپلود تصویر */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 flex items-center gap-1"
+                    title="آپلود تصویر"
+                  >
+                    {isUploadingImage ? '...' : '+ تصویر'}
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
                 <textarea
                   ref={contentRef}

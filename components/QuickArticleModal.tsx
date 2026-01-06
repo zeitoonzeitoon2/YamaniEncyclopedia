@@ -27,6 +27,7 @@ export default function QuickArticleModal({
 }: QuickArticleModalProps) {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -35,6 +36,42 @@ export default function QuickArticleModal({
 
   // ——— جدید: ref و توابع درج پاورقی ———
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const caption = prompt('يرجى إدخال تعليق للصورة (اختياري):') || ''
+
+    setIsUploadingImage(true)
+    const toastId = toast.loading('جارٍ رفع الصورة...')
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+
+      const res = await fetch('/api/articles/upload', {
+        method: 'POST',
+        body: fd
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'فشل رفع الصورة')
+      }
+
+      const { url } = await res.json()
+      insertAtCursor(`\n!image[${url}|${caption}]\n`)
+      toast.success('تم رفع الصورة بنجاح', { id: toastId })
+    } catch (error: any) {
+      console.error('Image upload error:', error)
+      toast.error(error.message || 'خطأ في رفع الصورة', { id: toastId })
+    } finally {
+      setIsUploadingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const insertAtCursor = (text: string) => {
     const ta = contentRef.current
@@ -353,6 +390,24 @@ export default function QuickArticleModal({
                   >
                     + قول
                   </button>
+
+                  {/* آپلود تصویر */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 flex items-center gap-1"
+                    title="رفع صورة"
+                  >
+                    {isUploadingImage ? '...' : '+ صورة'}
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
               </div>
               <textarea
