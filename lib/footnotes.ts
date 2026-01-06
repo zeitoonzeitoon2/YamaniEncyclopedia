@@ -130,21 +130,9 @@ export function applyArticleTransforms(input: string): string {
       first = first.replace(/^!\s*ayah\b\s*/, '')
     } else if (/^!\s*quote\b/.test(first)) {
       t = 'quote'
-      const m = first.match(/^!\s*quote\s*:\s*([^]+?)\s*(.*)$/)
-      if (m) {
-        const maybePerson = (m[1] || '').trim()
-        const rest = (m[2] || '').trim()
-        if (rest) {
-          person = maybePerson
-          first = rest
-        } else {
-          // اگر پس از دونقطه محتوایی وجود نداشت، عبارتِ پس از دونقطه را متنِ نقل‌قول در نظر بگیر
-          person = ''
-          first = maybePerson
-        }
-      } else {
-        first = first.replace(/^!\s*quote\b\s*/, '')
-      }
+      // هر چه بعد از !quote: آمده متن نقل‌قول است؛ گوینده نداریم
+      first = first.replace(/^!\s*quote\s*:?\s*/, '')
+      person = ''
     }
     const body = [first, ...q.slice(1)].join('\n')
     const content = autoLink(body)

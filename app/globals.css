@@ -145,7 +145,3 @@ body {
     @apply bg-warm-error text-white hover:bg-red-700 transition-colors shadow-lg;
   }
 }
-
-.article-content-body blockquote {
-    border-right-color: blue !important; /* تغییر رنگ خط سمت راست به آبی */
-}
