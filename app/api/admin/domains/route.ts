@@ -74,7 +74,22 @@ function buildTree(rows: Array<Omit<DomainTreeNode, 'children'>>): DomainTreeNod
 export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const url = new URL(_request.url)
+    const mode = (url.searchParams.get('mode') || '').trim()
+
+    if (mode === 'select') {
+      const items = await prisma.domain.findMany({
+        orderBy: [{ name: 'asc' }],
+        select: { id: true, name: true },
+      })
+      return NextResponse.json({ items })
+    }
+
+    if (session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

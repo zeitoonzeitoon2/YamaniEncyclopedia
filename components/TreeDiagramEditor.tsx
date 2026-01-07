@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import ReactFlow, {
   Node,
   Edge,
@@ -63,6 +64,9 @@ const CustomNode = ({ data, isConnectable }: any) => {
       <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 !bg-gray-600" />
       <div className="text-center">
         <div className="text-sm font-bold text-gray-800">{data.label}</div>
+        {!!data?.domainName && (
+          <div className="text-[11px] text-gray-600 mt-0.5">{data.domainName}</div>
+        )}
       </div>
       <Handle type="source" position={Position.Left} isConnectable={isConnectable} className="w-3 h-3 !bg-gray-600" />
     </div>
@@ -94,6 +98,7 @@ export default function TreeDiagramEditor({
   collectDrafts = false,
   isCreatePage = false,
 }: TreeDiagramEditorProps) {
+  const { data: session } = useSession()
   const [nodes, setNodes, onNodesChange] = useNodesState(
     (initialData?.nodes || [
       {
@@ -102,7 +107,7 @@ export default function TreeDiagramEditor({
         position: { x: 400, y: 200 },
         data: { label: 'ابدأ' },
       },
-    ]).map((n: any) => ({ ...n, data: { ...(n.data || {}), _readOnly: readOnly } }))
+    ]).map((n: any) => ({ ...n, data: { ...(n.data || {}), domainId: (n.data || {}).domainId ?? null, _readOnly: readOnly } }))
   )
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || [])
   const [nodeLabel, setNodeLabel] = useState('')
@@ -125,6 +130,16 @@ export default function TreeDiagramEditor({
 
   // حالة التمييز لتفاعل العُقَد المرتبطة
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([])
+
+  const [domains, setDomains] = useState<Array<{ id: string; name: string }>>([])
+  const domainNameById = React.useMemo(() => {
+    const m: Record<string, string> = {}
+    for (let i = 0; i < domains.length; i++) {
+      const d = domains[i]
+      m[d.id] = d.name
+    }
+    return m
+  }, [domains])
 
   // تمييز العُقَد المرتبطة مؤقتًا
   const highlightRelatedNodes = useCallback((sourceId: string, targetId: string) => {
@@ -166,13 +181,23 @@ export default function TreeDiagramEditor({
 
   // حساب العقد مع أعلام التمييز
   const computedNodes = React.useMemo(() => {
-    if (!highlightedNodeIds.length) return nodes.map(n => ({ ...n, data: { ...(n.data as any), _highlight: undefined } }))
-    return nodes.map((n) => (
-      highlightedNodeIds.includes(n.id)
-        ? { ...n, data: { ...(n.data as any), _highlight: true } }
-        : { ...n, data: { ...(n.data as any), _highlight: undefined } }
-    ))
-  }, [nodes, highlightedNodeIds])
+    const mapOne = (n: any, highlighted: boolean) => {
+      const dataAny = (n.data as any) || {}
+      const domainId = dataAny.domainId ?? null
+      const domainName = domainId ? (domainNameById[String(domainId)] || '') : ''
+      return {
+        ...n,
+        data: {
+          ...dataAny,
+          domainId,
+          domainName,
+          _highlight: highlighted ? true : undefined,
+        },
+      }
+    }
+    if (!highlightedNodeIds.length) return nodes.map((n) => mapOne(n, false))
+    return nodes.map((n) => mapOne(n, highlightedNodeIds.includes(n.id)))
+  }, [nodes, highlightedNodeIds, domainNameById])
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
@@ -183,6 +208,40 @@ export default function TreeDiagramEditor({
   useEffect(() => {
     setNodes((prev) => prev.map((n) => ({ ...n, data: { ...(n.data as any), _readOnly: readOnly } })))
   }, [readOnly, setNodes])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const run = async () => {
+      try {
+        const res = await fetch('/api/admin/domains?mode=select', { signal: controller.signal })
+        if (!res.ok) return
+        const data = await res.json().catch(() => ({}))
+        const items = Array.isArray((data as any)?.items) ? (data as any).items : []
+        if (items.length > 0) {
+          setDomains(items.filter((x: any) => x && typeof x.id === 'string' && typeof x.name === 'string'))
+          return
+        }
+        const roots = Array.isArray((data as any)?.roots) ? (data as any).roots : []
+        if (roots.length > 0) {
+          const flat: Array<{ id: string; name: string }> = []
+          const stack = [...roots]
+          while (stack.length) {
+            const n = stack.pop()
+            if (n && typeof n.id === 'string' && typeof n.name === 'string') {
+              flat.push({ id: n.id, name: n.name })
+              if (Array.isArray(n.children)) {
+                for (let i = 0; i < n.children.length; i++) stack.push(n.children[i])
+              }
+            }
+          }
+          flat.sort((a, b) => a.name.localeCompare(b.name))
+          setDomains(flat)
+        }
+      } catch {}
+    }
+    run()
+    return () => controller.abort()
+  }, [])
 
   // جلب عناوين المقالات لحقول الروابط الإضافية وكذلك للرابط الرئيسي للمقال لعرضها كنص الرابط
   useEffect(() => {
@@ -261,10 +320,23 @@ export default function TreeDiagramEditor({
     (params: Connection) => {
       if (readOnly) return
       const newEdge = addEdge(params, edges)
+      let nextNodes = nodes
+      if (params.source && params.target) {
+        const src = nodes.find((n) => n.id === params.source)
+        const tgt = nodes.find((n) => n.id === params.target)
+        const srcDomainId = (src?.data as any)?.domainId
+        const tgtDomainId = (tgt?.data as any)?.domainId
+        if (srcDomainId && (!tgtDomainId || String(tgtDomainId).trim() === '')) {
+          nextNodes = nodes.map((n) => (
+            n.id === params.target ? { ...n, data: { ...(n.data as any), domainId: srcDomainId } } : n
+          ))
+          setNodes(nextNodes)
+        }
+      }
       setEdges(newEdge)
-      onDataChange?.({ nodes, edges: newEdge })
+      onDataChange?.({ nodes: nextNodes, edges: newEdge })
     },
-    [edges, nodes, onDataChange, readOnly]
+    [edges, nodes, onDataChange, readOnly, setNodes]
   )
 
   const addNode = useCallback(
@@ -288,6 +360,7 @@ export default function TreeDiagramEditor({
           extraLinks: [],
           extraItems: [],
           relatedNodeIds: [],
+          domainId: selectedNodeId ? ((nodes.find((n) => n.id === selectedNodeId)?.data as any)?.domainId ?? null) : null,
           _readOnly: readOnly,
         },
       }
@@ -298,7 +371,7 @@ export default function TreeDiagramEditor({
       setNodeLabel('')
       onDataChange?.({ nodes: newNodes, edges })
     },
-    [nodeLabel, nodes, edges, onDataChange, readOnly]
+    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId]
   )
 
   const deleteSelectedNodes = useCallback(
@@ -441,6 +514,18 @@ export default function TreeDiagramEditor({
       if (!selectedNodeId) return
       const next = nodes.map((n) => (
         n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), label } } : n
+      ))
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
+    },
+    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+  )
+
+  const updateNodeDomainId = useCallback(
+    (domainId: string | null) => {
+      if (!selectedNodeId) return
+      const next = nodes.map((n) => (
+        n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), domainId } } : n
       ))
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
@@ -648,7 +733,7 @@ export default function TreeDiagramEditor({
 
     const nextNodes = (initialData.nodes || []).map((n: any) => ({
       ...n,
-      data: { ...(n.data || {}), _readOnly: readOnly },
+      data: { ...(n.data || {}), domainId: (n.data || {}).domainId ?? null, _readOnly: readOnly },
     }))
     const nextEdges = initialData.edges || []
     setNodes(nextNodes)
@@ -715,6 +800,29 @@ export default function TreeDiagramEditor({
         {selectedNode && (
           <div className="w-full lg:w-1/3 h-full overflow-y-auto p-4 bg-stone-800 border border-amber-700/40 rounded-lg">
             <h4 className="font-semibold text-amber-100">بطاقة البيانات للعقدة: {selectedNode?.data?.label}</h4>
+
+            <div className="mt-3">
+              <label className="block text-sm text-amber-200 mb-1">المجال (Domain)</label>
+              <select
+                className="w-full p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm disabled:opacity-70"
+                value={String(((selectedNode?.data as any)?.domainId || '') as any)}
+                disabled={
+                  readOnly ||
+                  !(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERVISOR' || isCreatePage)
+                }
+                onChange={(e) => {
+                  const v = e.target.value
+                  updateNodeDomainId(v ? v : null)
+                }}
+              >
+                <option value="">بدون تحديد</option>
+                {domains.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {isCreatePage && !readOnly && (
               <div className="mt-3">

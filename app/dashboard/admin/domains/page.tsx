@@ -104,7 +104,7 @@ export default function AdminDomainsPage() {
       const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
       if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطا در دریافت قلمروها'
+      const msg = e instanceof Error ? e.message : 'خطأ في جلب المجالات'
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -166,7 +166,7 @@ export default function AdminDomainsPage() {
     const slug = addForm.slug.trim()
     const description = addForm.description.trim()
     if (!name) {
-      toast.error('نام قلمرو الزامی است')
+      toast.error('اسم المجال مطلوب')
       return
     }
     try {
@@ -184,17 +184,17 @@ export default function AdminDomainsPage() {
 
       const payload = (await res.json().catch(() => ({}))) as { error?: string; domain?: { id: string } }
       if (!res.ok) {
-        toast.error(payload.error || 'خطا در ساخت قلمرو')
+        toast.error(payload.error || 'خطأ في إنشاء المجال')
         return
       }
 
-      toast.success('قلمرو ساخته شد')
+      toast.success('تم إنشاء المجال')
       setAddModalOpen(false)
       if (addParentId) setExpanded((prev) => ({ ...prev, [addParentId]: true }))
       const newId = payload.domain?.id
       await fetchDomains(newId)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطا در ساخت قلمرو'
+      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء المجال'
       toast.error(msg)
     } finally {
       setCreating(false)
@@ -203,11 +203,11 @@ export default function AdminDomainsPage() {
 
   const assignExpert = async () => {
     if (!selectedDomain) {
-      toast.error('ابتدا یک قلمرو انتخاب کنید')
+      toast.error('اختر مجالاً أولاً')
       return
     }
     if (!selectedUser) {
-      toast.error('ابتدا یک کاربر انتخاب کنید')
+      toast.error('اختر مستخدماً أولاً')
       return
     }
     try {
@@ -219,16 +219,16 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطا در انتساب متخصص')
+        toast.error(payload.error || 'خطأ في تعيين الخبير')
         return
       }
-      toast.success('متخصص افزوده شد')
+      toast.success('تمت إضافة الخبير')
       setSelectedUser(null)
       setUserQuery('')
       setUserResults([])
       await fetchDomains(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطا در انتساب متخصص'
+      const msg = e instanceof Error ? e.message : 'خطأ في تعيين الخبير'
       toast.error(msg)
     } finally {
       setAssigning(false)
@@ -247,13 +247,13 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطا در حذف متخصص')
+        toast.error(payload.error || 'خطأ في حذف الخبير')
         return
       }
-      toast.success('متخصص حذف شد')
+      toast.success('تم حذف الخبير')
       await fetchDomains(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطا در حذف متخصص'
+      const msg = e instanceof Error ? e.message : 'خطأ في حذف الخبير'
       toast.error(msg)
     } finally {
       setRemovingExpertKey(null)
@@ -268,18 +268,18 @@ export default function AdminDomainsPage() {
       const payload = (await res.json().catch(() => ({}))) as { error?: string; counts?: { children: number; posts: number } }
       if (!res.ok) {
         if (res.status === 409 && payload.counts) {
-          toast.error(`امکان حذف نیست: فرزندها=${payload.counts.children}، پست‌ها=${payload.counts.posts}`)
+          toast.error(`لا يمكن الحذف: المجالات الفرعية=${payload.counts.children}، المنشورات=${payload.counts.posts}`)
           return
         }
-        toast.error(payload.error || 'خطا در حذف قلمرو')
+        toast.error(payload.error || 'خطأ في حذف المجال')
         return
       }
-      toast.success('قلمرو حذف شد')
+      toast.success('تم حذف المجال')
       setDeleteModalOpen(false)
       setSelectedDomainId(philosophyRoot?.id || null)
       await fetchDomains(philosophyRoot?.id || undefined)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطا در حذف قلمرو'
+      const msg = e instanceof Error ? e.message : 'خطأ في حذف المجال'
       toast.error(msg)
     } finally {
       setDeleting(false)
@@ -327,13 +327,13 @@ export default function AdminDomainsPage() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-[11px] text-dark-muted border border-gray-700 rounded-full px-2 py-0.5">
-              {node.counts.posts} پست
+              {node.counts.posts} منشورات
             </span>
             <button
               type="button"
               onClick={() => openAddModal(node)}
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-dark-text text-xs"
-              title="إضافة قلمرو فرعي"
+              title="إضافة مجال فرعي"
             >
               <Plus size={14} />
               <span className="hidden sm:inline">إضافة</span>
@@ -364,7 +364,7 @@ export default function AdminDomainsPage() {
     <div className="min-h-screen bg-dark-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">مدیریت قلمروها</h1>
+        <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">إدارة المجالات العلمية</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
@@ -395,7 +395,7 @@ export default function AdminDomainsPage() {
 
           <div className="card">
             {!selectedDomain ? (
-              <div className="text-dark-muted">یک قلمرو را از لیست انتخاب کنید.</div>
+              <div className="text-dark-muted">اختر مجالاً من القائمة.</div>
             ) : (
               <div className="space-y-6">
                 <div>
@@ -413,7 +413,7 @@ export default function AdminDomainsPage() {
                       type="button"
                       onClick={() => setDeleteModalOpen(true)}
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-200 border border-red-600/30"
-                      title="حذف قلمرو"
+                      title="حذف المجال"
                       disabled={selectedDomain.slug === 'philosophy'}
                     >
                       <Trash2 size={16} />
@@ -422,17 +422,17 @@ export default function AdminDomainsPage() {
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-dark-muted">
-                    <span className="border border-gray-700 rounded-full px-3 py-1">پست‌ها: {selectedDomain.counts.posts}</span>
-                    <span className="border border-gray-700 rounded-full px-3 py-1">زیرقلمروها: {selectedDomain.counts.children}</span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-dark-border pt-4">
-                  <h3 className="text-lg font-bold text-dark-text mb-3 heading">مدیریت متخصصان</h3>
+                  <h3 className="text-lg font-bold text-dark-text mb-3 heading">إدارة الخبراء</h3>
 
                   <div className="space-y-2">
                     {selectedDomain.experts.length === 0 ? (
-                      <div className="text-dark-muted text-sm">متخصصی برای این قلمرو ثبت نشده است.</div>
+                      <div className="text-dark-muted text-sm">لا يوجد خبراء لهذا المجال.</div>
                     ) : (
                       selectedDomain.experts.map((ex) => {
                         const badge = getRoleBadge(ex.role)
@@ -475,7 +475,7 @@ export default function AdminDomainsPage() {
                             setSelectedUser(null)
                             setUserQuery(e.target.value)
                           }}
-                          placeholder="ابحث بالاسم أو البريد..."
+                          placeholder="بحث..."
                           className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                         />
                         {selectedUser && (
@@ -550,7 +550,7 @@ export default function AdminDomainsPage() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text">إضافة قلمرو فرعي</h2>
+              <h2 className="text-xl font-bold text-dark-text">إضافة مجال فرعي</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
@@ -563,7 +563,7 @@ export default function AdminDomainsPage() {
             <div className="p-6 space-y-4">
               <div className="text-sm text-dark-muted">الأب: {addParentName || '-'}</div>
               <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">نام *</label>
+                <label className="block text-sm font-medium text-dark-text mb-2">الاسم *</label>
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
@@ -605,7 +605,7 @@ export default function AdminDomainsPage() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text">حذف قلمرو</h2>
+              <h2 className="text-xl font-bold text-dark-text">حذف المجال</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
@@ -617,14 +617,14 @@ export default function AdminDomainsPage() {
             </div>
             <div className="p-6 space-y-4">
               <div className="text-dark-text">
-                آیا مطمئن هستید که می‌خواهید قلمرو <b>{selectedDomain.name}</b> را حذف کنید؟
+                هل أنت متأكد أنك تريد حذف المجال <b>{selectedDomain.name}</b>؟
               </div>
               <div className="text-sm text-dark-muted">
-                شرط حذف: قلمرو نباید زیرقلمرو یا پست داشته باشد.
+                شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.
               </div>
               <div className="flex items-center gap-3 text-sm text-dark-muted">
-                <span className="border border-gray-700 rounded-full px-3 py-1">پست‌ها: {selectedDomain.counts.posts}</span>
-                <span className="border border-gray-700 rounded-full px-3 py-1">زیرقلمروها: {selectedDomain.counts.children}</span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">
@@ -641,4 +641,3 @@ export default function AdminDomainsPage() {
     </div>
   )
 }
-

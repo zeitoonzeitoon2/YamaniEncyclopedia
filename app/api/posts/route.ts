@@ -7,40 +7,32 @@ import { generateNextRevisionNumber } from '@/lib/postUtils'
 // واجهة برمجة التطبيقات (API) الخاصة بالمنشورات
 
 export async function POST(request: NextRequest) {
-  console.log('POST /api/posts called - NEW VERSION')
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session:', session)
     
     if (!session?.user?.email) {
-      console.log('No session or email found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { content, type = 'TREE', originalPostId, articlesData } = await request.json()
-    console.log('Request data received:', { 
-      content: content ? `${content.substring(0, 100)}...` : null,
-      type, 
-      originalPostId, 
-      articlesData: articlesData ? `${articlesData.substring(0, 100)}...` : null
-    })
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const content = typeof body.content === 'string' ? body.content : ''
+    const type = typeof body.type === 'string' ? body.type : 'TREE'
+    const originalPostId = typeof body.originalPostId === 'string' ? body.originalPostId : undefined
+    const articlesData = typeof body.articlesData === 'string' ? body.articlesData : undefined
+    const requestedDomainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
 
     // داده‌های مقالات همان ورودی articlesData از کلاینت است؛ استخراج draftId دیگر انجام نمی‌شود
-    const finalArticlesData = articlesData
-
+    const finalArticlesData = articlesData && articlesData.trim() ? articlesData : undefined
+    
     if (!content) {
-      console.log('No content provided')
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
 
-    console.log('Finding user by email:', session.user.email)
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
-    console.log('User found:', user)
 
     if (!user) {
-      console.log('User not found in database')
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
@@ -48,53 +40,104 @@ export async function POST(request: NextRequest) {
     let revisionNumber = null
 
     if (originalPostId) {
-      console.log('This is an edit, generating revision number for originalPostId:', originalPostId)
       // این یک ویرایش پیشنهادی است
       revisionNumber = await generateNextRevisionNumber(originalPostId)
-      console.log('Generated revision number:', revisionNumber)
     } else {
-      console.log('This is a new post, version and revisionNumber will be null until approval')
       // این یک نمودار جدید است که در انتظار تایید است
       // version و revisionNumber null می‌مانند تا زمان تایید
     }
 
-    console.log('Creating post with data:', {
-      content: content ? `${content.substring(0, 50)}...` : null,
-      type,
-      authorId: user.id,
-      status: 'PENDING',
-      version,
-      revisionNumber,
-      articlesData: finalArticlesData ? `${finalArticlesData.substring(0, 50)}...` : null,
-      originalPostId
-    })
+    let normalizedContent = content
+    let relatedDomainIds: string[] = []
+    let postDomainId: string | null = requestedDomainId || null
+
+    try {
+      const tree = JSON.parse(content)
+      const nodesArr = Array.isArray(tree?.nodes) ? tree.nodes : null
+      const edgesArr = Array.isArray(tree?.edges) ? tree.edges : null
+
+      if (nodesArr) {
+        const byId: Record<string, any> = {}
+        for (let i = 0; i < nodesArr.length; i++) {
+          const n = nodesArr[i]
+          if (n && typeof n.id === 'string') byId[n.id] = n
+        }
+
+        if (edgesArr) {
+          for (let i = 0; i < edgesArr.length; i++) {
+            const e = edgesArr[i]
+            const sourceId = typeof e?.source === 'string' ? e.source : null
+            const targetId = typeof e?.target === 'string' ? e.target : null
+            if (!sourceId || !targetId) continue
+            const src = byId[sourceId]
+            const tgt = byId[targetId]
+            const srcDomainIdRaw = src?.data?.domainId
+            const tgtDomainIdRaw = tgt?.data?.domainId
+            const srcDomainId = typeof srcDomainIdRaw === 'string' ? srcDomainIdRaw.trim() : ''
+            const tgtDomainId = typeof tgtDomainIdRaw === 'string' ? tgtDomainIdRaw.trim() : ''
+            if (srcDomainId && !tgtDomainId) {
+              tgt.data = { ...(tgt.data || {}), domainId: srcDomainId }
+            }
+          }
+        }
+
+        const collected: string[] = []
+        for (let i = 0; i < nodesArr.length; i++) {
+          const n = nodesArr[i]
+          const didRaw = n?.data?.domainId
+          const did = typeof didRaw === 'string' ? didRaw.trim() : ''
+          if (did) collected.push(did)
+        }
+
+        const unique = Array.from(new Set(collected))
+        const candidates = Array.from(new Set([...(postDomainId ? [postDomainId] : []), ...unique]))
+
+        if (candidates.length > 0) {
+          const existing = await prisma.domain.findMany({
+            where: { id: { in: candidates } },
+            select: { id: true },
+          })
+          const validSet = new Set(existing.map((d) => d.id))
+          relatedDomainIds = unique.filter((id) => validSet.has(id))
+          postDomainId = (postDomainId && validSet.has(postDomainId)) ? postDomainId : (relatedDomainIds[0] || null)
+
+          for (let i = 0; i < nodesArr.length; i++) {
+            const n = nodesArr[i]
+            const didRaw = n?.data?.domainId
+            const did = typeof didRaw === 'string' ? didRaw.trim() : ''
+            if (did && !validSet.has(did)) {
+              n.data = { ...(n.data || {}), domainId: null }
+            }
+          }
+        } else {
+          postDomainId = null
+          relatedDomainIds = []
+        }
+      }
+
+      normalizedContent = JSON.stringify(tree)
+    } catch {
+      normalizedContent = content
+    }
 
     const post = await prisma.post.create({
       data: {
-        content,
+        content: normalizedContent,
         type,
         authorId: user.id,
         status: 'PENDING',
         version,
         revisionNumber,
+        ...(postDomainId ? { domainId: postDomainId } : {}),
+        relatedDomainIds,
         ...(finalArticlesData ? { articlesData: finalArticlesData } : {}),
-        ...(originalPostId ? { originalPostId } : {})
+        ...(originalPostId ? { originalPostId } : {}),
       }
     })
 
-    console.log('Post created successfully:', post.id)
     return NextResponse.json(post, { status: 201 })
   } catch (error) {
-    console.error('Error creating post - Full error details:')
-    console.error('Error name:', error instanceof Error ? error.name : undefined)
-    console.error('Error message:', error instanceof Error ? error.message : (typeof error === 'string' ? error : undefined))
-    const anyErr = error as any
-    console.error('Error code:', anyErr?.code)
-    console.error('Error stack:', error instanceof Error ? error.stack : undefined)
-    if (anyErr?.meta) {
-      console.error('Error meta:', anyErr.meta)
-    }
-    
+    console.error('Error creating post:', error)
     return NextResponse.json({ 
       error: 'Internal server error',
       details: process.env.NODE_ENV === 'development' 
