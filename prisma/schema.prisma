@@ -11,6 +11,39 @@ generator client {
 
 // Models (استفاده از String به‌جای enum برای سازگاری و سادگی)
 
+model Domain {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+
+  parentId    String?
+  parent      Domain?  @relation("DomainHierarchy", fields: [parentId], references: [id])
+  children    Domain[] @relation("DomainHierarchy")
+
+  experts     DomainExpert[]
+  posts       Post[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([parentId])
+}
+
+model DomainExpert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  domainId  String
+  domain    Domain   @relation(fields: [domainId], references: [id])
+  role      String   @default("EXPERT")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, domainId])
+  @@index([domainId])
+  @@index([userId])
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
@@ -23,6 +56,7 @@ model User {
   role         String        @default("USER")
   posts        Post[]
   adminVotes   Vote[]
+  domainExperts DomainExpert[]
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
@@ -40,6 +74,9 @@ model Post {
   type            String        @default("TREE")
   version         Int?
   revisionNumber  Int?
+  domainId        String?
+  domain          Domain?       @relation(fields: [domainId], references: [id])
+  relatedDomainIds String[]     @default([])
   authorId        String
   author          User          @relation(fields: [authorId], references: [id])
 
@@ -59,6 +96,7 @@ model Post {
   @@index([authorId])
   @@index([originalPostId])
   @@index([version])
+  @@index([domainId])
 }
 
 model Vote {
