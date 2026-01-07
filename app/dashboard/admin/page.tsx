@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface User {
   id: string
@@ -194,6 +195,18 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
           لوحة إدارة المستخدمين
         </h1>
+
+        <div className="card mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-dark-text heading">لوحة المدير</h2>
+              <p className="text-dark-muted text-sm mt-1">إدارة القلمروهات وتعيين الخبراء</p>
+            </div>
+            <Link href="/dashboard/admin/domains" className="btn-primary">
+              مدیریت قلمروها
+            </Link>
+          </div>
+        </div>
 
         {/* Site Settings: Header image */}
         <div className="card mb-8">
