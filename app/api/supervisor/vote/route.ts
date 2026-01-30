@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id }
     })
 
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+    if (!user) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
@@ -27,13 +27,30 @@ export async function POST(request: NextRequest) {
     }
 
     // بررسی وجود پست
-    const post = await prisma.post.findUnique({ where: { id: postId } })
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, status: true, domainId: true },
+    })
     if (!post) {
       return NextResponse.json({ error: 'پست یافت نشد' }, { status: 404 })
     }
     // جلوگیری از رأی‌گیری پس از انتشار یا نهایی شدن طرح
     if (['APPROVED', 'REJECTED', 'ARCHIVED'].includes(post.status)) {
       return NextResponse.json({ error: 'نظرسنجی این طرح متوقف شده است' }, { status: 400 })
+    }
+
+    const isSupervisor = user.role === 'SUPERVISOR' || user.role === 'ADMIN'
+    if (!isSupervisor) {
+      if (!post.domainId) {
+        return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+      }
+      const expert = await prisma.domainExpert.findFirst({
+        where: { userId: user.id, domainId: post.domainId },
+        select: { id: true },
+      })
+      if (!expert) {
+        return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+      }
     }
 
     const vote = await prisma.vote.upsert({

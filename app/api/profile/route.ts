@@ -9,12 +9,18 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, email: true, name: true, image: true, role: true },
-    })
+    const [user, expert] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, email: true, name: true, image: true, role: true },
+      }),
+      prisma.domainExpert.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true },
+      }),
+    ])
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    return NextResponse.json(user)
+    return NextResponse.json({ ...user, isDomainExpert: !!expert })
   } catch (error: any) {
     console.error('GET /api/profile error:', error)
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 })

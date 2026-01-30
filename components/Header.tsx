@@ -9,6 +9,7 @@ import { User, LogOut, Edit, Settings } from 'lucide-react'
 export function Header() {
   const { data: session, status } = useSession()
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
+  const [isDomainExpert, setIsDomainExpert] = React.useState(false)
 
   React.useEffect(() => {
     if (status !== 'authenticated') return
@@ -19,14 +20,21 @@ export function Header() {
         if (res.ok) {
           const data = await res.json()
           setDisplayRole(data?.role)
+          setIsDomainExpert(!!data?.isDomainExpert)
         } else {
           setDisplayRole(session?.user?.role)
+          setIsDomainExpert(false)
         }
       } catch {
         setDisplayRole(session?.user?.role)
+        setIsDomainExpert(false)
       }
     })()
   }, [status, session?.user?.role])
+
+  const effectiveRole = (displayRole || session?.user?.role) || ''
+  const isSupervisorLike = isDomainExpert || ['SUPERVISOR', 'ADMIN'].includes(effectiveRole)
+  const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
     <header className="bg-dark-card border-b border-dark-border relative">
@@ -57,8 +65,8 @@ export function Header() {
                     href="/supervisor" 
                     className="btn-secondary flex items-center gap-2"
                   >
-                    {(['EDITOR','USER'].includes((displayRole || session.user?.role) || '') ) ? <Edit size={16} /> : <Settings size={16} />}
-                    {(['EDITOR','USER'].includes((displayRole || session.user?.role) || '') ) ? 'لوحة المحرر' : 'لوحة المشرف'}
+                    {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
+                    {isEditorLike ? 'لوحة المحرر' : 'لوحة المشرف'}
                   </Link>
                 )}
 

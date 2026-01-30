@@ -4,12 +4,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
+import { getPostDisplayId } from '@/lib/postDisplay'
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN')) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -19,37 +20,75 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 })
     }
 
-    // شمارش تعداد ادمین‌ها و ناظرها
-    const [adminCount, supervisorCount] = await Promise.all([
-      prisma.user.count({ where: { role: 'ADMIN' } }),
-      prisma.user.count({ where: { role: 'SUPERVISOR' } })
-    ])
+    const me = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, role: true },
+    })
 
-    // حد نصاب امتیاز بر اساس نصف مجموع ادمین + ناظر
-    const threshold = Math.ceil((supervisorCount + adminCount) / 2)
+    if (!me) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    // حد نصاب مشارکت: نصف مجموع ادمین + ناظر (همسان با حد نصاب امتیاز)
-    const participationThreshold = Math.ceil((supervisorCount + adminCount) / 2)
-    
-    // دریافت پست و رای‌ها
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      include: {
-        votes: true,
-        originalPost: true
-      }
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        version: true,
+        revisionNumber: true,
+        content: true,
+        articlesData: true,
+        authorId: true,
+        originalPostId: true,
+        domainId: true,
+        relatedDomainIds: true,
+        votes: { select: { score: true, adminId: true } },
+        originalPost: { select: { id: true, version: true } },
+      },
     })
 
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    // محاسبه مجموع امتیازها
-    const totalScore = post.votes.reduce((sum, vote) => sum + vote.score, 0)
+    const isSupervisor = me.role === 'SUPERVISOR' || me.role === 'ADMIN'
+    if (!isSupervisor) {
+      if (!post.domainId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const expert = await prisma.domainExpert.findFirst({
+        where: { userId: me.id, domainId: post.domainId },
+        select: { id: true },
+      })
+      if (!expert) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+
+    const [superUsers, experts] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: { in: ['ADMIN', 'SUPERVISOR'] } },
+        select: { id: true },
+      }),
+      post.domainId
+        ? prisma.domainExpert.findMany({
+            where: { domainId: post.domainId },
+            select: { userId: true },
+          })
+        : Promise.resolve([] as Array<{ userId: string }>),
+    ])
+
+    const eligibleSet = new Set<string>([...superUsers.map((u) => u.id), ...experts.map((e) => e.userId)])
+    const eligibleIds = Array.from(eligibleSet)
+    const threshold = Math.ceil(eligibleIds.length / 2)
+    const participationThreshold = threshold
+
+    const totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
 
     // شمارش مشارکت رای‌دهندگان (ادمین + ناظر)
     const participationCount = await prisma.vote.count({
-      where: { postId, admin: { role: { in: ['SUPERVISOR', 'ADMIN'] } } }
+      where: { postId, adminId: { in: eligibleIds } }
     })
 
     // بررسی رسیدن به حد نصاب مشارکت
@@ -70,34 +109,142 @@ export async function POST(request: NextRequest) {
     if (Math.abs(totalScore) >= threshold) {
       if (totalScore >= threshold) {
         // امتیاز مثبت - تایید طرح
-        // اگر ویرایش دیگری قبلا منتشر شده، این ویرایش را فقط «قابل بررسی» کن
+        let rebaseToId: string | null = null
         if (post.originalPostId) {
-          const approvedSibling = await prisma.post.findFirst({
-            where: { originalPostId: post.originalPostId, status: 'APPROVED' },
-            select: { id: true }
+          const baseVersion = post.originalPost?.version ?? null
+          const live = await prisma.post.findFirst({
+            where: { status: 'APPROVED', type: post.type, version: { not: null } },
+            orderBy: { version: 'desc' },
+            select: { id: true, version: true },
           })
-          if (approvedSibling) {
-            await prisma.post.update({
-              where: { id: postId },
-              data: { status: 'REVIEWABLE' }
-            })
-            return NextResponse.json({
-              success: true,
-              published: false,
-              action: 'reviewable',
-              message: 'ویرایش شما به حد نصاب رسید اما ویرایش دیگری زودتر منتشر شده است. لطفاً ایده‌های خود را روی نسخه منتشر شده اعمال کنید.',
-              totalScore,
-              threshold,
-              reviewable: true
-            })
+
+          const liveVersion = live?.version ?? null
+          if (baseVersion != null && liveVersion != null && baseVersion < liveVersion) {
+            const [domains, publishedBetween] = await Promise.all([
+              prisma.domain.findMany({
+                select: { id: true, name: true, parentId: true },
+              }),
+              prisma.post.findMany({
+                where: {
+                  type: post.type,
+                  status: { in: ['APPROVED', 'ARCHIVED'] },
+                  version: { gt: baseVersion, lte: liveVersion },
+                },
+                select: { version: true, domainId: true, relatedDomainIds: true },
+                orderBy: { version: 'asc' },
+              }),
+            ])
+
+            const parentById = new Map<string, string | null>()
+            const childrenById = new Map<string, string[]>()
+            const nameById = new Map<string, string>()
+            for (const d of domains) {
+              parentById.set(d.id, d.parentId)
+              nameById.set(d.id, d.name)
+              if (d.parentId) {
+                const arr = childrenById.get(d.parentId) || []
+                arr.push(d.id)
+                childrenById.set(d.parentId, arr)
+              }
+            }
+
+            const collectAncestors = (id: string): string[] => {
+              const out: string[] = []
+              let curId: string | null | undefined = id
+              while (curId) {
+                const pId: string | null = parentById.get(curId) || null
+                if (!pId) break
+                out.push(pId)
+                curId = pId
+              }
+              return out
+            }
+
+            const collectDescendants = (id: string) => {
+              const out: string[] = []
+              const stack: string[] = [...(childrenById.get(id) || [])]
+              while (stack.length) {
+                const cur = stack.pop()!
+                out.push(cur)
+                const kids = childrenById.get(cur)
+                if (kids?.length) stack.push(...kids)
+              }
+              return out
+            }
+
+            const expandDomainIds = (ids: string[]) => {
+              const set = new Set<string>()
+              for (const id of ids) {
+                if (!id) continue
+                set.add(id)
+                for (const a of collectAncestors(id)) set.add(a)
+                for (const c of collectDescendants(id)) set.add(c)
+              }
+              return set
+            }
+
+            const draftDomainIds = Array.from(
+              new Set([post.domainId || '', ...(Array.isArray(post.relatedDomainIds) ? post.relatedDomainIds : [])].filter(Boolean))
+            )
+            const draftExpanded = expandDomainIds(draftDomainIds)
+
+            let conflict: { version: number; domainId: string } | null = null
+            for (const pub of publishedBetween) {
+              if (pub.version == null) continue
+              const pubDomainIds = Array.from(
+                new Set([pub.domainId || '', ...(Array.isArray(pub.relatedDomainIds) ? pub.relatedDomainIds : [])].filter(Boolean))
+              )
+              if (pubDomainIds.length === 0) continue
+              const pubExpanded = expandDomainIds(pubDomainIds)
+              let intersects = false
+              for (const id of Array.from(pubExpanded)) {
+                if (draftExpanded.has(id)) {
+                  intersects = true
+                  break
+                }
+              }
+              if (intersects) {
+                conflict = { version: pub.version, domainId: pub.domainId || pubDomainIds[0] }
+                break
+              }
+            }
+
+            if (conflict) {
+              await prisma.post.update({
+                where: { id: postId },
+                data: { status: 'REVIEWABLE' },
+              })
+
+              const domainName = nameById.get(conflict.domainId) || 'غير معروف'
+              const draftDisplayId = getPostDisplayId({
+                id: post.id,
+                status: post.status,
+                version: post.version,
+                revisionNumber: post.revisionNumber,
+                originalPost: post.originalPost ? { version: post.originalPost.version } : null,
+              })
+
+              return NextResponse.json({
+                success: true,
+                published: false,
+                action: 'reviewable',
+                message: `حصل تصميمك رقم ${draftDisplayId} على نقاط، لكن تم نشر تعديل آخر في مجال '${domainName}' في الإصدار رقم ${conflict.version}. لذلك وُسِم تصميمك بأنه «قابل للمراجعة» لتحديثه.`,
+                totalScore,
+                threshold,
+                reviewable: true,
+              })
+            }
+
+            if (live?.id) rebaseToId = live.id
           }
         }
         const version = await generateNextVersion()
 
         await prisma.$transaction(async (tx) => {
-          if (post.originalPostId) {
+          const archiveTargetId = rebaseToId || post.originalPostId
+          if (archiveTargetId) {
             await tx.post.update({
-              where: { id: post.originalPostId },
+              where: { id: archiveTargetId },
               data: { status: 'ARCHIVED' }
             })
           }
@@ -106,7 +253,8 @@ export async function POST(request: NextRequest) {
             data: {
               status: 'APPROVED',
               version: version,
-              revisionNumber: null
+              revisionNumber: null,
+              ...(rebaseToId ? { originalPostId: rebaseToId } : {}),
             }
           })
         })

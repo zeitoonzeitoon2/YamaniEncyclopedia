@@ -20,6 +20,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    const expertDomains = await prisma.domainExpert.findMany({
+      where: { userId: user.id },
+      select: { domainId: true },
+    })
+    const expertDomainIds = expertDomains.map((d) => d.domainId)
+    const isSupervisor = user.role === 'SUPERVISOR' || user.role === 'ADMIN'
+    const isDomainExpert = expertDomainIds.length > 0
+
     const url = new URL(request.url)
     const pageParam = parseInt(url.searchParams.get('page') || '1', 10)
     const pageSizeParam = parseInt(url.searchParams.get('pageSize') || '20', 10)
@@ -28,7 +36,20 @@ export async function GET(request: NextRequest) {
     const authorQueryRaw = url.searchParams.get('authorQuery')
     const authorQuery = authorQueryRaw ? authorQueryRaw.trim() : ''
 
-    const baseWhere: Prisma.PostWhereInput = { NOT: { status: { in: ['DRAFT'] } } }
+    const baseWhere: Prisma.PostWhereInput = isSupervisor || !isDomainExpert
+      ? { NOT: { status: { in: ['DRAFT'] } } }
+      : {
+          AND: [
+            { NOT: { status: { in: ['DRAFT'] } } },
+            { status: 'PENDING' },
+            {
+              OR: [
+                { domainId: { in: expertDomainIds } },
+                { relatedDomainIds: { hasSome: expertDomainIds } },
+              ],
+            },
+          ],
+        }
     const whereClause: Prisma.PostWhereInput = authorQuery
       ? {
           AND: [

@@ -74,8 +74,10 @@ export default function SupervisorDashboard() {
   const [filter, setFilter] = useState<'new_designs' | 'new_comments' | 'reviewables' | 'my-posts' | 'related' | 'user-search' | 'researchers'>('new_designs')
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
-  const isEditor = session?.user?.role === 'EDITOR' || session?.user?.role === 'USER'
-  const isSupervisor = session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN'
+  const [isDomainExpert, setIsDomainExpert] = useState(false)
+  const isSupervisorRole = session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN'
+  const isVoter = isSupervisorRole || isDomainExpert
+  const isEditor = !isVoter && (session?.user?.role === 'EDITOR' || session?.user?.role === 'USER')
   
   console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
   
@@ -83,6 +85,23 @@ export default function SupervisorDashboard() {
   useEffect(() => {
     console.log('SupervisorDashboard mounted, posts:', posts.length)
   }, [posts])
+
+  useEffect(() => {
+    if (status !== 'authenticated') return
+    ;(async () => {
+      try {
+        const res = await fetch('/api/profile', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setIsDomainExpert(!!data?.isDomainExpert)
+        } else {
+          setIsDomainExpert(false)
+        }
+      } catch {
+        setIsDomainExpert(false)
+      }
+    })()
+  }, [status])
   const [isPostsListCollapsed, setIsPostsListCollapsed] = useState(false)
   const [adminStats, setAdminStats] = useState<{supervisorCount: number; adminCount: number; combinedCount: number; threshold: number; participationThreshold: number} | null>(null)
   const [currentUserVote, setCurrentUserVote] = useState<number | undefined>(undefined)
@@ -441,7 +460,7 @@ export default function SupervisorDashboard() {
       }
 
       // الحصول على إحصائيات المشرفين للناظر فقط
-      if (isSupervisor) {
+      if (isSupervisorRole) {
         const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
@@ -1019,7 +1038,7 @@ export default function SupervisorDashboard() {
                     </button>
                   )}
                   
-                  {isSupervisor && (
+                  {isVoter && (
                     <div className="mb-4">
                       {selectedPost.status === 'APPROVED' ? (
                         <div className="p-3 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
@@ -1036,7 +1055,7 @@ export default function SupervisorDashboard() {
                   )}
                   
                   <div className="flex justify-between items-center text-sm text-dark-muted">
-                    {isSupervisor && adminStats ? (
+                    {isSupervisorRole && adminStats ? (
                       <div className="flex items-center gap-4">
                         <span>عتبة التقييم: <b>{adminStats.threshold}</b></span>
                         <span>عتبة المشاركة: <b>{adminStats.participationThreshold}</b></span>
