@@ -7,6 +7,7 @@ import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X } from 'lucide-react'
+import UserManagement from './UserManagement'
 
 type DomainUser = {
   id: string
@@ -86,6 +87,18 @@ export default function AdminDashboard() {
   }, [roots, selectedDomainId])
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
+
+  const flattenedDomains = useMemo(() => {
+    const list: { id: string; name: string; slug: string }[] = []
+    const traverse = (nodes: DomainNode[]) => {
+      for (const node of nodes) {
+        list.push({ id: node.id, name: node.name, slug: node.slug })
+        if (node.children) traverse(node.children)
+      }
+    }
+    traverse(roots)
+    return list
+  }, [roots])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -627,6 +640,8 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+        
+        <UserManagement allDomains={flattenedDomains} />
       </main>
 
       {addModalOpen && (

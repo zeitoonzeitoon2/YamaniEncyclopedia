@@ -20,6 +20,17 @@ export async function GET(_request: NextRequest) {
         name: true,
         email: true,
         role: true,
+        domainExperts: {
+          include: {
+            domain: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              }
+            }
+          }
+        },
         _count: {
           select: {
             posts: true,
