@@ -90,7 +90,14 @@ export async function GET(_request: NextRequest) {
     }
 
     if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      const userId = (session.user?.id || '').trim()
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+      const membership = await prisma.domainExpert.findFirst({
+        where: { userId },
+        select: { id: true },
+      })
+      if (!membership) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const domains = await prisma.domain.findMany({

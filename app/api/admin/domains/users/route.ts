@@ -6,8 +6,15 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (session.user?.role !== 'ADMIN') {
+      const userId = (session.user?.id || '').trim()
+      if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      const membership = await prisma.domainExpert.findFirst({
+        where: { userId },
+        select: { id: true },
+      })
+      if (!membership) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -36,4 +43,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

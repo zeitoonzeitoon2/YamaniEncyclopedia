@@ -86,6 +86,18 @@ export default function AdminDashboard() {
     return findDomainById(roots, selectedDomainId)
   }, [roots, selectedDomainId])
 
+  const canManageSelectedDomainMembers = useMemo(() => {
+    const userId = session?.user?.id
+    const userRole = session?.user?.role
+    if (!userId) return false
+    if (!selectedDomain) return false
+    if (userRole === 'ADMIN') return true
+    if (!selectedDomain.parentId) return false
+    const parent = findDomainById(roots, selectedDomain.parentId)
+    if (!parent) return false
+    return parent.experts.some((ex) => ex.user.id === userId)
+  }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
+
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
   const flattenedDomains = useMemo(() => {
@@ -107,14 +119,9 @@ export default function AdminDashboard() {
       router.push('/')
       return
     }
-
-    if (session.user?.role !== 'ADMIN') {
-      toast.error('ليست لديك صلاحية المدير')
-      router.push('/')
-      return
+    if (session.user?.role === 'ADMIN') {
+      fetchHeader()
     }
-
-    fetchHeader()
     fetchDomains()
   }, [session, status, router])
 
@@ -400,15 +407,17 @@ export default function AdminDashboard() {
             <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
               {node.counts.posts} منشورات
             </span>
-            <button
-              type="button"
-              onClick={() => openAddModal(node)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-site-text text-xs dark:border-gray-700 dark:hover:bg-gray-800"
-              title="إضافة مجال فرعي"
-            >
-              <Plus size={14} />
-              <span className="hidden sm:inline">إضافة</span>
-            </button>
+            {session?.user?.role === 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => openAddModal(node)}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-site-text text-xs dark:border-gray-700 dark:hover:bg-gray-800"
+                title="إضافة مجال فرعي"
+              >
+                <Plus size={14} />
+                <span className="hidden sm:inline">إضافة</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -440,27 +449,28 @@ export default function AdminDashboard() {
           لوحة المدير
         </h1>
 
-        {/* Site Settings: Header image */}
-        <div className="card mb-8">
-          <h2 className="text-xl font-bold text-site-text mb-4 heading">إعدادات الموقع - صورة الترويسة</h2>
-          <p className="text-site-muted text-sm mb-3">المقاس المقترح: 1920×480 (نسبة 4:1)، الحد الأقصى للحجم 5 ميجابايت، الصيغ: JPG/PNG/WebP</p>
-          {headerUrl && (
-            <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
-              <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" unoptimized />
+        {session?.user?.role === 'ADMIN' && (
+          <div className="card mb-8">
+            <h2 className="text-xl font-bold text-site-text mb-4 heading">إعدادات الموقع - صورة الترويسة</h2>
+            <p className="text-site-muted text-sm mb-3">المقاس المقترح: 1920×480 (نسبة 4:1)، الحد الأقصى للحجم 5 ميجابايت، الصيغ: JPG/PNG/WebP</p>
+            {headerUrl && (
+              <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
+                <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" unoptimized />
+              </div>
+            )}
+            {previewUrl && (
+              <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4 ring-2 ring-warm-accent rounded-lg overflow-hidden">
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+              <input type="file" accept="image/*" onChange={handleFileChange} className="text-site-text" />
+              <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
+                {uploading ? 'جارٍ الرفع...' : 'رفع صورة الترويسة'}
+              </button>
             </div>
-          )}
-          {previewUrl && (
-            <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4 ring-2 ring-warm-accent rounded-lg overflow-hidden">
-              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-            <input type="file" accept="image/*" onChange={handleFileChange} className="text-site-text" />
-            <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
-              {uploading ? 'جارٍ الرفع...' : 'رفع صورة الترويسة'}
-            </button>
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
@@ -505,16 +515,18 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteModalOpen(true)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
-                      title="حذف المجال"
-                      disabled={selectedDomain.slug === 'philosophy'}
-                    >
-                      <Trash2 size={16} />
-                      حذف
-                    </button>
+                    {session?.user?.role === 'ADMIN' && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteModalOpen(true)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
+                        title="حذف المجال"
+                        disabled={selectedDomain.slug === 'philosophy'}
+                      >
+                        <Trash2 size={16} />
+                        حذف
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
@@ -542,106 +554,110 @@ export default function AdminDashboard() {
                               </div>
                               <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removeExpert(ex.user.id)}
-                              disabled={removingExpertKey === key}
-                              className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
-                              title="إزالة"
-                            >
-                              {removingExpertKey === key ? '...' : 'حذف'}
-                            </button>
+                            {canManageSelectedDomainMembers && (
+                              <button
+                                type="button"
+                                onClick={() => removeExpert(ex.user.id)}
+                                disabled={removingExpertKey === key}
+                                className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                title="إزالة"
+                              >
+                                {removingExpertKey === key ? '...' : 'حذف'}
+                              </button>
+                            )}
                           </div>
                         )
                       })
                     )}
                   </div>
 
-                  <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
-                    <div className="flex items-center gap-2 mb-2">
-                      <UserPlus size={16} className="text-warm-accent" />
-                      <div className="text-site-text font-semibold">إضافة عضو</div>
-                    </div>
+                  {canManageSelectedDomainMembers && (
+                    <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                      <div className="flex items-center gap-2 mb-2">
+                        <UserPlus size={16} className="text-warm-accent" />
+                        <div className="text-site-text font-semibold">إضافة عضو</div>
+                      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="md:col-span-2 relative">
-                        <input
-                          value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
-                          onChange={(e) => {
-                            setSelectedUser(null)
-                            setUserQuery(e.target.value)
-                          }}
-                          placeholder="بحث..."
-                          className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                        />
-                        {selectedUser && (
-                          <button
-                            type="button"
-                            onClick={() => {
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 relative">
+                          <input
+                            value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
+                            onChange={(e) => {
                               setSelectedUser(null)
-                              setUserQuery('')
-                              setUserResults([])
+                              setUserQuery(e.target.value)
                             }}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                            aria-label="clear"
+                            placeholder="بحث..."
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                          />
+                          {selectedUser && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedUser(null)
+                                setUserQuery('')
+                                setUserResults([])
+                              }}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                              aria-label="clear"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+
+                          {!selectedUser && userResults.length > 0 && (
+                            <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
+                              {userResults.map((u) => (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedUser(u)
+                                    setUserResults([])
+                                  }}
+                                  className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
+                                    <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
+                                  </div>
+                                  <div className="text-xs text-site-muted">{u.role}</div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={assignRole}
+                            onChange={(e) => setAssignRole(e.target.value === 'HEAD' ? 'HEAD' : 'EXPERT')}
+                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                           >
-                            <X size={16} />
-                          </button>
-                        )}
-
-                        {!selectedUser && userResults.length > 0 && (
-                          <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
-                            {userResults.map((u) => (
-                              <button
-                                key={u.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedUser(u)
-                                  setUserResults([])
-                                }}
-                                className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
-                              >
-                                <div className="min-w-0">
-                                  <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
-                                  <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
-                                </div>
-                                <div className="text-xs text-site-muted">{u.role}</div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                            <option value="EXPERT">خبير</option>
+                            <option value="HEAD">رئيس</option>
+                          </select>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={assignRole}
-                          onChange={(e) => setAssignRole(e.target.value === 'HEAD' ? 'HEAD' : 'EXPERT')}
-                          className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={assignExpert}
+                          disabled={assigning || !selectedUser}
+                          className="btn-primary disabled:opacity-50"
                         >
-                          <option value="EXPERT">خبير</option>
-                          <option value="HEAD">رئيس</option>
-                        </select>
+                          {assigning ? '...' : 'إضافة'}
+                        </button>
                       </div>
                     </div>
-
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={assignExpert}
-                        disabled={assigning || !selectedUser}
-                        className="btn-primary disabled:opacity-50"
-                      >
-                        {assigning ? '...' : 'إضافة'}
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
         
-        <UserManagement allDomains={flattenedDomains} />
+        {session?.user?.role === 'ADMIN' && <UserManagement allDomains={flattenedDomains} />}
       </main>
 
       {addModalOpen && (

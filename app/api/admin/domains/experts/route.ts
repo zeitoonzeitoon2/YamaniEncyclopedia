@@ -5,12 +5,40 @@ import { prisma } from '@/lib/prisma'
 
 const ALLOWED_ROLES = new Set(['HEAD', 'EXPERT'])
 
+async function canManageDomainExperts(requester: { id?: string; role?: string } | undefined, domainId: string) {
+  const requesterId = (requester?.id || '').trim()
+  const requesterRole = (requester?.role || '').trim()
+  if (!requesterId) return { allowed: false as const, status: 401 as const, error: 'Unauthorized' }
+
+  if (requesterRole === 'ADMIN') return { allowed: true as const }
+
+  const domain = await prisma.domain.findUnique({
+    where: { id: domainId },
+    select: { parentId: true },
+  })
+
+  if (!domain) return { allowed: false as const, status: 404 as const, error: 'Domain not found' }
+
+  if (!domain.parentId) {
+    return { allowed: false as const, status: 403 as const, error: 'Forbidden' }
+  }
+
+  const parentMembership = await prisma.domainExpert.findFirst({
+    where: {
+      domainId: domain.parentId,
+      userId: requesterId,
+      role: { in: ['HEAD', 'EXPERT'] },
+    },
+    select: { id: true },
+  })
+
+  return parentMembership ? { allowed: true as const } : { allowed: false as const, status: 403 as const, error: 'Forbidden' }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const domainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
@@ -22,6 +50,11 @@ export async function POST(request: NextRequest) {
     }
     if (!ALLOWED_ROLES.has(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
+
+    const permission = await canManageDomainExperts(session.user, domainId)
+    if (!permission.allowed) {
+      return NextResponse.json({ error: permission.error }, { status: permission.status })
     }
 
     const [domain, user] = await Promise.all([
@@ -49,9 +82,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const domainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
@@ -59,6 +90,11 @@ export async function DELETE(request: NextRequest) {
 
     if (!domainId || !userId) {
       return NextResponse.json({ error: 'domainId and userId are required' }, { status: 400 })
+    }
+
+    const permission = await canManageDomainExperts(session.user, domainId)
+    if (!permission.allowed) {
+      return NextResponse.json({ error: permission.error }, { status: permission.status })
     }
 
     await prisma.domainExpert.delete({
@@ -71,4 +107,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
