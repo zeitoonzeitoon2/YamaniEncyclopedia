@@ -87,13 +87,13 @@ export function Header() {
                   </Link>
                 )}
 
-                {session.user?.role === 'ADMIN' && (
+                {(isDomainExpert || session.user?.role === 'ADMIN') && (
                   <Link 
                     href="/dashboard/admin" 
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Settings size={16} />
-                    لوحة المدير
+                    لوحة الإدارة
                   </Link>
                 )}
 

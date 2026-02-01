@@ -22,6 +22,23 @@ type DomainExpert = {
   user: DomainUser
 }
 
+type CandidacyVote = {
+  voterUserId: string
+  vote: string
+}
+
+type ExpertCandidacy = {
+  id: string
+  domainId: string
+  candidateUserId: string
+  proposerUserId: string
+  status: string
+  createdAt: string
+  candidateUser: DomainUser
+  proposerUser: DomainUser
+  votes: CandidacyVote[]
+}
+
 type DomainNode = {
   id: string
   name: string
@@ -77,9 +94,11 @@ export default function AdminDashboard() {
   const [userQuery, setUserQuery] = useState('')
   const [userResults, setUserResults] = useState<DomainUser[]>([])
   const [selectedUser, setSelectedUser] = useState<DomainUser | null>(null)
-  const [assignRole, setAssignRole] = useState<'HEAD' | 'EXPERT'>('EXPERT')
-  const [assigning, setAssigning] = useState(false)
+  const [nominating, setNominating] = useState(false)
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
+  const [loadingCandidacies, setLoadingCandidacies] = useState(false)
+  const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
+  const [votingKey, setVotingKey] = useState<string | null>(null)
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -203,6 +222,30 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchCandidacies = async (domainId: string) => {
+    try {
+      setLoadingCandidacies(true)
+      const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
+      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'خطأ في جلب الترشيحات')
+        return
+      }
+      setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'خطأ في جلب الترشيحات'
+      toast.error(msg)
+    } finally {
+      setLoadingCandidacies(false)
+    }
+  }
+
+  useEffect(() => {
+    const id = selectedDomainId
+    if (!id) return
+    fetchCandidacies(id)
+  }, [selectedDomainId])
+
   useEffect(() => {
     let active = true
     const t = setTimeout(async () => {
@@ -279,7 +322,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const assignExpert = async () => {
+  const nominateMember = async () => {
     if (!selectedDomain) {
       toast.error('اختر مجالاً أولاً')
       return
@@ -289,27 +332,54 @@ export default function AdminDashboard() {
       return
     }
     try {
-      setAssigning(true)
-      const res = await fetch('/api/admin/domains/experts', {
+      setNominating(true)
+      const res = await fetch('/api/admin/domains/candidacies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domainId: selectedDomain.id, userId: selectedUser.id, role: assignRole }),
+        body: JSON.stringify({ domainId: selectedDomain.id, candidateUserId: selectedUser.id }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في تعيين الخبير')
+        toast.error(payload.error || 'خطأ في إنشاء الترشيح')
         return
       }
-      toast.success('تمت إضافة الخبير')
+      toast.success('تم إرسال الترشيح')
       setSelectedUser(null)
       setUserQuery('')
       setUserResults([])
-      await fetchDomains(selectedDomain.id)
+      await fetchCandidacies(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في تعيين الخبير'
+      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء الترشيح'
       toast.error(msg)
     } finally {
-      setAssigning(false)
+      setNominating(false)
+    }
+  }
+
+  const voteOnCandidacy = async (candidacyId: string, vote: 'APPROVE' | 'REJECT') => {
+    if (!selectedDomain) return
+    const key = `${candidacyId}:${vote}`
+    try {
+      setVotingKey(key)
+      const res = await fetch('/api/admin/domains/candidacies/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidacyId, vote }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'خطأ في التصويت')
+        return
+      }
+      if (payload.status === 'APPROVED') toast.success('تمت الموافقة')
+      else if (payload.status === 'REJECTED') toast.success('تم الرفض')
+      else toast.success('تم تسجيل التصويت')
+      await Promise.all([fetchCandidacies(selectedDomain.id), fetchDomains(selectedDomain.id)])
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'خطأ في التصويت'
+      toast.error(msg)
+    } finally {
+      setVotingKey(null)
     }
   }
 
@@ -432,7 +502,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (status === 'loading' || loadingDomains) {
+  if (status === 'loading' || (loadingDomains && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
         <div className="text-site-text">جارٍ التحميل...</div>
@@ -571,14 +641,78 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
+                  <div className="mt-6 border-t border-site-border pt-4">
+                    <h3 className="text-lg font-bold text-site-text mb-3 heading">الترشيحات قيد الانتظار</h3>
+                    {loadingCandidacies ? (
+                      <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                    ) : pendingCandidacies.length === 0 ? (
+                      <div className="text-site-muted text-sm">لا توجد ترشيحات حالياً.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {pendingCandidacies.map((c) => {
+                          const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
+                          const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
+                          const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
+                          return (
+                            <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-site-text font-medium truncate">
+                                    {c.candidateUser.name || c.candidateUser.email || 'عضو'}
+                                  </div>
+                                  <div className="text-xs text-site-muted truncate mt-1">
+                                    المرشح: {c.candidateUser.email || '—'} • المقترِح: {c.proposerUser.email || c.proposerUser.name || '—'}
+                                  </div>
+                                  <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
+                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
+                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
+                                    {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                  </div>
+                                </div>
+                                {canManageSelectedDomainMembers && (
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
+                                      disabled={votingKey !== null}
+                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                        myVote === 'APPROVE'
+                                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                      } disabled:opacity-50`}
+                                    >
+                                      {votingKey === `${c.id}:APPROVE` ? '...' : 'موافقة'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => voteOnCandidacy(c.id, 'REJECT')}
+                                      disabled={votingKey !== null}
+                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                        myVote === 'REJECT'
+                                          ? 'border-red-600/60 bg-red-600/20 text-site-text'
+                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                      } disabled:opacity-50`}
+                                    >
+                                      {votingKey === `${c.id}:REJECT` ? '...' : 'رفض'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
                   {canManageSelectedDomainMembers && (
                     <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
                       <div className="flex items-center gap-2 mb-2">
                         <UserPlus size={16} className="text-warm-accent" />
-                        <div className="text-site-text font-semibold">إضافة عضو</div>
+                        <div className="text-site-text font-semibold">ترشيح عضو</div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="md:col-span-2 relative">
                           <input
                             value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
@@ -626,27 +760,16 @@ export default function AdminDashboard() {
                             </div>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={assignRole}
-                            onChange={(e) => setAssignRole(e.target.value === 'HEAD' ? 'HEAD' : 'EXPERT')}
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                          >
-                            <option value="EXPERT">خبير</option>
-                            <option value="HEAD">رئيس</option>
-                          </select>
-                        </div>
                       </div>
 
                       <div className="mt-3 flex justify-end">
                         <button
                           type="button"
-                          onClick={assignExpert}
-                          disabled={assigning || !selectedUser}
+                          onClick={nominateMember}
+                          disabled={nominating || !selectedUser}
                           className="btn-primary disabled:opacity-50"
                         >
-                          {assigning ? '...' : 'إضافة'}
+                          {nominating ? '...' : 'إرسال الترشيح'}
                         </button>
                       </div>
                     </div>
