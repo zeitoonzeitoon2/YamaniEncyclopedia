@@ -403,7 +403,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => openAddModal(node)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-site-text text-xs"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-site-text text-xs dark:border-gray-700 dark:hover:bg-gray-800"
               title="إضافة مجال فرعي"
             >
               <Plus size={14} />
@@ -508,7 +508,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setDeleteModalOpen(true)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-200 border border-red-600/30"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
                       title="حذف المجال"
                       disabled={selectedDomain.slug === 'philosophy'}
                     >

@@ -217,16 +217,16 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
 
   if (isLoading) {
     return (
-      <div className="bg-stone-800 rounded-lg p-6 border border-amber-700/40">
-        <h3 className="text-lg font-semibold text-amber-100 mb-4 heading">التعليقات</h3>
-        <div className="text-amber-200">جارٍ التحميل...</div>
+      <div className="bg-site-card rounded-lg p-6 border border-site-border">
+        <h3 className="text-lg font-semibold text-site-text mb-4 heading">التعليقات</h3>
+        <div className="text-site-muted">جارٍ التحميل...</div>
       </div>
     )
   }
 
   return (
-    <div className="bg-stone-800 rounded-lg p-6 border border-amber-700/40">
-      <h3 className="text-lg font-semibold text-amber-100 mb-4">
+    <div className="bg-site-card rounded-lg p-6 border border-site-border">
+      <h3 className="text-lg font-semibold text-site-text mb-4">
         التعليقات ({comments.length})
       </h3>
 
@@ -234,11 +234,11 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
       {canComment && (
         <form onSubmit={handleSubmitComment} className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <label className="text-amber-200 text-sm">وسم التعليق:</label>
+            <label className="text-site-muted text-sm">وسم التعليق:</label>
             <select
               value={newCategory ?? ''}
               onChange={(e) => setNewCategory(e.target.value ? (e.target.value as any) : null)}
-              className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40"
+              className="p-2 bg-site-bg text-site-text rounded border border-site-border"
             >
               <option value="">بدون وسم</option>
               <option value="QUESTION">سؤال</option>
@@ -251,21 +251,21 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="اكتب تعليقك..."
-            className="w-full p-3 bg-stone-900 text-amber-50 placeholder:opacity-60 rounded-lg border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none"
+            className="w-full p-3 bg-site-bg text-site-text placeholder:text-site-muted rounded-lg border border-site-border focus:border-warm-primary focus:outline-none resize-none"
             rows={3}
           />
           {canCreatePoll && (
-            <div className="mt-3 p-3 border border-amber-700/40 rounded-lg bg-stone-900">
-              <label className="inline-flex items-center gap-2 text-amber-200 text-sm">
+            <div className="mt-3 p-3 border border-site-border rounded-lg bg-site-bg">
+              <label className="inline-flex items-center gap-2 text-site-muted text-sm">
                 <input type="checkbox" checked={createPoll} onChange={(e) => setCreatePoll(e.target.checked)} />
                 إضافة استطلاع للرأي
               </label>
               {createPoll && (
                 <div className="mt-2 space-y-2">
-                  <input value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="السؤال (اختياري)" className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40" />
+                  <input value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="السؤال (اختياري)" className="w-full p-2 bg-site-bg text-site-text rounded border border-site-border" />
                   {pollOptions.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <input value={opt} onChange={(e) => setPollOptions(p => { const a=[...p]; a[idx]=e.target.value; return a })} placeholder={`الخيار ${idx+1}`} className="flex-1 p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40" />
+                      <input value={opt} onChange={(e) => setPollOptions(p => { const a=[...p]; a[idx]=e.target.value; return a })} placeholder={`الخيار ${idx+1}`} className="flex-1 p-2 bg-site-bg text-site-text rounded border border-site-border" />
                       <button type="button" onClick={() => setPollOptions(p => p.filter((_,i)=>i!==idx))} className="px-2 py-1 text-xs rounded bg-red-700 text-white">حذف</button>
                     </div>
                   ))}
@@ -291,7 +291,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
       {/* لیست کامنت‌ها */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <div className="text-amber-200 text-center py-8">لا توجد تعليقات بعد</div>
+          <div className="text-site-muted text-center py-8">لا توجد تعليقات بعد</div>
         ) : (
           comments.map((c) => (
             <div key={c.id}>{renderNode(c, 0, postId, onPickUser, canVotePoll)}</div>
@@ -341,7 +341,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
   }
 
   return (
-    <div className="bg-stone-900 border border-amber-700/30 rounded-lg p-4" style={style}>
+    <div className="bg-site-secondary border border-site-border rounded-lg p-4" style={style}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {onPickUser ? (
@@ -354,7 +354,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
               {node.author.image ? (
                 <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
               ) : (
-                <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-full bg-warm-primary/20 text-warm-accent inline-flex items-center justify-center text-xs">
                   {(node.author.name || '؟').charAt(0)}
                 </span>
               )}
@@ -364,7 +364,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
               {node.author.image ? (
                 <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
               ) : (
-                <span className="w-7 h-7 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-full bg-warm-primary/20 text-warm-accent inline-flex items-center justify-center text-xs">
                   {(node.author.name || '؟').charAt(0)}
                 </span>
               )}
@@ -374,35 +374,35 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
             <button
               type="button"
               onClick={() => onPickUser(node.author.id)}
-              className="font-medium text-amber-100 hover:underline"
+              className="font-medium text-site-text hover:underline"
               title="عرض منشورات هذا الباحث"
             >
               {node.author.name}
             </button>
           ) : (
-            <span className="font-medium text-amber-100">{node.author.name}</span>
+            <span className="font-medium text-site-text">{node.author.name}</span>
           )}
           {node.author.role === 'ADMIN' ? 'مدير' : node.author.role === 'SUPERVISOR' ? 'مشرف' : node.author.role === 'EDITOR' ? <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">محرر</span> : <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">مستخدم</span>}
           {(() => { const cat = node.category; const label = cat === 'QUESTION' ? 'سؤال' : cat === 'CRITIQUE' ? 'نقد' : cat === 'SUPPORT' ? 'دعم' : cat === 'SUGGESTION' ? 'اقتراح تعديل' : null; if (!label) return null; const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'; return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>; })()}
         </div>
-        <span className="text-sm text-amber-300">{new Date(node.createdAt).toLocaleDateString('ar')}</span>
+        <span className="text-sm text-site-muted">{new Date(node.createdAt).toLocaleDateString('ar')}</span>
       </div>
       <div className="flex items-baseline gap-2">
         {canComment && (
           <button
             onClick={() => setReplyToLocal(replyToLocal === node.id ? null : node.id)}
-            className="px-2 py-0.5 text-xs rounded-full border border-amber-700/50 text-amber-300 hover:bg-gray-800/60"
+            className="px-2 py-0.5 text-xs rounded-full border border-site-border text-site-muted hover:bg-site-card"
             title="ردّ"
           >
             ردّ
           </button>
         )}
-        <p className="text-amber-50 flex-1">{node.content}</p>
+        <p className="text-site-text flex-1">{node.content}</p>
       </div>
       {node.poll && (
-        <div className="mt-3 p-3 bg-stone-900 border border-amber-700/40 rounded-lg">
+        <div className="mt-3 p-3 bg-site-bg border border-site-border rounded-lg">
           {node.poll.question && (
-            <div className="text-amber-100 mb-2">{node.poll.question}</div>
+            <div className="text-site-text mb-2">{node.poll.question}</div>
           )}
           <div className="space-y-2">
             {node.poll.options.map(opt => (
@@ -419,22 +419,22 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
                       }
                     } catch {}
                   }}
-                  className={`px-3 py-1 rounded ${canVotePoll ? 'bg-warm-primary text-white hover:bg-warm-accent' : 'bg-stone-800 text-amber-300'}`}
+                  className={`px-3 py-1 rounded ${canVotePoll ? 'bg-warm-primary text-white hover:bg-warm-accent' : 'bg-site-secondary text-site-muted'}`}
                 >
                   {opt.text}
                 </button>
-                <span className="text-sm text-amber-200">{opt.count}</span>
+                <span className="text-sm text-site-muted">{opt.count}</span>
               </div>
             ))}
           </div>
-          <div className="text-xs text-amber-300 mt-2">إجمالي الأصوات: {node.poll.totalVotes}</div>
+          <div className="text-xs text-site-muted mt-2">إجمالي الأصوات: {node.poll.totalVotes}</div>
         </div>
       )}
       {replyToLocal === node.id && (
-        <form onSubmit={handleSubmitLocal} className="mt-3 bg-stone-900 border border-amber-700/40 rounded-lg p-3">
+        <form onSubmit={handleSubmitLocal} className="mt-3 bg-site-bg border border-site-border rounded-lg p-3">
           <div className="flex items-center gap-3 mb-2">
-            <label className="text-amber-200 text-sm">وسم الرد:</label>
-            <select value={replyCategoryLocal ?? ''} onChange={(e) => setReplyCategoryLocal(e.target.value ? (e.target.value as any) : null)} className="p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40">
+            <label className="text-site-muted text-sm">وسم الرد:</label>
+            <select value={replyCategoryLocal ?? ''} onChange={(e) => setReplyCategoryLocal(e.target.value ? (e.target.value as any) : null)} className="p-2 bg-site-bg text-site-text rounded border border-site-border">
               <option value="">بدون وسم</option>
               <option value="QUESTION">سؤال</option>
               <option value="CRITIQUE">نقد</option>
@@ -442,9 +442,9 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
               <option value="SUGGESTION">اقتراح تعديل</option>
             </select>
           </div>
-          <textarea value={replyContentLocal} onChange={(e) => setReplyContentLocal(e.target.value)} placeholder="اكتب ردّك..." className="w-full p-2 bg-stone-900 text-amber-50 rounded border border-amber-700/40 focus:border-amber-500 focus:outline-none resize-none" rows={2} />
+          <textarea value={replyContentLocal} onChange={(e) => setReplyContentLocal(e.target.value)} placeholder="اكتب ردّك..." className="w-full p-2 bg-site-bg text-site-text placeholder:text-site-muted rounded border border-site-border focus:border-warm-primary focus:outline-none resize-none" rows={2} />
           <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={() => { setReplyToLocal(null); setReplyContentLocal('') }} className="px-3 py-1 text-sm text-amber-300 hover:text-amber-100">إلغاء</button>
+            <button type="button" onClick={() => { setReplyToLocal(null); setReplyContentLocal('') }} className="px-3 py-1 text-sm text-site-muted hover:text-site-text">إلغاء</button>
             <button type="submit" disabled={isSubmittingLocal || !replyContentLocal.trim()} className="px-3 py-1 text-sm bg-warm-primary text-white rounded hover:bg-warm-accent disabled:opacity-50">إرسال</button>
           </div>
         </form>

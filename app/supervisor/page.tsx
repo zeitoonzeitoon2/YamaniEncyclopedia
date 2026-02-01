@@ -1041,7 +1041,7 @@ export default function SupervisorDashboard() {
                   {isVoter && (
                     <div className="mb-4">
                       {selectedPost.status === 'APPROVED' ? (
-                        <div className="p-3 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
+                        <div className="p-3 rounded-lg border border-green-200 bg-green-100 text-green-800 text-sm dark:bg-green-900/20 dark:text-green-300 dark:border-green-700">
                           تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جدید.
                         </div>
                       ) : (
@@ -1083,7 +1083,7 @@ export default function SupervisorDashboard() {
                     {selectedPost.originalPost ? (
                       <div>
                         {proposedDiagramData?.changeSummary && (
-                          <div className="mb-4 p-4 rounded-lg border border-blue-700 bg-blue-900/20 text-blue-200 text-sm">
+                          <div className="mb-4 p-4 rounded-lg border border-blue-200 bg-blue-100 text-blue-800 text-sm dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-700">
                             <div className="font-semibold mb-1 heading">ملخص التغييرات المرسلة من المحرر</div>
                             <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
                           </div>
