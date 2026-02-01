@@ -183,8 +183,8 @@ export default function NewArticlePage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">در حال بارگذاری...</div>
       </div>
     )
   }
@@ -195,13 +195,13 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <Header />
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-dark-text">ایجاد مقاله جدید</h1>
+            <h1 className="text-3xl font-bold text-site-text">ایجاد مقاله جدید</h1>
             <button
               onClick={() => router.back()}
               className="btn-secondary"
@@ -214,14 +214,14 @@ export default function NewArticlePage() {
             <div className="card">
               {/* عنوان مقاله */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">
+                <label className="block text-sm font-medium text-site-text mb-2">
                   عنوان مقاله *
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   placeholder="عنوان مقاله را وارد کنید..."
                   required
                 />
@@ -229,7 +229,7 @@ export default function NewArticlePage() {
 
               {/* آدرس URL */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">
+                <label className="block text-sm font-medium text-site-text mb-2">
                   آدرس URL (Slug) *
                 </label>
                 <div className="flex items-center">
@@ -240,7 +240,7 @@ export default function NewArticlePage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                    className="flex-1 p-3 rounded-l-lg border-l border-t border-b border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                    className="flex-1 p-3 rounded-l-lg border-l border-t border-b border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                     placeholder="آدرس-url-مقاله"
                     required
                   />
@@ -252,13 +252,13 @@ export default function NewArticlePage() {
 
               {/* خلاصه مقاله */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">
+                <label className="block text-sm font-medium text-site-text mb-2">
                   خلاصه مقاله
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={3}
                   placeholder="خلاصه کوتاهی از مقاله..."
                 />
@@ -266,7 +266,7 @@ export default function NewArticlePage() {
 
               {/* محتوای مقاله */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">
+                <label className="block text-sm font-medium text-site-text mb-2">
                   محتوای مقاله *
                 </label>
                 <div className="flex items-center gap-2 mb-2">
@@ -342,7 +342,7 @@ export default function NewArticlePage() {
                   ref={contentRef}
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={15}
                   placeholder="محتوای کامل مقاله را اینجا بنویسید..."
                   required

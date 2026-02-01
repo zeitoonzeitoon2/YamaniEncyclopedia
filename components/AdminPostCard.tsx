@@ -97,7 +97,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
     
     // برای پست‌های متنی قدیمی
     return (
-      <p className="text-dark-muted mb-6 leading-relaxed">{post.content}</p>
+      <p className="text-site-muted mb-6 leading-relaxed">{post.content}</p>
     )
   }
 
@@ -112,13 +112,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
               className="w-10 h-10 rounded-full"
             />
           ) : (
-            <div className="w-10 h-10 bg-dark-card rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-dark-muted" />
+            <div className="w-10 h-10 bg-site-card rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-site-muted" />
             </div>
           )}
           <div>
-            <p className="text-dark-text font-medium">{post.author.name || 'مستخدم مجهول'}</p>
-            <p className="text-dark-muted text-sm flex items-center gap-1">
+            <p className="text-site-text font-medium">{post.author.name || 'مستخدم مجهول'}</p>
+            <p className="text-site-muted text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {new Date(post.createdAt).toLocaleDateString('ar')}
             </p>
@@ -126,8 +126,8 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
         </div>
         <div className="flex items-center gap-3">
           {post.totalScore !== undefined && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-dark-card rounded-lg">
-              <span className="text-dark-muted text-sm">النقاط:</span>
+            <div className="flex items-center gap-1 px-2 py-1 bg-site-card rounded-lg">
+              <span className="text-site-muted text-sm">النقاط:</span>
               <span className={`font-bold ${post.totalScore > 0 ? 'text-green-400' : post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'}`}>
                 {post.totalScore}
               </span>
@@ -136,13 +136,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-dark-text mb-3">المعرّف: {getPostDisplayId(post)}</h3>
+      <h3 className="text-xl font-bold text-site-text mb-3">المعرّف: {getPostDisplayId(post)}</h3>
       {renderContent()}
 
       {/* نظام التصويت */}
       {currentAdminId && !votingFinalized && (
-        <div className="mb-6 p-4 bg-dark-card rounded-lg">
-          <h4 className="text-dark-text font-medium mb-3">تصويت المشرف</h4>
+        <div className="mb-6 p-4 bg-site-card rounded-lg">
+          <h4 className="text-site-text font-medium mb-3">تصويت المشرف</h4>
           <div className="flex items-center gap-2 mb-3">
             {[-2, -1, 0, 1, 2].map((score) => (
               <button
@@ -152,7 +152,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
                 className={`px-3 py-2 rounded-lg transition-colors ${
                   currentVote === score
                     ? 'bg-warm-primary text-white'
-                    : 'bg-dark-bg hover:bg-gray-700 text-dark-text'
+                    : 'bg-site-bg hover:bg-gray-700 text-site-text'
                 } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {score > 0 ? `+${score}` : score}
@@ -160,7 +160,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
             ))}
           </div>
           {currentVote !== null && (
-            <p className="text-dark-muted text-sm">
+            <p className="text-site-muted text-sm">
               تصويتك الحالي: {currentVote > 0 ? `+${currentVote}` : currentVote}
             </p>
           )}

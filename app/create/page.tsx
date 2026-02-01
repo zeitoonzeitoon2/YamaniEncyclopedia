@@ -189,16 +189,16 @@ function CreatePost() {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">جارٍ التحميل...</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">جارٍ التحميل...</div>
       </div>
     )
   }
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">يرجى تسجيل الدخول</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">يرجى تسجيل الدخول</div>
       </div>
     )
   }
@@ -281,11 +281,11 @@ function CreatePost() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <Header />
       <main className="px-4 py-8">
         <div className="max-w-none">
-          <h1 className="text-3xl font-bold text-dark-text mb-8 text-center">
+          <h1 className="text-3xl font-bold text-site-text mb-8 text-center">
             {originalPostId ? 'تحرير المخطط الرئيسي' : 'إنشاء مخطط شجري جديد'}
           </h1>
 
@@ -310,7 +310,7 @@ function CreatePost() {
 
           <div className="card">
             <div className="mb-6">
-              <label className="block text-dark-text font-medium mb-2">
+              <label className="block text-site-text font-medium mb-2">
                 المخطط الشجري
               </label>
               <div className="text-sm text-gray-400 mb-4">
@@ -336,15 +336,15 @@ function CreatePost() {
       </main>
       {isSummaryOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-2xl">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl">
             <div className="px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text heading">فضلاً اكتب ملخصاً للتغييرات وأي إيضاحات تراها مناسبة</h2>
+              <h2 className="text-xl font-bold text-site-text heading">فضلاً اكتب ملخصاً للتغييرات وأي إيضاحات تراها مناسبة</h2>
             </div>
             <div className="p-6">
               <textarea
                 value={summaryText}
                 onChange={(e) => setSummaryText(e.target.value)}
-                className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 rows={6}
                 placeholder="مثال: أضفت عقدة فرعية لتوضيح الخطوة الثانية، وعدّلت اسم العقدة الرئيسية لتكون أوضح."
               />
@@ -375,7 +375,7 @@ function CreatePost() {
 
 export default function CreatePostPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-dark-bg flex items-center justify-center"><div className="text-dark-text">جارٍ التحميل...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-site-bg flex items-center justify-center"><div className="text-site-text">جارٍ التحميل...</div></div>}>
       <CreatePost />
     </Suspense>
   )

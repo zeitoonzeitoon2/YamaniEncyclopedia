@@ -17,8 +17,8 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
   })
   if (!user) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">المستخدم غير موجود</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">المستخدم غير موجود</div>
       </div>
     )
   }
@@ -39,7 +39,7 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
   const isOwner = session?.user?.id === id
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-start gap-6 mb-8">
           {user.image ? (
@@ -50,10 +50,10 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
             </span>
           )}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-dark-text heading mb-2">{user.name || 'مستخدم'}</h1>
-            <p className="text-dark-muted mb-2">الدور: {user.role}</p>
+            <h1 className="text-3xl font-bold text-site-text heading mb-2">{user.name || 'مستخدم'}</h1>
+            <p className="text-site-muted mb-2">الدور: {user.role}</p>
             {user.bio && (
-              <div className="bg-dark-card border border-dark-border rounded-lg p-4 text-dark-text">
+              <div className="bg-site-card border border-site-border rounded-lg p-4 text-site-text">
                 <div className="font-semibold mb-1 heading">السيرة الذاتية</div>
                 <div className="whitespace-pre-wrap break-words">{user.bio}</div>
               </div>
@@ -62,8 +62,8 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
         </div>
 
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-dark-text heading">منشورات {user.name || ''}</h2>
-          <div className="text-sm text-dark-muted">الإجمالي: {total}</div>
+          <h2 className="text-xl font-bold text-site-text heading">منشورات {user.name || ''}</h2>
+          <div className="text-sm text-site-muted">الإجمالي: {total}</div>
         </div>
 
         {isOwner && (
@@ -74,17 +74,17 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
 
         {posts.length === 0 ? (
           <div className="card">
-            <div className="text-center text-dark-text py-8">لا توجد منشورات</div>
+            <div className="text-center text-site-text py-8">لا توجد منشورات</div>
           </div>
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/dashboard/editor`} className="block bg-dark-card border border-dark-border rounded-lg p-3 hover:bg-gray-800/60">
+              <Link key={post.id} href={`/dashboard/editor`} className="block bg-site-card border border-site-border rounded-lg p-3 hover:bg-gray-800/60">
                 <div className="flex items-center justify-between">
-                  <div className="text-dark-text font-medium">المعرّف: {getPostDisplayId(post as any)}</div>
-                  <div className="text-dark-muted text-sm">{new Date(post.createdAt).toLocaleDateString('ar')}</div>
+                  <div className="text-site-text font-medium">المعرّف: {getPostDisplayId(post as any)}</div>
+                  <div className="text-site-muted text-sm">{new Date(post.createdAt).toLocaleDateString('ar')}</div>
                 </div>
-                <div className="text-sm text-dark-muted mt-1">الحالة: {post.status}</div>
+                <div className="text-sm text-site-muted mt-1">الحالة: {post.status}</div>
               </Link>
             ))}
           </div>

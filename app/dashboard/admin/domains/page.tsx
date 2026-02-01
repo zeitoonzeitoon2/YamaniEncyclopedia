@@ -294,7 +294,7 @@ export default function AdminDomainsPage() {
       <div>
         <div
           className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 transition-colors ${
-            isSelected ? 'bg-warm-primary/20 border border-warm-primary/30' : 'hover:bg-dark-card/50'
+            isSelected ? 'bg-warm-primary/20 border border-warm-primary/30' : 'hover:bg-site-card/50'
           }`}
           style={{ paddingRight: `${depth * 14 + 8}px` }}
         >
@@ -302,7 +302,7 @@ export default function AdminDomainsPage() {
             <button
               type="button"
               onClick={() => (hasChildren ? toggleExpanded(node.id) : setSelectedDomainId(node.id))}
-              className="text-dark-muted hover:text-dark-text"
+              className="text-site-muted hover:text-site-text"
               aria-label={hasChildren ? (isExpanded ? 'collapse' : 'expand') : 'select'}
             >
               {hasChildren ? (
@@ -318,7 +318,7 @@ export default function AdminDomainsPage() {
             <button
               type="button"
               onClick={() => setSelectedDomainId(node.id)}
-              className="text-dark-text font-medium truncate text-right"
+              className="text-site-text font-medium truncate text-right"
               title={node.name}
             >
               {node.name}
@@ -326,13 +326,13 @@ export default function AdminDomainsPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-dark-muted border border-gray-700 rounded-full px-2 py-0.5">
+            <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
               {node.counts.posts} منشورات
             </span>
             <button
               type="button"
               onClick={() => openAddModal(node)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-dark-text text-xs"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-site-text text-xs"
               title="إضافة مجال فرعي"
             >
               <Plus size={14} />
@@ -354,22 +354,22 @@ export default function AdminDomainsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">جارٍ التحميل...</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">جارٍ التحميل...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">إدارة المجالات العلمية</h1>
+        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">إدارة المجالات العلمية</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-dark-text heading">شجرة العلوم</h2>
+              <h2 className="text-xl font-bold text-site-text heading">شجرة العلوم</h2>
               <button
                 type="button"
                 onClick={() => {
@@ -383,7 +383,7 @@ export default function AdminDomainsPage() {
             </div>
 
             {roots.length === 0 ? (
-              <div className="text-dark-muted">لا توجد نطاقات بعد.</div>
+              <div className="text-site-muted">لا توجد نطاقات بعد.</div>
             ) : (
               <div className="space-y-2">
                 {roots.map((r) => (
@@ -395,16 +395,16 @@ export default function AdminDomainsPage() {
 
           <div className="card">
             {!selectedDomain ? (
-              <div className="text-dark-muted">اختر مجالاً من القائمة.</div>
+              <div className="text-site-muted">اختر مجالاً من القائمة.</div>
             ) : (
               <div className="space-y-6">
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-xl font-bold text-dark-text heading">{selectedDomain.name}</h2>
-                      <div className="text-xs text-dark-muted mt-1">slug: {selectedDomain.slug}</div>
+                      <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
+                      <div className="text-xs text-site-muted mt-1">slug: {selectedDomain.slug}</div>
                       {selectedDomain.description && (
-                        <div className="text-sm text-dark-text mt-2 leading-6 whitespace-pre-wrap">
+                        <div className="text-sm text-site-text mt-2 leading-6 whitespace-pre-wrap">
                           {selectedDomain.description}
                         </div>
                       )}
@@ -421,36 +421,36 @@ export default function AdminDomainsPage() {
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-3 mt-4 text-sm text-dark-muted">
+                  <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
                     <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
                     <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-dark-border pt-4">
-                  <h3 className="text-lg font-bold text-dark-text mb-3 heading">إدارة الخبراء</h3>
+                <div className="border-t border-site-border pt-4">
+                  <h3 className="text-lg font-bold text-site-text mb-3 heading">إدارة الخبراء</h3>
 
                   <div className="space-y-2">
                     {selectedDomain.experts.length === 0 ? (
-                      <div className="text-dark-muted text-sm">لا يوجد خبراء لهذا المجال.</div>
+                      <div className="text-site-muted text-sm">لا يوجد خبراء لهذا المجال.</div>
                     ) : (
                       selectedDomain.experts.map((ex) => {
                         const badge = getRoleBadge(ex.role)
                         const key = `${selectedDomain.id}:${ex.user.id}`
                         return (
-                          <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-dark-card/40">
+                          <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                                <span className="text-dark-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
+                                <span className="text-site-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
                               </div>
-                              <div className="text-xs text-dark-muted truncate mt-1">{ex.user.email || ''}</div>
+                              <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                             </div>
                             <button
                               type="button"
                               onClick={() => removeExpert(ex.user.id)}
                               disabled={removingExpertKey === key}
-                              className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-dark-text disabled:opacity-50"
+                              className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
                               title="إزالة"
                             >
                               {removingExpertKey === key ? '...' : 'حذف'}
@@ -461,10 +461,10 @@ export default function AdminDomainsPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-dark-secondary/40">
+                  <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
                     <div className="flex items-center gap-2 mb-2">
                       <UserPlus size={16} className="text-warm-accent" />
-                      <div className="text-dark-text font-semibold">إضافة خبير</div>
+                      <div className="text-site-text font-semibold">إضافة خبير</div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -476,7 +476,7 @@ export default function AdminDomainsPage() {
                             setUserQuery(e.target.value)
                           }}
                           placeholder="بحث..."
-                          className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                         />
                         {selectedUser && (
                           <button
@@ -494,7 +494,7 @@ export default function AdminDomainsPage() {
                         )}
 
                         {!selectedUser && userResults.length > 0 && (
-                          <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-dark-secondary shadow-xl overflow-hidden">
+                          <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
                             {userResults.map((u) => (
                               <button
                                 key={u.id}
@@ -503,13 +503,13 @@ export default function AdminDomainsPage() {
                                   setSelectedUser(u)
                                   setUserResults([])
                                 }}
-                                className="w-full text-right px-3 py-2 hover:bg-dark-card/60 flex items-center justify-between gap-2"
+                                className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
                               >
                                 <div className="min-w-0">
-                                  <div className="text-dark-text text-sm truncate">{u.name || 'بدون اسم'}</div>
-                                  <div className="text-xs text-dark-muted truncate">{u.email || ''}</div>
+                                  <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
+                                  <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
                                 </div>
-                                <div className="text-xs text-dark-muted">{u.role}</div>
+                                <div className="text-xs text-site-muted">{u.role}</div>
                               </button>
                             ))}
                           </div>
@@ -520,7 +520,7 @@ export default function AdminDomainsPage() {
                         <select
                           value={assignRole}
                           onChange={(e) => setAssignRole(e.target.value === 'HEAD' ? 'HEAD' : 'EXPERT')}
-                          className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                          className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                         >
                           <option value="EXPERT">خبير</option>
                           <option value="HEAD">رئيس</option>
@@ -548,9 +548,9 @@ export default function AdminDomainsPage() {
 
       {addModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text">إضافة مجال فرعي</h2>
+              <h2 className="text-xl font-bold text-site-text">إضافة مجال فرعي</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
@@ -561,30 +561,30 @@ export default function AdminDomainsPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-dark-muted">الأب: {addParentName || '-'}</div>
+              <div className="text-sm text-site-muted">الأب: {addParentName || '-'}</div>
               <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">الاسم *</label>
+                <label className="block text-sm font-medium text-site-text mb-2">الاسم *</label>
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">Slug (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">Slug (اختیاری)</label>
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   placeholder="auto"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">توضیح (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">توضیح (اختیاری)</label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={3}
                 />
               </div>
@@ -603,9 +603,9 @@ export default function AdminDomainsPage() {
 
       {deleteModalOpen && selectedDomain && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text">حذف المجال</h2>
+              <h2 className="text-xl font-bold text-site-text">حذف المجال</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
@@ -616,13 +616,13 @@ export default function AdminDomainsPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-dark-text">
+              <div className="text-site-text">
                 هل أنت متأكد أنك تريد حذف المجال <b>{selectedDomain.name}</b>؟
               </div>
-              <div className="text-sm text-dark-muted">
+              <div className="text-sm text-site-muted">
                 شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.
               </div>
-              <div className="flex items-center gap-3 text-sm text-dark-muted">
+              <div className="flex items-center gap-3 text-sm text-site-muted">
                 <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
                 <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
               </div>

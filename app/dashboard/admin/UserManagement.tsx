@@ -154,26 +154,26 @@ export default function UserManagement({ allDomains }: Props) {
   return (
     <div className="card mt-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-dark-text heading">إدارة المستخدمين</h2>
+        <h2 className="text-xl font-bold text-site-text heading">إدارة المستخدمين</h2>
         <div className="relative">
           <input
             type="text"
             placeholder="بحث عن مستخدم..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 rounded-lg bg-dark-bg border border-dark-border text-dark-text focus:outline-none focus:border-warm-primary text-sm w-64"
+            className="pl-10 pr-4 py-2 rounded-lg bg-site-bg border border-site-border text-site-text focus:outline-none focus:border-warm-primary text-sm w-64"
           />
-          <Search className="absolute left-3 top-2.5 text-dark-muted" size={16} />
+          <Search className="absolute left-3 top-2.5 text-site-muted" size={16} />
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-dark-muted">جارٍ تحميل المستخدمين...</div>
+        <div className="text-center py-8 text-site-muted">جارٍ تحميل المستخدمين...</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead>
-              <tr className="border-b border-dark-border text-dark-muted text-sm">
+              <tr className="border-b border-site-border text-site-muted text-sm">
                 <th className="pb-3 pr-4 font-medium">المستخدم</th>
                 <th className="pb-3 px-4 font-medium">البريد الإلكتروني</th>
                 <th className="pb-3 px-4 font-medium">الدور العام</th>
@@ -181,20 +181,20 @@ export default function UserManagement({ allDomains }: Props) {
                 <th className="pb-3 pl-4 font-medium">إجراءات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-dark-border">
+            <tbody className="divide-y divide-site-border">
               {filteredUsers.map(user => {
                 const roleInfo = getGlobalRole(user)
                 return (
-                  <tr key={user.id} className="group hover:bg-dark-card/50 transition-colors">
+                  <tr key={user.id} className="group hover:bg-site-card/50 transition-colors">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-warm-primary/10 flex items-center justify-center text-warm-primary">
                           <User size={16} />
                         </div>
-                        <span className="font-medium text-dark-text">{user.name || 'بدون اسم'}</span>
+                        <span className="font-medium text-site-text">{user.name || 'بدون اسم'}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-dark-muted text-sm">{user.email}</td>
+                    <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
                         {roleInfo.label === 'مشرف عام' ? <ShieldCheck size={12} /> : roleInfo.label === 'مشرف متخصص' ? <Shield size={12} /> : null}
@@ -233,7 +233,7 @@ export default function UserManagement({ allDomains }: Props) {
           </table>
           
           {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-dark-muted">لا يوجد مستخدمين مطابقين للبحث.</div>
+            <div className="text-center py-8 text-site-muted">لا يوجد مستخدمين مطابقين للبحث.</div>
           )}
         </div>
       )}
@@ -241,10 +241,10 @@ export default function UserManagement({ allDomains }: Props) {
       {/* Modal */}
       {isModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-dark-border bg-dark-bg/50">
-              <h3 className="font-bold text-lg text-dark-text">تعيين المجالات: {selectedUser.name}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-dark-muted hover:text-dark-text">
+          <div className="bg-site-card border border-site-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-site-border bg-site-bg/50">
+              <h3 className="font-bold text-lg text-site-text">تعيين المجالات: {selectedUser.name}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-site-muted hover:text-site-text">
                 <X size={20} />
               </button>
             </div>
@@ -252,14 +252,14 @@ export default function UserManagement({ allDomains }: Props) {
             <div className="p-4 space-y-6">
               {/* Current Domains */}
               <div>
-                <h4 className="text-sm font-medium text-dark-muted mb-3">المجالات الحالية</h4>
+                <h4 className="text-sm font-medium text-site-muted mb-3">المجالات الحالية</h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                   {selectedUser.domainExperts.length === 0 ? (
-                    <p className="text-sm text-dark-muted italic">لا توجد مجالات معينة لهذا المستخدم.</p>
+                    <p className="text-sm text-site-muted italic">لا توجد مجالات معينة لهذا المستخدم.</p>
                   ) : (
                     selectedUser.domainExperts.map(de => (
-                      <div key={de.id} className="flex items-center justify-between p-2 rounded-lg bg-dark-bg border border-dark-border">
-                        <span className="text-sm text-dark-text">{de.domain.name}</span>
+                      <div key={de.id} className="flex items-center justify-between p-2 rounded-lg bg-site-bg border border-site-border">
+                        <span className="text-sm text-site-text">{de.domain.name}</span>
                         <button
                           onClick={() => handleRemoveDomain(de.domain.id)}
                           className="text-red-400 hover:text-red-300 p-1 rounded-md hover:bg-red-400/10 transition-colors"
@@ -274,13 +274,13 @@ export default function UserManagement({ allDomains }: Props) {
               </div>
 
               {/* Add Domain */}
-              <div className="pt-4 border-t border-dark-border">
-                <h4 className="text-sm font-medium text-dark-muted mb-3">إضافة مجال جديد</h4>
+              <div className="pt-4 border-t border-site-border">
+                <h4 className="text-sm font-medium text-site-muted mb-3">إضافة مجال جديد</h4>
                 <div className="flex gap-2">
                   <select
                     value={assignDomainId}
                     onChange={(e) => setAssignDomainId(e.target.value)}
-                    className="flex-1 bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-dark-text focus:outline-none focus:border-warm-primary"
+                    className="flex-1 bg-site-bg border border-site-border rounded-lg px-3 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary"
                   >
                     <option value="">اختر مجالاً...</option>
                     {allDomains
@@ -302,10 +302,10 @@ export default function UserManagement({ allDomains }: Props) {
               </div>
             </div>
             
-            <div className="p-4 bg-dark-bg/50 border-t border-dark-border text-right">
+            <div className="p-4 bg-site-bg/50 border-t border-site-border text-right">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-sm text-dark-muted hover:text-dark-text"
+                className="text-sm text-site-muted hover:text-site-text"
               >
                 إغلاق
               </button>

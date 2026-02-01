@@ -45,20 +45,20 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+    <div className="min-h-screen bg-site-bg flex items-center justify-center">
       <div className="card max-w-md w-full mx-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-dark-text mb-2">
+          <h1 className="text-3xl font-bold text-site-text mb-2">
             تسجيل الدخول
           </h1>
-          <p className="text-dark-muted">
+          <p className="text-site-muted">
             أدخل بريدك الإلكتروني وكلمة المرور
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-dark-text font-medium mb-2">
+            <label htmlFor="email" className="block text-site-text font-medium mb-2">
               البريد الإلكتروني
             </label>
             <input
@@ -73,7 +73,7 @@ export default function SignIn() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-dark-text font-medium mb-2">
+            <label htmlFor="password" className="block text-site-text font-medium mb-2">
               كلمة المرور
             </label>
             <input
@@ -97,7 +97,7 @@ export default function SignIn() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-dark-muted text-sm">
+          <p className="text-site-muted text-sm">
             لا تملك حساباً؟{' '}
             <Link href="/auth/signup" className="text-warm-accent hover:text-warm-primary">
               أنشئ حساباً

@@ -542,8 +542,8 @@ export default function SupervisorDashboard() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">جارٍ التحميل...</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">جارٍ التحميل...</div>
       </div>
     )
   }
@@ -629,12 +629,12 @@ export default function SupervisorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <Header />
       {/* removed debug banner */}
       
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-dark-text mb-8 text-center heading">
+        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">
           {isEditor ? 'لوحة المحرر' : 'لوحة المشرف'}
         </h1>
 
@@ -663,53 +663,53 @@ export default function SupervisorDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* بطاقة العُقَد */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-dark-text heading">العُقَد</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">العُقَد</h3>
             <div className="flex justify-around mt-3">
               <div className="text-center">
                 <p className="text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
-                <p className="text-xs text-dark-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">حُذِفت</p>
               </div>
             </div>
           </div>
 
           {/* بطاقة بطاقات التذكّر */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-dark-text heading">بطاقات البيانات</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">بطاقات البيانات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
-                <p className="text-xs text-dark-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
-                <p className="text-xs text-dark-muted">تعديل</p>
+                <p className="text-xs text-site-muted">تعديل</p>
               </div>
             </div>
           </div>
 
           {/* بطاقة المقالات */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-dark-text heading">المقالات</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">المقالات</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
-                <p className="text-xs text-dark-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">أُضيفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
-                <p className="text-xs text-dark-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">حُذِفت</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
-                <p className="text-xs text-dark-muted">تعديل</p>
+                <p className="text-xs text-site-muted">تعديل</p>
               </div>
             </div>
           </div>
@@ -724,11 +724,11 @@ export default function SupervisorDashboard() {
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-dark-text heading">قائمة المخططات</h2>
+                <h2 className="text-xl font-bold text-site-text heading">قائمة المخططات</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
-                className="p-2 rounded-lg bg-dark-card text-dark-text hover:bg-gray-700 transition-colors"
+                className="p-2 rounded-lg bg-site-card text-site-text hover:bg-gray-700 transition-colors"
                 title={isPostsListCollapsed ? 'عرض قائمة التصاميم' : 'إخفاء قائمة التصاميم'}
               >
                 {isPostsListCollapsed ? '📋' : '◀'}
@@ -767,7 +767,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'new_designs'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض التصاميم الجديدة"
                   >
@@ -781,7 +781,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'new_comments'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض المنشورات التي بها تعليقات جديدة"
                   >
@@ -795,7 +795,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'reviewables'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض العناصر القابلة للمراجعة"
                   >
@@ -810,7 +810,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'my-posts'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض تصاميمي"
                   >
@@ -824,7 +824,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'related'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض المشاركات ذات التعليقات المتعلقة بي"
                   >
@@ -838,7 +838,7 @@ export default function SupervisorDashboard() {
                     className={`group relative w-full rounded-full border text-xs font-medium py-2 px-3 flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-warm-primary ${
                       filter === 'researchers'
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
-                        : 'bg-transparent text-dark-text border-gray-700 hover:bg-gray-800/60'
+                        : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
                     title="عرض الباحثين والبحث عنهم"
                   >
@@ -852,23 +852,23 @@ export default function SupervisorDashboard() {
                       <input
                         value={researcherQuery}
                         onChange={(e) => setResearcherQuery(e.target.value)}
-                        className="w-full rounded-full border text-xs py-2 px-3 bg-dark-card text-dark-text border-gray-700"
+                        className="w-full rounded-full border text-xs py-2 px-3 bg-site-card text-site-text border-gray-700"
                         placeholder="ابحث بأول الحروف من الاسم"
                         title="اكتب أول حروف الاسم"
                       />
                     </div>
-                    <div className="max-h-48 overflow-y-auto bg-dark-card border border-gray-700 rounded-lg p-2">
+                    <div className="max-h-48 overflow-y-auto bg-site-card border border-gray-700 rounded-lg p-2">
                       {isResearchersLoading ? (
-                        <div className="text-dark-muted text-sm">جارٍ التحميل...</div>
+                        <div className="text-site-muted text-sm">جارٍ التحميل...</div>
                       ) : researchers.length === 0 ? (
-                        <div className="text-dark-muted text-sm">لا توجد نتائج</div>
+                        <div className="text-site-muted text-sm">لا توجد نتائج</div>
                       ) : (
                         <div className="space-y-1">
                           {(researchers.length ? researchers : allResearchers).map(r => (
                             <button
                               key={r.id}
                               onClick={() => { setSelectedResearcherId(r.id); fetchResearcherDetail(r.id); fetchResearcherPosts(r.id) }}
-                              className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-dark-text flex items-center gap-2"
+                              className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-site-text flex items-center gap-2"
                               title="عرض معلومات وبحوث الباحث"
                             >
                               {r.image ? (
@@ -878,7 +878,7 @@ export default function SupervisorDashboard() {
                               )}
                               <span className="flex-1">
                                 {(r.name && !r.name.includes('@')) ? r.name : 'بدون اسم'}
-                                <span className="ml-2 text-xs text-dark-muted">{r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role}</span>
+                                <span className="ml-2 text-xs text-site-muted">{r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role}</span>
                               </span>
                             </button>
                           ))}
@@ -895,14 +895,14 @@ export default function SupervisorDashboard() {
                               <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 text-white text-sm">{(selectedResearcher.name||'?').charAt(0)}</span>
                             )}
                             <div>
-                              <div className="text-dark-text font-semibold">
+                              <div className="text-site-text font-semibold">
                                 {selectedResearcher.name || 'بدون اسم'}
                               </div>
-                              <div className="text-xs text-dark-muted">{selectedResearcher.role === 'SUPERVISOR' ? 'مشرف' : selectedResearcher.role === 'EDITOR' ? 'محرر' : selectedResearcher.role}</div>
+                              <div className="text-xs text-site-muted">{selectedResearcher.role === 'SUPERVISOR' ? 'مشرف' : selectedResearcher.role === 'EDITOR' ? 'محرر' : selectedResearcher.role}</div>
                             </div>
                           </div>
                           {selectedResearcher.bio && (
-                            <div className="mt-2 text-sm text-dark-text leading-6">{selectedResearcher.bio}</div>
+                            <div className="mt-2 text-sm text-site-text leading-6">{selectedResearcher.bio}</div>
                           )}
                         </div>
                       </div>
@@ -913,7 +913,7 @@ export default function SupervisorDashboard() {
                 {filter === 'new_comments' ? (
                   recentComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
+                      <p className="text-site-muted text-lg">لا توجد تعليقات</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -921,18 +921,18 @@ export default function SupervisorDashboard() {
                         <button
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
-                          className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                          className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
                           title={`فتح التصميم المرتبط بهذا التعليق`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                            <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
                               <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
-                          <div className="text-sm text-dark-text line-clamp-2">
+                          <div className="text-sm text-site-text line-clamp-2">
                             {c.content}
                           </div>
                         </button>
@@ -942,7 +942,7 @@ export default function SupervisorDashboard() {
                 ) : filter === 'related' ? (
                   relatedComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-dark-muted text-lg">لا توجد تعليقات</p>
+                      <p className="text-site-muted text-lg">لا توجد تعليقات</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -950,18 +950,18 @@ export default function SupervisorDashboard() {
                         <button
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
-                          className="w-full text-right bg-dark-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                          className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
                           title={`فتح التصميم المتعلق بهذا التعليق`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="inline-flex items-center gap-1 text-xs text-dark-muted">
+                            <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
                               <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
                             </span>
                           </div>
-                          <div className="text-sm text-dark-text line-clamp-2">
+                          <div className="text-sm text-site-text line-clamp-2">
                             {c.content}
                           </div>
                         </button>
@@ -972,7 +972,7 @@ export default function SupervisorDashboard() {
                   <>
                     {filteredPosts.length === 0 ? (
                       <div className="text-center py-12">
-                        <p className="text-dark-muted text-lg">
+                        <p className="text-site-muted text-lg">
                           لا توجد تصاميم في هذه الفئة
                         </p>
                       </div>
@@ -995,7 +995,7 @@ export default function SupervisorDashboard() {
                               setPage(p => p + 1)
                               setTimeout(() => fetchPosts(ac.signal, true), 0)
                             }}
-                            className="px-4 py-2 rounded bg-dark-card text-dark-text border border-dark-border hover:bg-gray-800/60"
+                            className="px-4 py-2 rounded bg-site-card text-site-text border border-site-border hover:bg-gray-800/60"
                           >
                             عرض المزيد
                           </button>
@@ -1013,15 +1013,15 @@ export default function SupervisorDashboard() {
           <div className="flex-1">
             {selectedPost ? (
               <div>
-                <h2 className="text-xl font-bold text-dark-text mb-4 heading">تفاصيل التصميم</h2>
+                <h2 className="text-xl font-bold text-site-text mb-4 heading">تفاصيل التصميم</h2>
                 <div className="card mb-6 relative">
-                  <h3 className="font-bold text-lg text-dark-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
-                  <p className="text-dark-muted text-sm mb-4">
+                  <h3 className="font-bold text-lg text-site-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
+                  <p className="text-site-muted text-sm mb-4">
                     الكاتب:
                     <button
                       type="button"
                       onClick={() => pickUserAndShowPosts(selectedPost.author.id)}
-                      className="ml-1 text-dark-text hover:underline"
+                      className="ml-1 text-site-text hover:underline"
                       title="عرض منشورات هذا الباحث"
                     >
                       {selectedPost.author.name || 'مجهول'}
@@ -1054,7 +1054,7 @@ export default function SupervisorDashboard() {
                     </div>
                   )}
                   
-                  <div className="flex justify-between items-center text-sm text-dark-muted">
+                  <div className="flex justify-between items-center text-sm text-site-muted">
                     {isSupervisorRole && adminStats ? (
                       <div className="flex items-center gap-4">
                         <span>عتبة التقييم: <b>{adminStats.threshold}</b></span>
@@ -1088,17 +1088,17 @@ export default function SupervisorDashboard() {
                             <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
                           </div>
                         )}
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
+                        <h4 className="font-bold text-lg text-site-text mb-4 heading">المخطط المقترح</h4>
                         {originalDiagramData && proposedDiagramData ? (
                           <>
                             {/* Legend: دليل الألوان */}
                             <div className="mb-4">
-                              <div className="bg-dark-card border border-gray-700 rounded-lg p-3 text-sm text-dark-text">
+                              <div className="bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text">
                                 <div className="font-semibold mb-2 heading">دليل الألوان</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {/* Nodes legend */}
                                   <div>
-                                    <div className="text-xs text-dark-muted mb-1">العُقَد</div>
+                                    <div className="text-xs text-site-muted mb-1">العُقَد</div>
                                     <div className="flex flex-wrap gap-2">
                                       <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">أخضر: عُقدة جديدة</span>
                                       <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">أحمر: عُقدة محذوفة</span>
@@ -1107,7 +1107,7 @@ export default function SupervisorDashboard() {
                                   </div>
                                   {/* Stroke legend */}
                                   <div>
-                                    <div className="text-xs text-dark-muted mb-1">حدود بطاقة البيانات</div>
+                                    <div className="text-xs text-site-muted mb-1">حدود بطاقة البيانات</div>
                                     <div className="flex flex-wrap items-center gap-3">
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-green-500 bg-transparent" />
@@ -1142,7 +1142,7 @@ export default function SupervisorDashboard() {
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold text-lg text-dark-text mb-4 heading">المخطط المقترح</h4>
+                        <h4 className="font-bold text-lg text-site-text mb-4 heading">المخطط المقترح</h4>
                         {proposedDiagramData ? (
                           <div className="h-96 border border-gray-300 rounded-lg overflow-hidden">
                             <TreeDiagramEditor
@@ -1167,7 +1167,7 @@ export default function SupervisorDashboard() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-dark-muted text-lg">
+                <p className="text-site-muted text-lg">
                   يرجى اختيار تصميم لعرض التفاصيل
                 </p>
               </div>
@@ -1177,11 +1177,11 @@ export default function SupervisorDashboard() {
       </main>
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md">
             <div className="px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-dark-text heading">اختر إجراءً:</h2>
-              <p className="text-sm text-dark-text mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
-              <p className="text-sm text-dark-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من قائمة المخططات وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
+              <h2 className="text-xl font-bold text-site-text heading">اختر إجراءً:</h2>
+              <p className="text-sm text-site-text mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
+              <p className="text-sm text-site-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من قائمة المخططات وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-end gap-3">

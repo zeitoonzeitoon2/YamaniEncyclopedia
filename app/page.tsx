@@ -29,12 +29,12 @@ export default async function HomePage() {
           </div>
         )}
 
-        <h1 className="text-2xl font-bold mb-6 text-dark-text">المخطط الأبرز</h1>
+        <h1 className="text-2xl font-bold mb-6 text-site-text">المخطط الأبرز</h1>
         <div className="mb-12">
           {topVotedPost ? (
             <PostCard post={topVotedPost as any} fullWidth={true} hideArticleLinkInputs={true} hideAuthorName={true} hideAuthorAvatar={true} />
           ) : (
-            <p className="text-dark-muted">لا توجد منشورات بعد.</p>
+            <p className="text-site-muted">لا توجد منشورات بعد.</p>
           )}
         </div>
 
@@ -70,7 +70,7 @@ export default async function HomePage() {
         </section>
 
         {/* توضيح أسفل الصفحة */}
-        <div className="mt-12 border-t border-dark-border pt-6 text-sm text-dark-muted">
+        <div className="mt-12 border-t border-site-border pt-6 text-sm text-site-muted">
           <p>
             فَبَشِّرْ عِبَادِ · الَّذِينَ يَسْتَمِعُونَ الْقَوْلَ فَيَتَّبِعُونَ أَحْسَنَهُ أُولَئِكَ الَّذِينَ هَدَاهُمُ اللَّهُ وَأُولَئِكَ هُمْ أُولُو الْأَلْبَابِ (زمر: 17،18)
           </p>

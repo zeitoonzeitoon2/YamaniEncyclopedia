@@ -282,9 +282,9 @@ export default function QuickArticleModal({
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-dark-secondary rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-          <h2 className="text-xl font-bold text-dark-text">
+          <h2 className="text-xl font-bold text-site-text">
             {editMode ? 'تعديل المقال' : 'إنشاء مقالة سريعة'}
           </h2>
           <button
@@ -301,14 +301,14 @@ export default function QuickArticleModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* عنوان المقال */}
             <div>
-              <label className="block text-sm font-medium text-dark-text mb-2">
+              <label className="block text-sm font-medium text-site-text mb-2">
                 عنوان المقال *
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 placeholder="أدخل عنوان المقال..."
                 required
                 autoFocus
@@ -322,13 +322,13 @@ export default function QuickArticleModal({
 
             {/* ملخّص المقال */}
             <div>
-              <label className="block text-sm font-medium text-dark-text mb-2">
+              <label className="block text-sm font-medium text-site-text mb-2">
                 ملخص المقال
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 rows={2}
                 placeholder="ملخص قصير للمقال..."
               />
@@ -337,7 +337,7 @@ export default function QuickArticleModal({
             {/* محتوى المقال */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-dark-text">
+                <label className="block text-sm font-medium text-site-text">
                   محتوى المقال *
                 </label>
                 <button
@@ -414,7 +414,7 @@ export default function QuickArticleModal({
                 ref={contentRef}
                 value={formData.content}
                 onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                className="w-full p-3 rounded-lg border border-gray-600 bg-dark-bg text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
+                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
                 rows={10}
                 placeholder="اكتب محتوى المقال هنا... مثال: هذا نص فيه حاشية[^1]\n\n[^1]: اكتب نص الحاشية هنا."
                 required

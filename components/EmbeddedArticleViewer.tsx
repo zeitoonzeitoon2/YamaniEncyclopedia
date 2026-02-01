@@ -184,11 +184,11 @@ export default function EmbeddedArticleViewer({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-card border border-dark-border rounded-xl w-[95vw] max-w-[1600px] max-h-[95vh] overflow-hidden shadow-2xl">
+      <div className="bg-site-card border border-site-border rounded-xl w-[95vw] max-w-[1600px] max-h-[95vh] overflow-hidden shadow-2xl">
         {/* الترويسة */}
-        <div className="flex items-center justify-between p-4 border-b border-dark-border">
-          <h3 className="text-xl font-bold text-dark-text">مقارنة المقال</h3>
-          <button onClick={onClose} className="px-3 py-1 rounded bg-dark-muted text-dark-text hover:bg-dark-border">إغلاق</button>
+        <div className="flex items-center justify-between p-4 border-b border-site-border">
+          <h3 className="text-xl font-bold text-site-text">مقارنة المقال</h3>
+          <button onClick={onClose} className="px-3 py-1 rounded bg-dark-muted text-site-text hover:bg-site-border">إغلاق</button>
         </div>
         
         {/* المحتوى */}

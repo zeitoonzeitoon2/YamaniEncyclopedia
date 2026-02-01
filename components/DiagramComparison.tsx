@@ -367,7 +367,7 @@ export default function DiagramComparison({
     }
     const hasAnything = (typeof data.flashText === 'string' && data.flashText.trim()) || primaryLink || (items && items.some((it: any) => (it?.content || '').trim())) || (related && related.length > 0)
     if (!hasAnything) return (
-      <div className="text-sm text-dark-muted">لا توجد بطاقة بيانات</div>
+      <div className="text-sm text-site-muted">لا توجد بطاقة بيانات</div>
     )
     return (
       <div className="bg-stone-900/40 border border-amber-700/40 rounded-lg p-3">

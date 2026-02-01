@@ -96,8 +96,8 @@ export default function EditArticlePage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-dark-text">در حال بارگذاری...</div>
+      <div className="min-h-screen bg-site-bg flex items-center justify-center">
+        <div className="text-site-text">در حال بارگذاری...</div>
       </div>
     )
   }
@@ -108,55 +108,55 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen bg-site-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-dark-text">ویرایش مقاله</h1>
+            <h1 className="text-3xl font-bold text-site-text">ویرایش مقاله</h1>
             <button onClick={() => router.back()} className="btn-secondary">بازگشت</button>
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
             <div className="card">
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">عنوان</label>
+                <label className="block text-sm font-medium text-site-text mb-2">عنوان</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   required
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">Slug</label>
+                <label className="block text-sm font-medium text-site-text mb-2">Slug</label>
                 <div className="flex items-center">
                   <span className="px-3 py-3 bg-gray-700 text-gray-300 rounded-r-lg border border-r border-gray-600">/articles/</span>
                   <input
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                    className="flex-1 p-3 rounded-l-lg border-l border-t border-b border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                    className="flex-1 p-3 rounded-l-lg border-l border-t border-b border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                     required
                   />
                 </div>
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">خلاصه</label>
+                <label className="block text-sm font-medium text-site-text mb-2">خلاصه</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={3}
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-text mb-2">محتوا</label>
+                <label className="block text-sm font-medium text-site-text mb-2">محتوا</label>
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-dark-secondary text-dark-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-secondary text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={15}
                   required
                 />

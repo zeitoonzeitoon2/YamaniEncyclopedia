@@ -66,19 +66,19 @@ export default function ProfileEditor({ initialName, initialBio, initialImage }:
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold text-dark-text heading mb-3">تعديل الملف الشخصي</h3>
+      <h3 className="text-lg font-semibold text-site-text heading mb-3">تعديل الملف الشخصي</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm text-dark-muted mb-1">الاسم</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text" />
+          <label className="block text-sm text-site-muted mb-1">الاسم</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 rounded border border-gray-700 bg-site-bg text-site-text" />
         </div>
         <div>
-          <label className="block text-sm text-dark-muted mb-1">السيرة الذاتية</label>
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="w-full p-2 rounded border border-gray-700 bg-dark-bg text-dark-text" />
+          <label className="block text-sm text-site-muted mb-1">السيرة الذاتية</label>
+          <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="w-full p-2 rounded border border-gray-700 bg-site-bg text-site-text" />
         </div>
       </div>
       <div className="mt-3">
-        <label className="block text-sm text-dark-muted mb-1">رفع صورة الملف</label>
+        <label className="block text-sm text-site-muted mb-1">رفع صورة الملف</label>
         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => e.target.files && e.target.files[0] && handleUpload(e.target.files[0])} />
       </div>
       <div className="mt-4 flex gap-2">

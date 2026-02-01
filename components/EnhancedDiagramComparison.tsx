@@ -285,18 +285,18 @@ export default function EnhancedDiagramComparison({
       {/* قائمة المسودات (فقط عند توفّر البيانات) */}
       {parsedArticlesData && parsedArticlesData.drafts && parsedArticlesData.drafts.length > 0 && (
         <div className="mt-8">
-          <h4 className="font-bold text-lg text-dark-text mb-4">المقالات المقترحة</h4>
+          <h4 className="font-bold text-lg text-site-text mb-4">المقالات المقترحة</h4>
           <div className="grid gap-4 mb-6">
             {parsedArticlesData.drafts.map((draft) => (
               <div key={draft.id} className="card border border-gray-600">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h5 className="font-semibold text-dark-text">{draft.title}</h5>
-                    <p className="text-sm text-dark-muted mt-1">
+                    <h5 className="font-semibold text-site-text">{draft.title}</h5>
+                    <p className="text-sm text-site-muted mt-1">
                       الاسم المميز: {draft.slug}
                     </p>
                     {draft.description && (
-                      <p className="text-sm text-dark-muted mt-1">
+                      <p className="text-sm text-site-muted mt-1">
                         {draft.description}
                       </p>
                     )}

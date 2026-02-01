@@ -8,18 +8,34 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  color-scheme: dark;
+:root {
+  /* Light Mode (Warm) */
+  --site-bg: 253 251 247;      /* Warm Off-White #fdfbf7 */
+  --site-card: 255 255 255;    /* White #ffffff */
+  --site-border: 231 229 228;  /* Warm Gray 200 #e7e5e4 */
+  --site-text: 28 25 23;       /* Warm Gray 900 #1c1917 */
+  --site-muted: 120 113 108;   /* Warm Gray 500 #78716c */
+  --site-secondary: 245 245 244; /* Warm Gray 100 #f5f5f4 */
+}
+
+[class~="dark"] {
+  /* Dark Mode (Original) */
+  --site-bg: 10 10 10;         /* #0a0a0a */
+  --site-card: 26 26 26;       /* #1a1a1a */
+  --site-border: 42 42 42;     /* #2a2a2a */
+  --site-text: 229 229 229;    /* #e5e5e5 */
+  --site-muted: 115 115 115;   /* #737373 */
+  --site-secondary: 38 38 38;  /* Neutral 800 #262626 */
 }
 
 body {
-  @apply bg-dark-bg text-dark-text font-sans;
+  @apply bg-site-bg text-site-text font-sans transition-colors duration-200;
 }
 
 /* Custom Highlight (Marker) Styling */
 mark {
   background-color: rgba(230, 126, 34, 0.3); /* Transparent Orange */
-  color: #fff; /* Readable text */
+  color: inherit; /* Adapt to text color */
   border-radius: 4px;
   padding: 0 0.3em; /* Reduced vertical padding */
   -webkit-box-decoration-break: clone;
@@ -35,7 +51,7 @@ mark {
   box-sizing: border-box;
   max-width: 100%;
   display: block;
-  background: #151515;
+  background: var(--site-card);
   border-right: 4px solid #E67E22;
   padding: 20px 40px;
   border-radius: 8px;
@@ -90,14 +106,14 @@ mark {
   line-height: 1;
   pointer-events: none;
 }
-.article-content-body blockquote .q-footer { margin-top: 8px; text-align: right; font-size: 12px; color: #ffd7a3; }
+.article-content-body blockquote .q-footer { margin-top: 8px; text-align: right; font-size: 12px; color: var(--site-muted); }
 
 /* Quranic ayah style */
 .article-content-body blockquote.q-ayah {
   box-sizing: border-box;
   max-width: 100%;
   display: block;
-  background: #151515;
+  background: var(--site-card);
   border-right: 4px solid #E67E22;
   padding: 20px 40px;
   border-radius: 8px;
@@ -110,6 +126,16 @@ mark {
   position: relative;
   overflow: hidden;
 }
+
+/* Force dark text for Ayah in light mode if needed, or keep gold */
+[class~="dark"] .article-content-body blockquote.q-ayah {
+  color: #FFD700;
+}
+/* In light mode, Gold might be hard to read on white. Let's use a darker gold/orange */
+:root .article-content-body blockquote.q-ayah {
+  color: #b45309; /* Darker amber */
+}
+
 @layer components {
   /* دکمه‌های اصلی */
   .btn-primary {
@@ -122,12 +148,12 @@ mark {
 
   /* کارت‌ها */
   .card {
-    @apply bg-dark-card border border-dark-border rounded-lg shadow-xl;
+    @apply bg-site-card border border-site-border rounded-lg shadow-xl;
   }
 
   /* فیلدهای ورودی */
   .input-field {
-    @apply bg-dark-card border border-dark-border text-dark-text rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
+    @apply bg-site-card border border-site-border text-site-text rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
   }
   
   .input {

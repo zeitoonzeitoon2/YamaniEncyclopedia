@@ -72,7 +72,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
       className={`cursor-pointer transition-all duration-200 ${
         isSelected
           ? 'bg-warm-primary bg-opacity-10 border-2 border-warm-primary rounded-lg'
-          : 'bg-dark-card hover:bg-dark-card hover:bg-opacity-80 border border-dark-border rounded-lg'
+          : 'bg-site-card hover:bg-site-card hover:bg-opacity-80 border border-site-border rounded-lg'
       } p-4 mb-2`}
       onClick={onClick}
     >
@@ -94,8 +94,8 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
           </div>
         )}
         <div className="flex-1">
-          <p className="text-dark-text font-medium text-sm">{post.author.name || 'مؤلف مجهول'}</p>
-          <p className="text-dark-muted text-xs">
+          <p className="text-site-text font-medium text-sm">{post.author.name || 'مؤلف مجهول'}</p>
+          <p className="text-site-muted text-xs">
             {createdDate.toLocaleDateString('ar')}
           </p>
         </div>
@@ -109,7 +109,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
 
       {/* معرّف المنشور */}
       <div className="mb-2">
-        <h4 className="text-dark-text font-semibold text-sm">
+        <h4 className="text-site-text font-semibold text-sm">
           المعرّف: {getPostDisplayId(post)}
         </h4>
       </div>
@@ -137,7 +137,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
 
         {post.totalScore !== undefined && (
           <div className="flex items-center gap-1">
-            <span className="text-dark-muted text-xs">النقاط:</span>
+            <span className="text-site-muted text-xs">النقاط:</span>
             <span className={`font-bold text-xs ${
               post.totalScore > 0 ? 'text-green-400' :
               post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'

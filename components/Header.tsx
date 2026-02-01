@@ -4,12 +4,19 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, LogOut, Edit, Settings } from 'lucide-react'
+import { User, LogOut, Edit, Settings, Sun, Moon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export function Header() {
   const { data: session, status } = useSession()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   React.useEffect(() => {
     if (status !== 'authenticated') return
@@ -37,19 +44,29 @@ export function Header() {
   const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
-    <header className="bg-dark-card border-b border-dark-border relative">
-      <div className="absolute top-2 right-4 text-xs text-dark-muted">
+    <header className="bg-site-card border-b border-site-border relative">
+      <div className="absolute top-2 right-4 text-xs text-site-muted">
         Tree of Knowledge
       </div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-dark-text heading">
+          <Link href="/" className="text-2xl font-bold text-site-text heading">
             شجرة العلم
           </Link>
 
           <nav className="flex items-center gap-4">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 rounded-lg hover:bg-site-border transition-colors text-site-text"
+                aria-label="تغيير الثيم"
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            )}
+
             {status === 'loading' ? (
-              <div className="w-8 h-8 bg-dark-border rounded-full animate-pulse"></div>
+              <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
               <>
                 <Link 
@@ -94,10 +111,10 @@ export function Header() {
                       />
                     </Link>
                   )}
-                  <span className="text-dark-text">{session.user?.name}</span>
+                  <span className="text-site-text">{session.user?.name}</span>
                   <button
                     onClick={() => signOut()}
-                    className="text-dark-muted hover:text-red-400 transition-colors"
+                    className="text-site-muted hover:text-red-400 transition-colors"
                     title="تسجيل الخروج"
                   >
                     <LogOut size={20} />
@@ -105,13 +122,17 @@ export function Header() {
                 </div>
               </>
             ) : (
-              <Link
-                href="/auth/signin"
-                className="btn-primary flex items-center gap-2"
-              >
-                <User size={16} />
-                تسجيل الدخول
-              </Link>
+              <div className="flex gap-4">
+                <Link href="/auth/signin" className="text-site-text hover:text-warm-primary transition-colors">
+                  تسجيل الدخول
+                </Link>
+                <Link 
+                  href="/auth/signup" 
+                  className="btn-primary"
+                >
+                  إنشاء حساب
+                </Link>
+              </div>
             )}
           </nav>
         </div>

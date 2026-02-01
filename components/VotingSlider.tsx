@@ -93,7 +93,7 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
               }}
             />
             {/* مؤشرات النقاط */}
-            <div className="flex justify-between text-xs text-dark-muted mt-1 px-1">
+            <div className="flex justify-between text-xs text-site-muted mt-1 px-1">
               <span className="text-red-600 font-medium">-2</span>
               <span className="text-red-400">-1</span>
               <span className="text-gray-500">0</span>

@@ -15,12 +15,13 @@ module.exports = {
         'latin': ['Inter', 'ui-sans-serif', 'system-ui']
       },
       colors: {
-        dark: {
-          bg: '#0a0a0a',
-          card: '#1a1a1a',
-          border: '#2a2a2a',
-          text: '#e5e5e5',
-          muted: '#737373'
+        site: {
+          bg: 'rgb(var(--site-bg) / <alpha-value>)',
+          card: 'rgb(var(--site-card) / <alpha-value>)',
+          border: 'rgb(var(--site-border) / <alpha-value>)',
+          text: 'rgb(var(--site-text) / <alpha-value>)',
+          muted: 'rgb(var(--site-muted) / <alpha-value>)',
+          secondary: 'rgb(var(--site-secondary) / <alpha-value>)'
         },
         warm: {
           primary: '#d97706',

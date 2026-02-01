@@ -57,7 +57,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
     
     // للمنشورات النصية القديمة
     return (
-      <p className="text-dark-muted leading-relaxed">
+      <p className="text-site-muted leading-relaxed">
         {post.content.length > 150 
           ? `${post.content.substring(0, 150)}...` 
           : post.content
@@ -80,15 +80,15 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
         )}
         <div>
           {!hideAuthorName && post.author.name && (
-            <p className="text-dark-text font-medium">{post.author.name}</p>
+            <p className="text-site-text font-medium">{post.author.name}</p>
           )}
-          <p className="text-dark-muted text-sm">
+          <p className="text-site-muted text-sm">
             {new Date(post.createdAt).toLocaleDateString('ar')}
           </p>
         </div>
       </div>
       
-      <h3 className="text-xl font-semibold text-dark-text mb-3">
+      <h3 className="text-xl font-semibold text-site-text mb-3">
         المعرّف: {getPostDisplayId(post)}
       </h3>
       
