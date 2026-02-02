@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'
+import QuickArticleModal from '@/components/QuickArticleModal'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
 
@@ -62,6 +63,7 @@ export default function AdminCourseChaptersPage() {
   const [orderDirty, setOrderDirty] = useState(false)
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [previewHtml, setPreviewHtml] = useState('')
+  const [editorOpen, setEditorOpen] = useState(false)
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
 
@@ -437,13 +439,21 @@ export default function AdminCourseChaptersPage() {
                       className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
                     />
                   </div>
-                  <textarea
-                    value={form.content}
-                    onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
-                    rows={12}
-                    placeholder="محتوى الفصل (Markdown)..."
-                    className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap"
-                  />
+                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm text-site-text">محتوى الفصل</div>
+                      <button
+                        type="button"
+                        onClick={() => setEditorOpen(true)}
+                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                      >
+                        تحرير المحتوى
+                      </button>
+                    </div>
+                    <div className="text-xs text-site-muted">
+                      {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
@@ -466,6 +476,26 @@ export default function AdminCourseChaptersPage() {
           </div>
         )}
       </main>
+      <QuickArticleModal
+        isOpen={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        onArticleCreated={() => {}}
+        createViaAPI={false}
+        editMode={!!form.title || !!form.content}
+        existingDraft={{
+          title: form.title || 'عنوان الفصل',
+          description: '',
+          content: form.content || '',
+          slug: selectedChapter?.id || 'chapter-draft',
+        }}
+        onDraftCreated={(draft) => {
+          setForm((prev) => ({
+            ...prev,
+            title: draft.title || prev.title,
+            content: draft.content,
+          }))
+        }}
+      />
     </div>
   )
 }

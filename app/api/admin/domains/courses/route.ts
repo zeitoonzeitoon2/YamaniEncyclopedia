@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         description: true,
+        syllabus: true,
         status: true,
         createdAt: true,
         proposer: { select: { id: true, name: true, email: true, role: true } },
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
       id: c.id,
       title: c.title,
       description: c.description,
+      syllabus: c.syllabus,
       status: c.status,
       createdAt: c.createdAt,
       proposerUser: c.proposer,
@@ -68,9 +70,20 @@ export async function POST(request: NextRequest) {
     const domainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
     const title = typeof body.title === 'string' ? body.title.trim() : ''
     const description = typeof body.description === 'string' ? body.description.trim() : null
+    const rawSyllabus = Array.isArray(body.syllabus) ? body.syllabus : []
+    const syllabus = rawSyllabus
+      .map((item) => {
+        const titleValue = typeof item?.title === 'string' ? item.title.trim() : ''
+        const descValue = typeof item?.description === 'string' ? item.description.trim() : ''
+        return titleValue ? { title: titleValue, description: descValue || undefined } : null
+      })
+      .filter((item): item is { title: string; description?: string } => !!item)
 
     if (!domainId || !title) {
       return NextResponse.json({ error: 'domainId and title are required' }, { status: 400 })
+    }
+    if (syllabus.length === 0) {
+      return NextResponse.json({ error: 'syllabus is required' }, { status: 400 })
     }
 
     const perm = await canManageDomainCourses(session.user, domainId)
@@ -80,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
 
     const course = await prisma.course.create({
-      data: { title, description, domainId, proposerId: session.user.id, status: 'PENDING' },
+      data: { title, description, syllabus, domainId, proposerId: session.user.id, status: 'PENDING' },
       select: { id: true },
     })
 

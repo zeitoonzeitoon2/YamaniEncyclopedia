@@ -46,10 +46,16 @@ type CourseVote = {
   vote: string
 }
 
+type SyllabusItem = {
+  title: string
+  description?: string
+}
+
 type DomainCourse = {
   id: string
   title: string
   description: string | null
+  syllabus?: SyllabusItem[] | null
   status: string
   createdAt: string
   proposerUser: DomainUser | null
@@ -121,7 +127,11 @@ export default function AdminDashboard() {
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
   const [courseVotingKey, setCourseVotingKey] = useState<string | null>(null)
-  const [courseForm, setCourseForm] = useState({ title: '', description: '' })
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    description: '',
+    syllabus: [{ title: '', description: '' }],
+  })
   const [proposingCourse, setProposingCourse] = useState(false)
 
   const selectedDomain = useMemo(() => {
@@ -440,8 +450,20 @@ export default function AdminDashboard() {
     if (!selectedDomain) return
     const title = courseForm.title.trim()
     const description = courseForm.description.trim()
+    const syllabus = courseForm.syllabus
+      .map((item) => {
+        const itemTitle = item.title.trim()
+        const itemDescription = item.description?.trim() || ''
+        if (!itemTitle) return null
+        return { title: itemTitle, description: itemDescription || undefined }
+      })
+      .filter((item): item is SyllabusItem => !!item)
     if (!title) {
       toast.error('عنوان الدورة مطلوب')
+      return
+    }
+    if (syllabus.length === 0) {
+      toast.error('المنهج مطلوب')
       return
     }
     try {
@@ -449,7 +471,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/domains/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domainId: selectedDomain.id, title, description: description || undefined }),
+        body: JSON.stringify({ domainId: selectedDomain.id, title, description: description || undefined, syllabus }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
@@ -457,7 +479,7 @@ export default function AdminDashboard() {
         return
       }
       toast.success('تم إرسال المقترح')
-      setCourseForm({ title: '', description: '' })
+      setCourseForm({ title: '', description: '', syllabus: [{ title: '', description: '' }] })
       await fetchCourses(selectedDomain.id)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'خطأ في اقتراح الدورة'
@@ -988,6 +1010,21 @@ export default function AdminDashboard() {
                                       <div className="min-w-0">
                                         <div className="text-site-text font-medium">{course.title}</div>
                                         {course.description && <div className="text-xs text-site-muted mt-1">{course.description}</div>}
+                                      {Array.isArray(course.syllabus) && course.syllabus.length > 0 && (
+                                        <div className="mt-2 space-y-1 text-xs text-site-muted">
+                                          {course.syllabus.map((item, index) => (
+                                            <div key={`${course.id}-syllabus-${index}`} className="flex items-start gap-2">
+                                              <span className="text-[10px] text-site-muted">#{index + 1}</span>
+                                              <div className="min-w-0">
+                                                <div className="text-site-text">{item.title}</div>
+                                                {item.description && (
+                                                  <div className="text-[10px] text-site-muted">{item.description}</div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
                                         <div className="text-xs text-site-muted mt-1">
                                           المقترِح: {course.proposerUser?.email || course.proposerUser?.name || '—'}
                                         </div>
@@ -1060,6 +1097,74 @@ export default function AdminDashboard() {
                               placeholder="وصف مختصر"
                               className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[90px]"
                             />
+                            <div className="space-y-3">
+                              <div className="text-sm text-site-text font-medium">المنهج</div>
+                              <div className="space-y-2">
+                                {courseForm.syllabus.map((item, index) => (
+                                  <div key={`syllabus-${index}`} className="p-3 rounded-lg border border-gray-700 bg-gray-900/30 space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="text-xs text-site-muted">الفصل {index + 1}</div>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setCourseForm((prev) => ({
+                                            ...prev,
+                                            syllabus: prev.syllabus.length === 1
+                                              ? prev.syllabus
+                                              : prev.syllabus.filter((_, i) => i !== index),
+                                          }))
+                                        }
+                                        className="text-gray-400 hover:text-gray-200"
+                                        title="إزالة"
+                                        aria-label="إزالة"
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                    <input
+                                      value={item.title}
+                                      onChange={(e) =>
+                                        setCourseForm((prev) => ({
+                                          ...prev,
+                                          syllabus: prev.syllabus.map((entry, i) =>
+                                            i === index ? { ...entry, title: e.target.value } : entry
+                                          ),
+                                        }))
+                                      }
+                                      placeholder="عنوان الفصل"
+                                      className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                                    />
+                                    <textarea
+                                      value={item.description || ''}
+                                      onChange={(e) =>
+                                        setCourseForm((prev) => ({
+                                          ...prev,
+                                          syllabus: prev.syllabus.map((entry, i) =>
+                                            i === index ? { ...entry, description: e.target.value } : entry
+                                          ),
+                                        }))
+                                      }
+                                      placeholder="وصف مختصر للفصل"
+                                      className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[70px]"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCourseForm((prev) => ({
+                                      ...prev,
+                                      syllabus: [...prev.syllabus, { title: '', description: '' }],
+                                    }))
+                                  }
+                                  className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                                >
+                                  إضافة فصل
+                                </button>
+                              </div>
+                            </div>
                           </div>
                           <div className="mt-3 flex justify-end">
                             <button

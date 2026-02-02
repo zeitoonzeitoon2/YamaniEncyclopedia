@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { id: true, domainId: true, status: true },
+      select: { id: true, domainId: true, status: true, syllabus: true },
     })
     if (!course) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     if (course.status !== 'PENDING') {
@@ -72,11 +72,47 @@ export async function POST(request: NextRequest) {
     console.log(`Course ${courseId} vote result:`, { approvals, rejections, totalExperts, nextStatus })
 
     if (nextStatus !== 'PENDING') {
-      await prisma.course.update({
-        where: { id: courseId },
-        data: { status: nextStatus, isActive: nextStatus === 'APPROVED' },
-        select: { id: true },
-      })
+      if (nextStatus === 'APPROVED') {
+        const existingChapters = await prisma.courseChapter.count({ where: { courseId } })
+        const syllabusItems = Array.isArray(course.syllabus)
+          ? course.syllabus
+              .map((item) => {
+                const title = typeof item?.title === 'string' ? item.title.trim() : ''
+                const description = typeof item?.description === 'string' ? item.description.trim() : ''
+                return title ? { title, description: description || undefined } : null
+              })
+              .filter((item): item is { title: string; description?: string } => !!item)
+          : []
+
+        await prisma.$transaction([
+          prisma.course.update({
+            where: { id: courseId },
+            data: { status: nextStatus, isActive: true },
+            select: { id: true },
+          }),
+          ...(existingChapters === 0 && syllabusItems.length > 0
+            ? [
+                prisma.courseChapter.createMany({
+                  data: syllabusItems.map((item, index) => ({
+                    title: item.title,
+                    content: '',
+                    orderIndex: index,
+                    status: 'APPROVED',
+                    version: 1,
+                    courseId,
+                    authorId: perm.userId,
+                  })),
+                }),
+              ]
+            : []),
+        ])
+      } else {
+        await prisma.course.update({
+          where: { id: courseId },
+          data: { status: nextStatus, isActive: false },
+          select: { id: true },
+        })
+      }
     }
 
     return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, totalExperts } })

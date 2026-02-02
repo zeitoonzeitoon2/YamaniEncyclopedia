@@ -119,6 +119,7 @@ model Course {
   domainId    String
   domain      Domain   @relation(fields: [domainId], references: [id])
   description String?
+  syllabus    Json?
   isActive    Boolean  @default(true)
   status      String   @default("PENDING")
   proposerId  String
@@ -151,7 +152,7 @@ model CourseVote {
 model CourseChapter {
   id          String   @id @default(cuid())
   title       String
-  content     String
+  content     String   @default("")
   orderIndex  Int      @default(0)
   status      String   @default("PENDING")
   version     Int?
