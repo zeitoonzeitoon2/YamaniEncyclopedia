@@ -7,11 +7,16 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const postId = searchParams.get('postId')
+    const postId = (searchParams.get('postId') || '').trim()
+    const chapterId = (searchParams.get('chapterId') || '').trim()
 
-    if (!postId) {
-      return NextResponse.json({ error: 'postId is required' }, { status: 400 })
+    if (!postId && !chapterId) {
+      return NextResponse.json({ error: 'postId or chapterId is required' }, { status: 400 })
     }
+    if (postId && chapterId) {
+      return NextResponse.json({ error: 'Only one of postId or chapterId is allowed' }, { status: 400 })
+    }
+    const whereTarget = postId ? { postId } : { chapterId }
 
     const buildTree = (items: any[]) => {
       const byId: Record<string, any> = {}
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     try {
       const all = await prisma.comment.findMany({
-        where: { postId },
+        where: whereTarget,
         select: {
           id: true,
           content: true,
@@ -86,7 +91,7 @@ export async function GET(request: NextRequest) {
     } catch (dbErr) {
       console.error('GET /api/comments with tag failed, retrying without tag:', dbErr)
       const all = await prisma.comment.findMany({
-        where: { postId },
+        where: whereTarget,
         select: {
           id: true,
           content: true,
@@ -152,7 +157,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
     const content = body?.content
-    const postId = body?.postId
+    const postId = typeof body?.postId === 'string' ? body.postId.trim() : ''
+    const chapterId = typeof body?.chapterId === 'string' ? body.chapterId.trim() : ''
     const parentId = body?.parentId
     let tag: string | null = body?.tag ?? body?.category ?? null
 
@@ -175,27 +181,48 @@ export async function POST(request: NextRequest) {
     }
     tag = mapTag(tag)
 
-    if (!content?.trim() || !postId) {
-      return NextResponse.json({ error: 'Content and postId are required' }, { status: 400 })
+    if (!content?.trim() || (!postId && !chapterId)) {
+      return NextResponse.json({ error: 'Content and postId or chapterId are required' }, { status: 400 })
+    }
+    if (postId && chapterId) {
+      return NextResponse.json({ error: 'Only one of postId or chapterId is allowed' }, { status: 400 })
     }
 
-    // بررسی وجود پست
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-    })
+    if (postId) {
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true },
+      })
+      if (!post) {
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+      }
+    }
 
-    if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    if (chapterId) {
+      const chapter = await prisma.courseChapter.findUnique({
+        where: { id: chapterId },
+        select: { id: true },
+      })
+      if (!chapter) {
+        return NextResponse.json({ error: 'Chapter not found' }, { status: 404 })
+      }
     }
 
     // اگر parentId وجود دارد، بررسی وجود کامنت والد
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: parentId },
+        select: { id: true, postId: true, chapterId: true },
       })
 
       if (!parentComment) {
         return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 })
+      }
+      if (postId && parentComment.postId !== postId) {
+        return NextResponse.json({ error: 'Parent comment mismatch' }, { status: 400 })
+      }
+      if (chapterId && parentComment.chapterId !== chapterId) {
+        return NextResponse.json({ error: 'Parent comment mismatch' }, { status: 400 })
       }
     }
 
@@ -203,7 +230,8 @@ export async function POST(request: NextRequest) {
       const comment = await prisma.comment.create({
         data: {
           content: content.trim(),
-          postId,
+          ...(postId ? { postId } : {}),
+          ...(chapterId ? { chapterId } : {}),
           authorId: session.user.id,
           parentId: parentId || null,
           ...(tag ? { tag } : {}),
@@ -219,7 +247,8 @@ export async function POST(request: NextRequest) {
         const comment = await prisma.comment.create({
           data: {
             content: content.trim(),
-            postId,
+            ...(postId ? { postId } : {}),
+            ...(chapterId ? { chapterId } : {}),
             authorId: session.user.id,
             parentId: parentId || null,
           },

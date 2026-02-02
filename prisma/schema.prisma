@@ -101,6 +101,9 @@ model User {
   examSessionsAsExaminer ExamSession[] @relation("ExamSessionExaminer")
   proposedCourses Course[] @relation("CourseProposer")
   courseVotes     CourseVote[] @relation("CourseVoteVoter")
+  courseChapters  CourseChapter[]
+  chapterVotes    ChapterVote[] @relation("ChapterVoteVoter")
+  chapterProgress CourseChapterProgress[]
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
@@ -122,6 +125,7 @@ model Course {
   proposer    User     @relation("CourseProposer", fields: [proposerId], references: [id])
   userCourses UserCourse[]
   votes       CourseVote[]
+  chapters    CourseChapter[]
   requirements DomainRequirement[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -142,6 +146,56 @@ model CourseVote {
 
   @@id([courseId, voterId])
   @@index([voterId])
+}
+
+model CourseChapter {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  orderIndex  Int      @default(0)
+  status      String   @default("PENDING")
+  version     Int?
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  originalChapterId String?
+  originalChapter   CourseChapter? @relation("CourseChapterRevisions", fields: [originalChapterId], references: [id])
+  revisions         CourseChapter[] @relation("CourseChapterRevisions")
+  votes       ChapterVote[]
+  progress    CourseChapterProgress[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([authorId])
+  @@index([status])
+  @@index([originalChapterId])
+  @@index([orderIndex])
+  @@index([version])
+}
+
+model ChapterVote {
+  chapterId String
+  chapter   CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  voterId   String
+  voter     User   @relation("ChapterVoteVoter", fields: [voterId], references: [id])
+  vote      String @default("APPROVE")
+  createdAt DateTime @default(now())
+
+  @@id([chapterId, voterId])
+  @@index([voterId])
+}
+
+model CourseChapterProgress {
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+  chapterId String
+  chapter   CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@id([userId, chapterId])
+  @@index([chapterId])
 }
 
 model UserCourse {
@@ -247,8 +301,10 @@ model Comment {
   content   String
   category  String?
   tag       String?
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  postId    String?
+  post      Post?     @relation(fields: [postId], references: [id])
+  chapterId String?
+  chapter   CourseChapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   
@@ -264,6 +320,7 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   @@index([postId])
+  @@index([chapterId])
   @@index([category])
   @@index([tag])
   @@index([createdAt])

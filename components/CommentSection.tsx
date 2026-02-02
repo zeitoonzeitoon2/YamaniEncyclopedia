@@ -25,11 +25,12 @@ interface CommentNode {
 }
 
 interface CommentSectionProps {
-  postId: string
+  postId?: string
+  chapterId?: string
   onPickUser?: (id: string) => void
 }
 
-export default function CommentSection({ postId, onPickUser }: CommentSectionProps) {
+export default function CommentSection({ postId, chapterId, onPickUser }: CommentSectionProps) {
   const { data: session } = useSession()
   const [comments, setComments] = useState<CommentNode[]>([])
   const [newComment, setNewComment] = useState('')
@@ -50,25 +51,31 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
 
   // بارگذاری کامنت‌ها
   const loadComments = useCallback(async () => {
+    const targetId = postId || chapterId
+    if (!targetId) {
+      setIsLoading(false)
+      return
+    }
+    const query = postId ? `postId=${postId}` : `chapterId=${chapterId}`
     try {
-      const response = await fetch(`/api/comments?postId=${postId}`)
+      const response = await fetch(`/api/comments?${query}`)
       if (response.ok) {
         const data = await response.json()
         setComments(data)
-        // پس از لود موفق، به عنوان خوانده‌شده علامت بزن
-        try {
-          await fetch('/api/comments/mark-read', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ postId }),
-          })
-          // بروزرسانی نشان کارت با رویداد عمومی
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('comments:read', { detail: { postId } }))
+        if (postId) {
+          try {
+            await fetch('/api/comments/mark-read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ postId }),
+            })
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('comments:read', { detail: { postId } }))
+            }
+          } catch (e) {
+            console.warn('mark-read failed', e)
           }
-        } catch (e) {
-          console.warn('mark-read failed', e)
         }
       }
     } catch (error) {
@@ -76,7 +83,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
     } finally {
       setIsLoading(false)
     }
-  }, [postId])
+  }, [postId, chapterId])
 
   useEffect(() => {
     loadComments()
@@ -108,7 +115,8 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
         },
         body: JSON.stringify({
           content: newComment.trim(),
-          postId,
+          ...(postId ? { postId } : {}),
+          ...(chapterId ? { chapterId } : {}),
           ...(newCategory ? { category: newCategory } : {}),
         }),
       })
@@ -152,7 +160,8 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
         },
         body: JSON.stringify({
           content: replyContent.trim(),
-          postId,
+          ...(postId ? { postId } : {}),
+          ...(chapterId ? { chapterId } : {}),
           parentId: commentId,
           ...(replyCategory ? { category: replyCategory } : {}),
         }),
@@ -294,7 +303,7 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
           <div className="text-site-muted text-center py-8">لا توجد تعليقات بعد</div>
         ) : (
           comments.map((c) => (
-            <div key={c.id}>{renderNode(c, 0, postId, onPickUser, canVotePoll)}</div>
+            <div key={c.id}>{renderNode(c, 0, postId, chapterId, onPickUser, canVotePoll)}</div>
           ))
         )}
       </div>
@@ -302,14 +311,14 @@ export default function CommentSection({ postId, onPickUser }: CommentSectionPro
   )
 }
 
-function renderNode(node: CommentNode, depth: number, postId: string, onPickUser?: (id: string) => void, canVotePoll?: boolean) {
+function renderNode(node: CommentNode, depth: number, postId: string | undefined, chapterId: string | undefined, onPickUser?: (id: string) => void, canVotePoll?: boolean) {
   const margin = Math.min(depth * 16, 96)
   return (
-    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} style={{ marginRight: margin }} onPickUser={onPickUser} canVotePoll={canVotePoll} />
+    <CommentNodeView key={node.id} node={node} depth={depth} postId={postId} chapterId={chapterId} style={{ marginRight: margin }} onPickUser={onPickUser} canVotePoll={canVotePoll} />
   )
 }
 
-function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }: { node: CommentNode; depth: number; postId: string; style?: React.CSSProperties; onPickUser?: (id: string) => void; canVotePoll?: boolean }) {
+function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, canVotePoll }: { node: CommentNode; depth: number; postId?: string; chapterId?: string; style?: React.CSSProperties; onPickUser?: (id: string) => void; canVotePoll?: boolean }) {
   const { data: session } = useSession()
   const canComment = !!session?.user
   const [replyToLocal, setReplyToLocal] = useState<string | null>(null)
@@ -325,7 +334,13 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
       const res = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: replyContentLocal.trim(), postId, parentId: node.id, ...(replyCategoryLocal ? { category: replyCategoryLocal } : {}) }),
+        body: JSON.stringify({
+          content: replyContentLocal.trim(),
+          ...(postId ? { postId } : {}),
+          ...(chapterId ? { chapterId } : {}),
+          parentId: node.id,
+          ...(replyCategoryLocal ? { category: replyCategoryLocal } : {}),
+        }),
       })
       if (res.ok) {
         setReplyToLocal(null)
@@ -452,7 +467,7 @@ function CommentNodeView({ node, depth, postId, style, onPickUser, canVotePoll }
       {node.replies?.length > 0 && (
         <div className="mt-4 space-y-3">
           {node.replies.map((child) => (
-            <div key={child.id}>{renderNode(child, depth + 1, postId, onPickUser, canVotePoll)}</div>
+            <div key={child.id}>{renderNode(child, depth + 1, postId, chapterId, onPickUser, canVotePoll)}</div>
           ))}
         </div>
       )}
