@@ -53,13 +53,16 @@ export async function POST(request: NextRequest) {
       create: { courseId, voterId: perm.userId, vote },
     })
 
-    const [approvals, rejections] = await Promise.all([
+    const [approvals, rejections, totalExperts] = await Promise.all([
       prisma.courseVote.count({ where: { courseId, vote: 'APPROVE' } }),
       prisma.courseVote.count({ where: { courseId, vote: 'REJECT' } }),
+      prisma.domainExpert.count({ where: { domainId: course.domainId, role: { in: ['HEAD', 'EXPERT'] } } }),
     ])
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    if (approvals >= 2 && approvals > rejections) nextStatus = 'APPROVED'
+    const approvalBySmallTeam = totalExperts <= 2 && approvals >= 1
+    const approvalByMajority = approvals > totalExperts / 2
+    if (approvalBySmallTeam || approvalByMajority) nextStatus = 'APPROVED'
     if (rejections >= 2 && rejections > approvals) nextStatus = 'REJECTED'
 
     if (nextStatus !== 'PENDING') {
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections } })
+    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, totalExperts } })
   } catch (error) {
     console.error('Error voting course:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -64,8 +64,8 @@ export function Header() {
         Tree of Knowledge
       </div>
       <div className="container mx-auto px-4 py-4">
-        <div className="grid grid-cols-3 items-center gap-4">
-          <nav className="flex items-center gap-3 justify-start">
+        <div className="flex items-center justify-between gap-4">
+          <nav className="flex items-center gap-3 justify-start order-1">
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -164,7 +164,7 @@ export function Header() {
             )}
           </nav>
 
-          <div className="flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center order-2">
             <div className="flex items-center rounded-full bg-site-border/60 p-1 border border-site-border">
               <Link
                 href="/"
@@ -185,7 +185,7 @@ export function Header() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end order-3">
             <Link href="/" className="text-2xl font-bold text-site-text heading">
               شجرة العلم
             </Link>
