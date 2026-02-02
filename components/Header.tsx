@@ -14,6 +14,8 @@ export function Header() {
   const [mounted, setMounted] = React.useState(false)
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement | null>(null)
   const pathname = usePathname()
   const isAcademy = pathname?.startsWith('/academy')
 
@@ -42,6 +44,16 @@ export function Header() {
     })()
   }, [status, session?.user?.role])
 
+  React.useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (!menuRef.current) return
+      if (!menuRef.current.contains(target)) setMenuOpen(false)
+    }
+    if (menuOpen) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
   const effectiveRole = (displayRole || session?.user?.role) || ''
   const isSupervisorLike = isDomainExpert || ['SUPERVISOR', 'ADMIN'].includes(effectiveRole)
   const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
@@ -52,34 +64,8 @@ export function Header() {
         Tree of Knowledge
       </div>
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-site-text heading">
-            شجرة العلم
-          </Link>
-
-          <nav className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Link
-                href="/"
-                className={`px-3 py-1 rounded-full text-sm border ${
-                  isAcademy
-                    ? 'border-site-border text-site-muted hover:text-site-text'
-                    : 'border-warm-primary/40 bg-warm-primary/20 text-site-text'
-                }`}
-              >
-                شجرة البحث
-              </Link>
-              <Link
-                href="/academy"
-                className={`px-3 py-1 rounded-full text-sm border ${
-                  isAcademy
-                    ? 'border-warm-primary/40 bg-warm-primary/20 text-site-text'
-                    : 'border-site-border text-site-muted hover:text-site-text'
-                }`}
-              >
-                الأكاديمية
-              </Link>
-            </div>
+        <div className="grid grid-cols-3 items-center gap-4">
+          <nav className="flex items-center gap-3 justify-start">
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -93,40 +79,20 @@ export function Header() {
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
-              <>
-                <Link 
-                  href="/create" 
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Edit size={16} />
-                  تحرير جديد
-                </Link>
-                
-                {session && (
-                  <Link 
-                    href="/supervisor" 
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
-                    {isEditorLike ? 'لوحة المحرر' : 'لوحة المشرف'}
+              <div className="flex items-center gap-3">
+                {!isAcademy && (
+                  <Link href="/create" className="btn-primary flex items-center gap-2">
+                    <Edit size={16} />
+                    تحرير جديد
                   </Link>
                 )}
-
-                {(isDomainExpert || session.user?.role === 'ADMIN') && (
-                  <Link 
-                    href="/dashboard/admin" 
-                    className="btn-secondary flex items-center gap-2"
+                <div className="relative" ref={menuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-2 px-2 py-1 rounded-lg border border-site-border hover:bg-site-border/60"
                   >
-                    <Settings size={16} />
-                    لوحة الإدارة
-                  </Link>
-                )}
-
-                {/* حذف لوحة المحرر القديمة و ادغام با لوحة المشرف */}
-
-                <div className="flex items-center gap-3">
-                  {session.user?.image && (
-                    <Link href={`/profile/${session.user.id}`} title="ملفي الشخصي">
+                    {session.user?.image ? (
                       <Image
                         src={session.user.image}
                         alt={session.user.name || ''}
@@ -134,32 +100,96 @@ export function Header() {
                         height={32}
                         className="rounded-full"
                       />
-                    </Link>
-                  )}
-                  <span className="text-site-text">{session.user?.name}</span>
-                  <button
-                    onClick={() => signOut()}
-                    className="text-site-muted hover:text-red-400 transition-colors"
-                    title="تسجيل الخروج"
-                  >
-                    <LogOut size={20} />
+                    ) : (
+                      <span className="w-8 h-8 rounded-full bg-site-border flex items-center justify-center text-site-text">
+                        <User size={16} />
+                      </span>
+                    )}
+                    <span className="text-site-text text-sm">{session.user?.name || 'حسابي'}</span>
                   </button>
+                  {menuOpen && (
+                    <div className="absolute left-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-gray-700">
+                        <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
+                        <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href={`/profile/${session.user?.id}`}
+                          className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                        >
+                          <User size={16} />
+                          الملف الشخصي
+                        </Link>
+                        {session && (
+                          <Link
+                            href="/supervisor"
+                            className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                          >
+                            {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
+                            {isEditorLike ? 'لوحة المحرر' : 'لوحة المشرف'}
+                          </Link>
+                        )}
+                        {(isDomainExpert || session.user?.role === 'ADMIN') && (
+                          <Link
+                            href="/dashboard/admin"
+                            className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                          >
+                            <Settings size={16} />
+                            لوحة الإدارة
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => signOut()}
+                          className="w-full text-right px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          تسجيل الخروج
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </>
+              </div>
             ) : (
               <div className="flex gap-4">
                 <Link href="/auth/signin" className="text-site-text hover:text-warm-primary transition-colors">
                   تسجيل الدخول
                 </Link>
-                <Link 
-                  href="/auth/signup" 
-                  className="btn-primary"
-                >
+                <Link href="/auth/signup" className="btn-primary">
                   إنشاء حساب
                 </Link>
               </div>
             )}
           </nav>
+
+          <div className="flex items-center justify-center">
+            <div className="flex items-center rounded-full bg-site-border/60 p-1 border border-site-border">
+              <Link
+                href="/"
+                className={`px-4 py-1 rounded-full text-sm transition-colors ${
+                  isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/30 text-site-text'
+                }`}
+              >
+                الموسوعة
+              </Link>
+              <Link
+                href="/academy"
+                className={`px-4 py-1 rounded-full text-sm transition-colors ${
+                  isAcademy ? 'bg-warm-primary/30 text-site-text' : 'text-site-muted hover:text-site-text'
+                }`}
+              >
+                الأكاديمية
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <Link href="/" className="text-2xl font-bold text-site-text heading">
+              شجرة العلم
+            </Link>
+          </div>
         </div>
       </div>
     </header>
