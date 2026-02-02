@@ -164,6 +164,7 @@ model CourseChapter {
   revisions         CourseChapter[] @relation("CourseChapterRevisions")
   votes       ChapterVote[]
   progress    CourseChapterProgress[]
+  comments    Comment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
