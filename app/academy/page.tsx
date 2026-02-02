@@ -94,7 +94,7 @@ export default function AcademyLandingPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {domains.map((domain) => (
-              <div key={domain.id} className="card">
+              <div key={domain.id} id={`domain-${domain.slug}`} className="card">
                 <h2 className="text-xl font-bold text-site-text heading mb-2">{domain.name}</h2>
                 {domain.description && <div className="text-site-muted text-sm mb-3">{domain.description}</div>}
                 <div className="space-y-3">

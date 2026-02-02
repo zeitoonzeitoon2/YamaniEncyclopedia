@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
@@ -940,10 +941,14 @@ export default function AdminDashboard() {
                             {domainCourses
                               .filter((c) => c.status === 'APPROVED')
                               .map((course) => (
-                                <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                <Link
+                                  key={course.id}
+                                  href={selectedDomain ? `/academy#domain-${selectedDomain.slug}` : '/academy'}
+                                  className="block p-3 rounded-lg border border-gray-700 bg-site-card/40 hover:bg-site-card/70 transition-colors"
+                                >
                                   <div className="text-site-text font-medium">{course.title}</div>
                                   {course.description && <div className="text-xs text-site-muted mt-1">{course.description}</div>}
-                                </div>
+                                </Link>
                               ))}
                           </div>
                         )}
