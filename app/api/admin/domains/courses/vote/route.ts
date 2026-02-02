@@ -60,10 +60,16 @@ export async function POST(request: NextRequest) {
     ])
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    const approvalBySmallTeam = totalExperts <= 2 && approvals >= 1
-    const approvalByMajority = approvals > totalExperts / 2
-    if (approvalBySmallTeam || approvalByMajority) nextStatus = 'APPROVED'
-    if (rejections >= 2 && rejections > approvals) nextStatus = 'REJECTED'
+    const approvalThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
+    const rejectionThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
+
+    if (approvals >= approvalThreshold && approvals > rejections) {
+      nextStatus = 'APPROVED'
+    } else if (rejections >= rejectionThreshold && rejections > approvals) {
+      nextStatus = 'REJECTED'
+    }
+
+    console.log(`Course ${courseId} vote result:`, { approvals, rejections, totalExperts, nextStatus })
 
     if (nextStatus !== 'PENDING') {
       await prisma.course.update({

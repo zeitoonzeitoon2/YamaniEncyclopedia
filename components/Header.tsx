@@ -65,7 +65,34 @@ export function Header() {
       </div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
-          <nav className="flex items-center gap-3 justify-start order-1">
+          <div className="flex items-center">
+            <Link href="/" className="text-2xl font-bold text-site-text heading">
+              شجرة العلم
+            </Link>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center rounded-full bg-site-border/60 p-1 border border-site-border">
+              <Link
+                href="/"
+                className={`px-4 py-1 rounded-full text-sm transition-colors ${
+                  isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/30 text-site-text'
+                }`}
+              >
+                الموسوعة
+              </Link>
+              <Link
+                href="/academy"
+                className={`px-4 py-1 rounded-full text-sm transition-colors ${
+                  isAcademy ? 'bg-warm-primary/30 text-site-text' : 'text-site-muted hover:text-site-text'
+                }`}
+              >
+                الأكاديمية
+              </Link>
+            </div>
+          </div>
+
+          <nav className="flex items-center gap-3">
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -163,33 +190,6 @@ export function Header() {
               </div>
             )}
           </nav>
-
-          <div className="flex-1 flex items-center justify-center order-2">
-            <div className="flex items-center rounded-full bg-site-border/60 p-1 border border-site-border">
-              <Link
-                href="/"
-                className={`px-4 py-1 rounded-full text-sm transition-colors ${
-                  isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/30 text-site-text'
-                }`}
-              >
-                الموسوعة
-              </Link>
-              <Link
-                href="/academy"
-                className={`px-4 py-1 rounded-full text-sm transition-colors ${
-                  isAcademy ? 'bg-warm-primary/30 text-site-text' : 'text-site-muted hover:text-site-text'
-                }`}
-              >
-                الأكاديمية
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end order-3">
-            <Link href="/" className="text-2xl font-bold text-site-text heading">
-              شجرة العلم
-            </Link>
-          </div>
         </div>
       </div>
     </header>
