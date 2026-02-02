@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { User, LogOut, Edit, Settings, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { usePathname } from 'next/navigation'
 
 export function Header() {
   const { data: session, status } = useSession()
@@ -13,6 +14,8 @@ export function Header() {
   const [mounted, setMounted] = React.useState(false)
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
+  const pathname = usePathname()
+  const isAcademy = pathname?.startsWith('/academy')
 
   React.useEffect(() => {
     setMounted(true)
@@ -55,6 +58,28 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  isAcademy
+                    ? 'border-site-border text-site-muted hover:text-site-text'
+                    : 'border-warm-primary/40 bg-warm-primary/20 text-site-text'
+                }`}
+              >
+                شجرة البحث
+              </Link>
+              <Link
+                href="/academy"
+                className={`px-3 py-1 rounded-full text-sm border ${
+                  isAcademy
+                    ? 'border-warm-primary/40 bg-warm-primary/20 text-site-text'
+                    : 'border-site-border text-site-muted hover:text-site-text'
+                }`}
+              >
+                الأكاديمية
+              </Link>
+            </div>
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

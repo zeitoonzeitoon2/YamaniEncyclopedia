@@ -23,6 +23,8 @@ model Domain {
 
   experts     DomainExpert[]
   expertCandidacies ExpertCandidacy[]
+  courses     Course[]
+  domainRequirements DomainRequirement[]
   posts       Post[]
 
   createdAt   DateTime @default(now())
@@ -92,6 +94,10 @@ model User {
   expertCandidaciesProposed ExpertCandidacy[] @relation("ExpertCandidacyProposer")
   expertCandidaciesAsCandidate ExpertCandidacy[] @relation("ExpertCandidacyCandidate")
   candidacyVotes CandidacyVote[] @relation("CandidacyVoteVoter")
+  userCourses  UserCourse[] @relation("UserCourseStudent")
+  examinedCourses UserCourse[] @relation("UserCourseExaminer")
+  examSessionsAsStudent ExamSession[] @relation("ExamSessionStudent")
+  examSessionsAsExaminer ExamSession[] @relation("ExamSessionExaminer")
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
@@ -99,6 +105,72 @@ model User {
   commentPollVotes    CommentPollVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  domainId    String
+  domain      Domain   @relation(fields: [domainId], references: [id])
+  description String?
+  isActive    Boolean  @default(true)
+  userCourses UserCourse[]
+  requirements DomainRequirement[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([domainId])
+  @@index([isActive])
+}
+
+model UserCourse {
+  userId     String
+  user       User     @relation("UserCourseStudent", fields: [userId], references: [id])
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id])
+  status     String   @default("ENROLLED")
+  examinerId String?
+  examiner   User?    @relation("UserCourseExaminer", fields: [examinerId], references: [id])
+  score      Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([userId, courseId])
+  @@index([courseId])
+  @@index([status])
+  @@index([examinerId])
+}
+
+model DomainRequirement {
+  domainId         String
+  domain           Domain @relation(fields: [domainId], references: [id])
+  requiredCourseId String
+  requiredCourse   Course @relation(fields: [requiredCourseId], references: [id])
+  action           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@id([domainId, requiredCourseId, action])
+  @@index([requiredCourseId])
+  @@index([action])
+}
+
+model ExamSession {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation("ExamSessionStudent", fields: [studentId], references: [id])
+  examinerId String
+  examiner   User     @relation("ExamSessionExaminer", fields: [examinerId], references: [id])
+  meetLink   String?
+  scheduledAt DateTime
+  status     String   @default("SCHEDULED")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([examinerId])
+  @@index([scheduledAt])
+  @@index([status])
 }
 
 model Post {
