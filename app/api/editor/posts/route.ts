@@ -86,10 +86,12 @@ export async function GET(request: NextRequest) {
 
     const commentsMap = new Map<string, { latestCommentAt: Date | null; commentsCount: number }>()
     for (const row of commentsAgg) {
-      commentsMap.set(row.postId, {
-        latestCommentAt: row._max.createdAt ?? null,
-        commentsCount: row._count._all ?? 0,
-      })
+      if (row.postId) {
+        commentsMap.set(row.postId, {
+          latestCommentAt: row._max.createdAt ?? null,
+          commentsCount: row._count._all ?? 0,
+        })
+      }
     }
 
     // محاسبه تعداد کامنت‌های خوانده‌نشده فقط برای آیتم‌های همین صفحه (در صورت نیاز می‌توان جداگانه lazy-load کرد)
