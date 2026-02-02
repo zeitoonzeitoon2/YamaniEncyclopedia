@@ -55,6 +55,7 @@ model ExpertCandidacy {
   candidateUser    User           @relation("ExpertCandidacyCandidate", fields: [candidateUserId], references: [id])
   proposerUserId   String
   proposerUser     User           @relation("ExpertCandidacyProposer", fields: [proposerUserId], references: [id])
+  role             String         @default("EXPERT")
   status           String         @default("PENDING")
   votes            CandidacyVote[]
   createdAt        DateTime       @default(now())
@@ -98,6 +99,8 @@ model User {
   examinedCourses UserCourse[] @relation("UserCourseExaminer")
   examSessionsAsStudent ExamSession[] @relation("ExamSessionStudent")
   examSessionsAsExaminer ExamSession[] @relation("ExamSessionExaminer")
+  proposedCourses Course[] @relation("CourseProposer")
+  courseVotes     CourseVote[] @relation("CourseVoteVoter")
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
@@ -114,13 +117,31 @@ model Course {
   domain      Domain   @relation(fields: [domainId], references: [id])
   description String?
   isActive    Boolean  @default(true)
+  status      String   @default("PENDING")
+  proposerId  String
+  proposer    User     @relation("CourseProposer", fields: [proposerId], references: [id])
   userCourses UserCourse[]
+  votes       CourseVote[]
   requirements DomainRequirement[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([domainId])
   @@index([isActive])
+  @@index([status])
+  @@index([proposerId])
+}
+
+model CourseVote {
+  courseId   String
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  voterId    String
+  voter      User   @relation("CourseVoteVoter", fields: [voterId], references: [id])
+  vote       String @default("APPROVE")
+  createdAt  DateTime @default(now())
+
+  @@id([courseId, voterId])
+  @@index([voterId])
 }
 
 model UserCourse {

@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
         id: true,
         domainId: true,
         candidateUserId: true,
+        role: true,
         status: true,
         domain: { select: { parentId: true } },
       },
@@ -79,8 +80,8 @@ export async function POST(request: NextRequest) {
       await prisma.$transaction([
         prisma.domainExpert.upsert({
           where: { userId_domainId: { userId: candidacy.candidateUserId, domainId: candidacy.domainId } },
-          update: { role: 'EXPERT' },
-          create: { userId: candidacy.candidateUserId, domainId: candidacy.domainId, role: 'EXPERT' },
+          update: { role: candidacy.role },
+          create: { userId: candidacy.candidateUserId, domainId: candidacy.domainId, role: candidacy.role },
           select: { id: true },
         }),
         prisma.expertCandidacy.update({

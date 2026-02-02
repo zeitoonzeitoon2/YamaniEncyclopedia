@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+const ALLOWED_ROLES = new Set(['HEAD', 'EXPERT'])
+
 async function hasAnyDomainExpertMembership(userId: string) {
   const m = await prisma.domainExpert.findFirst({ where: { userId }, select: { id: true } })
   return !!m
@@ -45,6 +47,7 @@ export async function GET(request: NextRequest) {
         domainId: true,
         candidateUserId: true,
         proposerUserId: true,
+        role: true,
         status: true,
         createdAt: true,
         candidateUser: { select: { id: true, name: true, email: true, role: true } },
@@ -70,9 +73,14 @@ export async function POST(request: NextRequest) {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const domainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
     const candidateUserId = typeof body.candidateUserId === 'string' ? body.candidateUserId.trim() : ''
+    const requestedRole = typeof body.role === 'string' ? body.role.trim() : ''
+    const roleValue = requestedRole || 'EXPERT'
 
     if (!domainId || !candidateUserId) {
       return NextResponse.json({ error: 'domainId and candidateUserId are required' }, { status: 400 })
+    }
+    if (!ALLOWED_ROLES.has(roleValue)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
     if (role !== 'ADMIN') {
@@ -101,13 +109,14 @@ export async function POST(request: NextRequest) {
 
     const candidacy = await prisma.expertCandidacy.upsert({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },
-      update: { proposerUserId: userId, status: 'PENDING' },
-      create: { domainId, candidateUserId, proposerUserId: userId, status: 'PENDING' },
+      update: { proposerUserId: userId, status: 'PENDING', role: roleValue },
+      create: { domainId, candidateUserId, proposerUserId: userId, status: 'PENDING', role: roleValue },
       select: {
         id: true,
         domainId: true,
         candidateUserId: true,
         proposerUserId: true,
+        role: true,
         status: true,
         createdAt: true,
         candidateUser: { select: { id: true, name: true, email: true, role: true } },

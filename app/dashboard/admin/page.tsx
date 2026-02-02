@@ -32,11 +32,27 @@ type ExpertCandidacy = {
   domainId: string
   candidateUserId: string
   proposerUserId: string
+  role: string
   status: string
   createdAt: string
   candidateUser: DomainUser
   proposerUser: DomainUser
   votes: CandidacyVote[]
+}
+
+type CourseVote = {
+  voterId: string
+  vote: string
+}
+
+type DomainCourse = {
+  id: string
+  title: string
+  description: string | null
+  status: string
+  createdAt: string
+  proposerUser: DomainUser | null
+  votes: CourseVote[]
 }
 
 type DomainNode = {
@@ -95,10 +111,17 @@ export default function AdminDashboard() {
   const [userResults, setUserResults] = useState<DomainUser[]>([])
   const [selectedUser, setSelectedUser] = useState<DomainUser | null>(null)
   const [nominating, setNominating] = useState(false)
+  const [nominateRole, setNominateRole] = useState('EXPERT')
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
   const [votingKey, setVotingKey] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'members' | 'courses'>('members')
+  const [loadingCourses, setLoadingCourses] = useState(false)
+  const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
+  const [courseVotingKey, setCourseVotingKey] = useState<string | null>(null)
+  const [courseForm, setCourseForm] = useState({ title: '', description: '' })
+  const [proposingCourse, setProposingCourse] = useState(false)
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -116,6 +139,15 @@ export default function AdminDashboard() {
     if (!parent) return false
     return parent.experts.some((ex) => ex.user.id === userId)
   }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
+
+  const canVoteOnSelectedDomainCourses = useMemo(() => {
+    const userId = session?.user?.id
+    const userRole = session?.user?.role
+    if (!userId) return false
+    if (!selectedDomain) return false
+    if (userRole === 'ADMIN') return true
+    return selectedDomain.experts.some((ex) => ex.user.id === userId)
+  }, [selectedDomain, session?.user?.id, session?.user?.role])
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
@@ -240,10 +272,29 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchCourses = async (domainId: string) => {
+    try {
+      setLoadingCourses(true)
+      const res = await fetch(`/api/admin/domains/courses?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
+      const payload = (await res.json().catch(() => ({}))) as { courses?: DomainCourse[]; error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'خطأ في جلب الدورات')
+        return
+      }
+      setDomainCourses(Array.isArray(payload.courses) ? payload.courses : [])
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'خطأ في جلب الدورات'
+      toast.error(msg)
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
+
   useEffect(() => {
     const id = selectedDomainId
     if (!id) return
     fetchCandidacies(id)
+    fetchCourses(id)
   }, [selectedDomainId])
 
   useEffect(() => {
@@ -336,7 +387,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/domains/candidacies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domainId: selectedDomain.id, candidateUserId: selectedUser.id }),
+        body: JSON.stringify({ domainId: selectedDomain.id, candidateUserId: selectedUser.id, role: nominateRole }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
@@ -345,6 +396,7 @@ export default function AdminDashboard() {
       }
       toast.success('تم إرسال الترشيح')
       setSelectedUser(null)
+      setNominateRole('EXPERT')
       setUserQuery('')
       setUserResults([])
       await fetchCandidacies(selectedDomain.id)
@@ -380,6 +432,64 @@ export default function AdminDashboard() {
       toast.error(msg)
     } finally {
       setVotingKey(null)
+    }
+  }
+
+  const proposeCourse = async () => {
+    if (!selectedDomain) return
+    const title = courseForm.title.trim()
+    const description = courseForm.description.trim()
+    if (!title) {
+      toast.error('عنوان الدورة مطلوب')
+      return
+    }
+    try {
+      setProposingCourse(true)
+      const res = await fetch('/api/admin/domains/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domainId: selectedDomain.id, title, description: description || undefined }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'خطأ في اقتراح الدورة')
+        return
+      }
+      toast.success('تم إرسال المقترح')
+      setCourseForm({ title: '', description: '' })
+      await fetchCourses(selectedDomain.id)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'خطأ في اقتراح الدورة'
+      toast.error(msg)
+    } finally {
+      setProposingCourse(false)
+    }
+  }
+
+  const voteOnCourse = async (courseId: string, vote: 'APPROVE' | 'REJECT') => {
+    if (!selectedDomain) return
+    const key = `${courseId}:${vote}`
+    try {
+      setCourseVotingKey(key)
+      const res = await fetch('/api/admin/domains/courses/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, vote }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'خطأ في التصويت')
+        return
+      }
+      if (payload.status === 'APPROVED') toast.success('تمت الموافقة')
+      else if (payload.status === 'REJECTED') toast.success('تم الرفض')
+      else toast.success('تم تسجيل التصويت')
+      await fetchCourses(selectedDomain.id)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'خطأ في التصويت'
+      toast.error(msg)
+    } finally {
+      setCourseVotingKey(null)
     }
   }
 
@@ -606,172 +716,336 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="border-t border-site-border pt-4">
-                  <h3 className="text-lg font-bold text-site-text mb-3 heading">الأعضاء</h3>
-
-                  <div className="space-y-2">
-                    {selectedDomain.experts.length === 0 ? (
-                      <div className="text-site-muted text-sm">لا يوجد أعضاء لهذا المجال.</div>
-                    ) : (
-                      selectedDomain.experts.map((ex) => {
-                        const badge = getRoleBadge(ex.role)
-                        const key = `${selectedDomain.id}:${ex.user.id}`
-                        return (
-                          <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                                <span className="text-site-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
-                              </div>
-                              <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
-                            </div>
-                            {canManageSelectedDomainMembers && (
-                              <button
-                                type="button"
-                                onClick={() => removeExpert(ex.user.id)}
-                                disabled={removingExpertKey === key}
-                                className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
-                                title="إزالة"
-                              >
-                                {removingExpertKey === key ? '...' : 'حذف'}
-                              </button>
-                            )}
-                          </div>
-                        )
-                      })
-                    )}
+                  <div className="flex items-center gap-2 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('members')}
+                      className={`px-3 py-2 rounded-lg text-sm border ${
+                        activeTab === 'members'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                      }`}
+                    >
+                      الأعضاء
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('courses')}
+                      className={`px-3 py-2 rounded-lg text-sm border ${
+                        activeTab === 'courses'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                      }`}
+                    >
+                      الدورات
+                    </button>
                   </div>
 
-                  <div className="mt-6 border-t border-site-border pt-4">
-                    <h3 className="text-lg font-bold text-site-text mb-3 heading">الترشيحات قيد الانتظار</h3>
-                    {loadingCandidacies ? (
-                      <div className="text-site-muted text-sm">جارٍ التحميل...</div>
-                    ) : pendingCandidacies.length === 0 ? (
-                      <div className="text-site-muted text-sm">لا توجد ترشيحات حالياً.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {pendingCandidacies.map((c) => {
-                          const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
-                          const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
-                          const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
-                          return (
-                            <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <div className="text-site-text font-medium truncate">
-                                    {c.candidateUser.name || c.candidateUser.email || 'عضو'}
-                                  </div>
-                                  <div className="text-xs text-site-muted truncate mt-1">
-                                    المرشح: {c.candidateUser.email || '—'} • المقترِح: {c.proposerUser.email || c.proposerUser.name || '—'}
-                                  </div>
-                                  <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
-                                    {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
-                                  </div>
-                                </div>
-                                {canManageSelectedDomainMembers && (
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
-                                      disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
-                                        myVote === 'APPROVE'
-                                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingKey === `${c.id}:APPROVE` ? '...' : 'موافقة'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnCandidacy(c.id, 'REJECT')}
-                                      disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
-                                        myVote === 'REJECT'
-                                          ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingKey === `${c.id}:REJECT` ? '...' : 'رفض'}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {canManageSelectedDomainMembers && (
-                    <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
-                      <div className="flex items-center gap-2 mb-2">
-                        <UserPlus size={16} className="text-warm-accent" />
-                        <div className="text-site-text font-semibold">ترشيح عضو</div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="md:col-span-2 relative">
-                          <input
-                            value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
-                            onChange={(e) => {
-                              setSelectedUser(null)
-                              setUserQuery(e.target.value)
-                            }}
-                            placeholder="بحث..."
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                          />
-                          {selectedUser && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedUser(null)
-                                setUserQuery('')
-                                setUserResults([])
-                              }}
-                              className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                              aria-label="clear"
-                            >
-                              <X size={16} />
-                            </button>
-                          )}
-
-                          {!selectedUser && userResults.length > 0 && (
-                            <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
-                              {userResults.map((u) => (
-                                <button
-                                  key={u.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedUser(u)
-                                    setUserResults([])
-                                  }}
-                                  className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
-                                >
+                  {activeTab === 'members' ? (
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الأعضاء</h3>
+                        <div className="space-y-2">
+                          {selectedDomain.experts.length === 0 ? (
+                            <div className="text-site-muted text-sm">لا يوجد أعضاء لهذا المجال.</div>
+                          ) : (
+                            selectedDomain.experts.map((ex) => {
+                              const badge = getRoleBadge(ex.role)
+                              const key = `${selectedDomain.id}:${ex.user.id}`
+                              return (
+                                <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
                                   <div className="min-w-0">
-                                    <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
-                                    <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                                      <span className="text-site-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
+                                    </div>
+                                    <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                                   </div>
-                                  <div className="text-xs text-site-muted">{u.role}</div>
-                                </button>
-                              ))}
-                            </div>
+                                  {canManageSelectedDomainMembers && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeExpert(ex.user.id)}
+                                      disabled={removingExpertKey === key}
+                                      className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                      title="إزالة"
+                                    >
+                                      {removingExpertKey === key ? '...' : 'حذف'}
+                                    </button>
+                                  )}
+                                </div>
+                              )
+                            })
                           )}
                         </div>
                       </div>
 
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={nominateMember}
-                          disabled={nominating || !selectedUser}
-                          className="btn-primary disabled:opacity-50"
-                        >
-                          {nominating ? '...' : 'إرسال الترشيح'}
-                        </button>
+                      <div className="border-t border-site-border pt-4">
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الترشيحات قيد الانتظار</h3>
+                        {loadingCandidacies ? (
+                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                        ) : pendingCandidacies.length === 0 ? (
+                          <div className="text-site-muted text-sm">لا توجد ترشيحات حالياً.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {pendingCandidacies.map((c) => {
+                              const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
+                              const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
+                              const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
+                              const roleBadge = getRoleBadge(c.role)
+                              return (
+                                <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${roleBadge.cls}`}>{roleBadge.label}</span>
+                                        <span className="text-site-text font-medium truncate">
+                                          {c.candidateUser.name || c.candidateUser.email || 'عضو'}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs text-site-muted truncate mt-1">
+                                        المرشح: {c.candidateUser.email || '—'} • المقترِح: {c.proposerUser.email || c.proposerUser.name || '—'}
+                                      </div>
+                                      <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
+                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
+                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
+                                        {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                      </div>
+                                    </div>
+                                    {canManageSelectedDomainMembers && (
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
+                                          disabled={votingKey !== null}
+                                          className={`text-xs px-3 py-2 rounded-lg border ${
+                                            myVote === 'APPROVE'
+                                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          } disabled:opacity-50`}
+                                        >
+                                          {votingKey === `${c.id}:APPROVE` ? '...' : 'موافقة'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => voteOnCandidacy(c.id, 'REJECT')}
+                                          disabled={votingKey !== null}
+                                          className={`text-xs px-3 py-2 rounded-lg border ${
+                                            myVote === 'REJECT'
+                                              ? 'border-red-600/60 bg-red-600/20 text-site-text'
+                                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          } disabled:opacity-50`}
+                                        >
+                                          {votingKey === `${c.id}:REJECT` ? '...' : 'رفض'}
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
+
+                      {canManageSelectedDomainMembers && (
+                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                          <div className="flex items-center gap-2 mb-2">
+                            <UserPlus size={16} className="text-warm-accent" />
+                            <div className="text-site-text font-semibold">ترشيح عضو</div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="md:col-span-2 relative">
+                              <input
+                                value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
+                                onChange={(e) => {
+                                  setSelectedUser(null)
+                                  setUserQuery(e.target.value)
+                                }}
+                                placeholder="بحث..."
+                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                              />
+                              {selectedUser && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedUser(null)
+                                    setUserQuery('')
+                                    setUserResults([])
+                                  }}
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                                  aria-label="clear"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+
+                              {!selectedUser && userResults.length > 0 && (
+                                <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
+                                  {userResults.map((u) => (
+                                    <button
+                                      key={u.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedUser(u)
+                                        setUserResults([])
+                                      }}
+                                      className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
+                                    >
+                                      <div className="min-w-0">
+                                        <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
+                                        <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
+                                      </div>
+                                      <div className="text-xs text-site-muted">{u.role}</div>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <select
+                                value={nominateRole}
+                                onChange={(e) => setNominateRole(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                              >
+                                <option value="EXPERT">خبير</option>
+                                <option value="HEAD">رئيس</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={nominateMember}
+                              disabled={nominating || !selectedUser}
+                              className="btn-primary disabled:opacity-50"
+                            >
+                              {nominating ? '...' : 'إرسال الترشيح'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الدورات المعتمدة</h3>
+                        {loadingCourses ? (
+                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                        ) : domainCourses.filter((c) => c.status === 'APPROVED').length === 0 ? (
+                          <div className="text-site-muted text-sm">لا توجد دورات معتمدة بعد.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {domainCourses
+                              .filter((c) => c.status === 'APPROVED')
+                              .map((course) => (
+                                <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div className="text-site-text font-medium">{course.title}</div>
+                                  {course.description && <div className="text-xs text-site-muted mt-1">{course.description}</div>}
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t border-site-border pt-4">
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">مقترحات قيد التصويت</h3>
+                        {loadingCourses ? (
+                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                        ) : domainCourses.filter((c) => c.status === 'PENDING').length === 0 ? (
+                          <div className="text-site-muted text-sm">لا توجد مقترحات حالياً.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {domainCourses
+                              .filter((c) => c.status === 'PENDING')
+                              .map((course) => {
+                                const approvals = course.votes.filter((v) => v.vote === 'APPROVE').length
+                                const rejections = course.votes.filter((v) => v.vote === 'REJECT').length
+                                const myVote = course.votes.find((v) => v.voterId === session?.user?.id)?.vote || null
+                                return (
+                                  <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <div className="text-site-text font-medium">{course.title}</div>
+                                        {course.description && <div className="text-xs text-site-muted mt-1">{course.description}</div>}
+                                        <div className="text-xs text-site-muted mt-1">
+                                          المقترِح: {course.proposerUser?.email || course.proposerUser?.name || '—'}
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
+                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
+                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
+                                          {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                        </div>
+                                      </div>
+                                      {canVoteOnSelectedDomainCourses && (
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <button
+                                            type="button"
+                                            onClick={() => voteOnCourse(course.id, 'APPROVE')}
+                                            disabled={courseVotingKey !== null}
+                                            className={`text-xs px-3 py-2 rounded-lg border ${
+                                              myVote === 'APPROVE'
+                                                ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                                                : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                            } disabled:opacity-50`}
+                                          >
+                                            {courseVotingKey === `${course.id}:APPROVE` ? '...' : 'موافقة'}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => voteOnCourse(course.id, 'REJECT')}
+                                            disabled={courseVotingKey !== null}
+                                            className={`text-xs px-3 py-2 rounded-lg border ${
+                                              myVote === 'REJECT'
+                                                ? 'border-red-600/60 bg-red-600/20 text-site-text'
+                                                : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                            } disabled:opacity-50`}
+                                          >
+                                            {courseVotingKey === `${course.id}:REJECT` ? '...' : 'رفض'}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                          </div>
+                        )}
+                      </div>
+
+                      {canVoteOnSelectedDomainCourses && (
+                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                          <div className="flex items-center gap-2 mb-2">
+                            <UserPlus size={16} className="text-warm-accent" />
+                            <div className="text-site-text font-semibold">اقتراح دورة</div>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3">
+                            <input
+                              value={courseForm.title}
+                              onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
+                              placeholder="عنوان الدورة"
+                              className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                            />
+                            <textarea
+                              value={courseForm.description}
+                              onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
+                              placeholder="وصف مختصر"
+                              className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[90px]"
+                            />
+                          </div>
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={proposeCourse}
+                              disabled={proposingCourse}
+                              className="btn-primary disabled:opacity-50"
+                            >
+                              {proposingCourse ? '...' : 'إرسال المقترح'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
