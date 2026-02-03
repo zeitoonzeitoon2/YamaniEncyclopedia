@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'
 import QuickArticleModal from '@/components/QuickArticleModal'
+import EnhancedDiagramComparison from '@/components/EnhancedDiagramComparison'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
 
@@ -339,9 +340,34 @@ export default function AdminCourseChaptersPage() {
 
   const pendingChapters = chapters.filter((c) => c.status === 'PENDING')
 
+  const selectChapterById = (chapterId: string) => {
+    const target = chaptersRef.current.find((c) => c.id === chapterId) || null
+    if (!target) return
+    const rootId = getRootId(target)
+    setExpandedRoots((prev) => ({ ...prev, [rootId]: true }))
+    setSelectedId(chapterId)
+    setMode('edit')
+  }
+
+  const selectedPreviousChapter = useMemo(() => {
+    if (!selectedChapter) return null
+    const rootId = getRootId(selectedChapter)
+    const versions = chapters
+      .filter((c) => getRootId(c) === rootId)
+      .sort((a, b) => {
+        const va = a.version ?? 0
+        const vb = b.version ?? 0
+        if (va !== vb) return va - vb
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      })
+    const idx = versions.findIndex((c) => c.id === selectedChapter.id)
+    if (idx <= 0) return null
+    return versions[idx - 1]
+  }, [chapters, selectedChapter?.id])
+
   const previewDiffOps = useMemo(() => {
-    const isPending = selectedChapter?.status === 'PENDING'
-    if (!isPending) return null
+    if (!selectedChapter) return null
+    if (!selectedPreviousChapter) return null
 
     const tokenize = (text: string) => text.split(/(\s+)/).filter((t) => t.length > 0)
     const diffTokens = (a: string[], b: string[]): DiffOp[] => {
@@ -438,10 +464,39 @@ export default function AdminCourseChaptersPage() {
       return merged
     }
 
-    const base = selectedApprovedChapter?.content || ''
-    const draft = form.content || ''
-    return diffTokens(tokenize(base), tokenize(draft))
-  }, [form.content, selectedApprovedChapter?.content, selectedChapter?.status])
+    const base = selectedPreviousChapter?.content || ''
+    const current = form.content || ''
+    return diffTokens(tokenize(base), tokenize(current))
+  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.content])
+
+  const parsedDiagramForPreview = useMemo(() => {
+    const unwrapFence = (text: string) => {
+      const trimmed = (text || '').trim()
+      if (!trimmed.startsWith('```')) return trimmed
+      const lines = trimmed.split('\n')
+      if (lines.length < 3) return trimmed
+      if (!lines[lines.length - 1].trim().startsWith('```')) return trimmed
+      return lines.slice(1, -1).join('\n').trim()
+    }
+
+    const tryParseDiagram = (text: string): { nodes: any[]; edges: any[] } | null => {
+      try {
+        const raw = unwrapFence(text)
+        const parsed = JSON.parse(raw)
+        if (!parsed || typeof parsed !== 'object') return null
+        const nodes = (parsed as any).nodes
+        const edges = (parsed as any).edges
+        if (!Array.isArray(nodes) || !Array.isArray(edges)) return null
+        return { nodes, edges }
+      } catch {
+        return null
+      }
+    }
+
+    const previous = selectedPreviousChapter ? tryParseDiagram(selectedPreviousChapter.content || '') : null
+    const current = selectedChapter ? tryParseDiagram(form.content || '') : null
+    return { previous, current }
+  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.id])
 
   return (
     <div className="min-h-screen bg-site-bg">
@@ -487,8 +542,7 @@ export default function AdminCourseChaptersPage() {
                             type="button"
                             onClick={() => {
                               toggleGroup(group.rootId)
-                              setSelectedId(group.parent.id)
-                              setMode('edit')
+                              selectChapterById(group.parent.id)
                             }}
                             className="w-full text-right"
                           >
@@ -519,8 +573,7 @@ export default function AdminCourseChaptersPage() {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        setSelectedId(chapter.id)
-                                        setMode('edit')
+                                        selectChapterById(chapter.id)
                                       }}
                                       className="w-full text-right"
                                     >
@@ -560,7 +613,14 @@ export default function AdminCourseChaptersPage() {
                   <h3 className="text-lg font-bold text-site-text heading">التصويتات المطلوبة</h3>
                   {pendingChapters.map((chapter) => (
                     <div key={chapter.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
-                      <div className="text-site-text text-sm">{chapter.title}</div>
+                      <button
+                        type="button"
+                        onClick={() => selectChapterById(chapter.id)}
+                        className="w-full text-right"
+                      >
+                        <div className="text-site-text text-sm">{chapter.title}</div>
+                        <div className="text-xs text-site-muted mt-1">{versionLabel(chapter)}</div>
+                      </button>
                       <div className="flex items-center gap-2 mt-2">
                         <button
                           type="button"
@@ -652,34 +712,37 @@ export default function AdminCourseChaptersPage() {
 
               <div className="card">
                 <h3 className="text-lg font-bold text-site-text heading mb-3">معاينة المحتوى</h3>
-                {selectedChapter?.status === 'PENDING' ? (
+                {selectedChapter && selectedPreviousChapter && parsedDiagramForPreview.previous && parsedDiagramForPreview.current ? (
+                  <EnhancedDiagramComparison
+                    originalData={parsedDiagramForPreview.previous}
+                    proposedData={parsedDiagramForPreview.current}
+                  />
+                ) : selectedChapter && selectedPreviousChapter ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                       <div className="text-sm text-site-text">
-                        النسخة المعتمدة {selectedApprovedChapter?.version ? `v${selectedApprovedChapter.version}` : ''}
+                        النسخة السابقة {selectedPreviousChapter?.version ? `v${selectedPreviousChapter.version}` : ''}
                       </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
-                        {selectedApprovedChapter ? (
-                          <div className="whitespace-pre-wrap break-words text-sm leading-6">
-                            {(previewDiffOps || []).map((op, idx) => {
-                              if (op.type === 'insert') return null
-                              if (op.type === 'delete') {
-                                return (
-                                  <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
-                                    {op.value}
-                                  </span>
-                                )
-                              }
-                              return <span key={idx}>{op.value}</span>
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-site-muted text-sm">لا توجد نسخة معتمدة بعد.</div>
-                        )}
+                        <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                          {(previewDiffOps || []).map((op, idx) => {
+                            if (op.type === 'insert') return null
+                            if (op.type === 'delete') {
+                              return (
+                                <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
+                                  {op.value}
+                                </span>
+                              )
+                            }
+                            return <span key={idx}>{op.value}</span>
+                          })}
+                        </div>
                       </div>
                     </div>
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                      <div className="text-sm text-site-text">المسودة {selectedChapter.version ? `v${selectedChapter.version}` : ''}</div>
+                      <div className="text-sm text-site-text">
+                        النسخة المحددة {selectedChapter.version ? `v${selectedChapter.version}` : ''}
+                      </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
                         <div className="whitespace-pre-wrap break-words text-sm leading-6">
                           {(previewDiffOps || []).map((op, idx) => {
