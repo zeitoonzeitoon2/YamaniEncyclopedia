@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
 
@@ -20,6 +21,7 @@ type AcademyDomain = {
 }
 
 export default function AcademyLandingPage() {
+  const router = useRouter()
   const [domains, setDomains] = useState<AcademyDomain[]>([])
   const [loading, setLoading] = useState(true)
   const [enrollingId, setEnrollingId] = useState<string | null>(null)
@@ -99,7 +101,11 @@ export default function AcademyLandingPage() {
                 {domain.description && <div className="text-site-muted text-sm mb-3">{domain.description}</div>}
                 <div className="space-y-3">
                   {domain.courses.map((course) => (
-                    <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                    <div
+                      key={course.id}
+                      onClick={() => router.push(`/academy/course/${course.id}`)}
+                      className="p-3 rounded-lg border border-gray-700 bg-site-card/40 cursor-pointer hover:border-warm-primary/60"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-site-text font-medium">{course.title}</div>
@@ -107,7 +113,10 @@ export default function AcademyLandingPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => enroll(course.id)}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            enroll(course.id)
+                          }}
                           disabled={enrollingId === course.id}
                           className="btn-primary text-sm disabled:opacity-50"
                         >

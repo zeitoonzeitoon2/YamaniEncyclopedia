@@ -48,6 +48,12 @@ export default function CourseViewerPage() {
   const [previewHtml, setPreviewHtml] = useState('')
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
+  const currentIndex = useMemo(() => chapters.findIndex((c) => c.id === selectedId), [chapters, selectedId])
+  const previousChapter = useMemo(() => (currentIndex > 0 ? chapters[currentIndex - 1] : null), [chapters, currentIndex])
+  const nextChapter = useMemo(
+    () => (currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null),
+    [chapters, currentIndex]
+  )
   const completedCount = progress.filter((id) => chapters.some((c) => c.id === id)).length
 
   useEffect(() => {
@@ -66,8 +72,9 @@ export default function CourseViewerPage() {
         setChapters(nextChapters)
         setEnrollment(payload.enrollment ?? null)
         setProgress(Array.isArray(payload.progress) ? payload.progress : [])
-        if (!selectedId && nextChapters.length > 0) {
-          setSelectedId(nextChapters[0].id)
+        if (nextChapters.length > 0) {
+          const hasSelected = selectedId && nextChapters.some((c) => c.id === selectedId)
+          if (!hasSelected) setSelectedId(nextChapters[0].id)
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'تعذر تحميل الدورة'
@@ -131,8 +138,8 @@ export default function CourseViewerPage() {
         ) : chapters.length === 0 ? (
           <div className="text-site-muted">لا توجد فصول معتمدة بعد.</div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-            <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+            <div className="space-y-4 lg:order-2">
               <div className="card space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-site-text heading">المحتوى</h3>
@@ -171,7 +178,7 @@ export default function CourseViewerPage() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:order-1">
               <div className="card space-y-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-site-text heading">{selectedChapter?.title}</h2>
@@ -190,6 +197,24 @@ export default function CourseViewerPage() {
                   <div className="text-xs text-site-muted">سجّل في الدورة لتتبع التقدم.</div>
                 )}
                 <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => previousChapter && setSelectedId(previousChapter.id)}
+                    disabled={!previousChapter}
+                    className="btn-secondary disabled:opacity-50"
+                  >
+                    السابق
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => nextChapter && setSelectedId(nextChapter.id)}
+                    disabled={!nextChapter}
+                    className="btn-secondary disabled:opacity-50"
+                  >
+                    التالي
+                  </button>
+                </div>
               </div>
             </div>
           </div>
