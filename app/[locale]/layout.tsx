@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
-import { setRequestLocale } from 'next-intl/server'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, setRequestLocale } from 'next-intl/server'
 import { locales } from '@/i18n'
+import { Providers } from '../providers'
 
 export const metadata = {
   title: 'شجرة العلم - منصة للتفكير المشترك',
@@ -11,7 +13,7 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   params,
 }: {
@@ -23,6 +25,11 @@ export default function RootLayout({
   }
 
   setRequestLocale(params.locale)
+  const messages = await getMessages()
 
-  return children
+  return (
+    <NextIntlClientProvider locale={params.locale} messages={messages}>
+      <Providers>{children}</Providers>
+    </NextIntlClientProvider>
+  )
 }

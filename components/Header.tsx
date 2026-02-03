@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { User, LogOut, Edit, Settings, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
+import { locales } from '@/i18n'
 
 export function Header() {
   const { data: session, status } = useSession()
@@ -17,11 +18,22 @@ export function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
   const router = useRouter()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
   const locale = useLocale()
   const t = useTranslations('header')
   const tl = useTranslations('language')
-  const isAcademy = pathname?.startsWith('/academy')
+  const pathname = rawPathname || '/'
+  const safePathname = React.useMemo(() => {
+    if (!pathname.startsWith('/')) return `/${pathname}`
+    const segments = pathname.split('/').filter(Boolean)
+    if (segments.length === 0) return '/'
+    if (locales.includes(segments[0] as (typeof locales)[number])) {
+      const rest = segments.slice(1).join('/')
+      return rest ? `/${rest}` : '/'
+    }
+    return pathname
+  }, [pathname])
+  const isAcademy = safePathname.startsWith('/academy')
 
   React.useEffect(() => {
     setMounted(true)
@@ -107,7 +119,7 @@ export function Header() {
 
             <select
               value={locale}
-              onChange={(event) => router.replace(pathname, { locale: event.target.value })}
+              onChange={(event) => router.replace(safePathname, { locale: event.target.value })}
               className="rounded-lg border border-site-border bg-site-card text-site-text text-sm px-2 py-1"
               aria-label={tl('label')}
             >
