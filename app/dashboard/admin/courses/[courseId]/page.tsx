@@ -45,6 +45,9 @@ type CourseInfo = {
 type ChaptersResponse = { course: CourseInfo; chapters: CourseChapter[] }
 
 type EditorMode = 'new' | 'edit' | 'revision'
+type ContentView = 'edit' | 'compare'
+
+type DiffOp = { type: 'equal' | 'insert' | 'delete'; value: string }
 
 export default function AdminCourseChaptersPage() {
   const params = useParams() as { courseId?: string }
@@ -65,15 +68,60 @@ export default function AdminCourseChaptersPage() {
   const [previewHtml, setPreviewHtml] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [expandedRoots, setExpandedRoots] = useState<Record<string, boolean>>({})
+  const [contentView, setContentView] = useState<ContentView>('edit')
   const autoDraftingRef = useRef(false)
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
+
+  const getRootId = (chapter: CourseChapter) => chapter.originalChapterId || chapter.id
+
+  const chapterGroups = useMemo(() => {
+    const byRoot = new Map<string, CourseChapter[]>()
+    for (const chapter of chapters) {
+      const rootId = getRootId(chapter)
+      const list = byRoot.get(rootId) || []
+      list.push(chapter)
+      byRoot.set(rootId, list)
+    }
+
+    const groups = Array.from(byRoot.entries()).map(([rootId, list]) => {
+      const versions = [...list].sort((a, b) => {
+        const va = a.version ?? 0
+        const vb = b.version ?? 0
+        if (va !== vb) return va - vb
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      })
+      const approvedVersions = versions.filter((c) => c.status === 'APPROVED')
+      const approved = approvedVersions.length ? approvedVersions[approvedVersions.length - 1] : null
+      const parent = approved || versions[versions.length - 1]
+      const orderIndex = Math.min(...versions.map((c) => c.orderIndex ?? 0))
+      return { rootId, orderIndex, parent, versions, approved }
+    })
+
+    groups.sort((a, b) => {
+      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
+      return a.parent.title.localeCompare(b.parent.title)
+    })
+
+    return groups
+  }, [chapters])
+
+  const selectedApprovedChapter = useMemo(() => {
+    if (!selectedChapter) return null
+    const rootId = getRootId(selectedChapter)
+    const approved = chapters
+      .filter((c) => getRootId(c) === rootId && c.status === 'APPROVED')
+      .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
+    return approved.length ? approved[approved.length - 1] : null
+  }, [chapters, selectedChapter?.id])
 
   const resetFormForNew = (nextOrderIndex: number) => {
     setMode('new')
     setSelectedId(null)
     setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '' })
     setActiveDraftId(null)
+    setContentView('edit')
     autoDraftingRef.current = false
   }
 
@@ -121,6 +169,7 @@ export default function AdminCourseChaptersPage() {
       originalChapterId: selectedChapter.originalChapterId || '',
     })
     setMode('edit')
+    setContentView(selectedChapter.status === 'PENDING' ? 'compare' : 'edit')
   }, [selectedChapter?.id])
 
   useEffect(() => {
@@ -241,7 +290,7 @@ export default function AdminCourseChaptersPage() {
         return
       }
       setSelectedId(null)
-      resetFormForNew(Math.max(chapters.length - 1, 0))
+      resetFormForNew(Math.max(chapterGroups.length - 1, 0))
       await fetchChapters()
       toast.success('تم حذف الفصل')
     } catch (e: unknown) {
@@ -273,27 +322,16 @@ export default function AdminCourseChaptersPage() {
     }
   }
 
-  const moveChapter = (chapterId: string, direction: 'up' | 'down') => {
-    setChapters((prev) => {
-      const list = [...prev]
-      const idx = list.findIndex((c) => c.id === chapterId)
-      if (idx === -1) return prev
-      const target = direction === 'up' ? idx - 1 : idx + 1
-      if (target < 0 || target >= list.length) return prev
-      const temp = list[idx]
-      list[idx] = list[target]
-      list[target] = temp
-      const reordered = list.map((c, index) => ({ ...c, orderIndex: index }))
-      setOrderDirty(true)
-      return reordered
-    })
-  }
-
   const saveOrder = async () => {
     if (!courseId) return
     try {
       setReordering(true)
-      const order = chapters.map((c, index) => ({ id: c.id, orderIndex: index }))
+      const rootIds = chapterGroups.map((g) => g.rootId)
+      const rootToIndex = new Map(rootIds.map((id, index) => [id, index]))
+      const order = chapters.map((c) => ({
+        id: c.id,
+        orderIndex: rootToIndex.get(getRootId(c)) ?? (c.orderIndex ?? 0),
+      }))
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -321,6 +359,15 @@ export default function AdminCourseChaptersPage() {
     if (chapter.status === 'APPROVED') return 'معتمد'
     if (chapter.status === 'REJECTED') return 'مرفوض'
     return 'مسودة'
+  }
+
+  const versionLabel = (chapter: CourseChapter) => {
+    const v = chapter.version ? `v${chapter.version}` : 'v—'
+    return `${v} • ${chapterLabel(chapter)}`
+  }
+
+  const toggleGroup = (rootId: string) => {
+    setExpandedRoots((prev) => ({ ...prev, [rootId]: !prev[rootId] }))
   }
 
   const pendingChapters = chapters.filter((c) => c.status === 'PENDING')
@@ -351,7 +398,7 @@ export default function AdminCourseChaptersPage() {
                   <h3 className="text-lg font-bold text-site-text heading">الفصول</h3>
                   <button
                     type="button"
-                    onClick={() => resetFormForNew(chapters.length)}
+                    onClick={() => resetFormForNew(chapterGroups.length)}
                     className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                   >
                     فصل جديد
@@ -361,49 +408,134 @@ export default function AdminCourseChaptersPage() {
                   <div className="text-site-muted text-sm">لا توجد فصول بعد.</div>
                 ) : (
                   <div className="space-y-2">
-                    {chapters.map((chapter, index) => (
-                      <div key={chapter.id} className="p-2 rounded-lg border border-gray-700 bg-site-card/40">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedId(chapter.id)
-                            setMode('edit')
-                          }}
-                          className="w-full text-right"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="text-site-text text-sm truncate">{chapter.title}</div>
-                              <div className="text-xs text-site-muted mt-1">#{index + 1} • {chapterLabel(chapter)}</div>
+                    {chapterGroups.map((group, groupIndex) => {
+                      const isExpanded = !!expandedRoots[group.rootId]
+                      return (
+                        <div key={group.rootId} className="p-2 rounded-lg border border-gray-700 bg-site-card/40">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              toggleGroup(group.rootId)
+                              setSelectedId(group.parent.id)
+                              setMode('edit')
+                            }}
+                            className="w-full text-right"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-site-text text-sm truncate">
+                                  {group.parent.title || `الفصل ${group.orderIndex + 1}`}
+                                </div>
+                                <div className="text-xs text-site-muted mt-1 flex items-center justify-between gap-2">
+                                  <span>
+                                    #{groupIndex + 1} • {group.versions.length} نسخة
+                                  </span>
+                                  <span>{isExpanded ? '▲' : '▼'}</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-site-muted">{group.approved?.version ? `v${group.approved.version}` : '—'}</div>
                             </div>
-                            <div className="text-xs text-site-muted">{chapter.version ? `v${chapter.version}` : '—'}</div>
+                          </button>
+
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const order = chapterGroups.map((g) => g.rootId)
+                                const idx = order.indexOf(group.rootId)
+                                const target = idx - 1
+                                if (target < 0) return
+                                const swapped = [...order]
+                                ;[swapped[idx], swapped[target]] = [swapped[target], swapped[idx]]
+                                const rootToIndex = new Map(swapped.map((id, i) => [id, i]))
+                                setChapters((prev) =>
+                                  [...prev]
+                                    .map((c) => ({ ...c, orderIndex: rootToIndex.get(getRootId(c)) ?? c.orderIndex }))
+                                    .sort((a, b) => {
+                                      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
+                                      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                                    })
+                                )
+                                setOrderDirty(true)
+                              }}
+                              className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
+                              disabled={groupIndex === 0}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const order = chapterGroups.map((g) => g.rootId)
+                                const idx = order.indexOf(group.rootId)
+                                const target = idx + 1
+                                if (target >= order.length) return
+                                const swapped = [...order]
+                                ;[swapped[idx], swapped[target]] = [swapped[target], swapped[idx]]
+                                const rootToIndex = new Map(swapped.map((id, i) => [id, i]))
+                                setChapters((prev) =>
+                                  [...prev]
+                                    .map((c) => ({ ...c, orderIndex: rootToIndex.get(getRootId(c)) ?? c.orderIndex }))
+                                    .sort((a, b) => {
+                                      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
+                                      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                                    })
+                                )
+                                setOrderDirty(true)
+                              }}
+                              className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
+                              disabled={groupIndex === chapterGroups.length - 1}
+                            >
+                              ↓
+                            </button>
                           </div>
-                        </button>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => moveChapter(chapter.id, 'up')}
-                            className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveChapter(chapter.id, 'down')}
-                            className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
-                          >
-                            ↓
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(chapter.id)}
-                            className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200"
-                          >
-                            حذف
-                          </button>
+
+                          {isExpanded && (
+                            <div className="mt-3 space-y-2">
+                              {group.versions.map((chapter) => {
+                                const isSelected = chapter.id === selectedId
+                                return (
+                                  <div
+                                    key={chapter.id}
+                                    className={`p-2 rounded-lg border bg-black/10 ${
+                                      isSelected ? 'border-warm-primary/70' : 'border-gray-700'
+                                    }`}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedId(chapter.id)
+                                        setMode('edit')
+                                      }}
+                                      className="w-full text-right"
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <div className="text-site-text text-sm truncate">{chapter.title}</div>
+                                          <div className="text-xs text-site-muted mt-1">{versionLabel(chapter)}</div>
+                                        </div>
+                                        <div className="text-xs text-site-muted">
+                                          {new Date(chapter.updatedAt).toLocaleDateString('ar')}
+                                        </div>
+                                      </div>
+                                    </button>
+                                    <div className="flex items-center justify-end gap-2 mt-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDelete(chapter.id)}
+                                        className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200"
+                                      >
+                                        حذف
+                                      </button>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
                 <div className="mt-3 flex justify-end">
@@ -462,49 +594,231 @@ export default function AdminCourseChaptersPage() {
                   <h3 className="text-lg font-bold text-site-text heading">
                     {mode === 'new' ? 'مسودة فصل جديد' : mode === 'revision' ? 'نسخة جديدة للفصل' : 'تحرير الفصل'}
                   </h3>
-                  {selectedChapter && (
-                    <div className="text-xs text-site-muted">
-                      {chapterLabel(selectedChapter)} • {selectedChapter.author.name || selectedChapter.author.email || '—'}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  <input
-                    value={form.title}
-                    onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="عنوان الفصل"
-                    className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                  />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-site-muted">ترتيب الفصل:</span>
-                    <input
-                      type="number"
-                      value={form.orderIndex}
-                      onChange={(e) => setForm((prev) => ({ ...prev, orderIndex: Number(e.target.value) }))}
-                      className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
-                    />
+                    {selectedChapter && selectedChapter.status === 'PENDING' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setContentView('edit')}
+                          className={`px-3 py-1 text-xs rounded-lg border ${
+                            contentView === 'edit'
+                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                          }`}
+                        >
+                          تحرير
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setContentView('compare')}
+                          className={`px-3 py-1 text-xs rounded-lg border ${
+                            contentView === 'compare'
+                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                          }`}
+                        >
+                          مقارنة
+                        </button>
+                      </>
+                    )}
+                    {selectedChapter && (
+                      <div className="text-xs text-site-muted">
+                        {chapterLabel(selectedChapter)} • {selectedChapter.author.name || selectedChapter.author.email || '—'}
+                      </div>
+                    )}
                   </div>
-                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm text-site-text">محتوى الفصل</div>
-                      <button
-                        type="button"
-                        onClick={() => setEditorOpen(true)}
-                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
-                      >
-                        تحرير المحتوى
+                </div>
+                {contentView === 'compare' && selectedChapter ? (
+                  (() => {
+                    const tokenize = (text: string) => text.split(/(\s+)/).filter((t) => t.length > 0)
+                    const diffTokens = (a: string[], b: string[]): DiffOp[] => {
+                      const n = a.length
+                      const m = b.length
+                      const max = n + m
+                      const offset = max
+                      const v0 = new Array(2 * max + 1).fill(0)
+                      const trace: number[][] = []
+
+                      for (let d = 0; d <= max; d++) {
+                        const v = v0.slice()
+                        for (let k = -d; k <= d; k += 2) {
+                          const kIndex = k + offset
+                          let x: number
+                          if (k === -d || (k !== d && v0[kIndex - 1] < v0[kIndex + 1])) {
+                            x = v0[kIndex + 1]
+                          } else {
+                            x = v0[kIndex - 1] + 1
+                          }
+                          let y = x - k
+                          while (x < n && y < m && a[x] === b[y]) {
+                            x++
+                            y++
+                          }
+                          v[kIndex] = x
+                          if (x >= n && y >= m) {
+                            trace.push(v)
+                            d = max + 1
+                            break
+                          }
+                        }
+                        if (d <= max) {
+                          trace.push(v)
+                          for (let i = 0; i < v0.length; i++) v0[i] = v[i]
+                        }
+                      }
+
+                      let x = n
+                      let y = m
+                      const edits: { type: DiffOp['type']; token: string }[] = []
+                      for (let d = trace.length - 1; d > 0; d--) {
+                        const v = trace[d]
+                        const prev = trace[d - 1]
+                        const k = x - y
+                        const kIndex = k + offset
+                        let prevK: number
+                        if (k === -d || (k !== d && prev[kIndex - 1] < prev[kIndex + 1])) {
+                          prevK = k + 1
+                        } else {
+                          prevK = k - 1
+                        }
+                        const prevX = prev[prevK + offset]
+                        const prevY = prevX - prevK
+
+                        while (x > prevX && y > prevY) {
+                          edits.push({ type: 'equal', token: a[x - 1] })
+                          x--
+                          y--
+                        }
+
+                        if (x === prevX) {
+                          edits.push({ type: 'insert', token: b[y - 1] })
+                          y--
+                        } else {
+                          edits.push({ type: 'delete', token: a[x - 1] })
+                          x--
+                        }
+                      }
+
+                      while (x > 0 && y > 0) {
+                        edits.push({ type: 'equal', token: a[x - 1] })
+                        x--
+                        y--
+                      }
+                      while (x > 0) {
+                        edits.push({ type: 'delete', token: a[x - 1] })
+                        x--
+                      }
+                      while (y > 0) {
+                        edits.push({ type: 'insert', token: b[y - 1] })
+                        y--
+                      }
+
+                      edits.reverse()
+                      const merged: DiffOp[] = []
+                      for (const e of edits) {
+                        const last = merged[merged.length - 1]
+                        if (last && last.type === e.type) {
+                          last.value += e.token
+                        } else {
+                          merged.push({ type: e.type, value: e.token })
+                        }
+                      }
+                      return merged
+                    }
+
+                    const base = selectedApprovedChapter?.content || ''
+                    const draft = selectedChapter.content || ''
+                    const ops = diffTokens(tokenize(base), tokenize(draft))
+
+                    const renderSide = (side: 'base' | 'draft') => (
+                      <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                        {ops.map((op, idx) => {
+                          if (side === 'base') {
+                            if (op.type === 'insert') return null
+                            if (op.type === 'delete') {
+                              return (
+                                <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
+                                  {op.value}
+                                </span>
+                              )
+                            }
+                            return <span key={idx}>{op.value}</span>
+                          }
+                          if (op.type === 'delete') return null
+                          if (op.type === 'insert') {
+                            return (
+                              <span key={idx} className="bg-green-600/20 text-green-200 rounded px-0.5">
+                                {op.value}
+                              </span>
+                            )
+                          }
+                          return <span key={idx}>{op.value}</span>
+                        })}
+                      </div>
+                    )
+
+                    return (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                          <div className="text-sm text-site-text">
+                            النسخة المعتمدة {selectedApprovedChapter?.version ? `v${selectedApprovedChapter.version}` : ''}
+                          </div>
+                          <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                            {selectedApprovedChapter ? renderSide('base') : <div className="text-site-muted text-sm">لا توجد نسخة معتمدة بعد.</div>}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                          <div className="text-sm text-site-text">
+                            المسودة {selectedChapter.version ? `v${selectedChapter.version}` : ''}
+                          </div>
+                          <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                            {renderSide('draft')}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-3">
+                      <input
+                        value={form.title}
+                        onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                        placeholder="عنوان الفصل"
+                        className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-site-muted">ترتيب الفصل:</span>
+                        <input
+                          type="number"
+                          value={form.orderIndex}
+                          onChange={(e) => setForm((prev) => ({ ...prev, orderIndex: Number(e.target.value) }))}
+                          className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
+                        />
+                      </div>
+                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm text-site-text">محتوى الفصل</div>
+                          <button
+                            type="button"
+                            onClick={() => setEditorOpen(true)}
+                            className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                          >
+                            تحرير المحتوى
+                          </button>
+                        </div>
+                        <div className="text-xs text-site-muted">
+                          {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
+                        {saving ? '...' : 'حفظ المسودة'}
                       </button>
                     </div>
-                    <div className="text-xs text-site-muted">
-                      {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
-                    {saving ? '...' : 'حفظ المسودة'}
-                  </button>
-                </div>
+                  </>
+                )}
               </div>
 
               {selectedChapter && (
