@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import Link from 'next/link'
+import { Link } from '@/lib/navigation'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

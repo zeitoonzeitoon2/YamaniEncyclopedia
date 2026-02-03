@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { Link, useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'

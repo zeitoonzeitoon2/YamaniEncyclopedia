@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 

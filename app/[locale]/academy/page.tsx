@@ -4,6 +4,7 @@ import { Link, useRouter } from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
+import { useTranslations } from 'next-intl'
 
 type AcademyCourse = {
   id: string
@@ -21,6 +22,8 @@ type AcademyDomain = {
 
 export default function AcademyLandingPage() {
   const router = useRouter()
+  const t = useTranslations('academy')
+  const th = useTranslations('header')
   const [domains, setDomains] = useState<AcademyDomain[]>([])
   const [loading, setLoading] = useState(true)
   const [enrollingId, setEnrollingId] = useState<string | null>(null)
@@ -31,19 +34,19 @@ export default function AcademyLandingPage() {
         const res = await fetch('/api/academy/courses', { cache: 'no-store' })
         const payload = (await res.json().catch(() => ({}))) as { domains?: AcademyDomain[]; error?: string }
         if (!res.ok) {
-          toast.error(payload.error || 'خطأ في جلب الدورات')
+          toast.error(payload.error || t('loadError'))
           return
         }
         setDomains(Array.isArray(payload.domains) ? payload.domains : [])
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'خطأ في جلب الدورات'
+        const msg = e instanceof Error ? e.message : t('loadError')
         toast.error(msg)
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [])
+  }, [t])
 
   const enroll = async (courseId: string) => {
     try {
@@ -55,12 +58,12 @@ export default function AcademyLandingPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'تعذر التسجيل')
+        toast.error(payload.error || t('enrollError'))
         return
       }
-      toast.success('تم التسجيل بنجاح')
+      toast.success(t('enrollSuccess'))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر التسجيل'
+      const msg = e instanceof Error ? e.message : t('enrollError')
       toast.error(msg)
     } finally {
       setEnrollingId(null)
@@ -73,25 +76,23 @@ export default function AcademyLandingPage() {
       <main className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-site-text heading">الأكاديمية</h1>
-            <p className="text-site-muted mt-2">
-              منصّة التعليم والاختبارات للوصول إلى الامتيازات داخل شجرة البحث.
-            </p>
+            <h1 className="text-3xl font-bold text-site-text heading">{th('academy')}</h1>
+            <p className="text-site-muted mt-2">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/academy/dashboard" className="btn-primary">
-              لوحة المتعلم
+              {t('dashboard')}
             </Link>
             <Link href="/academy/teaching" className="btn-secondary">
-              لوحة الممتحن
+              {t('examinerDashboard')}
             </Link>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-site-muted">جارٍ التحميل...</div>
+          <div className="text-site-muted">{t('loading')}</div>
         ) : domains.length === 0 ? (
-          <div className="text-site-muted">لا توجد دورات معتمدة بعد.</div>
+          <div className="text-site-muted">{t('empty')}</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {domains.map((domain) => (
@@ -119,7 +120,7 @@ export default function AcademyLandingPage() {
                           disabled={enrollingId === course.id}
                           className="btn-primary text-sm disabled:opacity-50"
                         >
-                          {enrollingId === course.id ? '...' : 'تسجيل'}
+                          {enrollingId === course.id ? '...' : t('enroll')}
                         </button>
                       </div>
                     </div>

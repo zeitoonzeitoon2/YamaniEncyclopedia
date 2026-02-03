@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 
 export default function SignUp() {

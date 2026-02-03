@@ -4,6 +4,7 @@ import { Link } from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
+import { useTranslations } from 'next-intl'
 
 type AcademyCourse = {
   id: string
@@ -20,6 +21,7 @@ type AcademyDomain = {
 }
 
 export default function AcademyDashboardPage() {
+  const t = useTranslations('academy')
   const [domains, setDomains] = useState<AcademyDomain[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -29,19 +31,19 @@ export default function AcademyDashboardPage() {
         const res = await fetch('/api/academy/courses', { cache: 'no-store' })
         const payload = (await res.json().catch(() => ({}))) as { domains?: AcademyDomain[]; error?: string }
         if (!res.ok) {
-          toast.error(payload.error || 'خطأ في جلب الدورات')
+          toast.error(payload.error || t('loadError'))
           return
         }
         setDomains(Array.isArray(payload.domains) ? payload.domains : [])
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'خطأ في جلب الدورات'
+        const msg = e instanceof Error ? e.message : t('loadError')
         toast.error(msg)
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [])
+  }, [t])
 
   return (
     <div className="min-h-screen bg-site-bg">
@@ -49,20 +51,20 @@ export default function AcademyDashboardPage() {
       <main className="container mx-auto px-4 py-8 space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-site-text heading">لوحة المتعلم</h1>
-            <p className="text-site-muted mt-2">تتبع الدورات والاختبارات الخاصة بك.</p>
+            <h1 className="text-3xl font-bold text-site-text heading">{t('dashboard')}</h1>
+            <p className="text-site-muted mt-2">{t('dashboardSubtitle')}</p>
           </div>
           <Link href="/academy" className="btn-secondary">
-            العودة للأكاديمية
+            {t('backToAcademy')}
           </Link>
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-bold text-site-text heading mb-3">دوراتي</h2>
+          <h2 className="text-xl font-bold text-site-text heading mb-3">{t('myCourses')}</h2>
           {loading ? (
-            <div className="text-site-muted">جارٍ التحميل...</div>
+            <div className="text-site-muted">{t('loading')}</div>
           ) : domains.length === 0 ? (
-            <div className="text-site-muted">لا توجد دورات معتمدة بعد.</div>
+            <div className="text-site-muted">{t('empty')}</div>
           ) : (
             <div className="space-y-4">
               {domains.map((domain) => (

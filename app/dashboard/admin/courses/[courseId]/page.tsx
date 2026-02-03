@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'

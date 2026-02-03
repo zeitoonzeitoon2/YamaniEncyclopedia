@@ -1,12 +1,12 @@
 'use client'
 
-import { useSession, signIn, signOut } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import React from 'react'
-import Link from 'next/link'
+import { Link, usePathname, useRouter } from '@/lib/navigation'
 import Image from 'next/image'
 import { User, LogOut, Edit, Settings, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { usePathname } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 
 export function Header() {
   const { data: session, status } = useSession()
@@ -16,7 +16,11 @@ export function Header() {
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
+  const router = useRouter()
   const pathname = usePathname()
+  const locale = useLocale()
+  const t = useTranslations('header')
+  const tl = useTranslations('language')
   const isAcademy = pathname?.startsWith('/academy')
 
   React.useEffect(() => {
@@ -60,14 +64,12 @@ export function Header() {
 
   return (
     <header className="bg-site-card border-b border-site-border relative">
-      <div className="absolute top-2 right-4 text-xs text-site-muted">
-        Tree of Knowledge
-      </div>
+      <div className="absolute top-2 end-4 text-xs text-site-muted">{t('tagline')}</div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center">
             <Link href="/" className="text-2xl font-bold text-site-text heading">
-              شجرة العلم
+              {t('title')}
             </Link>
           </div>
 
@@ -79,7 +81,7 @@ export function Header() {
                   isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/30 text-site-text'
                 }`}
               >
-                الموسوعة
+                {t('encyclopedia')}
               </Link>
               <Link
                 href="/academy"
@@ -87,7 +89,7 @@ export function Header() {
                   isAcademy ? 'bg-warm-primary/30 text-site-text' : 'text-site-muted hover:text-site-text'
                 }`}
               >
-                الأكاديمية
+                {t('academy')}
               </Link>
             </div>
           </div>
@@ -97,11 +99,22 @@ export function Header() {
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className="p-2 rounded-lg hover:bg-site-border transition-colors text-site-text"
-                aria-label="تغيير الثيم"
+                aria-label={t('themeToggle')}
               >
                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             )}
+
+            <select
+              value={locale}
+              onChange={(event) => router.replace(pathname, { locale: event.target.value })}
+              className="rounded-lg border border-site-border bg-site-card text-site-text text-sm px-2 py-1"
+              aria-label={tl('label')}
+            >
+              <option value="ar">{tl('ar')}</option>
+              <option value="fa">{tl('fa')}</option>
+              <option value="en">{tl('en')}</option>
+            </select>
 
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
@@ -110,7 +123,7 @@ export function Header() {
                 {!isAcademy && (
                   <Link href="/create" className="btn-primary flex items-center gap-2">
                     <Edit size={16} />
-                    تحرير جديد
+                    {t('newEdit')}
                   </Link>
                 )}
                 <div className="relative" ref={menuRef}>
@@ -132,10 +145,10 @@ export function Header() {
                         <User size={16} />
                       </span>
                     )}
-                    <span className="text-site-text text-sm">{session.user?.name || 'حسابي'}</span>
+                    <span className="text-site-text text-sm">{session.user?.name || t('account')}</span>
                   </button>
                   {menuOpen && (
-                    <div className="absolute left-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
+                    <div className="absolute start-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-gray-700">
                         <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
                         <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
@@ -143,36 +156,36 @@ export function Header() {
                       <div className="py-1">
                         <Link
                           href={`/profile/${session.user?.id}`}
-                          className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                          className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                         >
                           <User size={16} />
-                          الملف الشخصي
+                          {t('profile')}
                         </Link>
                         {session && (
                           <Link
                             href="/supervisor"
-                            className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
-                            {isEditorLike ? 'لوحة المحرر' : 'لوحة المشرف'}
+                            {isEditorLike ? t('editorDashboard') : t('supervisorDashboard')}
                           </Link>
                         )}
                         {(isDomainExpert || session.user?.role === 'ADMIN') && (
                           <Link
                             href="/dashboard/admin"
-                            className="w-full text-right px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             <Settings size={16} />
-                            لوحة الإدارة
+                            {t('adminDashboard')}
                           </Link>
                         )}
                         <button
                           type="button"
                           onClick={() => signOut()}
-                          className="w-full text-right px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
+                          className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
                         >
                           <LogOut size={16} />
-                          تسجيل الخروج
+                          {t('signOut')}
                         </button>
                       </div>
                     </div>
@@ -182,10 +195,10 @@ export function Header() {
             ) : (
               <div className="flex gap-4">
                 <Link href="/auth/signin" className="text-site-text hover:text-warm-primary transition-colors">
-                  تسجيل الدخول
+                  {t('signIn')}
                 </Link>
                 <Link href="/auth/signup" className="btn-primary">
-                  إنشاء حساب
+                  {t('signUp')}
                 </Link>
               </div>
             )}

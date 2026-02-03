@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'

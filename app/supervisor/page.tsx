@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'
 import DiagramComparison from '@/components/DiagramComparison'

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
 import { Modal } from '@/components/Modal'

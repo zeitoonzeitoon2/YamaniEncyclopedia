@@ -1,9 +1,8 @@
 'use client'
 
 import { signIn, getSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 
 export default function SignIn() {
