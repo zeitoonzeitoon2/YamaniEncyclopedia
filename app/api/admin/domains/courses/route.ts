@@ -71,13 +71,17 @@ export async function POST(request: NextRequest) {
     const title = typeof body.title === 'string' ? body.title.trim() : ''
     const description = typeof body.description === 'string' ? body.description.trim() : null
     const rawSyllabus = Array.isArray(body.syllabus) ? body.syllabus : []
-    const syllabus = rawSyllabus
-      .map((item) => {
-        const titleValue = typeof item?.title === 'string' ? item.title.trim() : ''
-        const descValue = typeof item?.description === 'string' ? item.description.trim() : ''
-        return titleValue ? { title: titleValue, description: descValue || undefined } : null
-      })
-      .filter((item): item is { title: string; description?: string } => !!item)
+    const syllabus = rawSyllabus.reduce<Array<{ title: string; description?: string }>>((acc, item) => {
+      const titleValue = typeof item?.title === 'string' ? item.title.trim() : ''
+      const descValue = typeof item?.description === 'string' ? item.description.trim() : ''
+      if (!titleValue) return acc
+      if (descValue) {
+        acc.push({ title: titleValue, description: descValue })
+      } else {
+        acc.push({ title: titleValue })
+      }
+      return acc
+    }, [])
 
     if (!domainId || !title) {
       return NextResponse.json({ error: 'domainId and title are required' }, { status: 400 })

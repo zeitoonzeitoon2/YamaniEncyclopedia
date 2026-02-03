@@ -75,13 +75,19 @@ export async function POST(request: NextRequest) {
       if (nextStatus === 'APPROVED') {
         const existingChapters = await prisma.courseChapter.count({ where: { courseId } })
         const syllabusItems = Array.isArray(course.syllabus)
-          ? course.syllabus
-              .map((item) => {
-                const title = typeof item?.title === 'string' ? item.title.trim() : ''
-                const description = typeof item?.description === 'string' ? item.description.trim() : ''
-                return title ? { title, description: description || undefined } : null
-              })
-              .filter((item): item is { title: string; description?: string } => !!item)
+          ? course.syllabus.reduce<Array<{ title: string; description?: string }>>((acc, item) => {
+              if (!item || typeof item !== 'object') return acc
+              const record = item as Record<string, unknown>
+              const title = typeof record.title === 'string' ? record.title.trim() : ''
+              const description = typeof record.description === 'string' ? record.description.trim() : ''
+              if (!title) return acc
+              if (description) {
+                acc.push({ title, description })
+              } else {
+                acc.push({ title })
+              }
+              return acc
+            }, [])
           : []
 
         await prisma.$transaction([

@@ -450,14 +450,17 @@ export default function AdminDashboard() {
     if (!selectedDomain) return
     const title = courseForm.title.trim()
     const description = courseForm.description.trim()
-    const syllabus = courseForm.syllabus
-      .map((item) => {
-        const itemTitle = item.title.trim()
-        const itemDescription = item.description?.trim() || ''
-        if (!itemTitle) return null
-        return { title: itemTitle, description: itemDescription || undefined }
-      })
-      .filter((item): item is SyllabusItem => !!item)
+    const syllabus = courseForm.syllabus.reduce<SyllabusItem[]>((acc, item) => {
+      const itemTitle = item.title.trim()
+      const itemDescription = item.description?.trim() || ''
+      if (!itemTitle) return acc
+      if (itemDescription) {
+        acc.push({ title: itemTitle, description: itemDescription })
+      } else {
+        acc.push({ title: itemTitle })
+      }
+      return acc
+    }, [])
     if (!title) {
       toast.error('عنوان الدورة مطلوب')
       return
