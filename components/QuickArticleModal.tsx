@@ -11,6 +11,7 @@ interface QuickArticleModalProps {
   // إذا كان هذا الوضع مفعلاً، فسنُرجِع مسودة بدل إنشاء مقال فعلي
   createViaAPI?: boolean
   onDraftCreated?: (draft: { title: string; description?: string; content: string; slug: string }) => void
+  onDraftChange?: (draft: { title: string; description?: string; content: string }) => void
   // لتحرير مقالة مسودة
   editMode?: boolean
   existingDraft?: { title: string; description?: string; content: string; slug: string }
@@ -22,6 +23,7 @@ export default function QuickArticleModal({
   onArticleCreated,
   createViaAPI,
   onDraftCreated,
+  onDraftChange,
   editMode,
   existingDraft,
 }: QuickArticleModalProps) {
@@ -77,7 +79,11 @@ export default function QuickArticleModal({
     const ta = contentRef.current
     const current = formData.content || ''
     if (!ta) {
-      setFormData(prev => ({ ...prev, content: current + text }))
+      setFormData(prev => {
+        const next = { ...prev, content: current + text }
+        onDraftChange?.(next)
+        return next
+      })
       return
     }
     const start = ta.selectionStart ?? current.length
@@ -85,7 +91,11 @@ export default function QuickArticleModal({
     const before = current.slice(0, start)
     const after = current.slice(end)
     const updated = before + text + after
-    setFormData(prev => ({ ...prev, content: updated }))
+    setFormData(prev => {
+      const next = { ...prev, content: updated }
+      onDraftChange?.(next)
+      return next
+    })
     setTimeout(() => {
       const pos = before.length + text.length
       ta.focus()
@@ -122,7 +132,11 @@ export default function QuickArticleModal({
     if (!ta) {
       // اگر ref هنوز set نشده بود، به انتها اضافه کن
       const updated = current + refText + (current.includes(`[^${nextNum}]:`) ? '' : defText)
-      setFormData(prev => ({ ...prev, content: updated }))
+      setFormData(prev => {
+        const next = { ...prev, content: updated }
+        onDraftChange?.(next)
+        return next
+      })
       return
     }
 
@@ -136,7 +150,11 @@ export default function QuickArticleModal({
       updated += defText
     }
 
-    setFormData(prev => ({ ...prev, content: updated }))
+    setFormData(prev => {
+      const next = { ...prev, content: updated }
+      onDraftChange?.(next)
+      return next
+    })
 
     // تنظیم مکان‌نما بلافاصله بعد از ارجاع
     setTimeout(() => {
@@ -307,7 +325,13 @@ export default function QuickArticleModal({
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData(prev => {
+                    const next = { ...prev, title: e.target.value }
+                    onDraftChange?.(next)
+                    return next
+                  })
+                }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 placeholder="أدخل عنوان المقال..."
                 required
@@ -327,7 +351,13 @@ export default function QuickArticleModal({
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData(prev => {
+                    const next = { ...prev, description: e.target.value }
+                    onDraftChange?.(next)
+                    return next
+                  })
+                }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 rows={2}
                 placeholder="ملخص قصير للمقال..."
@@ -413,7 +443,13 @@ export default function QuickArticleModal({
               <textarea
                 ref={contentRef}
                 value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                onChange={(e) =>
+                  setFormData(prev => {
+                    const next = { ...prev, content: e.target.value }
+                    onDraftChange?.(next)
+                    return next
+                  })
+                }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
                 rows={10}
                 placeholder="اكتب محتوى المقال هنا... مثال: هذا نص فيه حاشية[^1]\n\n[^1]: اكتب نص الحاشية هنا."

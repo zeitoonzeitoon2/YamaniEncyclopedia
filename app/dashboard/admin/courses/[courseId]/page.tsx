@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/Header'
@@ -64,6 +64,8 @@ export default function AdminCourseChaptersPage() {
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [previewHtml, setPreviewHtml] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const autoDraftingRef = useRef(false)
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
 
@@ -71,6 +73,8 @@ export default function AdminCourseChaptersPage() {
     setMode('new')
     setSelectedId(null)
     setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '' })
+    setActiveDraftId(null)
+    autoDraftingRef.current = false
   }
 
   const fetchChapters = async () => {
@@ -108,6 +112,8 @@ export default function AdminCourseChaptersPage() {
 
   useEffect(() => {
     if (!selectedChapter) return
+    setActiveDraftId(selectedChapter.status === 'PENDING' ? selectedChapter.id : null)
+    autoDraftingRef.current = false
     setForm({
       title: selectedChapter.title || '',
       content: selectedChapter.content || '',
@@ -121,6 +127,61 @@ export default function AdminCourseChaptersPage() {
     setPreviewHtml(applyArticleTransforms(form.content || ''))
   }, [form.content])
 
+  const handleEditorDraftChange = async (draft: { title: string; description?: string; content: string }) => {
+    setForm((prev) => ({ ...prev, title: draft.title, content: draft.content }))
+    if (!selectedChapter) return
+    if (selectedChapter.status !== 'APPROVED') return
+    if (activeDraftId) return
+    if (!draft.content.trim()) return
+    if (!courseId) return
+    const userId = session?.user?.id || ''
+    if (!userId) return
+
+    const rootId = selectedChapter.originalChapterId || selectedChapter.id
+    const existingDraft = chapters.find(
+      (chapter) =>
+        chapter.status === 'PENDING' && chapter.originalChapterId === rootId && chapter.author.id === userId
+    )
+    if (existingDraft) {
+      setActiveDraftId(existingDraft.id)
+      setMode('edit')
+      return
+    }
+
+    if (autoDraftingRef.current) return
+    const draftTitle = (draft.title || selectedChapter.title || '').trim()
+    if (!draftTitle) return
+    autoDraftingRef.current = true
+    try {
+      const content = draft.content
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draftTitle,
+          content,
+          orderIndex: selectedChapter.orderIndex ?? 0,
+          originalChapterId: rootId,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
+      if (!res.ok) {
+        toast.error(payload.error || 'تعذر إنشاء المسودة')
+        return
+      }
+      if (payload.chapter?.id) {
+        setActiveDraftId(payload.chapter.id)
+      }
+      setMode('edit')
+      await fetchChapters()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'تعذر إنشاء المسودة'
+      toast.error(msg)
+    } finally {
+      autoDraftingRef.current = false
+    }
+  }
+
   const handleSave = async () => {
     if (!courseId) return
     const title = form.title.trim()
@@ -131,8 +192,9 @@ export default function AdminCourseChaptersPage() {
     }
     try {
       setSaving(true)
-      if (mode === 'edit' && selectedId) {
-        const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${selectedId}`, {
+      const targetId = activeDraftId || (mode === 'edit' ? selectedId : null)
+      if (targetId) {
+        const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, content, orderIndex: form.orderIndex }),
@@ -253,17 +315,7 @@ export default function AdminCourseChaptersPage() {
     }
   }
 
-  const newRevisionFrom = (chapter: CourseChapter) => {
-    const rootId = chapter.originalChapterId || chapter.id
-    setMode('revision')
-    setSelectedId(null)
-    setForm({
-      title: chapter.title,
-      content: chapter.content,
-      orderIndex: chapter.orderIndex,
-      originalChapterId: rootId,
-    })
-  }
+
 
   const chapterLabel = (chapter: CourseChapter) => {
     if (chapter.status === 'APPROVED') return 'معتمد'
@@ -341,13 +393,6 @@ export default function AdminCourseChaptersPage() {
                             className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
                           >
                             ↓
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => newRevisionFrom(chapter)}
-                            className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
-                          >
-                            نسخة جديدة
                           </button>
                           <button
                             type="button"
@@ -486,7 +531,7 @@ export default function AdminCourseChaptersPage() {
           title: form.title || 'عنوان الفصل',
           description: '',
           content: form.content || '',
-          slug: selectedChapter?.id || 'chapter-draft',
+          slug: activeDraftId || selectedChapter?.id || 'chapter-draft',
         }}
         onDraftCreated={(draft) => {
           setForm((prev) => ({
@@ -494,6 +539,9 @@ export default function AdminCourseChaptersPage() {
             title: draft.title || prev.title,
             content: draft.content,
           }))
+        }}
+        onDraftChange={(draft) => {
+          handleEditorDraftChange(draft)
         }}
       />
     </div>
