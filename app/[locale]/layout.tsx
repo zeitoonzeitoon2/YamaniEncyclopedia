@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages, setRequestLocale } from 'next-intl/server'
+import { setRequestLocale } from 'next-intl/server'
 import { locales } from '@/i18n'
 import { Providers } from '../providers'
 
@@ -25,7 +25,7 @@ export default async function RootLayout({
   }
 
   setRequestLocale(params.locale)
-  const messages = await getMessages()
+  const messages = (await import(`../../messages/${params.locale}.json`)).default
 
   return (
     <NextIntlClientProvider locale={params.locale} messages={messages}>
