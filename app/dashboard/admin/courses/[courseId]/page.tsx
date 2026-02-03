@@ -45,7 +45,6 @@ type CourseInfo = {
 type ChaptersResponse = { course: CourseInfo; chapters: CourseChapter[] }
 
 type EditorMode = 'new' | 'edit' | 'revision'
-type ContentView = 'edit' | 'compare'
 
 type DiffOp = { type: 'equal' | 'insert' | 'delete'; value: string }
 
@@ -62,15 +61,13 @@ export default function AdminCourseChaptersPage() {
   const [mode, setMode] = useState<EditorMode>('new')
   const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '' })
   const [saving, setSaving] = useState(false)
-  const [reordering, setReordering] = useState(false)
-  const [orderDirty, setOrderDirty] = useState(false)
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [previewHtml, setPreviewHtml] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
   const [expandedRoots, setExpandedRoots] = useState<Record<string, boolean>>({})
-  const [contentView, setContentView] = useState<ContentView>('edit')
   const autoDraftingRef = useRef(false)
+  const chaptersRef = useRef<CourseChapter[]>([])
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
 
@@ -121,7 +118,6 @@ export default function AdminCourseChaptersPage() {
     setSelectedId(null)
     setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '' })
     setActiveDraftId(null)
-    setContentView('edit')
     autoDraftingRef.current = false
   }
 
@@ -159,18 +155,22 @@ export default function AdminCourseChaptersPage() {
   }, [session, status, courseId, router])
 
   useEffect(() => {
-    if (!selectedChapter) return
-    setActiveDraftId(selectedChapter.status === 'PENDING' ? selectedChapter.id : null)
+    chaptersRef.current = chapters
+  }, [chapters])
+
+  useEffect(() => {
+    const current = selectedId ? chaptersRef.current.find((c) => c.id === selectedId) || null : null
+    if (!current) return
+    setActiveDraftId(current.status === 'PENDING' ? current.id : null)
     autoDraftingRef.current = false
     setForm({
-      title: selectedChapter.title || '',
-      content: selectedChapter.content || '',
-      orderIndex: selectedChapter.orderIndex ?? 0,
-      originalChapterId: selectedChapter.originalChapterId || '',
+      title: current.title || '',
+      content: current.content || '',
+      orderIndex: current.orderIndex ?? 0,
+      originalChapterId: current.originalChapterId || '',
     })
     setMode('edit')
-    setContentView(selectedChapter.status === 'PENDING' ? 'compare' : 'edit')
-  }, [selectedChapter?.id])
+  }, [selectedId])
 
   useEffect(() => {
     setPreviewHtml(applyArticleTransforms(form.content || ''))
@@ -322,39 +322,6 @@ export default function AdminCourseChaptersPage() {
     }
   }
 
-  const saveOrder = async () => {
-    if (!courseId) return
-    try {
-      setReordering(true)
-      const rootIds = chapterGroups.map((g) => g.rootId)
-      const rootToIndex = new Map(rootIds.map((id, index) => [id, index]))
-      const order = chapters.map((c) => ({
-        id: c.id,
-        orderIndex: rootToIndex.get(getRootId(c)) ?? (c.orderIndex ?? 0),
-      }))
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
-      if (!res.ok) {
-        toast.error(payload.error || 'تعذر حفظ الترتيب')
-        return
-      }
-      setOrderDirty(false)
-      await fetchChapters()
-      toast.success('تم حفظ الترتيب')
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر حفظ الترتيب'
-      toast.error(msg)
-    } finally {
-      setReordering(false)
-    }
-  }
-
-
-
   const chapterLabel = (chapter: CourseChapter) => {
     if (chapter.status === 'APPROVED') return 'معتمد'
     if (chapter.status === 'REJECTED') return 'مرفوض'
@@ -371,6 +338,110 @@ export default function AdminCourseChaptersPage() {
   }
 
   const pendingChapters = chapters.filter((c) => c.status === 'PENDING')
+
+  const previewDiffOps = useMemo(() => {
+    const isPending = selectedChapter?.status === 'PENDING'
+    if (!isPending) return null
+
+    const tokenize = (text: string) => text.split(/(\s+)/).filter((t) => t.length > 0)
+    const diffTokens = (a: string[], b: string[]): DiffOp[] => {
+      const n = a.length
+      const m = b.length
+      const max = n + m
+      const offset = max
+      const v0 = new Array(2 * max + 1).fill(0)
+      const trace: number[][] = []
+
+      for (let d = 0; d <= max; d++) {
+        const v = v0.slice()
+        for (let k = -d; k <= d; k += 2) {
+          const kIndex = k + offset
+          let x: number
+          if (k === -d || (k !== d && v0[kIndex - 1] < v0[kIndex + 1])) {
+            x = v0[kIndex + 1]
+          } else {
+            x = v0[kIndex - 1] + 1
+          }
+          let y = x - k
+          while (x < n && y < m && a[x] === b[y]) {
+            x++
+            y++
+          }
+          v[kIndex] = x
+          if (x >= n && y >= m) {
+            trace.push(v)
+            d = max + 1
+            break
+          }
+        }
+        if (d <= max) {
+          trace.push(v)
+          for (let i = 0; i < v0.length; i++) v0[i] = v[i]
+        }
+      }
+
+      let x = n
+      let y = m
+      const edits: { type: DiffOp['type']; token: string }[] = []
+      for (let d = trace.length - 1; d > 0; d--) {
+        const prev = trace[d - 1]
+        const k = x - y
+        const kIndex = k + offset
+        let prevK: number
+        if (k === -d || (k !== d && prev[kIndex - 1] < prev[kIndex + 1])) {
+          prevK = k + 1
+        } else {
+          prevK = k - 1
+        }
+        const prevX = prev[prevK + offset]
+        const prevY = prevX - prevK
+
+        while (x > prevX && y > prevY) {
+          edits.push({ type: 'equal', token: a[x - 1] })
+          x--
+          y--
+        }
+
+        if (x === prevX) {
+          edits.push({ type: 'insert', token: b[y - 1] })
+          y--
+        } else {
+          edits.push({ type: 'delete', token: a[x - 1] })
+          x--
+        }
+      }
+
+      while (x > 0 && y > 0) {
+        edits.push({ type: 'equal', token: a[x - 1] })
+        x--
+        y--
+      }
+      while (x > 0) {
+        edits.push({ type: 'delete', token: a[x - 1] })
+        x--
+      }
+      while (y > 0) {
+        edits.push({ type: 'insert', token: b[y - 1] })
+        y--
+      }
+
+      edits.reverse()
+      const merged: DiffOp[] = []
+      for (const e of edits) {
+        const last = merged[merged.length - 1]
+        if (last && last.type === e.type) {
+          last.value += e.token
+        } else {
+          merged.push({ type: e.type, value: e.token })
+        }
+      }
+      return merged
+    }
+
+    const base = selectedApprovedChapter?.content || ''
+    const draft = form.content || ''
+    return diffTokens(tokenize(base), tokenize(draft))
+  }, [form.content, selectedApprovedChapter?.content, selectedChapter?.status])
 
   return (
     <div className="min-h-screen bg-site-bg">
@@ -426,69 +497,13 @@ export default function AdminCourseChaptersPage() {
                                 <div className="text-site-text text-sm truncate">
                                   {group.parent.title || `الفصل ${group.orderIndex + 1}`}
                                 </div>
-                                <div className="text-xs text-site-muted mt-1 flex items-center justify-between gap-2">
-                                  <span>
-                                    #{groupIndex + 1} • {group.versions.length} نسخة
-                                  </span>
-                                  <span>{isExpanded ? '▲' : '▼'}</span>
+                                <div className="text-xs text-site-muted mt-1">
+                                  #{groupIndex + 1} • {group.versions.length} نسخة
                                 </div>
                               </div>
-                              <div className="text-xs text-site-muted">{group.approved?.version ? `v${group.approved.version}` : '—'}</div>
+                              <div className="text-xs text-site-muted">{isExpanded ? '▲' : '▼'}</div>
                             </div>
                           </button>
-
-                          <div className="flex items-center gap-2 mt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const order = chapterGroups.map((g) => g.rootId)
-                                const idx = order.indexOf(group.rootId)
-                                const target = idx - 1
-                                if (target < 0) return
-                                const swapped = [...order]
-                                ;[swapped[idx], swapped[target]] = [swapped[target], swapped[idx]]
-                                const rootToIndex = new Map(swapped.map((id, i) => [id, i]))
-                                setChapters((prev) =>
-                                  [...prev]
-                                    .map((c) => ({ ...c, orderIndex: rootToIndex.get(getRootId(c)) ?? c.orderIndex }))
-                                    .sort((a, b) => {
-                                      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
-                                      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                                    })
-                                )
-                                setOrderDirty(true)
-                              }}
-                              className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
-                              disabled={groupIndex === 0}
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const order = chapterGroups.map((g) => g.rootId)
-                                const idx = order.indexOf(group.rootId)
-                                const target = idx + 1
-                                if (target >= order.length) return
-                                const swapped = [...order]
-                                ;[swapped[idx], swapped[target]] = [swapped[target], swapped[idx]]
-                                const rootToIndex = new Map(swapped.map((id, i) => [id, i]))
-                                setChapters((prev) =>
-                                  [...prev]
-                                    .map((c) => ({ ...c, orderIndex: rootToIndex.get(getRootId(c)) ?? c.orderIndex }))
-                                    .sort((a, b) => {
-                                      if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
-                                      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                                    })
-                                )
-                                setOrderDirty(true)
-                              }}
-                              className="px-2 py-1 text-xs rounded border border-gray-700 text-site-muted hover:text-site-text"
-                              disabled={groupIndex === chapterGroups.length - 1}
-                            >
-                              ↓
-                            </button>
-                          </div>
 
                           {isExpanded && (
                             <div className="mt-3 space-y-2">
@@ -538,16 +553,6 @@ export default function AdminCourseChaptersPage() {
                     })}
                   </div>
                 )}
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={saveOrder}
-                    disabled={!orderDirty || reordering}
-                    className="btn-primary disabled:opacity-50"
-                  >
-                    {reordering ? '...' : 'حفظ الترتيب'}
-                  </button>
-                </div>
               </div>
 
               {pendingChapters.length > 0 && (
@@ -594,231 +599,49 @@ export default function AdminCourseChaptersPage() {
                   <h3 className="text-lg font-bold text-site-text heading">
                     {mode === 'new' ? 'مسودة فصل جديد' : mode === 'revision' ? 'نسخة جديدة للفصل' : 'تحرير الفصل'}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    {selectedChapter && selectedChapter.status === 'PENDING' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setContentView('edit')}
-                          className={`px-3 py-1 text-xs rounded-lg border ${
-                            contentView === 'edit'
-                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                          }`}
-                        >
-                          تحرير
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setContentView('compare')}
-                          className={`px-3 py-1 text-xs rounded-lg border ${
-                            contentView === 'compare'
-                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                          }`}
-                        >
-                          مقارنة
-                        </button>
-                      </>
-                    )}
-                    {selectedChapter && (
-                      <div className="text-xs text-site-muted">
-                        {chapterLabel(selectedChapter)} • {selectedChapter.author.name || selectedChapter.author.email || '—'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {contentView === 'compare' && selectedChapter ? (
-                  (() => {
-                    const tokenize = (text: string) => text.split(/(\s+)/).filter((t) => t.length > 0)
-                    const diffTokens = (a: string[], b: string[]): DiffOp[] => {
-                      const n = a.length
-                      const m = b.length
-                      const max = n + m
-                      const offset = max
-                      const v0 = new Array(2 * max + 1).fill(0)
-                      const trace: number[][] = []
-
-                      for (let d = 0; d <= max; d++) {
-                        const v = v0.slice()
-                        for (let k = -d; k <= d; k += 2) {
-                          const kIndex = k + offset
-                          let x: number
-                          if (k === -d || (k !== d && v0[kIndex - 1] < v0[kIndex + 1])) {
-                            x = v0[kIndex + 1]
-                          } else {
-                            x = v0[kIndex - 1] + 1
-                          }
-                          let y = x - k
-                          while (x < n && y < m && a[x] === b[y]) {
-                            x++
-                            y++
-                          }
-                          v[kIndex] = x
-                          if (x >= n && y >= m) {
-                            trace.push(v)
-                            d = max + 1
-                            break
-                          }
-                        }
-                        if (d <= max) {
-                          trace.push(v)
-                          for (let i = 0; i < v0.length; i++) v0[i] = v[i]
-                        }
-                      }
-
-                      let x = n
-                      let y = m
-                      const edits: { type: DiffOp['type']; token: string }[] = []
-                      for (let d = trace.length - 1; d > 0; d--) {
-                        const v = trace[d]
-                        const prev = trace[d - 1]
-                        const k = x - y
-                        const kIndex = k + offset
-                        let prevK: number
-                        if (k === -d || (k !== d && prev[kIndex - 1] < prev[kIndex + 1])) {
-                          prevK = k + 1
-                        } else {
-                          prevK = k - 1
-                        }
-                        const prevX = prev[prevK + offset]
-                        const prevY = prevX - prevK
-
-                        while (x > prevX && y > prevY) {
-                          edits.push({ type: 'equal', token: a[x - 1] })
-                          x--
-                          y--
-                        }
-
-                        if (x === prevX) {
-                          edits.push({ type: 'insert', token: b[y - 1] })
-                          y--
-                        } else {
-                          edits.push({ type: 'delete', token: a[x - 1] })
-                          x--
-                        }
-                      }
-
-                      while (x > 0 && y > 0) {
-                        edits.push({ type: 'equal', token: a[x - 1] })
-                        x--
-                        y--
-                      }
-                      while (x > 0) {
-                        edits.push({ type: 'delete', token: a[x - 1] })
-                        x--
-                      }
-                      while (y > 0) {
-                        edits.push({ type: 'insert', token: b[y - 1] })
-                        y--
-                      }
-
-                      edits.reverse()
-                      const merged: DiffOp[] = []
-                      for (const e of edits) {
-                        const last = merged[merged.length - 1]
-                        if (last && last.type === e.type) {
-                          last.value += e.token
-                        } else {
-                          merged.push({ type: e.type, value: e.token })
-                        }
-                      }
-                      return merged
-                    }
-
-                    const base = selectedApprovedChapter?.content || ''
-                    const draft = selectedChapter.content || ''
-                    const ops = diffTokens(tokenize(base), tokenize(draft))
-
-                    const renderSide = (side: 'base' | 'draft') => (
-                      <div className="whitespace-pre-wrap break-words text-sm leading-6">
-                        {ops.map((op, idx) => {
-                          if (side === 'base') {
-                            if (op.type === 'insert') return null
-                            if (op.type === 'delete') {
-                              return (
-                                <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
-                                  {op.value}
-                                </span>
-                              )
-                            }
-                            return <span key={idx}>{op.value}</span>
-                          }
-                          if (op.type === 'delete') return null
-                          if (op.type === 'insert') {
-                            return (
-                              <span key={idx} className="bg-green-600/20 text-green-200 rounded px-0.5">
-                                {op.value}
-                              </span>
-                            )
-                          }
-                          return <span key={idx}>{op.value}</span>
-                        })}
-                      </div>
-                    )
-
-                    return (
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                          <div className="text-sm text-site-text">
-                            النسخة المعتمدة {selectedApprovedChapter?.version ? `v${selectedApprovedChapter.version}` : ''}
-                          </div>
-                          <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
-                            {selectedApprovedChapter ? renderSide('base') : <div className="text-site-muted text-sm">لا توجد نسخة معتمدة بعد.</div>}
-                          </div>
-                        </div>
-                        <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                          <div className="text-sm text-site-text">
-                            المسودة {selectedChapter.version ? `v${selectedChapter.version}` : ''}
-                          </div>
-                          <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
-                            {renderSide('draft')}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })()
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-3">
-                      <input
-                        value={form.title}
-                        onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                        placeholder="عنوان الفصل"
-                        className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-site-muted">ترتيب الفصل:</span>
-                        <input
-                          type="number"
-                          value={form.orderIndex}
-                          onChange={(e) => setForm((prev) => ({ ...prev, orderIndex: Number(e.target.value) }))}
-                          className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
-                        />
-                      </div>
-                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm text-site-text">محتوى الفصل</div>
-                          <button
-                            type="button"
-                            onClick={() => setEditorOpen(true)}
-                            className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
-                          >
-                            تحرير المحتوى
-                          </button>
-                        </div>
-                        <div className="text-xs text-site-muted">
-                          {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
-                        </div>
-                      </div>
+                  {selectedChapter && (
+                    <div className="text-xs text-site-muted">
+                      {chapterLabel(selectedChapter)} • {selectedChapter.author.name || selectedChapter.author.email || '—'}
                     </div>
-                    <div className="flex justify-end gap-2">
-                      <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
-                        {saving ? '...' : 'حفظ المسودة'}
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <input
+                    value={form.title}
+                    onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="عنوان الفصل"
+                    className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-site-muted">ترتيب الفصل:</span>
+                    <input
+                      type="number"
+                      value={form.orderIndex}
+                      onChange={(e) => setForm((prev) => ({ ...prev, orderIndex: Number(e.target.value) }))}
+                      className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
+                    />
+                  </div>
+                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm text-site-text">محتوى الفصل</div>
+                      <button
+                        type="button"
+                        onClick={() => setEditorOpen(true)}
+                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                      >
+                        تحرير المحتوى
                       </button>
                     </div>
-                  </>
-                )}
+                    <div className="text-xs text-site-muted">
+                      {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
+                    {saving ? '...' : 'حفظ المسودة'}
+                  </button>
+                </div>
               </div>
 
               {selectedChapter && (
@@ -829,7 +652,54 @@ export default function AdminCourseChaptersPage() {
 
               <div className="card">
                 <h3 className="text-lg font-bold text-site-text heading mb-3">معاينة المحتوى</h3>
-                <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                {selectedChapter?.status === 'PENDING' ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="text-sm text-site-text">
+                        النسخة المعتمدة {selectedApprovedChapter?.version ? `v${selectedApprovedChapter.version}` : ''}
+                      </div>
+                      <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                        {selectedApprovedChapter ? (
+                          <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                            {(previewDiffOps || []).map((op, idx) => {
+                              if (op.type === 'insert') return null
+                              if (op.type === 'delete') {
+                                return (
+                                  <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
+                                    {op.value}
+                                  </span>
+                                )
+                              }
+                              return <span key={idx}>{op.value}</span>
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-site-muted text-sm">لا توجد نسخة معتمدة بعد.</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="text-sm text-site-text">المسودة {selectedChapter.version ? `v${selectedChapter.version}` : ''}</div>
+                      <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                        <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                          {(previewDiffOps || []).map((op, idx) => {
+                            if (op.type === 'delete') return null
+                            if (op.type === 'insert') {
+                              return (
+                                <span key={idx} className="bg-green-600/20 text-green-200 rounded px-0.5">
+                                  {op.value}
+                                </span>
+                              )
+                            }
+                            return <span key={idx}>{op.value}</span>
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                )}
               </div>
             </div>
           </div>
