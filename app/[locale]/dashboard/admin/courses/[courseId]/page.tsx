@@ -8,6 +8,7 @@ import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'
 import QuickArticleModal from '@/components/QuickArticleModal'
 import EnhancedDiagramComparison from '@/components/EnhancedDiagramComparison'
+import { useTranslations, useLocale } from 'next-intl'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
 
@@ -51,6 +52,8 @@ type EditorMode = 'new' | 'edit' | 'revision'
 type DiffOp = { type: 'equal' | 'insert' | 'delete'; value: string }
 
 export default function AdminCourseChaptersPage() {
+  const t = useTranslations('adminCourses')
+  const locale = useLocale()
   const params = useParams() as { courseId?: string }
   const courseId = params?.courseId || ''
   const router = useRouter()
@@ -130,7 +133,7 @@ export default function AdminCourseChaptersPage() {
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, { cache: 'no-store' })
       const data = (await res.json().catch(() => ({}))) as Partial<ChaptersResponse> & { error?: string }
       if (!res.ok) {
-        toast.error(data.error || 'خطأ في جلب الفصول')
+        toast.error(data.error || t('toast.fetchError'))
         return
       }
       setCourse(data.course || null)
@@ -140,7 +143,7 @@ export default function AdminCourseChaptersPage() {
         setMode('edit')
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب الفصول'
+      const msg = e instanceof Error ? e.message : t('toast.fetchError')
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -217,7 +220,7 @@ export default function AdminCourseChaptersPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
       if (!res.ok) {
-        toast.error(payload.error || 'تعذر إنشاء المسودة')
+        toast.error(payload.error || t('toast.draftCreateError'))
         return
       }
       if (payload.chapter?.id) {
@@ -226,7 +229,7 @@ export default function AdminCourseChaptersPage() {
       setMode('edit')
       await fetchChapters()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر إنشاء المسودة'
+      const msg = e instanceof Error ? e.message : t('toast.draftCreateError')
       toast.error(msg)
     } finally {
       autoDraftingRef.current = false
@@ -238,7 +241,7 @@ export default function AdminCourseChaptersPage() {
     const title = form.title.trim()
     const content = form.content.trim()
     if (!title || !content) {
-      toast.error('العنوان والمحتوى مطلوبان')
+      toast.error(t('toast.requiredFields'))
       return
     }
     try {
@@ -252,7 +255,7 @@ export default function AdminCourseChaptersPage() {
         })
         const payload = (await res.json().catch(() => ({}))) as { error?: string }
         if (!res.ok) {
-          toast.error(payload.error || 'تعذر حفظ الفصل')
+          toast.error(payload.error || t('toast.saveError'))
           return
         }
       } else {
@@ -268,14 +271,14 @@ export default function AdminCourseChaptersPage() {
         })
         const payload = (await res.json().catch(() => ({}))) as { error?: string }
         if (!res.ok) {
-          toast.error(payload.error || 'تعذر إنشاء المسودة')
+          toast.error(payload.error || t('toast.draftCreateError'))
           return
         }
       }
       await fetchChapters()
-      toast.success('تم حفظ الفصل')
+      toast.success(t('toast.saveSuccess'))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر حفظ الفصل'
+      const msg = e instanceof Error ? e.message : t('toast.saveError')
       toast.error(msg)
     } finally {
       setSaving(false)
@@ -288,15 +291,15 @@ export default function AdminCourseChaptersPage() {
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}`, { method: 'DELETE' })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'تعذر حذف الفصل')
+        toast.error(payload.error || t('toast.deleteError'))
         return
       }
       setSelectedId(null)
       resetFormForNew(Math.max(chapterGroups.length - 1, 0))
       await fetchChapters()
-      toast.success('تم حذف الفصل')
+      toast.success(t('toast.deleteSuccess'))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر حذف الفصل'
+      const msg = e instanceof Error ? e.message : t('toast.deleteError')
       toast.error(msg)
     }
   }
@@ -312,12 +315,12 @@ export default function AdminCourseChaptersPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'تعذر تسجيل التصويت')
+        toast.error(payload.error || t('toast.voteError'))
         return
       }
       await fetchChapters()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'تعذر تسجيل التصويت'
+      const msg = e instanceof Error ? e.message : t('toast.voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
@@ -325,9 +328,9 @@ export default function AdminCourseChaptersPage() {
   }
 
   const chapterLabel = (chapter: CourseChapter) => {
-    if (chapter.status === 'APPROVED') return 'معتمد'
-    if (chapter.status === 'REJECTED') return 'مرفوض'
-    return 'مسودة'
+    if (chapter.status === 'APPROVED') return t('statusApproved')
+    if (chapter.status === 'REJECTED') return t('statusRejected')
+    return t('statusDraft')
   }
 
   const versionLabel = (chapter: CourseChapter) => {
@@ -505,34 +508,34 @@ export default function AdminCourseChaptersPage() {
       <main className="container mx-auto px-4 py-8 space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-site-text heading">إدارة الفصول</h1>
+            <h1 className="text-3xl font-bold text-site-text heading">{t('title')}</h1>
             {course && (
               <p className="text-site-muted mt-2">{course.title}</p>
             )}
           </div>
           <button type="button" onClick={() => router.push('/dashboard/admin')} className="btn-secondary">
-            العودة للوحة الإدارة
+            {t('backToAdmin')}
           </button>
         </div>
 
         {loading ? (
-          <div className="text-site-muted">جارٍ التحميل...</div>
+          <div className="text-site-muted">{t('loading')}</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
             <div className="space-y-4">
               <div className="card">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold text-site-text heading">الفصول</h3>
+                  <h3 className="text-lg font-bold text-site-text heading">{t('chapters')}</h3>
                   <button
                     type="button"
                     onClick={() => resetFormForNew(chapterGroups.length)}
                     className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                   >
-                    فصل جديد
+                    {t('newChapter')}
                   </button>
                 </div>
                 {chapters.length === 0 ? (
-                  <div className="text-site-muted text-sm">لا توجد فصول بعد.</div>
+                  <div className="text-site-muted text-sm">{t('noChapters')}</div>
                 ) : (
                   <div className="space-y-2">
                     {chapterGroups.map((group, groupIndex) => {
@@ -550,10 +553,10 @@ export default function AdminCourseChaptersPage() {
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0">
                                 <div className="text-site-text text-sm truncate">
-                                  {group.parent.title || `الفصل ${group.orderIndex + 1}`}
+                                  {group.parent.title || t('chapterNumber', { number: group.orderIndex + 1 })}
                                 </div>
                                 <div className="text-xs text-site-muted mt-1">
-                                  #{groupIndex + 1} • {group.versions.length} نسخة
+                                  #{groupIndex + 1} • {t('versionCount', { count: group.versions.length })}
                                 </div>
                               </div>
                               <div className="text-xs text-site-muted">{isExpanded ? '▲' : '▼'}</div>
@@ -584,7 +587,7 @@ export default function AdminCourseChaptersPage() {
                                           <div className="text-xs text-site-muted mt-1">{versionLabel(chapter)}</div>
                                         </div>
                                         <div className="text-xs text-site-muted">
-                                          {new Date(chapter.updatedAt).toLocaleDateString('ar')}
+                                          {new Date(chapter.updatedAt).toLocaleDateString(locale)}
                                         </div>
                                       </div>
                                     </button>
@@ -594,7 +597,7 @@ export default function AdminCourseChaptersPage() {
                                         onClick={() => handleDelete(chapter.id)}
                                         className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200"
                                       >
-                                        حذف
+                                        {t('delete')}
                                       </button>
                                     </div>
                                   </div>
@@ -611,7 +614,7 @@ export default function AdminCourseChaptersPage() {
 
               {pendingChapters.length > 0 && (
                 <div className="card space-y-2">
-                  <h3 className="text-lg font-bold text-site-text heading">التصويتات المطلوبة</h3>
+                  <h3 className="text-lg font-bold text-site-text heading">{t('requiredVotes')}</h3>
                   {pendingChapters.map((chapter) => (
                     <div key={chapter.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
                       <button
@@ -633,7 +636,7 @@ export default function AdminCourseChaptersPage() {
                               : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                           } disabled:opacity-50`}
                         >
-                          {votingKey === `${chapter.id}:APPROVE` ? '...' : 'موافقة'}
+                          {votingKey === `${chapter.id}:APPROVE` ? '...' : t('approve')}
                         </button>
                         <button
                           type="button"
@@ -645,7 +648,7 @@ export default function AdminCourseChaptersPage() {
                               : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                           } disabled:opacity-50`}
                         >
-                          {votingKey === `${chapter.id}:REJECT` ? '...' : 'رفض'}
+                          {votingKey === `${chapter.id}:REJECT` ? '...' : t('reject')}
                         </button>
                       </div>
                     </div>
@@ -658,7 +661,7 @@ export default function AdminCourseChaptersPage() {
               <div className="card space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-lg font-bold text-site-text heading">
-                    {mode === 'new' ? 'مسودة فصل جديد' : mode === 'revision' ? 'نسخة جديدة للفصل' : 'تحرير الفصل'}
+                    {mode === 'new' ? t('modeNew') : mode === 'revision' ? t('modeRevision') : t('modeEdit')}
                   </h3>
                   {selectedChapter && (
                     <div className="text-xs text-site-muted">
@@ -670,11 +673,11 @@ export default function AdminCourseChaptersPage() {
                   <input
                     value={form.title}
                     onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                    placeholder="عنوان الفصل"
+                    placeholder={t('chapterTitlePlaceholder')}
                     className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-site-muted">ترتيب الفصل:</span>
+                    <span className="text-xs text-site-muted">{t('orderLabel')}</span>
                     <input
                       type="number"
                       value={form.orderIndex}
@@ -684,23 +687,23 @@ export default function AdminCourseChaptersPage() {
                   </div>
                   <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm text-site-text">محتوى الفصل</div>
+                      <div className="text-sm text-site-text">{t('contentLabel')}</div>
                       <button
                         type="button"
                         onClick={() => setEditorOpen(true)}
                         className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                       >
-                        تحرير المحتوى
+                        {t('editContent')}
                       </button>
                     </div>
                     <div className="text-xs text-site-muted">
-                      {form.content ? `عدد الأحرف: ${form.content.length}` : 'لا يوجد محتوى بعد.'}
+                      {form.content ? t('charCount', { count: form.content.length }) : t('noContent')}
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <button type="button" onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
-                    {saving ? '...' : 'حفظ المسودة'}
+                    {saving ? '...' : t('saveDraft')}
                   </button>
                 </div>
               </div>
@@ -712,7 +715,7 @@ export default function AdminCourseChaptersPage() {
               )}
 
               <div className="card">
-                <h3 className="text-lg font-bold text-site-text heading mb-3">معاينة المحتوى</h3>
+                <h3 className="text-lg font-bold text-site-text heading mb-3">{t('previewContent')}</h3>
                 {selectedChapter && selectedPreviousChapter && parsedDiagramForPreview.previous && parsedDiagramForPreview.current ? (
                   <EnhancedDiagramComparison
                     originalData={parsedDiagramForPreview.previous}
@@ -722,7 +725,7 @@ export default function AdminCourseChaptersPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                       <div className="text-sm text-site-text">
-                        النسخة السابقة {selectedPreviousChapter?.version ? `v${selectedPreviousChapter.version}` : ''}
+                        {t('previousVersion')} {selectedPreviousChapter?.version ? `v${selectedPreviousChapter.version}` : ''}
                       </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
                         <div className="whitespace-pre-wrap break-words text-sm leading-6">
@@ -742,7 +745,7 @@ export default function AdminCourseChaptersPage() {
                     </div>
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                       <div className="text-sm text-site-text">
-                        النسخة المحددة {selectedChapter.version ? `v${selectedChapter.version}` : ''}
+                        {t('selectedVersion')} {selectedChapter.version ? `v${selectedChapter.version}` : ''}
                       </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
                         <div className="whitespace-pre-wrap break-words text-sm leading-6">
