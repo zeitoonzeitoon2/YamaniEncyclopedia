@@ -31,6 +31,34 @@ interface CommentSectionProps {
   onPickUser?: (id: string) => void
 }
 
+// User role badge
+const getRoleBadge = (role: string, t: any) => {
+  switch (role) {
+    case 'ADMIN':
+      return <span className="px-2 py-1 text-xs bg-red-600 text-white rounded">{t('roles.ADMIN')}</span>
+    case 'SUPERVISOR':
+      return <span className="px-2 py-1 text-xs bg-amber-600 text-white rounded">{t('roles.SUPERVISOR')}</span>
+    case 'EDITOR':
+      return <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{t('roles.EDITOR')}</span>
+    case 'USER':
+      return <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">{t('roles.USER')}</span>
+    default:
+      return null
+  }
+}
+
+const categoryLabel = (cat: string | undefined, t: any) => {
+  if (!cat) return null
+  return t(`tags.${cat}`)
+}
+
+const categoryBadge = (cat: string | undefined, t: any) => {
+  const label = categoryLabel(cat, t)
+  if (!label) return null
+  const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'
+  return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>
+}
+
 export default function CommentSection({ postId, chapterId, onPickUser }: CommentSectionProps) {
   const { data: session } = useSession()
   const t = useTranslations('comments')
@@ -147,46 +175,6 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  // User role badge
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return <span className="px-2 py-1 text-xs bg-red-600 text-white rounded">{t('roles.ADMIN')}</span>
-      case 'SUPERVISOR':
-        return <span className="px-2 py-1 text-xs bg-amber-600 text-white rounded">{t('roles.SUPERVISOR')}</span>
-      case 'EDITOR':
-        return <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{t('roles.EDITOR')}</span>
-      case 'USER':
-        return <span className="px-2 py-1 text-xs bg-gray-600 text-white rounded">{t('roles.USER')}</span>
-      default:
-        return null
-    }
-  }
-
-  // Date format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  const categoryLabel = (cat?: string) => {
-    if (!cat) return null
-    return t(`tags.${cat}`)
-  }
-
-  const categoryBadge = (cat?: string) => {
-    const label = categoryLabel(cat)
-    if (!label) return null
-    const cls = cat === 'QUESTION' ? 'bg-blue-600' : cat === 'CRITIQUE' ? 'bg-red-600' : cat === 'SUPPORT' ? 'bg-green-600' : 'bg-amber-600'
-    return <span className={`px-2 py-1 text-xs ${cls} text-white rounded`}>{label}</span>
   }
 
   if (isLoading) {
@@ -362,8 +350,8 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
           ) : (
             <span className="font-medium text-site-text">{node.author.name}</span>
           )}
-          {getRoleBadge(node.author.role)}
-          {categoryBadge(node.category)}
+          {getRoleBadge(node.author.role, t)}
+          {categoryBadge(node.category, t)}
         </div>
         <span className="text-sm text-site-muted">{new Date(node.createdAt).toLocaleDateString(locale)}</span>
       </div>
