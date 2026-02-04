@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import ReactFlow, {
   Node,
   Edge,
@@ -13,12 +14,13 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 
 
-// کامپوننت نود سفارشی با قابلیت نمایش تفاوت‌ها
+// Custom node component with diff display capability
 const DiffNode = ({ data, isConnectable }: any) => {
+  const t = useTranslations('diagramComparison')
   const getNodeStyle = () => {
     const baseStyle = "px-4 py-2 shadow-md rounded-md min-w-[120px] transition-colors duration-300"
 
-    // اگر در حالت هایلایت موقت است، رنگ نارنجی اولویت دارد
+    // If in temporary highlight mode, amber color takes priority
     const bgClass = data?._highlight
       ? 'bg-amber-300 text-gray-900'
       : (data?.renameFill === 'blue')
@@ -29,10 +31,10 @@ const DiffNode = ({ data, isConnectable }: any) => {
       ? 'bg-red-100 text-red-800'
       : 'bg-warm-cream text-gray-800'
 
-    // بشكل افتراضي لا يوجد أي إطار (stroke)
+    // By default, no stroke (border)
     let borderClass = ''
 
-    // رنگ استروک بر اساس وضعیت فلش‌کارت؛ فقط زمانی اعمال شود که فلش‌کارت دارد
+    // Stroke color based on flashcard status; only applied when it has a flashcard
     switch (data.flashBorder) {
       case 'orange':
         borderClass = 'border-4 border-amber-500'
@@ -47,7 +49,7 @@ const DiffNode = ({ data, isConnectable }: any) => {
         borderClass = 'border-4 border-blue-500'
         break
       default:
-        // none => بدون استروک
+        // none => no stroke
         break
     }
 
@@ -64,12 +66,12 @@ const DiffNode = ({ data, isConnectable }: any) => {
       />
       <div className="text-center">
         <div className="text-sm font-bold">{data.label}</div>
-        {/* نشانگر وجود فلش‌کارت - حذف و به‌جای آن استروک رنگی بر اساس وضعیت فلش‌کارت اعمال شد */}
+        {/* Flashcard indicator - removed and replaced with colored stroke based on flashcard status */}
         {data.status === 'added' && (
-          <div className="text-xs text-green-600 mt-1">جديد</div>
+          <div className="text-xs text-green-600 mt-1">{t('newNode')}</div>
         )}
         {data.status === 'removed' && (
-          <div className="text-xs text-red-600 mt-1">محذوف</div>
+          <div className="text-xs text-red-600 mt-1">{t('deletedNode')}</div>
         )}
       </div>
       <Handle
@@ -82,7 +84,7 @@ const DiffNode = ({ data, isConnectable }: any) => {
   )
 }
 
-// تعریف nodeTypes خارج از کامپوننت تا هر بار ری‌رندر نشود
+// Define nodeTypes outside the component to avoid re-rendering
 const nodeTypes: NodeTypes = {
   diff: DiffNode,
 }
@@ -109,36 +111,37 @@ export default function DiagramComparison({
   onShowArticleComparison,
   onStatsChange,
 }: DiagramComparisonProps) {
-  // مموایز کردن nodeTypes برای جلوگیری از هشدار React Flow
+  const t = useTranslations('diagramComparison')
+  // Memoize nodeTypes to avoid React Flow warning
   const memoizedNodeTypes = useMemo(() => nodeTypes, [])
   
-  // حالت‌های فلش‌کارت
+  // Flashcard states
   const [selectedOriginalNodeId, setSelectedOriginalNodeId] = useState<string | null>(null)
   const [selectedProposedNodeId, setSelectedProposedNodeId] = useState<string | null>(null)
 
-  // مراجع به اینستنس هر نمودار برای زوم/فیت ویو
+  // References to each flow instance for zoom/fitView
   const originalFlowRef = useRef<any>(null)
   const proposedFlowRef = useRef<any>(null)
 
-  // حالة تمييز مؤقت للعُقَد المرتبطة
+  // Temporary highlight state for related nodes
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([])
 
-  // کمکی: نرمال‌سازی لینک‌های اضافه برای کلیک‌پذیری
+  // Helper: Normalize extra links for clickability
   const normalizeExtraLink = useCallback((raw: string) => {
     try {
       let link = (raw || '').trim()
       if (!link) return ''
-      // إذا كان مشابهاً لمعرّف مسودة (طويل وحروف/أرقام)، فأعده كما هو
+      // If it looks like a draft ID (long alphanumeric), return as is
       if (/^[a-z0-9]{20,}$/i.test(link)) return link
-      // اگر لینک کامل خارجی است
+      // If it's a full external link
       if (/^https?:\/\//i.test(link)) return link
-      // اگر شامل دامین است، آن را حذف کن
+      // If it contains a domain, remove it
       link = link.replace(/^https?:\/\/[^/]+/i, '')
-      // اگر به صورت /articles/... است همان را برگردان
+      // If it's in /articles/... format, return as is
       if (link.startsWith('/articles/')) return link
-      // اگر بدون اسلش شروع می‌شود، به عنوان اسلاگ مقاله در نظر بگیر
+      // If it starts without a slash, treat it as an article slug
       link = link.replace(/^\/+/, '')
-      // إذا كان بعد التنظيف مشابهاً لمعرّف مسودة، فأعده كما هو
+      // If after cleaning it looks like a draft ID, return as is
       if (/^[a-z0-9]{20,}$/i.test(link)) return link
       if (link.startsWith('articles/')) return `/${link}`
       return `/articles/${link}`
@@ -147,7 +150,7 @@ export default function DiagramComparison({
     }
   }, [])
 
-  // کمکی: ساخت آرایه یکپارچه از فیلدهای اضافه
+  // Helper: Build a unified array of extra fields
   const buildExtraItems = useCallback((data: any) => {
     const d = data || {}
     if (Array.isArray(d.extraItems)) return d.extraItems
@@ -159,7 +162,7 @@ export default function DiagramComparison({
     ] as Array<{ type: 'text' | 'link'; content: string }>
   }, [])
 
-  // کمکی: استخراج لینک اصلی مقاله از داده نود (پشتیبانی از articleDraft/previousArticleLink)
+  // Helper: Extract primary article link from node data (supports articleDraft/previousArticleLink)
   const getNormalizedLink = useCallback((data: any) => {
     try {
       const d = data || {}
@@ -169,19 +172,19 @@ export default function DiagramComparison({
         link = `/articles/${draft.slug.trim()}`
       } else if (typeof draft?.id === 'string' && draft.id.trim()) {
         const id = draft.id.trim()
-        // إذا كان المعرّف مشابهاً لمعرّف مسودة، فمرّره كما هو ليُجلب من المسار /api/drafts
+        // If the ID looks like a draft ID, pass it as is to be fetched from /api/drafts
         link = /^[a-z0-9]{20,}$/i.test(id) ? id : `/articles/${id}`
       } else if (typeof d.articleLink === 'string' && d.articleLink.trim()) {
         link = d.articleLink.trim()
       }
-      // توجه: دیگر به previousArticleLink به‌عنوان fallback اتکا نمی‌کنیم تا وضعیت فعلی نمایش داده شود
+      // Note: We no longer rely on previousArticleLink as fallback to show current status
       return link
     } catch {
       return ''
     }
   }, [])
 
-  // کمکی: آیا فلش‌کارت دارد؟ (متن، هر نوع لینک، یا فیلدهای اضافه)
+  // Helper: Does it have a flashcard? (text, any link, or extra fields)
   const hasFlash = useCallback((data: any) => {
     const txt = typeof data?.flashText === 'string' ? data.flashText.trim() : ''
     const link = getNormalizedLink(data)
@@ -190,7 +193,7 @@ export default function DiagramComparison({
     return !!txt || !!link || hasExtra
   }, [buildExtraItems, getNormalizedLink])
 
-  // کمکی: امضای یکتا از محتوای فلش‌کارت برای تشخیص تغییر (متن + لینک + فیلدهای اضافه)
+  // Helper: Unique signature of flashcard content to detect changes (text + link + extra fields)
   const buildFlashSignature = useCallback((data: any) => {
     const txt = typeof data?.flashText === 'string' ? data.flashText.trim() : ''
     const link = getNormalizedLink(data)
@@ -201,23 +204,23 @@ export default function DiagramComparison({
     return `${txt}|${link}|${extraNorm}`
   }, [buildExtraItems, getNormalizedLink])
 
-  // محاسبه تفاوت‌ها
+  // Calculate differences
   const { originalWithDiff, proposedWithDiff, stats } = useMemo(() => {
     const originalNodeIds = new Set(originalData.nodes.map(n => n.id))
     const proposedNodeIds = new Set(proposedData.nodes.map(n => n.id))
 
-    // ساخت map برای دسترسی سریع
+    // Create map for fast access
     const originalMap = new Map(originalData.nodes.map(n => [n.id, n]))
     const proposedMap = new Map(proposedData.nodes.map(n => [n.id, n]))
 
-    // نودهای اضافه شده
+    // Added nodes
     const addedNodeIds = new Set(Array.from(proposedNodeIds).filter(id => !originalNodeIds.has(id)))
-    // نودهای حذف شده
+    // Removed nodes
     const removedNodeIds = new Set(Array.from(originalNodeIds).filter(id => !proposedNodeIds.has(id)))
-    // نودهای تغییر نکرده
+    // Unchanged nodes
     const unchangedNodeIds = new Set(Array.from(originalNodeIds).filter(id => proposedNodeIds.has(id)))
 
-    // ایجاد نمودار اصلی با نشان‌گذاری حذف شده‌ها + وضعیت فلش‌کارت
+    // Create original diagram with removed markers + flashcard status
     const originalWithDiff: DiagramData = {
       nodes: originalData.nodes.map(node => {
         const proposedNode = proposedMap.get(node.id)
@@ -229,14 +232,14 @@ export default function DiagramComparison({
 
         let flashBorder: 'none' | 'orange' | 'red' | 'green' | 'blue' = 'none'
         if (oHas && pHas) {
-          flashBorder = oSig !== pSig ? 'blue' : 'orange' // تغییر هر یک از بخش‌های فلش‌کارت => آبی، در غیراینصورت نارنجی
+          flashBorder = oSig !== pSig ? 'blue' : 'orange' // Flashcard content changed => blue, otherwise orange
         } else if (oHas && !pHas) {
-          flashBorder = 'red' // حذف فلش‌کارت => فقط در نمودار فعلی قرمز
+          flashBorder = 'red' // Flashcard removed => red in current diagram only
         } else {
-          flashBorder = 'none' // نداشتن فلش‌کارت یا تازه اضافه‌شده (در پیشنهاد)
+          flashBorder = 'none' // No flashcard or newly added (in proposed)
         }
 
-        // تشخیص تغییر نام (label) برای گره‌هایی که در هر دو نمودار وجود دارند
+        // Detect rename (label) for nodes that exist in both diagrams
         let renameFill: 'blue' | undefined = undefined
         if (unchangedNodeIds.has(node.id)) {
           const oLabel = typeof (node as any)?.data?.label === 'string' ? (node as any).data.label.trim() : ''
@@ -262,7 +265,7 @@ export default function DiagramComparison({
       )
     }
 
-    // ایجاد نمودار پیشنهادی با نشان‌گذاری اضافه شده‌ها + وضعیت فلش‌کارت
+    // Create proposed diagram with added markers + flashcard status
     const proposedWithDiff: DiagramData = {
       nodes: proposedData.nodes.map(node => {
         const originalNode = originalMap.get(node.id)
@@ -274,14 +277,14 @@ export default function DiagramComparison({
 
         let flashBorder: 'none' | 'orange' | 'red' | 'green' | 'blue' = 'none'
         if (oHas && pHas) {
-          flashBorder = oSig !== pSig ? 'blue' : 'orange' // تغییر هر یک از بخش‌های فلش‌کارت => آبی، در غیراینصورت نارنجی
+          flashBorder = oSig !== pSig ? 'blue' : 'orange' // Flashcard content changed => blue, otherwise orange
         } else if (!oHas && pHas) {
-          flashBorder = 'green' // فلش‌کارت جدید => فقط در نمودار پیشنهادی سبز
+          flashBorder = 'green' // New flashcard => green in proposed diagram only
         } else {
-          flashBorder = 'none' // حذف فلش‌کارت یا عدم وجود => بدون استروک در نمودار پیشنهادی
+          flashBorder = 'none' // Flashcard removed or doesn't exist => no stroke in proposed diagram
         }
 
-        // تشخیص تغییر نام (label) برای گره‌هایی که در هر دو نمودار وجود دارند
+        // Detect rename (label) for nodes that exist in both diagrams
         let renameFill: 'blue' | undefined = undefined
         if (originalNode) {
           const oLabel = typeof (originalNode as any)?.data?.label === 'string' ? (originalNode as any).data.label.trim() : ''
@@ -315,16 +318,16 @@ export default function DiagramComparison({
     return { originalWithDiff, proposedWithDiff, stats }
   }, [originalData, proposedData, hasFlash, buildFlashSignature])
 
-  // حساب الإحصاءات المجمَّعة للبطاقات التعليمية/المقالات وإشعار المكوّن الأب
+  // Calculate aggregated stats for flashcards/articles and notify parent component
   useEffect(() => {
     if (!onStatsChange) return
 
-    // إحصاءات بطاقات التعلّم من حدود العُقَد
+    // Flashcard stats from node borders
     const flashAdded = proposedWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'green').length
     const flashRemoved = originalWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'red').length
     const flashEdited = proposedWithDiff.nodes.filter(n => (n as any)?.data?.flashBorder === 'blue').length
 
-    // إحصاءات المقالات عبر مقارنة الروابط المُطبَّعة
+    // Article stats by comparing normalized links
     const getLink = (d: any) => {
       try {
         const link = getNormalizedLink(d)
@@ -355,8 +358,9 @@ export default function DiagramComparison({
     })
   }, [onStatsChange, originalWithDiff, proposedWithDiff, stats, originalData.nodes, proposedData.nodes, getNormalizedLink])
 
-  // کمک‌گیر برای نمایش محتویات فلش‌کارت
+  // Helper for displaying flashcard contents
   const FlashcardView = ({ data, title, allNodes, onSelectNode, side, onCompareArticle }: { data: any; title: string; allNodes: any[]; onSelectNode: (id: string) => void; side: 'original' | 'proposed'; onCompareArticle?: (side: 'original' | 'proposed', link: string, extraIndex?: number) => void }) => {
+    const t = useTranslations('diagramComparison')
     if (!data) return null
     const items = buildExtraItems(data)
     const primaryLink = getNormalizedLink(data)
@@ -367,7 +371,7 @@ export default function DiagramComparison({
     }
     const hasAnything = (typeof data.flashText === 'string' && data.flashText.trim()) || primaryLink || (items && items.some((it: any) => (it?.content || '').trim())) || (related && related.length > 0)
     if (!hasAnything) return (
-      <div className="text-sm text-site-muted">لا توجد بطاقة بيانات</div>
+      <div className="text-sm text-site-muted">{t('noFlashcard')}</div>
     )
     return (
       <div className="bg-stone-900/40 border border-amber-700/40 rounded-lg p-3">
@@ -375,7 +379,7 @@ export default function DiagramComparison({
 
         {data.flashText && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">نصّ بطاقة البيانات</div>
+            <div className="text-xs text-amber-300 mb-1">{t('flashcardText')}</div>
             <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
               {String(data.flashText)}
             </div>
@@ -384,7 +388,7 @@ export default function DiagramComparison({
 
         {primaryLink && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">الرابط الأول</div>
+            <div className="text-xs text-amber-300 mb-1">{t('firstLink')}</div>
             <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
               <a href={primaryLink} target="_blank" className="text-blue-300 underline break-all">{primaryLink}</a>
               {onCompareArticle ? (
@@ -393,10 +397,10 @@ export default function DiagramComparison({
                   onClick={() => onCompareArticle(side, primaryLink)}
                   className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
                 >
-                  عرض
+                  {t('view')}
                 </button>
               ) : (
-                <a href={primaryLink} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">عرض</a>
+                <a href={primaryLink} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
               )}
             </div>
           </div>
@@ -412,11 +416,10 @@ export default function DiagramComparison({
                         const base = primaryLink ? 1 : 0
                         const linkOrder = items.slice(0, idx + 1).filter((x: any) => x?.type === 'link').length
                         const linkNumber = base + linkOrder
-                        const ord = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر']
-                        const ordLabel = ord[linkNumber - 1] || `رقم ${linkNumber}`
-                        return `الرابط ${ordLabel}`
+                        const ordLabel = t(`ordinals.${linkNumber}` as any) || t('linkNumber', { number: linkNumber })
+                        return t('linkWithOrdinal', { ordinal: ordLabel })
                       })()
-                    : `نص إضافي ${idx + 1}`
+                    : t('extraText', { index: idx + 1 })
                 }</div>
                 {it.type === 'link' ? (
                   <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
@@ -429,10 +432,10 @@ export default function DiagramComparison({
                         onClick={() => onCompareArticle(side, normalizeExtraLink(String(it.content || '')), idx)}
                         className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
                       >
-                        عرض
+                        {t('view')}
                        </button>
                     ) : (
-                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">عرض</a>
+                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
                     )}
                   </div>
                 ) : (
@@ -447,7 +450,7 @@ export default function DiagramComparison({
 
         {related && related.length > 0 && (
           <div className="mt-3 pt-3 border-t border-amber-700/40">
-            <div className="text-xs text-amber-300 mb-1">مرتبط بـ</div>
+            <div className="text-xs text-amber-300 mb-1">{t('relatedTo')}</div>
             <div className="flex flex-wrap gap-2">
               {related.map((rid) => (
                 <button
@@ -467,18 +470,18 @@ export default function DiagramComparison({
     )
   }
 
-  // انتخاب فعال
+  // Active selection
   const activeNodeId = selectedOriginalNodeId || selectedProposedNodeId
   const activeOriginalNode = activeNodeId ? originalWithDiff.nodes.find(n => n.id === activeNodeId) : null
   const activeProposedNode = activeNodeId ? proposedWithDiff.nodes.find(n => n.id === activeNodeId) : null
 
-  // هایلایت موقت دو گره (مبدأ/مقصد)
+  // Temporary highlight of two nodes (source/target)
   const highlightRelatedNodes = useCallback((sourceId: string, targetId: string) => {
     setHighlightedNodeIds([sourceId, targetId])
     setTimeout(() => setHighlightedNodeIds([]), 2000)
   }, [])
 
-  // فیت‌کردن نما برای نمایش هر دو گره، سپس هایلایت
+  // Fit view to show both nodes, then highlight
   const focusNodesAndHighlight = useCallback((sourceId: string, targetId: string) => {
     const instances = [originalFlowRef.current, proposedFlowRef.current]
     let didFit = false
@@ -514,7 +517,7 @@ export default function DiagramComparison({
     try { return getNormalizedLink(d || {}) } catch { return '' }
   }, [getNormalizedLink])
 
-  // مُساعِد: تجميع مصفوفة الروابط الإضافية (مُنمطّة) لبيانات العقدة
+  // Helper: Collect unified array of extra links (normalized) for node data
   const collectExtraLinks = useCallback((d: any): string[] => {
     const items = buildExtraItems(d || {})
     return (items || [])
@@ -532,28 +535,27 @@ export default function DiagramComparison({
     const oPrimary = buildPrimaryLink(oData)
     const pPrimary = buildPrimaryLink(pData)
 
-    // الروابط المقابِلة الافتراضية هي الروابط الأساسية
-    // الروابط النظيرة الافتراضية هي الروابط الأساسية
+    // Default counterpart links are the primary links
     let originalLinkToUse = oPrimary
     let proposedLinkToUse = pPrimary
 
     if (typeof extraIndex === 'number') {
-      // عند النقر على رابط إضافي، لا تفاضل إلى الرابط الأساسي في الجهة المقابلة إذا لم يوجد نظير في نفس الفهرس
+      // When clicking an extra link, don't fall back to primary link on the opposite side if no counterpart exists at the same index
       const oExtras = collectExtraLinks(oData)
       const pExtras = collectExtraLinks(pData)
 
       if (side === 'original') {
-        // الجهة الأصلية: استخدم الرابط الذي نُقر عليه؛ والجهة المقابلة إمّا النظير بنفس الفهرس أو لا شيء
+        // Original side: Use the clicked link; opposite side is either the counterpart at the same index or nothing
         originalLinkToUse = link || (oExtras[extraIndex] ?? '')
         proposedLinkToUse = (typeof pExtras[extraIndex] !== 'undefined') ? pExtras[extraIndex] : ''
       } else {
         // side === 'proposed'
-        // الجهة المقترَحة: استخدم الرابط الذي نُقر عليه؛ والجهة المقابلة إمّا النظير بنفس الفهرس أو لا شيء
+        // Proposed side: Use the clicked link; opposite side is either the counterpart at the same index or nothing
         proposedLinkToUse = link || (pExtras[extraIndex] ?? '')
         originalLinkToUse = (typeof oExtras[extraIndex] !== 'undefined') ? oExtras[extraIndex] : ''
       }
     } else {
-      // عند النقر على الرابط الأساسي: السلوك السابق كما هو
+      // When clicking the primary link: previous behavior remains same
       if (side === 'original') {
         originalLinkToUse = link || oPrimary
         proposedLinkToUse = pPrimary
@@ -566,7 +568,7 @@ export default function DiagramComparison({
     onShowArticleComparison(originalLinkToUse, proposedLinkToUse)
   }, [onShowArticleComparison, activeOriginalNode, activeProposedNode, buildPrimaryLink, collectExtraLinks])
 
-  // اعمال هایلایت بر روی نودهای هر دو نمودار
+  // Apply highlight to nodes in both diagrams
   const originalNodesRendered = useMemo(() => {
     if (!highlightedNodeIds.length) return originalWithDiff.nodes
     return originalWithDiff.nodes.map((n: any) => (
@@ -616,14 +618,14 @@ export default function DiagramComparison({
         </ReactFlow>
       </div>
 
-      {/* پنل نمایش فلش‌کارت */}
+      {/* Flashcard display panel */}
       {(activeOriginalNode || activeProposedNode) && (
         <div className="md:col-span-2 card bg-stone-800/40 border border-amber-700/40 rounded-lg p-4">
           <div className="flex flex-col md:flex-row gap-6 overflow-hidden">
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeOriginalNode as any)?.data}
-                title={`بطاقة البيانات (المخطط الحالي) ${ (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' }`}
+                title={t('flashcardTitleCurrent', { label: (activeOriginalNode as any)?.data?.label ? `- ${(activeOriginalNode as any).data.label}` : '' })}
                 allNodes={originalWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="original"
@@ -634,7 +636,7 @@ export default function DiagramComparison({
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeProposedNode as any)?.data}
-                title={`بطاقة البيانات (المخطط المقترح) ${ (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' }`}
+                title={t('flashcardTitleProposed', { label: (activeProposedNode as any)?.data?.label ? `- ${(activeProposedNode as any).data.label}` : '' })}
                 allNodes={proposedWithDiff.nodes as any}
                 onSelectNode={handleSelectRelated}
                 side="proposed"

@@ -5,12 +5,13 @@ import { Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
+import { useTranslations } from 'next-intl'
 import { Header } from '@/components/Header'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
 import { Node, Edge } from 'reactflow'
 
-// Helper: تشخیص نمودار «بدیهی/تهی» برای جلوگیری از ذخیرهٔ پیش‌فرض
+// Helper: Identify a "trivial/empty" tree to prevent default saving
 type TreeData = { nodes: Node[]; edges: Edge[] }
 function isTrivialTree(data: Partial<TreeData> | null | undefined): boolean {
   if (!data || !Array.isArray((data as any).nodes) || !Array.isArray((data as any).edges)) return true
@@ -22,6 +23,8 @@ function isTrivialTree(data: Partial<TreeData> | null | undefined): boolean {
 }
 
 function CreatePost() {
+  const t = useTranslations('createPost')
+  const tEditor = useTranslations('treeDiagramEditor')
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -34,7 +37,7 @@ function CreatePost() {
         id: '1',
         type: 'custom',
         position: { x: 400, y: 200 },
-        data: { label: 'ابدأ' },
+        data: { label: tEditor('startNode') },
       },
     ],
     edges: [],
@@ -44,7 +47,7 @@ function CreatePost() {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false)
   const [summaryText, setSummaryText] = useState('')
 
-  // بارگذاری نمودار اصلی با بیشترین امتیاز یا بازیابی پیش‌نویس ذخیره‌شده
+  // Load main diagram with the highest score or restore saved draft
   const hasLoadedRef = useRef(false)
   const skipAutoSaveRef = useRef(false)
   useEffect(() => {
@@ -55,7 +58,7 @@ function CreatePost() {
     if (hasLoadedRef.current) return
     hasLoadedRef.current = true
 
-    // اگر در حالت ویرایش از طریق ?edit=ID هستیم، ابتدا تلاش برای بازیابی پیش‌نویس اختصاصی همین آیتم
+    // If in edit mode via ?edit=ID, first attempt to restore specific draft for this item
     const tryLoadEditTarget = async () => {
       if (!editId) return false
       try {
@@ -75,7 +78,7 @@ function CreatePost() {
         console.warn('Failed to restore edit draft from localStorage', e)
       }
 
-      // در صورت نبود پیش‌نویس محلی، دادهٔ پست مورد نظر را واکشی کن (نسخه کامل)
+      // If no local draft, fetch target post data (full version)
       try {
         const resp = await fetch(`/api/editor/posts/${editId}`)
         if (resp.ok) {
@@ -87,7 +90,7 @@ function CreatePost() {
             } catch (e) {
               console.error('Invalid target post content JSON', e)
             }
-            // محتوا از طرح قبلی کاربر؛ مبنای شناسۀ ویرایش از نسخه منتشرشده
+            // Content from user's previous draft; base edit ID from published version
             setOriginalPostId(target?.originalPost?.id ?? null)
             setIsLoading(false)
             return true
@@ -111,18 +114,18 @@ function CreatePost() {
           }
         }
       } catch (error) {
-        console.error('خطأ في تحميل المخطط الرئيسي:', error)
-        toast.error('خطأ في تحميل المخطط الرئيسي')
+        console.error(`${t('loadError')}:`, error)
+        toast.error(t('loadError'))
       } finally {
         setIsLoading(false)
       }
     }
 
-    // تلاش برای لود مسیر ویرایش؛ در صورت عدم موفقیت، روال قبلی
+    // Try to load edit path; if unsuccessful, follow previous flow
     ;(async () => {
       const handled = await tryLoadEditTarget()
       if (!handled) {
-        // سناریو: حالت غیر ویرایشی. ابتدا آخرین نسخه منتشرشده را بگیر، سپس تصمیم بگیر آیا پیش‌نویس محلی معتبر است یا خیر
+        // Scenario: Non-edit mode. First get the latest published version, then decide if local draft is valid
         try {
           const resp = await fetch('/api/posts/latest', { cache: 'no-store' })
           const latest = resp.ok ? await resp.json() : null
@@ -141,7 +144,7 @@ function CreatePost() {
                     setIsLoading(false)
                     return
                   } else {
-                    // پیش‌نویس برای نسخه قدیمی است؛ پاک شود تا نسخه جدید لود گردد
+                    // Draft is for an old version; clear it to load new version
                     try { localStorage.removeItem(draftKey) } catch {}
                   }
                 } else {
@@ -168,17 +171,17 @@ function CreatePost() {
           console.warn('Failed to fetch latest approved post', e)
         }
 
-        // در صورت عدم موفقیت، روال fallback
+        // If unsuccessful, fallback flow
         await loadTopPost()
       }
     })()
   }, [status, editId, draftKey])
 
-  // ذخیره خودکار پیش‌نویس در localStorage با هر تغییر
+  // Auto-save draft in localStorage with every change
   useEffect(() => {
     if (status !== 'authenticated') return
     if (skipAutoSaveRef.current) return
-    // از ذخیره‌ی پیش‌نویس کاملاً خالی (فقط نود شروع) جلوگیری کنیم
+    // Prevent saving completely empty draft (only start node)
     if (isTrivialTree(treeData)) return
     try {
       const payload = { treeData, originalPostId }
@@ -191,7 +194,7 @@ function CreatePost() {
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">جارٍ التحميل...</div>
+        <div className="text-site-text">{t('loading')}</div>
       </div>
     )
   }
@@ -199,14 +202,14 @@ function CreatePost() {
   if (!session) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">يرجى تسجيل الدخول</div>
+        <div className="text-site-text">{t('loginRequired')}</div>
       </div>
     )
   }
 
   const doSubmit = async (summary: string) => {
     if (treeData.nodes.length === 0) {
-      toast.error('لطفاً حداقل یک نود در نمودار ایجاد کنید')
+      toast.error(t('minNodesError'))
       return
     }
     setIsSubmitting(true)
@@ -222,12 +225,12 @@ function CreatePost() {
         body: JSON.stringify(body),
       })
       if (response.ok) {
-        toast.success('تم إرسال مخططك بنجاح وهو بانتظار الموافقة')
+        toast.success(t('submitSuccess'))
         skipAutoSaveRef.current = true
         try { localStorage.removeItem(draftKey) } catch {}
         setTreeData({
           nodes: [
-            { id: '1', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'ابدأ' } },
+            { id: '1', type: 'custom', position: { x: 400, y: 200 }, data: { label: tEditor('startNode') } },
           ],
           edges: [],
         })
@@ -238,12 +241,12 @@ function CreatePost() {
         const text = await response.text()
         let err: any = {}
         try { err = JSON.parse(text) } catch { err = { error: text } }
-        console.error('ارسال نمودار ناموفق:', response.status, err)
-        toast.error(err?.error ? `خطا: ${err.error}` : `خطا در ارسال (${response.status})`)
+        console.error('Submission failed:', response.status, err)
+        toast.error(err?.error ? `${t('submitError')}: ${err.error}` : `${t('submitError')} (${response.status})`)
       }
     } catch (error) {
-      console.error('خطا در ارسال نمودار:', error)
-      toast.error('خطا در ارسال نمودار')
+      console.error('Submission error:', error)
+      toast.error(t('submitError'))
     } finally {
       setIsSubmitting(false)
     }
@@ -255,29 +258,29 @@ function CreatePost() {
     setIsSummaryOpen(true)
   }
 
-  // وقتی کاربر «إلغاء» می‌زند، پیش‌نویس ذخیره‌شده پاک شود تا دفعه بعد صفحه CREATE از نمودار اصلی منتشر‌شده بارگذاری گردد
+  // When user clicks "Cancel", saved draft should be cleared so that next time CREATE page loads from latest published diagram
   const handleCancel = () => {
     try {
-      // جلوگیری از ذخیره‌سازی خودکار بلافاصله بعد از پاکسازی
+      // Prevent auto-save immediately after clearing
       skipAutoSaveRef.current = true
-      // حذف پیش‌نویس فعلی
+      // Remove current draft
       if (typeof window !== 'undefined') {
         localStorage.removeItem(draftKey)
       }
     } catch {}
-    // اختیاری: ریست موقت state محلی همین صفحه
+    // Optional: Reset temporary local state of this page
     setTreeData({
       nodes: [
         {
           id: '1',
           type: 'custom',
           position: { x: 400, y: 200 },
-          data: { label: 'ابدأ' },
+          data: { label: tEditor('startNode') },
         },
       ],
       edges: [],
     })
-    // بازگشت
+    // Go back
     router.push('/')
   }
 
@@ -287,17 +290,17 @@ function CreatePost() {
       <main className="px-4 py-8">
         <div className="max-w-none">
           <h1 className="text-3xl font-bold text-site-text mb-8 text-center">
-            {originalPostId ? 'تحرير المخطط الرئيسي' : 'إنشاء مخطط شجري جديد'}
+            {originalPostId ? t('editTitle') : t('title')}
           </h1>
 
-          {/* نوار اقدامات بالا */}
+          {/* Top action bar */}
           <div className="flex gap-4 mb-4 justify-end">
             <button
               type="button"
               onClick={handleCancel}
               className="btn-secondary"
             >
-              إلغاء
+              {t('cancel')}
             </button>
             <button
               type="button"
@@ -305,19 +308,19 @@ function CreatePost() {
               onClick={(e) => handleSubmit(e as any)}
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'جارٍ الإرسال...' : (originalPostId ? 'إرسال التغييرات' : 'إرسال المخطط')}
+              {isSubmitting ? t('submitting') : (originalPostId ? t('submitChanges') : t('submit'))}
             </button>
           </div>
 
           <div className="card">
             <div className="mb-6">
               <label className="block text-site-text font-medium mb-2">
-                المخطط الشجري
+                {t('treeDiagramLabel')}
               </label>
               <div className="text-sm text-gray-400 mb-4">
                 {originalPostId 
-                  ? 'تم تحميل المخطط الرئيسي. يمكنك إضافة عقد جديدة، وتحرير أو حذف الموجودة.'
-                  : 'لإنشاء مخطط، أضف عقداً جديدة وقم بربطها ببعضها. لربط عقدتين، استخدم الدوائر الموجودة على جوانب العقد.'
+                  ? t('loadMainDesc')
+                  : t('createMainDesc')
                 }
               </div>
               <div className="w-full min-h-[150vh]">
@@ -331,7 +334,7 @@ function CreatePost() {
               </div>
             </div>
 
-            {/* دکمه‌های پایین حذف شدند و به بالا منتقل شدند */}
+            {/* Bottom buttons were removed and moved to the top */}
           </div>
         </div>
       </main>
@@ -339,7 +342,7 @@ function CreatePost() {
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl">
             <div className="px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text heading">فضلاً اكتب ملخصاً للتغييرات وأي إيضاحات تراها مناسبة</h2>
+              <h2 className="text-xl font-bold text-site-text heading">{t('summaryTitle')}</h2>
             </div>
             <div className="p-6">
               <textarea
@@ -347,7 +350,7 @@ function CreatePost() {
                 onChange={(e) => setSummaryText(e.target.value)}
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 rows={6}
-                placeholder="مثال: أضفت عقدة فرعية لتوضيح الخطوة الثانية، وعدّلت اسم العقدة الرئيسية لتكون أوضح."
+                placeholder={t('summaryPlaceholder')}
               />
               <div className="flex items-center justify-end gap-3 mt-4">
                 <button
@@ -355,7 +358,7 @@ function CreatePost() {
                   onClick={() => { setIsSummaryOpen(false) }}
                   className="btn-secondary"
                 >
-                  إلغاء
+                  {t('cancel')}
                 </button>
                 <button
                   type="button"
@@ -363,7 +366,7 @@ function CreatePost() {
                   onClick={() => doSubmit(summaryText)}
                   className="btn-primary"
                 >
-                  تأكيد الإرسال
+                  {t('confirmSubmit')}
                 </button>
               </div>
             </div>
@@ -375,8 +378,9 @@ function CreatePost() {
 }
 
 export default function CreatePostPage() {
+  const t = useTranslations('createPost')
   return (
-    <Suspense fallback={<div className="min-h-screen bg-site-bg flex items-center justify-center"><div className="text-site-text">جارٍ التحميل...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-site-bg flex items-center justify-center"><div className="text-site-text">{t('loading')}</div></div>}>
       <CreatePost />
     </Suspense>
   )

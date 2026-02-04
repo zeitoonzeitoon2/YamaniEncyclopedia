@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import ReactFlow, {
   Node,
   Edge,
@@ -31,19 +32,20 @@ interface FlashcardField {
 type PreviewDraft = { title: string; description?: string; content: string }
 
 const CustomNode = ({ data, isConnectable }: any) => {
-  // التحقّق مما إذا كانت العقدة تحتوي على محتوى بطاقة تعليمية (نص، رابط مقال، أو عناصر إضافية)
+  const t = useTranslations('treeDiagramEditor')
+  // Check if the node has flashcard content (text, article link, or extra items)
   const hasFlashContent = () => {
-    // التحقّق من نص البطاقة
+    // Check flashcard text
     const hasFlashText = data?.flashText && String(data.flashText).trim().length > 0;
     
-    // التحقّق من رابط المقال
+    // Check article link
     const hasArticleLink = data?.articleLink && String(data.articleLink).trim().length > 0;
     
-    // التحقّق من العناصر الإضافية
+    // Check extra items
     const hasExtraItems = data?.extraItems && Array.isArray(data.extraItems) && 
       data.extraItems.some((item: any) => item?.content && String(item.content).trim().length > 0);
     
-    // التحقّق من الحقول الإضافية القديمة
+    // Check old extra fields
     const hasExtraTexts = data?.extraTexts && Array.isArray(data.extraTexts) && 
       data.extraTexts.some((text: string) => text && String(text).trim().length > 0);
     
@@ -98,6 +100,7 @@ export default function TreeDiagramEditor({
   collectDrafts = false,
   isCreatePage = false,
 }: TreeDiagramEditorProps) {
+  const t = useTranslations('treeDiagramEditor')
   const { data: session } = useSession()
   const [nodes, setNodes, onNodesChange] = useNodesState(
     (initialData?.nodes || [
@@ -105,7 +108,7 @@ export default function TreeDiagramEditor({
         id: '1',
         type: 'custom',
         position: { x: 400, y: 200 },
-        data: { label: 'ابدأ' },
+        data: { label: t('startNode') },
       },
     ]).map((n: any) => ({ ...n, data: { ...(n.data || {}), domainId: (n.data || {}).domainId ?? null, _readOnly: readOnly } }))
   )
@@ -122,13 +125,13 @@ export default function TreeDiagramEditor({
   const [flashcardFields, setFlashcardFields] = useState<FlashcardField[]>([])
   const createFieldId = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
-  // مخزن مؤقّت لعناوين الروابط الإضافية لعرض عناوين المقالات لتلك الروابط
+  // Temporary storage for extra link titles to display article titles for those links
   const [extraLinkTitles, setExtraLinkTitles] = useState<Record<string, string>>({})
   const [extraLinkContentCache, setExtraLinkContentCache] = useState<Record<string, string>>({})
   const [relatedNodeIds, setRelatedNodeIds] = useState<string[]>([])
   const [relationToAddId, setRelationToAddId] = useState<string>('')
 
-  // حالة التمييز لتفاعل العُقَد المرتبطة
+  // Highlight state for related node interaction
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([])
 
   const [domains, setDomains] = useState<Array<{ id: string; name: string }>>([])
@@ -141,22 +144,22 @@ export default function TreeDiagramEditor({
     return m
   }, [domains])
 
-  // تمييز العُقَد المرتبطة مؤقتًا
+  // Temporarily highlight related nodes
   const highlightRelatedNodes = useCallback((sourceId: string, targetId: string) => {
     setHighlightedNodeIds([sourceId, targetId])
     setTimeout(() => setHighlightedNodeIds([]), 2000)
   }, [])
 
-  // حفظ مرجع كائن ReactFlow
+  // Save ReactFlow instance reference
   const reactFlowInstanceRef = useRef<any>(null)
-  // فقط یکبار initialData را به state داخلی Hydrate کنیم
+  // Hydrate initialData into internal state only once
   const hasHydratedInitialData = useRef(false)
   
-  // تركيز المنظور ليشمل العقدتين ثم تمييزهما
+  // Focus view to include both nodes and then highlight them
   const focusNodesAndHighlight = useCallback((sourceId: string, targetId: string) => {
     const reactFlow = reactFlowInstanceRef.current
     if (!reactFlow) {
-      // بديل: قم بالتمييز فقط إذا لم يتوفر الكائن
+      // Fallback: Just highlight if instance not available
       highlightRelatedNodes(sourceId, targetId)
       return
     }
@@ -166,20 +169,20 @@ export default function TreeDiagramEditor({
       const b = reactFlow.getNode(targetId)
       const toFit: Node[] = [a, b].filter(Boolean) as Node[]
       if (toFit.length > 0) {
-        // ملاءمة العرض بحيث تصبح العقدتان مرئيتين
-        // قيمة padding ≈ 0.3 من أجل هامش بسيط؛ والمدة إن كانت مدعومة تُحوِّل الانتقال بسلاسة
-        // لا مشكلة إذا تجاهل الإصدار الحالي من ReactFlow قيمة المدة
+        // Fit view so both nodes are visible
+        // padding ≈ 0.3 for a small margin; duration if supported transitions smoothly
+        // No issue if current ReactFlow version ignores duration
         ;(reactFlow.fitView as any)({ nodes: toFit, padding: 0.3, duration: 400 })
-        // تنفيذ التمييز بعد أن يستقرّ المنظور بقليل
+        // Execute highlight shortly after view stabilizes
         setTimeout(() => highlightRelatedNodes(sourceId, targetId), 450)
         return
       }
     } catch {}
-    // بديل: قم بالتمييز فقط إذا تعذّر حساب العقد
+    // Fallback: Just highlight if node calculation fails
     highlightRelatedNodes(sourceId, targetId)
   }, [highlightRelatedNodes])
 
-  // حساب العقد مع أعلام التمييز
+  // Compute nodes with highlight flags
   const computedNodes = React.useMemo(() => {
     const mapOne = (n: any, highlighted: boolean) => {
       const dataAny = (n.data as any) || {}
@@ -243,11 +246,11 @@ export default function TreeDiagramEditor({
     return () => controller.abort()
   }, [])
 
-  // جلب عناوين المقالات لحقول الروابط الإضافية وكذلك للرابط الرئيسي للمقال لعرضها كنص الرابط
+  // Fetch article titles for extra link fields and the main article link to display as link text
   useEffect(() => {
     const controller = new AbortController()
     const run = async () => {
-      // 1) عنوان الرابط الرئيسي للمقال (المفتاح 'main')
+      // 1) Main article link title (key 'main')
       try {
         if (articleLink && !articleLink.startsWith('http')) {
           if (extraLinkContentCache['main'] !== articleLink) {
@@ -265,15 +268,15 @@ export default function TreeDiagramEditor({
             }
           }
         } else {
-          // رابط خارجي أو فارغ -> امسح العنوان المخزَّن لتفادي عرض بيانات قديمة
+          // External link or empty -> Clear stored title to avoid stale data
           setExtraLinkTitles((prev) => ({ ...prev, main: '' }))
           setExtraLinkContentCache((prev) => ({ ...prev, main: articleLink || '' }))
         }
       } catch (e) {
-        // تجاهل
+        // Ignore
       }
 
-      // 2) حقول الروابط الإضافية
+      // 2) Extra link fields
       const tasks = flashcardFields
         .filter((f) => f.type === 'link' && f.content && !f.content.startsWith('http'))
         .map(async (f) => {
@@ -292,7 +295,7 @@ export default function TreeDiagramEditor({
             setExtraLinkTitles((prev) => ({ ...prev, [f.id]: title }))
             setExtraLinkContentCache((prev) => ({ ...prev, [f.id]: f.content }))
           } catch (e) {
-            // تجاهُل أخطاء الجلب (التنقّل/تفكيك المكوّن)
+            // Ignore fetch errors (navigation/unmount)
           }
         })
       await Promise.all(tasks)
@@ -385,11 +388,11 @@ export default function TreeDiagramEditor({
       const selectedNodes = nodes.filter((node) => node.selected)
       const selectedNodeIds = selectedNodes.map((node) => node.id)
 
-      // حذف العقد والحواف المرتبطة
+      // Delete nodes and associated edges
       let newNodes = nodes.filter((node) => !node.selected)
       const newEdges = edges.filter((edge) => !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target))
 
-      // تنظيف المراجع المرتبطة من العقد الأخرى
+      // Clean up associated references from other nodes
       newNodes = newNodes.map((n) => {
         const d: any = n.data || {}
         if (Array.isArray(d.relatedNodeIds) && d.relatedNodeIds.length > 0) {
@@ -448,7 +451,7 @@ export default function TreeDiagramEditor({
       ]
     }
 
-    // اگر هیچ فیلدی نیست، یک «کادر متن» پیش‌فرض بساز و با setNodes تابعی ذخیره کن
+    // If no fields, create a default "text box" and save it via setNodes function
     if (items.length === 0) {
       items = [{ id: createFieldId(), type: 'text', content: '' }]
       setNodes((prev) => {
@@ -571,7 +574,7 @@ export default function TreeDiagramEditor({
     [selectedNodeId, nodes, setNodes, onDataChange, edges]
   )
 
-  // دالّة مساعدة لتحديث العقد المرتبطة
+  // Helper function to update related nodes
   const updateRelatedNodes = useCallback(
     (ids: string[]) => {
       if (!selectedNodeId) return
@@ -594,12 +597,12 @@ export default function TreeDiagramEditor({
       if (target === 'main') {
         setArticleLink(link)
         updateArticleLink(link)
-        toast.success('تم ربط مسودة المقال ببطاقة البيانات')
+        toast.success(t('articleLinkedToFlashcard'))
       } else {
         const next = flashcardFields.map((f) => (f.id === target ? { ...f, content: link } : f))
         setFlashcardFields(next)
         updateFlashcardFields(next)
-        toast.success('تم ربط مسودة المقال بالرابط الإضافي')
+        toast.success(t('articleLinkedToExtraLink'))
       }
 
       setModalTarget(null)
@@ -628,7 +631,7 @@ export default function TreeDiagramEditor({
         })
         setNodes(next)
         onDataChange?.({ nodes: next, edges })
-        toast.success('تم ربط مسودة المقال ببطاقة البيانات')
+        toast.success(t('articleLinkedToFlashcard'))
       } else {
         const nodeLabel = (() => {
           try {
@@ -645,12 +648,12 @@ export default function TreeDiagramEditor({
         ))
         setFlashcardFields(next)
         updateFlashcardFields(next)
-        toast.success('تم ربط مسودة المقال بالرابط الإضافي')
+        toast.success(t('articleLinkedToExtraLink'))
       }
 
       setModalTarget(null)
     },
-    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes]
+    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes, t]
   )
 
   const openCreateArticleModal = useCallback((nodeId: string) => {
@@ -675,17 +678,17 @@ export default function TreeDiagramEditor({
       try {
         const slug = normalizeSlugFromLink(articleLink)
         if (!slug) {
-          toast.error('المعرّف (slug) الخاص بالمقال غير صالح')
+          toast.error(t('invalidSlug'))
           return
         }
         const res = await fetch(`/api/articles/${slug}`)
         if (!res.ok) {
-          toast.error('خطأ في جلب المقال')
+          toast.error(t('fetchArticleError'))
           return
         }
         const article = await res.json()
         const draft = {
-          title: article.title || 'بدون عنوان',
+          title: article.title || t('noTitle'),
           description: article.description || '',
           content: article.content || '',
           slug,
@@ -695,16 +698,16 @@ export default function TreeDiagramEditor({
         setModalTarget(fieldId)
       } catch (e) {
         console.error(e)
-        toast.error('خطأ في تحضير التحرير المقترح')
+        toast.error(t('prepareEditError'))
       }
     },
-    []
+    [t]
   )
 
   const handleNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
     if (readOnly || !isCreatePage) return
     const current = (node.data as any)?.label || ''
-    const newLabel = window.prompt('أدخل اسم العقدة الجديد:', current)
+    const newLabel = window.prompt(t('nodePrompt'), current)
     if (newLabel === null) return
     const trimmed = newLabel.trim()
     const next = nodes.map((n) => (
@@ -714,8 +717,8 @@ export default function TreeDiagramEditor({
     onDataChange?.({ nodes: next, edges })
     setSelectedNodeId(node.id)
     setNodeTitle(trimmed)
-    toast.success('تم تحديث اسم العقدة')
-  }, [readOnly, isCreatePage, nodes, edges, onDataChange])
+    toast.success(t('nodeLabelUpdated'))
+  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t])
 
   useEffect(() => {
     if (!isPreviewOpen || typeof window === 'undefined') return
@@ -726,7 +729,7 @@ export default function TreeDiagramEditor({
     }
   }, [isPreviewOpen])
 
-  // مزامنة الحالة الداخلية مع initialData الواردة عند تغيّرها
+  // Sync internal state with incoming initialData when it changes
   useEffect(() => {
     if (!initialData) return
     if (hasHydratedInitialData.current) return
@@ -753,7 +756,7 @@ export default function TreeDiagramEditor({
             type="text"
             value={nodeLabel}
             onChange={(e) => setNodeLabel(e.target.value)}
-            placeholder="نص العقدة الجديدة..."
+            placeholder={t('newNodePlaceholder')}
             className="flex-1 px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-700 text-white placeholder-gray-400"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
@@ -763,10 +766,10 @@ export default function TreeDiagramEditor({
             }}
           />
           <button type="button" onClick={addNode} disabled={!nodeLabel.trim()} className="px-4 py-2 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600 disabled:opacity-50">
-            إضافة عقدة
+            {t('addNode')}
           </button>
           <button type="button" onClick={deleteSelectedNodes} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
-            حذف المحدد
+            {t('deleteSelected')}
           </button>
         </div>
       )}
@@ -799,10 +802,10 @@ export default function TreeDiagramEditor({
 
         {selectedNode && (
           <div className="w-full lg:w-1/3 h-full overflow-y-auto p-4 bg-stone-800 border border-amber-700/40 rounded-lg">
-            <h4 className="font-semibold text-amber-100">بطاقة البيانات للعقدة: {selectedNode?.data?.label}</h4>
+            <h4 className="font-semibold text-amber-100">{t('flashcardTitle', { label: selectedNode?.data?.label })}</h4>
 
             <div className="mt-3">
-              <label className="block text-sm text-amber-200 mb-1">المجال (Domain)</label>
+              <label className="block text-sm text-amber-200 mb-1">{t('domainLabel')}</label>
               <select
                 className="w-full p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm disabled:opacity-70"
                 value={String(((selectedNode?.data as any)?.domainId || '') as any)}
@@ -815,7 +818,7 @@ export default function TreeDiagramEditor({
                   updateNodeDomainId(v ? v : null)
                 }}
               >
-                <option value="">بدون تحديد</option>
+                <option value="">{t('noSelection')}</option>
                 {domains.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -826,7 +829,7 @@ export default function TreeDiagramEditor({
 
             {isCreatePage && !readOnly && (
               <div className="mt-3">
-                <label className="block text-sm text-amber-200 mb-1">اسم العقدة</label>
+                <label className="block text-sm text-amber-200 mb-1">{t('nodeName')}</label>
                 <input
                   type="text"
                   className="w-full p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
@@ -836,11 +839,11 @@ export default function TreeDiagramEditor({
                     setNodeTitle(v)
                     updateNodeLabel(v)
                   }}
-                  placeholder="اسم العقدة..."
+                  placeholder={t('nodeNamePlaceholder')}
                 />
               </div>
             )}
-            {/* نص 1 قبل الرابط الأول */}
+            {/* Text 1 before the first link */}
             {(() => {
               const firstTextIndex = flashcardFields.findIndex((f) => f.type === 'text')
               if (firstTextIndex < 0) return null
@@ -848,7 +851,7 @@ export default function TreeDiagramEditor({
               return (
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs text-amber-300">نص 1</label>
+                    <label className="block text-xs text-amber-300">{t('textLabel', { number: 1 })}</label>
                     {!readOnly && (
                       <button
                         type="button"
@@ -859,7 +862,7 @@ export default function TreeDiagramEditor({
                         }}
                         className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
                       >
-                        حذف
+                        {t('delete')}
                       </button>
                     )}
                   </div>
@@ -876,16 +879,16 @@ export default function TreeDiagramEditor({
                       setFlashcardFields(next)
                       updateFlashcardFields(next)
                     }}
-                    placeholder="نص..."
+                    placeholder={t('textPlaceholder')}
                   />
                 </div>
               )
             })()}
 
-            {/* الرابط الأول (الرابط الرئيسي للمقال) */}
+            {/* First Link (Main Article Link) */}
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs text-amber-300">الرابط الأول</label>
+                <label className="block text-xs text-amber-300">{t('firstLink')}</label>
                  {!readOnly && (
                    <div className="flex items-center gap-2">
                     <button
@@ -897,7 +900,7 @@ export default function TreeDiagramEditor({
                       }}
                       className="text-xs text-amber-400 hover:text-amber-300 underline bg-transparent border-none cursor-pointer"
                     >
-                      + إنشاء وربط تلقائي
+                      {t('createAndLinkAuto')}
                     </button>
                     {articleLink && (
                       <button
@@ -908,7 +911,7 @@ export default function TreeDiagramEditor({
                         }}
                         className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
                       >
-                        حذف
+                        {t('delete')}
                       </button>
                     )}
                   </div>
@@ -937,7 +940,7 @@ export default function TreeDiagramEditor({
                       window.open(link, '_blank')
                     }
                   }}
-                  placeholder="رابط داخلي: /articles/اسم-المقال • رابط خارجي: https://example.com"
+                  placeholder={t('linkPlaceholderDetailed')}
                 />
               )}
               {articleLink && (
@@ -948,19 +951,19 @@ export default function TreeDiagramEditor({
                       displayLink = displayLink.replace(/^https?:\/\/[^/]+/i, '')
                       if (!displayLink.startsWith('/')) displayLink = '/' + displayLink
                     }
-                    // إنشاء وسم ودّي للرابط الرئيسي مماثل للروابط الإضافية: فضّل العنوان المُجلَب
+                    // Create a friendly label for the main link similar to extra links: prefer fetched title
                     let label: string
                     const isExternal = /^https?:\/\//i.test(articleLink)
                     if (!isExternal) {
                       const slug = normalizeSlugFromLink(articleLink)
                       const fallback = slug ? slug.replace(/-/g, ' ') : displayLink
-                      label = (extraLinkTitles['main'] || '').trim() || fallback || 'عرض'
+                      label = (extraLinkTitles['main'] || '').trim() || fallback || t('view')
                     } else {
                       try {
                         const u = new URL(articleLink)
                         label = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : u.hostname
                       } catch {
-                        label = displayLink || 'عرض'
+                        label = displayLink || t('view')
                       }
                     }
                     return (
@@ -981,7 +984,7 @@ export default function TreeDiagramEditor({
                       onClick={() => openEditExtraLinkModal('main', articleLink)}
                       className="text-amber-400 hover:text-amber-300 underline text-xs"
                     >
-                      تحرير
+                      {t('edit')}
                     </button>
                   )}
                   {!isCreatePage && !readOnly && (selectedNode?.data as any)?.articleDraft && (
@@ -989,13 +992,13 @@ export default function TreeDiagramEditor({
                       onClick={() => openEditDraftArticleModal(selectedNode!.id, (selectedNode!.data as any).articleDraft)}
                       className="text-amber-400 hover:text-amber-300 underline text-xs"
                     >
-                      تحرير المسودة
+                      {t('editDraft')}
                     </button>
                   )}
                   {!isCreatePage && !readOnly && articleLink.startsWith('/articles/') && !(selectedNode?.data as any)?.articleDraft && (
                     <>
                       <a href={`${articleLink}/edit`} target="_blank" className="text-amber-400 hover:text-amber-300 underline text-xs">
-                        تحرير مباشر
+                        {t('directEdit')}
                       </a>
                       {collectDrafts && (
                         <button
@@ -1004,17 +1007,17 @@ export default function TreeDiagramEditor({
                             try {
                               const slug = normalizeSlugFromLink(articleLink)
                               if (!slug) {
-                                toast.error('المعرّف النصي للمقال غير صالح')
+                                toast.error(t('invalidSlug'))
                                 return
                               }
                               const res = await fetch(`/api/articles/${slug}`)
                               if (!res.ok) {
-                                toast.error('خطأ في جلب المقال')
+                                toast.error(t('fetchArticleError'))
                                 return
                               }
                               const article = await res.json()
                               const draft = {
-                                title: article.title || selectedNode!.data?.label || 'بدون عنوان',
+                                title: article.title || selectedNode!.data?.label || t('noTitle'),
                                 description: article.description || '',
                                 content: article.content || '',
                                 slug,
@@ -1024,12 +1027,12 @@ export default function TreeDiagramEditor({
                               setModalTarget('main')
                             } catch (e) {
                               console.error(e)
-                              toast.error('خطأ في تحضير التحرير المقترح')
+                              toast.error(t('prepareEditError'))
                             }
                           }}
                           className="text-blue-300 hover:text-blue-200 underline text-xs"
                         >
-                          تحرير مقترح
+                          {t('proposedEdit')}
                         </button>
                       )}
                     </>
@@ -1047,16 +1050,27 @@ export default function TreeDiagramEditor({
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs text-amber-300">
                         {field.type === 'text'
-                          ? `نص ${flashcardFields.slice(0, idx + 1).filter((f) => f.type === 'text').length}`
+                          ? t('textLabel', { number: flashcardFields.slice(0, idx + 1).filter((f) => f.type === 'text').length })
                           : (() => {
                               const linkOrder = flashcardFields
                                 .slice(0, idx + 1)
                                 .filter((f) => f.type === 'link').length
                               const base = (articleLink && articleLink.trim()) ? 1 : 0
                               const linkNumber = base + linkOrder
-                              const ord = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر']
+                              const ord = [
+                                t('ordinals.first'),
+                                t('ordinals.second'),
+                                t('ordinals.third'),
+                                t('ordinals.fourth'),
+                                t('ordinals.fifth'),
+                                t('ordinals.sixth'),
+                                t('ordinals.seventh'),
+                                t('ordinals.eighth'),
+                                t('ordinals.ninth'),
+                                t('ordinals.tenth')
+                              ]
                               const ordLabel = ord[linkNumber - 1] || String(linkNumber)
-                              return `الرابط ${ordLabel}`
+                              return t('linkWithOrdinal', { ordinal: ordLabel })
                             })()}
                       </label>
                       {!readOnly && (
@@ -1067,7 +1081,7 @@ export default function TreeDiagramEditor({
                               onClick={() => setModalTarget(field.id)}
                               className="text-xs text-amber-400 hover:text-amber-300 underline bg-transparent border-none cursor-pointer"
                             >
-                              + إنشاء وربط تلقائي
+                              {t('createAndLinkAuto')}
                             </button>
                           )}
                           <button
@@ -1082,7 +1096,7 @@ export default function TreeDiagramEditor({
                             }}
                             className="text-xs text-red-400 hover:text-red-300 bg-transparent border-none cursor-pointer"
                           >
-                            حذف
+                            {t('delete')}
                           </button>
                         </div>
                       )}
@@ -1100,73 +1114,73 @@ export default function TreeDiagramEditor({
                           const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
                           setFlashcardFields(next)
                           updateFlashcardFields(next)
+                      }}
+                      placeholder={t('textPlaceholder')}
+                    />
+                  ) : (
+                    !hideArticleLinkInputs ? (
+                      <input
+                        type="text"
+                        className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                        value={field.content}
+                        readOnly={readOnly}
+                        disabled={readOnly}
+                        onChange={(e) => {
+                          if (readOnly) return
+                          const value = e.target.value
+                          const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
+                          setFlashcardFields(next)
+                          updateFlashcardFields(next)
                         }}
-                        placeholder="نص..."
+                        placeholder={t('linkPlaceholderDetailed')}
                       />
-                    ) : (
-                      !hideArticleLinkInputs ? (
-                        <input
-                          type="text"
-                          className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
-                          value={field.content}
-                          readOnly={readOnly}
-                          disabled={readOnly}
-                          onChange={(e) => {
-                            if (readOnly) return
-                            const value = e.target.value
-                            const next = flashcardFields.map((f, i) => (i === idx ? { ...f, content: value } : f))
-                            setFlashcardFields(next)
-                            updateFlashcardFields(next)
-                          }}
-                          placeholder="رابط داخلي: /articles/اسم-المقال • رابط خارجي: https://example.com"
-                        />
-                      ) : null
-                    )}
-                    {field.type === 'link' && field.content ? (
-                      (() => {
-                        const isExternal = field.content.startsWith('http')
-                        const href = isExternal
-                          ? field.content
-                          : `/articles/${normalizeSlugFromLink(field.content)}`
+                    ) : null
+                  )}
+                  {field.type === 'link' && field.content ? (
+                    (() => {
+                      const isExternal = field.content.startsWith('http')
+                      const href = isExternal
+                        ? field.content
+                        : `/articles/${normalizeSlugFromLink(field.content)}`
 
-                        // احتساب وسم ودّي: فضّل عنوان المقال المُجلَب؛ وإلا فارجع إلى المعرّف/المسار
-                        let label = 'عرض المقال'
-                        if (!isExternal) {
-                          const slug = normalizeSlugFromLink(field.content)
-                          label = extraLinkTitles[field.id] || (slug ? slug.replace(/-/g, ' ') : field.content)
-                        } else {
-                          try {
-                            const u = new URL(field.content)
-                            label = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : u.hostname
-                          } catch {
-                            label = field.content
-                          }
+                      // Calculate friendly label: prefer fetched article title; otherwise fallback to slug/path
+                      let label = t('viewArticle')
+                      if (!isExternal) {
+                        const slug = normalizeSlugFromLink(field.content)
+                        label = extraLinkTitles[field.id] || (slug ? slug.replace(/-/g, ' ') : field.content)
+                      } else {
+                        try {
+                          const u = new URL(field.content)
+                          label = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : u.hostname
+                        } catch {
+                          label = field.content
                         }
+                      }
 
-                        return (
-                          <div className="flex items-center gap-2 mt-1">
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 underline text-xs"
-                              title={href}
+                      return (
+                        <div className="flex items-center gap-2 mt-1">
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline text-xs"
+                            title={href}
+                          >
+                            {label}
+                          </a>
+                          {!readOnly && (
+                            <button
+                              type="button"
+                              onClick={() => openEditExtraLinkModal(field.id, field.content)}
+                              className="text-amber-400 hover:text-amber-300 underline text-xs"
                             >
-                              {label}
-                            </a>
-                            {!readOnly && (
-                              <button
-                                type="button"
-                                onClick={() => openEditExtraLinkModal(field.id, field.content)}
-                                className="text-amber-400 hover:text-amber-300 underline text-xs"
-                              >
-                                تحرير
-                              </button>
-                            )}
-                          </div>
-                        )
-                      })()
-                    ) : null}
+                              {t('edit')}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })()
+                  ) : null}
                   </div>
                 )
             ))}
@@ -1182,7 +1196,7 @@ export default function TreeDiagramEditor({
                   }}
                   className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs"
                 >
-                  + إضافة مربع نص
+                  {t('addTextField')}
                 </button>
                 <button
                   type="button"
@@ -1193,22 +1207,22 @@ export default function TreeDiagramEditor({
                   }}
                   className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs"
                 >
-                  + إضافة مربع رابط
+                  {t('addLinkField')}
                 </button>
               </div>
             )}
 
-            {/* العُقَد المرتبطة (مرتبط بـ) — القسم السفلي من البطاقة التعليمية */}
+            {/* Related nodes (linked to) — bottom section of the flashcard */}
             {(relatedNodeIds.length > 0 || !readOnly) && (
               <div className="mt-4 pt-3 border-t border-amber-700/40">
-                <label className="block text-sm text-amber-200 mb-1">مرتبط بـ</label>
+                <label className="block text-sm text-amber-200 mb-1">{t('relatedTo')}</label>
                 <div className="flex flex-wrap gap-2">
                   {relatedNodeIds.length === 0 && (
-                    <span className="text-xs text-amber-300/60">لم يتم اختيار أي عقدة</span>
+                    <span className="text-xs text-amber-300/60">{t('noNodeSelected')}</span>
                   )}
                   {relatedNodeIds.map((rid) => {
                     const rn = nodes.find((n) => n.id === rid)
-                    const label = (rn?.data as any)?.label || `العقدة ${rid}`
+                    const label = (rn?.data as any)?.label || t('nodeLabelWithId', { id: rid })
                     return (
                       <span key={rid} className="inline-flex items-center gap-2">
                         <button
@@ -1218,7 +1232,7 @@ export default function TreeDiagramEditor({
                             focusNodesAndHighlight(selectedNodeId, rid)
                           }}
                           className="px-2 py-1 rounded border border-amber-700/40 bg-stone-900 text-amber-100 text-xs hover:bg-stone-800"
-                          title={`تمييز الارتباط مع ${label}`}
+                          title={t('highlightRelationWithLabel', { label })}
                         >
                           {label}
                         </button>
@@ -1231,8 +1245,8 @@ export default function TreeDiagramEditor({
                               updateRelatedNodes(next)
                             }}
                             className="text-red-400 hover:text-red-300"
-                            aria-label="حذف العلاقة"
-                            title="حذف"
+                            aria-label={t('deleteRelation')}
+                            title={t('delete')}
                           >
                             ×
                           </button>
@@ -1249,12 +1263,12 @@ export default function TreeDiagramEditor({
                       value={relationToAddId}
                       onChange={(e) => setRelationToAddId(e.target.value)}
                     >
-                      <option value="">اختر عقدة...</option>
+                      <option value="">{t('selectNodePlaceholder')}</option>
                       {nodes
                         .filter((n) => n.id !== selectedNodeId && !relatedNodeIds.includes(n.id))
                         .map((n) => (
                           <option key={n.id} value={n.id}>
-                            {(n.data as any)?.label || `العقدة ${n.id}`}
+                            {(n.data as any)?.label || t('nodeLabelWithId', { id: n.id })}
                           </option>
                         ))}
                     </select>
@@ -1270,7 +1284,7 @@ export default function TreeDiagramEditor({
                       }}
                       className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs disabled:opacity-50"
                     >
-                      إضافة
+                      {t('add')}
                     </button>
                     {relatedNodeIds.length > 0 && (
                       <button
@@ -1281,7 +1295,7 @@ export default function TreeDiagramEditor({
                         }}
                         className="px-3 py-1 rounded border border-red-700/40 text-red-300 hover:bg-red-900/30 text-xs"
                       >
-                        حذف الكل
+                        {t('deleteAll')}
                       </button>
                     )}
                   </div>

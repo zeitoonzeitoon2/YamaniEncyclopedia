@@ -3,16 +3,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 interface QuickArticleModalProps {
   isOpen: boolean
   onClose: () => void
   onArticleCreated: (articleSlug: string) => void
-  // إذا كان هذا الوضع مفعلاً، فسنُرجِع مسودة بدل إنشاء مقال فعلي
+  // If this mode is enabled, we will return a draft instead of creating an actual article
   createViaAPI?: boolean
   onDraftCreated?: (draft: { title: string; description?: string; content: string; slug: string }) => void
   onDraftChange?: (draft: { title: string; description?: string; content: string }) => void
-  // لتحرير مقالة مسودة
+  // For editing a draft article
   editMode?: boolean
   existingDraft?: { title: string; description?: string; content: string; slug: string }
 }
@@ -27,6 +28,7 @@ export default function QuickArticleModal({
   editMode,
   existingDraft,
 }: QuickArticleModalProps) {
+  const t = useTranslations('quickArticle')
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -36,7 +38,7 @@ export default function QuickArticleModal({
     content: ''
   })
 
-  // ——— جدید: ref و توابع درج پاورقی ———
+  // --- New: ref and footnote insertion functions ---
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -44,10 +46,10 @@ export default function QuickArticleModal({
     const file = e.target.files?.[0]
     if (!file) return
 
-    const caption = prompt('يرجى إدخال تعليق للصورة (اختياري):') || ''
+    const caption = prompt(t('imageCaptionPrompt')) || ''
 
     setIsUploadingImage(true)
-    const toastId = toast.loading('جارٍ رفع الصورة...')
+    const toastId = toast.loading(t('uploadingImage'))
 
     try {
       const fd = new FormData()
@@ -60,15 +62,15 @@ export default function QuickArticleModal({
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || 'فشل رفع الصورة')
+        throw new Error(err.error || t('uploadFailed'))
       }
 
       const { url } = await res.json()
       insertAtCursor(`\n!image[${url}|${caption}]\n`)
-      toast.success('تم رفع الصورة بنجاح', { id: toastId })
+      toast.success(t('uploadSuccess'), { id: toastId })
     } catch (error: any) {
       console.error('Image upload error:', error)
-      toast.error(error.message || 'خطأ في رفع الصورة', { id: toastId })
+      toast.error(error.message || t('uploadError'), { id: toastId })
     } finally {
       setIsUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -105,9 +107,9 @@ export default function QuickArticleModal({
 
   const getNextFootnoteNumber = (text: string) => {
     let maxNum = 0
-    // ارجاعات
+    // References
     const refRe = /\[\^(\d+)\]/g
-    // تعاریف
+    // Definitions
     const defRe = /^\[\^(\d+)\]:/gm
     let m: RegExpExecArray | null
 
@@ -130,7 +132,7 @@ export default function QuickArticleModal({
     const defText = `\n\n[^${nextNum}]: `
 
     if (!ta) {
-      // اگر ref هنوز set نشده بود، به انتها اضافه کن
+      // If ref is not yet set, add to the end
       const updated = current + refText + (current.includes(`[^${nextNum}]:`) ? '' : defText)
       setFormData(prev => {
         const next = { ...prev, content: updated }
@@ -156,7 +158,7 @@ export default function QuickArticleModal({
       return next
     })
 
-    // تنظیم مکان‌نما بلافاصله بعد از ارجاع
+    // Set cursor immediately after reference
     setTimeout(() => {
       const pos = before.length + refText.length
       ta.focus()
@@ -164,7 +166,7 @@ export default function QuickArticleModal({
     }, 0)
   }
 
-  // تحميل بيانات المقالة الموجودة في وضع التحرير
+  // Load existing article data in edit mode
   useEffect(() => {
     if (editMode && existingDraft) {
       setFormData({
@@ -177,7 +179,7 @@ export default function QuickArticleModal({
     }
   }, [editMode, existingDraft, isOpen])
 
-  // قفل تمرير الصفحة أثناء فتح النافذة
+  // Lock page scroll while the window is open
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') return
     const prev = document.body.style.overflow
@@ -187,23 +189,23 @@ export default function QuickArticleModal({
     }
   }, [isOpen])
 
-  // توليد slug تمهيدي من العنوان (للعرض على المستخدم) ويُستخدم أيضاً في وضع المسودة
+  // Generate a preliminary slug from the title (for display to the user) and also used in draft mode
   const previewSlug = (title: string) => {
     const normalized = (title || '')
       .toLowerCase()
       .trim()
-      // تطبيع الحروف الفارسية إلى العربية
+      // Normalize Persian characters to Arabic
       .replace(/[ی]/g, 'ي')
       .replace(/[ک]/g, 'ك')
-      // حذف المسافة الضيقة وعلامات التحكم بالاتجاه (bidi)
+      // Remove zero-width non-joiner and bidi control marks
       .replace(/[\u200c\u200f\u202a-\u202e]/g, ' ')
     const slug = normalized
       .replace(/\s+/g, '-')
-      // إزالة أي محارف غير مسموح بها باستثناء العربية والشرطة
+      // Remove any disallowed characters except Arabic and hyphen
       .replace(/[^\w\-\u0600-\u06FF]/g, '')
-      // توحيد الشرطات المتتالية إلى شرطة واحدة
+      // Consolidate consecutive hyphens into one
       .replace(/\-\-+/g, '-')
-      // إزالة الشرطات الزائدة من البداية والنهاية
+      // Remove leading and trailing hyphens
       .replace(/^-+|-+$/g, '')
     return slug || 'article'
   }
@@ -212,12 +214,12 @@ export default function QuickArticleModal({
     e.preventDefault()
     
     if (!session) {
-      toast.error('يرجى تسجيل الدخول')
+      toast.error(t('loginRequired'))
       return
     }
 
     if (!formData.title || !formData.content) {
-      toast.error('العنوان والمحتوى مطلوبان')
+      toast.error(t('titleAndContentRequired'))
       return
     }
 
@@ -233,7 +235,7 @@ export default function QuickArticleModal({
               title: formData.title,
               description: formData.description,
               content: formData.content,
-              slug: existingDraft.slug // حفظ slug موجود
+              slug: existingDraft.slug // Preserve existing slug
             }
           : {
               title: formData.title,
@@ -251,23 +253,23 @@ export default function QuickArticleModal({
   
         if (response.ok) {
           const result = await response.json()
-          toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها ببطاقة البيانات')
+          toast.success(editMode ? t('draftEdited') : t('draftCreated'))
           if (editMode) {
             const slug = result?.newSlug || result?.article?.slug || existingDraft?.slug
             if (slug) onArticleCreated(slug)
           } else {
-            // تُرجِع واجهة البرمجة API كائن المقال الكامل، لذا نحتاج للوصول إلى خاصية slug
+            // API returns the full article object, so we need to access the slug property
             onArticleCreated(result.slug || result.article?.slug)
           }
           setFormData({ title: '', description: '', content: '' })
           onClose()
         } else {
           const error = await response.json()
-          toast.error(editMode ? 'خطأ في تحرير المقال' : 'خطأ في إنشاء المقال')
+          toast.error(editMode ? t('editError') : t('createError'))
         }
       } else {
-        // وضع المسودة: لا تُنشئ المقالة، فقط أعد البيانات إلى المكوّن الأب
-        // للتعديلات، أبقِ على نفس المعرّف (slug) الأصلي لكي يتم تحديث نفس المقال بعد الموافقة
+        // Draft mode: don't create article, just return data to parent component
+        // For edits, keep the same original slug so that the same article is updated after approval
         const slug = editMode && existingDraft 
           ? existingDraft.slug 
           : (previewSlug(formData.title) || 'article')
@@ -279,13 +281,13 @@ export default function QuickArticleModal({
         }
         onDraftCreated?.(draftData)
         onArticleCreated(slug)
-        toast.success(editMode ? 'تم تحرير مسودة المقال' : 'تم إنشاء مسودة المقال وربطها ببطاقة البيانات')
+        toast.success(editMode ? t('draftEdited') : t('draftCreated'))
         setFormData({ title: '', description: '', content: '' })
         onClose()
       }
     } catch (error) {
       console.error('Error creating/editing article:', error)
-      toast.error(editMode ? 'خطأ في تحرير المقال' : 'خطأ في إنشاء المقال')
+      toast.error(editMode ? t('editError') : t('createError'))
     } finally {
       setLoading(false)
     }
@@ -303,13 +305,13 @@ export default function QuickArticleModal({
       <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
           <h2 className="text-xl font-bold text-site-text">
-            {editMode ? 'تعديل المقال' : 'إنشاء مقالة سريعة'}
+            {editMode ? t('modalTitleEdit') : t('modalTitleCreate')}
           </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
-            aria-label="إغلاق"
-            title="إغلاق"
+            aria-label={t('close')}
+            title={t('close')}
           >
             ×
           </button>
@@ -317,10 +319,10 @@ export default function QuickArticleModal({
 
         <div className="p-6 overflow-y-auto max-h-[70vh]">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* عنوان المقال */}
+            {/* Article title */}
             <div>
               <label className="block text-sm font-medium text-site-text mb-2">
-                عنوان المقال *
+                {t('titleLabel')}
               </label>
               <input
                 type="text"
@@ -333,21 +335,21 @@ export default function QuickArticleModal({
                   })
                 }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                placeholder="أدخل عنوان المقال..."
+                placeholder={t('titlePlaceholder')}
                 required
                 autoFocus
               />
               {formData.title && (
                 <p className="text-xs text-gray-400 mt-1 break-words">
-                  عنوان URL (تلقائي): /articles/{previewSlug(formData.title)}
+                  {t('urlPreview', { slug: previewSlug(formData.title) })}
                 </p>
               )}
             </div>
 
-            {/* ملخّص المقال */}
+            {/* Article summary */}
             <div>
               <label className="block text-sm font-medium text-site-text mb-2">
-                ملخص المقال
+                {t('descriptionLabel')}
               </label>
               <textarea
                 value={formData.description}
@@ -360,76 +362,76 @@ export default function QuickArticleModal({
                 }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 rows={2}
-                placeholder="ملخص قصير للمقال..."
+                placeholder={t('descriptionPlaceholder')}
               />
             </div>
 
-            {/* محتوى المقال */}
+            {/* Article content */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-site-text">
-                  محتوى المقال *
+                  {t('contentLabel')}
                 </label>
                 <button
                   type="button"
                   onClick={insertFootnoteAtCursor}
                   className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                  title="أضف حاشية في موضع المؤشر"
+                  title={t('footnoteTitle')}
                 >
-                  + حاشية
+                  {t('addFootnote')}
                 </button>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n## ')}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="أدخل عنوان H2"
+                    title={t('h2Title')}
                   >
-                    + H2
+                    {t('addH2')}
                   </button>
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n### ')}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="أدخل عنوان H3"
+                    title={t('h3Title')}
                   >
-                    + H3
+                    {t('addH3')}
                   </button>
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n#### ')}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="أدخل عنوان H4"
+                    title={t('h4Title')}
                   >
-                    + H4
+                    {t('addH4')}
                   </button>
                   
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n> !ayah ')}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="اقتباس آية"
+                    title={t('ayahTitle')}
                   >
-                    + آية
+                    {t('addAyah')}
                   </button>
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n> !quote: ')}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title="اقتباس قول"
+                    title={t('quoteTitle')}
                   >
-                    + قول
+                    {t('addQuote')}
                   </button>
 
-                  {/* آپلود تصویر */}
+                  {/* Image upload */}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
                     className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 flex items-center gap-1"
-                    title="رفع صورة"
+                    title={t('imageTitle')}
                   >
-                    {isUploadingImage ? '...' : '+ صورة'}
+                    {isUploadingImage ? '...' : t('addImage')}
                   </button>
                   <input
                     type="file"
@@ -452,12 +454,12 @@ export default function QuickArticleModal({
                 }
                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
                 rows={10}
-                placeholder="اكتب محتوى المقال هنا... مثال: هذا نص فيه حاشية[^1]\n\n[^1]: اكتب نص الحاشية هنا."
+                placeholder={t('contentPlaceholder')}
                 required
               />
             </div>
 
-            {/* أزرار الإجراءات */}
+            {/* Action buttons */}
             <div className="flex items-center gap-4 pt-4">
               <button
                 type="submit"
@@ -465,10 +467,10 @@ export default function QuickArticleModal({
                 className="btn-primary flex-1"
               >
                 {loading 
-                  ? (editMode ? 'جارٍ التحرير...' : 'جارٍ الإنشاء...') 
+                  ? (editMode ? t('loadingEdit') : t('loadingCreate')) 
                   : editMode 
-                    ? 'حفظ التغييرات'
-                    : (createViaAPI ? 'إنشاء وربط ببطاقة البيانات' : 'إنشاء مسودة وربط')
+                    ? t('submitEdit')
+                    : (createViaAPI ? t('submitCreate') : t('submitCreateDraft'))
                 }
               </button>
               
@@ -477,14 +479,14 @@ export default function QuickArticleModal({
                 onClick={handleClose}
                 className="btn-secondary"
               >
-                إغلاق
+                {t('closeButton')}
               </button>
             </div>
           </form>
 
           <div className="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700/40">
             <p className="text-xs text-blue-300 break-words">
-              💡 سيتم إنشاء عنوان URL (الاسم المميز) تلقائيًا من العنوان، وسيتم ربط المقال فورًا ببطاقة البيانات.
+              {t('hint')}
             </p>
           </div>
         </div>

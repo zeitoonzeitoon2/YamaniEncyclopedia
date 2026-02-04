@@ -1,9 +1,15 @@
 "use client";
 
 import React from 'react'
-import { applyArticleTransforms } from '@/lib/footnotes'
+import { X } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { useTranslations } from 'next-intl'
 
-// مكوّن عارض المقالات الداخلي لعرض مسودّات المقالات ضمنيًا
+/**
+ * Internal article viewer component for displaying article drafts within the current context.
+ * Used for comparing the original article with a proposed version.
+ */
 export default function EmbeddedArticleViewer({ 
   originalArticleLink, 
   proposedArticleLink, 
@@ -17,222 +23,137 @@ export default function EmbeddedArticleViewer({
   postContent?: string
   onClose: () => void
 }) {
-  const [originalContent, setOriginalContent] = React.useState<string>('جارٍ التحميل...')
-  const [proposedContent, setProposedContent] = React.useState<string>('جارٍ التحميل...')
-  const [originalError, setOriginalError] = React.useState<string>('')
-  const [proposedError, setProposedError] = React.useState<string>('')
+  const t = useTranslations('embeddedArticleViewer')
+  const [originalContent, setOriginalContent] = React.useState<string>(t('loading'))
+  const [proposedContent, setProposedContent] = React.useState<string>(t('loading'))
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
-  // مكوّن عارض المقالات الداخلي لعرض المسودّات ضمنيًا
-  const normalizeSlugFromLink = (link: string): string => {
-    try {
-      let path = link || ''
-      
-      // إذا كان أصلًا معرّف مسوّدة (يبدأ بنمط مثل cmeb...) فأعده كما هو
-      if (/^[a-z0-9]{20,}$/i.test(path.trim())) {
-        return path.trim()
-      }
-      
-      if (/^https?:\/\//i.test(link)) {
-        const u = new URL(link)
-        path = u.pathname
-      }
-      // إزالة الاستعلام وعلامة التجزئة
-      path = path.split('?')[0].split('#')[0]
-      // إزالة البادئة /articles/
-      const after = path.replace(/^\/?articles\//, '')
-      // تشذيب الشرطات المائلة النهائية
-      return decodeURIComponent(after.replace(/\/+$/g, ''))
-    } catch {
-      const cleaned = (link || '').replace(/^\/?articles\//, '').replace(/\/+$/g, '')
-      // إذا كان معرّف مسوّدة فأعده كما هو
-      if (/^[a-z0-9]{20,}$/i.test(cleaned)) {
-        return cleaned
-      }
-      return cleaned
-    }
-  }
-
-  // دالة مساعدة للعثور على محتوى المسودّة عبر الرابط أو المعرّف (slug)
-  const findDraftContent = async (link: string): Promise<string | null> => {
-    const targetSlug = normalizeSlugFromLink(link)
-    console.log('findDraftContent called with link:', link, 'normalized to:', targetSlug)
-    
-    // تحقّق مما إذا كان الرابط يبدو معرّف مسوّدة (يبدأ بنمط مثل 'cmeb' أو ما شابهه)
-    if (/^[a-z0-9]{20,}$/i.test(targetSlug)) {
-      console.log('Detected draft ID, fetching from API:', targetSlug)
-      try {
-        const response = await fetch(`/api/drafts/${targetSlug}`)
-        console.log('Draft API response status:', response.status)
-        if (response.ok) {
-          const draft = await response.json()
-          console.log('Draft fetched successfully:', draft)
-          return draft.content || null
-        } else {
-          console.log('Draft API error:', await response.text())
-        }
-      } catch (e) {
-        console.error('Error fetching draft by ID:', e)
-      }
-    } else {
-      console.log('Not a draft ID, continuing with normal flow')
-    }
-    
-    // أولًا، حاول العثور عليه في articlesData
-    if (articlesData) {
-      try {
-        const data = JSON.parse(articlesData)
-        if (data.type === 'drafts' && data.drafts) {
-          const draft = data.drafts.find((d: any) => d.slug === targetSlug)
-          if (draft) return draft.content
-        }
-      } catch (e) {
-        console.error('Error parsing articlesData:', e)
-      }
-    }
-    
-    // ثانيًا، حاول البحث في articleDraft داخل محتوى المنشور
-    if (postContent) {
-      try {
-        const treeData = JSON.parse(postContent)
-        if (treeData.nodes) {
-          for (const node of treeData.nodes) {
-            if (node.data?.articleDraft && node.data.articleDraft.slug === targetSlug) {
-              return node.data.articleDraft.content
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing postContent:', e)
-      }
-    }
-    
-    return null
-  }
-
-  // تحميل محتوى المقال الأصلي
   React.useEffect(() => {
-    if (originalArticleLink) {
-      const slug = normalizeSlugFromLink(originalArticleLink)
-      if (slug) {
-        // حمّل دائماً محتوى النسخة المنشورة من واجهة البرمجة (API)؛ أما النسخة المقترحة فتُقرأ من drafts
-        fetch(`/api/articles/${slug}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.error) {
-              setOriginalError('المقال غير موجود')
-              setOriginalContent('')
-            } else {
-              setOriginalContent(applyArticleTransforms(data.content || 'لا يوجد محتوى'))
-              setOriginalError('')
-            }
-          })
-          .catch(() => {
-            setOriginalError('خطأ في تحميل المقال')
-            setOriginalContent('')
-          })
-      } else {
-        setOriginalContent('لا يوجد مقال متصل')
-        setOriginalError('')
-      }
-    } else {
-      setOriginalContent('لا يوجد مقال متصل')
-      setOriginalError('')
-    }
-  }, [originalArticleLink])
-
-  // تحميل محتوى المقال المقترح
-  React.useEffect(() => {
-    const loadProposedContent = async () => {
-      if (proposedArticleLink) {
-        // جرّب أولًا البحث في المسودّات/‏articlesData
-        const draftContent = await findDraftContent(proposedArticleLink)
-        if (draftContent) {
-          setProposedContent(applyArticleTransforms(draftContent))
-          setProposedError('')
-          return
-        }
-        
-        // الرجوع إلى واجهة البرمجة (API) في حال عدم العثور
-        const slug = normalizeSlugFromLink(proposedArticleLink)
-        if (slug) {
+    async function fetchArticles() {
+      setLoading(true)
+      setError(null)
+      try {
+        // 1. Load original content if it exists
+        if (originalArticleLink) {
           try {
-            const res = await fetch(`/api/articles/${slug}`)
-            const data = await res.json()
-            if (data.error) {
-              setProposedError('المقال غير موجود')
-              setProposedContent('')
+            const res = await fetch(`/api/articles/get-by-slug?slug=${originalArticleLink}`)
+            if (res.ok) {
+              const data = await res.json()
+              setOriginalContent(data.content || '')
             } else {
-              setProposedContent(applyArticleTransforms(data.content || 'لا يوجد محتوى'))
-              setProposedError('')
+              setOriginalContent(t('articleNotFound'))
             }
-          } catch {
-            setProposedError('خطأ في تحميل المقال')
-            setProposedContent('')
+          } catch (err) {
+            console.error('Error fetching original article:', err)
+            setOriginalContent(t('loadError'))
           }
         } else {
-          setProposedContent('لا يوجد مقال متصل')
-          setProposedError('')
+          setOriginalContent(t('noArticleLinked'))
         }
-      } else {
-        setProposedContent('لا يوجد مقال متصل')
-        setProposedError('')
+
+        // 2. Load proposed content
+        // If it's a slug, fetch from API; if it's raw content, use it directly
+        if (proposedArticleLink) {
+          // Check if proposedArticleLink looks like a slug (no spaces, relatively short)
+          const isSlug = !proposedArticleLink.includes(' ') && proposedArticleLink.length < 100
+          
+          if (isSlug) {
+            try {
+              const res = await fetch(`/api/articles/get-by-slug?slug=${proposedArticleLink}`)
+              if (res.ok) {
+                const data = await res.json()
+                setProposedContent(data.content || '')
+              } else {
+                setProposedContent(t('articleNotFound'))
+              }
+            } catch (err) {
+              console.error('Error fetching proposed article:', err)
+              setProposedContent(t('loadError'))
+            }
+          } else {
+            // It's likely the content itself
+            setProposedContent(proposedArticleLink)
+          }
+        } else if (postContent) {
+          // If no link, use postContent if provided
+          setProposedContent(postContent)
+        } else {
+          setProposedContent(t('noArticleLinked'))
+        }
+
+      } catch (err) {
+        console.error('General error in EmbeddedArticleViewer:', err)
+        setError(t('loadError'))
+      } finally {
+        setLoading(false)
       }
     }
-    
-    loadProposedContent()
-  }, [proposedArticleLink, articlesData])
+
+    fetchArticles()
+  }, [originalArticleLink, proposedArticleLink, postContent, t])
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-site-card border border-site-border rounded-xl w-[95vw] max-w-[1600px] max-h-[95vh] overflow-hidden shadow-2xl">
-        {/* الترويسة */}
-        <div className="flex items-center justify-between p-4 border-b border-site-border">
-          <h3 className="text-xl font-bold text-site-text">مقارنة المقال</h3>
-          <button onClick={onClose} className="px-3 py-1 rounded bg-dark-muted text-site-text hover:bg-site-border">إغلاق</button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8">
+      <div className="relative w-full max-w-7xl h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
-        {/* المحتوى */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 max-h-[calc(95vh-80px)] overflow-y-auto">
-          {/* المقال الحالي (يمين في وضع RTL) */}
-          <div className="bg-stone-800 border border-amber-700/40 rounded-lg p-4">
-            <h4 className="text-amber-100 font-semibold mb-4">
-              المقال الحالي
-              {originalArticleLink && (
-                <span className="text-sm font-normal block text-amber-200 break-all">
-                  {originalArticleLink}
-                </span>
-              )}
-            </h4>
-            <div className="text-amber-50 whitespace-pre-wrap break-words text-sm max-h-[70vh] overflow-y-auto overflow-x-hidden rounded-md bg-stone-900/40 p-3">
-              {originalError ? (
-                <div className="text-red-400">{originalError}</div>
-              ) : (
-                <div className="prose prose-invert prose-sm max-w-none break-words"
-                     dangerouslySetInnerHTML={{ __html: originalContent }} />
-              )}
-            </div>
-          </div>
-          
-          {/* المقال المقترح (يسار في وضع RTL) */}
-          <div className="bg-stone-800 border border-amber-700/40 rounded-lg p-4">
-            <h4 className="text-amber-100 font-semibold mb-4">
-              المقال المقترح
-              {proposedArticleLink && (
-                <span className="text-sm font-normal block text-amber-200 break-all">
-                  {proposedArticleLink}
-                </span>
-              )}
-            </h4>
-            <div className="text-amber-50 whitespace-pre-wrap break-words text-sm max-h-[70vh] overflow-y-auto overflow-x-hidden rounded-md bg-stone-900/40 p-3">
-              {proposedError ? (
-                <div className="text-red-400">{proposedError}</div>
-              ) : (
-                <div className="prose prose-invert prose-sm max-w-none break-words"
-                     dangerouslySetInnerHTML={{ __html: proposedContent }} />
-              )}
-            </div>
-          </div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+            {t('title')}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400"
+            title={t('close')}
+          >
+            <X size={24} />
+          </button>
         </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+          
+          {/* Left Side: Current Article */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="px-6 py-3 bg-slate-100/50 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-800">
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {t('currentArticle')}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {originalContent}
+              </ReactMarkdown>
+            </div>
+          </div>
+
+          {/* Right Side: Proposed Article */}
+          <div className="flex-1 flex flex-col min-w-0 bg-blue-50/20 dark:bg-blue-900/10">
+            <div className="px-6 py-3 bg-blue-100/30 dark:bg-blue-900/20 border-b border-slate-200 dark:border-slate-800">
+              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                {t('proposedArticle')}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 prose dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {proposedContent}
+              </ReactMarkdown>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Footer info (optional) */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center z-10">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-600 dark:text-slate-300 font-medium">{t('loading')}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

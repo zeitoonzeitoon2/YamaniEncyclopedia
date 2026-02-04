@@ -1,6 +1,6 @@
 'use client'
-
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface VotingSliderProps {
   currentVote?: number
@@ -9,6 +9,7 @@ interface VotingSliderProps {
 }
 
 export default function VotingSlider({ currentVote, onVote, disabled = false }: VotingSliderProps) {
+  const t = useTranslations('votingSlider')
   const [value, setValue] = useState(currentVote || 0)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -40,12 +41,12 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
 
   const getScoreText = (score: number) => {
     switch (score) {
-      case -2: return 'معارض بشدة'
-      case -1: return 'معارض'
-      case 0: return 'محايد'
-      case 1: return 'مؤيد'
-      case 2: return 'مؤيد بشدة'
-      default: return 'محايد'
+      case -2: return t('stronglyOpposed')
+      case -1: return t('opposed')
+      case 0: return t('neutral')
+      case 1: return t('supportive')
+      case 2: return t('stronglySupportive')
+      default: return t('neutral')
     }
   }
 
@@ -62,18 +63,18 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* منزلق مع شرح جانبي */}
+      {/* Slider with side explanation */}
       <div className="flex items-center gap-3">
-        {/* منزلق مع شرح جانبي */}
+        {/* Slider with side explanation */}
         <div className="flex items-center gap-3">
-          {/* الشرح على اليسار */}
+          {/* Explanation on the left */}
           <div className="min-w-[120px] text-sm">
             <span className={`font-medium ${getScoreColor(value)}`}>
               {getScoreText(value)}
             </span>
           </div>
           
-          {/* منزلق */}
+          {/* Slider */}
           <div className="flex-1" dir="ltr">
             <input
               type="range"
@@ -92,7 +93,7 @@ export default function VotingSlider({ currentVote, onVote, disabled = false }: 
                 background: getSliderBackground()
               }}
             />
-            {/* مؤشرات النقاط */}
+            {/* Score indicators */}
             <div className="flex justify-between text-xs text-site-muted mt-1 px-1">
               <span className="text-red-600 font-medium">-2</span>
               <span className="text-red-400">-1</span>

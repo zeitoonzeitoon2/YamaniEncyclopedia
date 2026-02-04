@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { getPostDisplayId } from '@/lib/postDisplay'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Post {
   id: string
@@ -29,6 +30,8 @@ interface SimplePostCardProps {
 }
 
 export function SimplePostCard({ post, isSelected = false, onClick }: SimplePostCardProps) {
+  const t = useTranslations('postCard')
+  const locale = useLocale()
   const createdDate = typeof post.createdAt === 'string'
     ? new Date(post.createdAt)
     : post.createdAt
@@ -50,21 +53,8 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
     }
   }
 
-  const getStatusText = () => {
-    switch (post.status) {
-      case 'PENDING':
-        return 'قيد الانتظار'
-      case 'APPROVED':
-        return 'تمت الموافقة'
-      case 'REJECTED':
-        return 'مرفوض'
-      case 'REVIEWABLE':
-        return 'قابل للمراجعة'
-      case 'ARCHIVED':
-        return 'إصدار سابق'
-      default:
-        return 'غير محدد'
-    }
+  const getStatusText = (status: string) => {
+    return t(`status.${status}`) || t('status.UNKNOWN')
   }
 
   return (
@@ -76,12 +66,12 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
       } p-4 mb-2`}
       onClick={onClick}
     >
-      {/* ترويسة مع معلومات المؤلف */}
+      {/* Header with author information */}
       <div className="flex items-center gap-3 mb-3">
         {post.author.image ? (
           <Image
             src={post.author.image}
-            alt={post.author.name || 'المؤلف'}
+            alt={post.author.name || t('authorAlt')}
             width={32}
             height={32}
             className="rounded-full"
@@ -89,55 +79,40 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         ) : (
           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-bold">
-              {(post.author.name || 'م').charAt(0).toUpperCase()}
+              {(post.author.name || '?').charAt(0).toUpperCase()}
             </span>
           </div>
         )}
         <div className="flex-1">
-          <p className="text-site-text font-medium text-sm">{post.author.name || 'مؤلف مجهول'}</p>
+          <p className="text-site-text font-medium text-sm">{post.author.name || t('unknownAuthor')}</p>
           <p className="text-site-muted text-xs">
-            {createdDate.toLocaleDateString('ar')}
+            {createdDate.toLocaleDateString(locale)}
           </p>
         </div>
-        {/* شارة التعليقات الجديدة */}
+        {/* New comments badge */}
         {post.unreadComments && post.unreadComments > 0 && (
           <div className="ml-2 px-2 py-1 rounded bg-red-600 text-white text-xs font-bold whitespace-nowrap">
-            {post.unreadComments} تعليق جديد
+            {t('newComments', { count: post.unreadComments })}
           </div>
         )}
       </div>
 
-      {/* معرّف المنشور */}
+      {/* Post identifier */}
       <div className="mb-2">
         <h4 className="text-site-text font-semibold text-sm">
-          المعرّف: {getPostDisplayId(post)}
+          {t('idLabel')} {getPostDisplayId(post)}
         </h4>
       </div>
 
-      {/* الحالة والنقاط */}
+      {/* Status and score */}
       <div className="flex items-center justify-between">
         <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor()}`}>
-          {(() => {
-            switch (post.status) {
-              case 'PENDING':
-                return 'قيد الانتظار'
-              case 'APPROVED':
-                return 'تمت الموافقة'
-              case 'REJECTED':
-                return 'مرفوض'
-              case 'REVIEWABLE':
-                return 'قابل للمراجعة'
-              case 'ARCHIVED':
-                return 'إصدار سابق'
-              default:
-                return 'غير محدد'
-            }
-          })()}
+          {getStatusText(post.status)}
         </span>
 
         {post.totalScore !== undefined && (
           <div className="flex items-center gap-1">
-            <span className="text-site-muted text-xs">النقاط:</span>
+            <span className="text-site-muted text-xs">{t('scoreLabel')}</span>
             <span className={`font-bold text-xs ${
               post.totalScore > 0 ? 'text-green-400' :
               post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'
@@ -148,7 +123,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         )}
       </div>
 
-      {/* تمت إزالة مؤشر النوع */}
+      {/* Type indicator removed */}
     </div>
   )
 }

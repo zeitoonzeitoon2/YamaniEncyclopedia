@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
-// حذف وابستگی به date-fns و استفاده از JavaScript داخلی
+import { useTranslations, useLocale } from 'next-intl'
+// Remove date-fns dependency and use internal JavaScript
 import { User, Calendar } from 'lucide-react'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
@@ -36,6 +37,8 @@ interface AdminPostCardProps {
 }
 
 export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPostCardProps) {
+  const t = useTranslations('adminPostCard')
+  const locale = useLocale()
   const [isVoting, setIsVoting] = useState(false)
   
   const votingFinalized = ['APPROVED', 'REJECTED', 'ARCHIVED'].includes(post.status)
@@ -55,13 +58,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
 
       if (response.ok) {
         onStatusChange()
-        toast.success('تم تسجيل تصويتك')
+        toast.success(t('voteSuccess'))
       } else {
-        toast.error('خطأ في تسجيل التصويت')
+        toast.error(t('voteError'))
       }
     } catch (error) {
       console.error('Error voting:', error)
-      toast.error('خطأ في تسجيل التصويت')
+      toast.error(t('voteError'))
     } finally {
       setIsVoting(false)
     }
@@ -89,13 +92,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
       } catch (error) {
         return (
           <p className="text-red-400 text-sm mb-6">
-            خطأ في عرض مخطط الشجرة
+            {t('treeError')}
           </p>
         )
       }
     }
     
-    // برای پست‌های متنی قدیمی
+    // For old text posts
     return (
       <p className="text-site-muted mb-6 leading-relaxed">{post.content}</p>
     )
@@ -108,7 +111,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
           {post.author.image ? (
             <img
               src={post.author.image}
-              alt={post.author.name || 'المؤلف'}
+              alt={post.author.name || t('authorAlt')}
               className="w-10 h-10 rounded-full"
             />
           ) : (
@@ -117,17 +120,17 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
             </div>
           )}
           <div>
-            <p className="text-site-text font-medium">{post.author.name || 'مستخدم مجهول'}</p>
+            <p className="text-site-text font-medium">{post.author.name || t('unknownUser')}</p>
             <p className="text-site-muted text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {new Date(post.createdAt).toLocaleDateString('ar')}
+              {new Date(post.createdAt).toLocaleDateString(locale)}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {post.totalScore !== undefined && (
             <div className="flex items-center gap-1 px-2 py-1 bg-site-card rounded-lg">
-              <span className="text-site-muted text-sm">النقاط:</span>
+              <span className="text-site-muted text-sm">{t('points')}</span>
               <span className={`font-bold ${post.totalScore > 0 ? 'text-green-400' : post.totalScore < 0 ? 'text-red-400' : 'text-yellow-400'}`}>
                 {post.totalScore}
               </span>
@@ -136,13 +139,13 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-site-text mb-3">المعرّف: {getPostDisplayId(post)}</h3>
+      <h3 className="text-xl font-bold text-site-text mb-3">{t('idPrefix')} {getPostDisplayId(post)}</h3>
       {renderContent()}
 
-      {/* نظام التصويت */}
+      {/* Voting system */}
       {currentAdminId && !votingFinalized && (
         <div className="mb-6 p-4 bg-site-card rounded-lg">
-          <h4 className="text-site-text font-medium mb-3">تصويت المشرف</h4>
+          <h4 className="text-site-text font-medium mb-3">{t('supervisorVote')}</h4>
           <div className="flex items-center gap-2 mb-3">
             {[-2, -1, 0, 1, 2].map((score) => (
               <button
@@ -161,7 +164,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
           </div>
           {currentVote !== null && (
             <p className="text-site-muted text-sm">
-              تصويتك الحالي: {currentVote > 0 ? `+${currentVote}` : currentVote}
+              {t('currentVote', { score: currentVote > 0 ? `+${currentVote}` : currentVote })}
             </p>
           )}
         </div>
@@ -169,7 +172,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
 
       {currentAdminId && votingFinalized && post.status === 'APPROVED' && (
         <div className="mb-6 p-4 rounded-lg border border-green-700 bg-green-900/20 text-green-300 text-sm">
-          تمّ بلوغ هذا المقترح حدّ المشاركة والنقاط ونُشر، لذلك تمّ إيقاف التصويت. إذا كانت لديك ملاحظات على هذا المقترح، فاطرحها في التعليقات وأرسل أفكارك في مقترح جديد.
+          {t('votingClosed')}
         </div>
       )}
 

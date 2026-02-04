@@ -1,9 +1,10 @@
 'use client'
 
-// إزالة الاعتماد على date-fns والاكتفاء بجافاسكربت المدمجة
+// Remove dependency on date-fns and rely on built-in JavaScript
 import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Post {
   id: string
@@ -25,13 +26,16 @@ interface Post {
 interface PostCardProps {
   post: Post
   fullWidth?: boolean
-  // للتحكّم في إخفاء حقول رابط المقال عند العرض في الصفحة الرئيسية
+  // To control hiding article link fields when displayed on the home page
   hideArticleLinkInputs?: boolean
   hideAuthorName?: boolean
   hideAuthorAvatar?: boolean
 }
 
 export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false }: PostCardProps) {
+  const t = useTranslations('postCard')
+  const locale = useLocale()
+
   const renderContent = () => {
     if (post.type === 'TREE') {
       try {
@@ -49,13 +53,13 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
       } catch (error) {
         return (
           <p className="text-red-400 text-sm">
-            خطأ في عرض مخطط الشجرة
+            {t('treeError')}
           </p>
         )
       }
     }
     
-    // للمنشورات النصية القديمة
+    // For old text-based posts
     return (
       <p className="text-site-muted leading-relaxed">
         {post.content.length > 150 
@@ -72,7 +76,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
         {post.author.image && !hideAuthorAvatar && (
           <Image
             src={post.author.image}
-            alt={post.author.name || ''}
+            alt={post.author.name || t('authorAlt')}
             width={40}
             height={40}
             className="rounded-full"
@@ -83,13 +87,13 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
             <p className="text-site-text font-medium">{post.author.name}</p>
           )}
           <p className="text-site-muted text-sm">
-            {new Date(post.createdAt).toLocaleDateString('ar')}
+            {new Date(post.createdAt).toLocaleDateString(locale)}
           </p>
         </div>
       </div>
       
       <h3 className="text-xl font-semibold text-site-text mb-3">
-        المعرّف: {getPostDisplayId(post)}
+        {t('idLabel')} {getPostDisplayId(post)}
       </h3>
       
       {renderContent()}

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import DiagramComparison from './DiagramComparison'
 import EmbeddedArticleViewer from './EmbeddedArticleViewer'
 
@@ -36,13 +37,14 @@ export default function EnhancedDiagramComparison({
   articlesData,
   onStatsChange,
 }: EnhancedDiagramComparisonProps) {
+  const t = useTranslations('enhancedDiagramComparison')
   console.log('EnhancedDiagramComparison rendered with:', { originalData, proposedData, articlesData })
   const [showArticleComparison, setShowArticleComparison] = useState(false)
   const [selectedDraft, setSelectedDraft] = useState<ArticleDraft | null>(null)
   const [originalArticle, setOriginalArticle] = useState<any>(null)
   const [loadingOriginal, setLoadingOriginal] = useState(false)
 
-  // تحليل بيانات المقالات
+  // Analyze article data
   const parsedArticlesData: ArticlesData | null = React.useMemo(() => {
     if (!articlesData) return null
     try {
@@ -52,25 +54,25 @@ export default function EnhancedDiagramComparison({
     }
   }, [articlesData])
 
-  // أداة مساعدة لاستخراج الslug من الروابط /articles/...
+  // Helper tool to extract slug from links like /articles/...
   const extractSlug = React.useCallback((link?: string | null) => {
     if (!link) return null
     try {
-      // إزالة معلمات الاستعلام والهاش
+      // Remove query parameters and hash
       const clean = link.split('?')[0].split('#')[0]
-      // إذا جاء بشكل كامل (مثلاً http://.../articles/slug)
+      // If provided as a full URL (e.g., http://.../articles/slug)
       const idx = clean.indexOf('/articles/')
       if (idx !== -1) {
         return decodeURIComponent(clean.substring(idx + '/articles/'.length))
       }
-      // إذا كان مجرد الslug نفسه
+      // If it's just the slug itself
       return decodeURIComponent(clean.replace(/^\/+/, ''))
     } catch {
       return null
     }
   }, [])
 
-  // جلب المقال الأصلي للمقارنة
+  // Fetch original article for comparison
   const fetchOriginalArticle = React.useCallback(async (slug: string) => {
     setLoadingOriginal(true)
     try {
@@ -79,11 +81,11 @@ export default function EnhancedDiagramComparison({
         const article = await response.json()
         setOriginalArticle(article)
       } else {
-        console.error('خطأ في جلب المقالة الأصلية')
+        console.error(t('errorFetchingOriginal'))
         setOriginalArticle(null)
       }
     } catch (error) {
-      console.error('خطأ في جلب المقالة الأصلية:', error)
+      console.error(t('errorFetchingOriginal'), error)
       setOriginalArticle(null)
     } finally {
       setLoadingOriginal(false)
@@ -98,23 +100,23 @@ export default function EnhancedDiagramComparison({
     setShowArticleComparison(true)
   }, [fetchOriginalArticle])
 
-  // الدالة لعرض مقارنة المقال عبر المخطط
+  // Function to display article comparison via the diagram
   const handleShowArticleComparison = React.useCallback((originalLink?: string, proposedLink?: string) => {
     console.log('handleShowArticleComparison called with:', { originalLink, proposedLink })
 
     const originalLinkStr = originalLink ?? ''
     const proposedLinkStr = proposedLink ?? ''
 
-    // محاولة جلب المقال الأصلي باستخدام الرابط الحالي
+    // Attempt to fetch the original article using the current link
     const originalSlug = extractSlug(originalLinkStr)
     if (originalSlug) {
       fetchOriginalArticle(originalSlug)
     }
     
-    // proposedLink قد يكون الآن previousArticleLink (رابط مقال قديم)
+    // proposedLink may now be previousArticleLink (old article link)
     const cleanedProposed = (proposedLinkStr || '').split('?')[0].split('#')[0]
 
-    // 1) أولاً ابحث عن id/slug ضمن بيانات drafts (توافق رجعي)
+    // 1) First search for id/slug within drafts data (backward compatibility)
     if (parsedArticlesData?.drafts && cleanedProposed) {
       const draft = parsedArticlesData.drafts.find(d => d.id === cleanedProposed || d.slug === cleanedProposed)
       if (draft) {
@@ -124,7 +126,7 @@ export default function EnhancedDiagramComparison({
       }
     }
 
-    // 2) إذا كان proposedLink مشابهاً لمعرّف مسودة (بدون /articles/)
+    // 2) If proposedLink is similar to a draft identifier (without /articles/)
     if (cleanedProposed && !cleanedProposed.includes('/articles/')) {
       (async () => {
         try {
@@ -143,7 +145,7 @@ export default function EnhancedDiagramComparison({
           console.warn('Failed to fetch draft by id, will try as published article slug.', e)
         }
 
-        // إذا لم ينجح، جرّبه كمقال منشور
+        // If unsuccessful, try it as a published article
         const proposedSlug = extractSlug(cleanedProposed)
         if (proposedSlug) {
           try {
@@ -160,11 +162,11 @@ export default function EnhancedDiagramComparison({
               }
               setSelectedDraft(draftLike)
             } else {
-              console.warn('المقالة المقترحة غير موجودة أو غير منشورة')
+              console.warn(t('proposedArticleNotFound'))
               setSelectedDraft(null)
             }
           } catch (e) {
-            console.error('خطأ في جلب المقالة المقترحة:', e)
+            console.error(t('errorFetchingProposed'), e)
             setSelectedDraft(null)
           } finally {
             setShowArticleComparison(true)
@@ -176,7 +178,7 @@ export default function EnhancedDiagramComparison({
       return
     }
 
-    // 3) إذا كان previousArticleLink (يتضمن /articles/)، فاجلبه كمقالٍ سابق
+    // 3) If previousArticleLink (contains /articles/), fetch it as a previous article
     const proposedSlug = extractSlug(proposedLinkStr)
     if (proposedSlug) {
       (async () => {
@@ -194,11 +196,11 @@ export default function EnhancedDiagramComparison({
             }
             setSelectedDraft(draftLike)
           } else {
-            console.warn('المقالة المقترحة غير موجودة أو غير منشورة')
+            console.warn(t('proposedArticleNotFound'))
             setSelectedDraft(null)
           }
         } catch (e) {
-          console.error('خطأ في جلب المقالة المقترحة:', e)
+          console.error(t('errorFetchingProposed'), e)
           setSelectedDraft(null)
         } finally {
           setShowArticleComparison(true)
@@ -209,7 +211,7 @@ export default function EnhancedDiagramComparison({
     }
   }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect])
 
-  // ترقية إحصاءات المقالات بالاعتماد على المسودات لحساب التعديلات
+  // Upgrade article statistics based on drafts to calculate edits
   const handleStatsFromDiagram = React.useCallback((incomingStats: {
     nodes: { added: number; removed: number; unchanged: number; total: number }
     flashcards: { added: number; removed: number; edited: number }
@@ -217,7 +219,7 @@ export default function EnhancedDiagramComparison({
   }) => {
     if (!onStatsChange) return
 
-    // 1) جمع تعديلات المقالات من المسودات (وجود originalArticleSlug)
+    // 1) Collect article edits from drafts (presence of originalArticleSlug)
     const editedDraftSlugs = new Set<string>()
     if (parsedArticlesData?.drafts && Array.isArray(parsedArticlesData.drafts)) {
       parsedArticlesData.drafts.forEach((d) => {
@@ -226,7 +228,7 @@ export default function EnhancedDiagramComparison({
       })
     }
 
-    // 2) احتساب تغيّر روابط المقال على العُقَد واستخراج المعرّف (slug) لتجنّب العدّ المكرر
+    // 2) Calculate article link changes on nodes and extract slug to avoid double counting
     const getSlugFromNodeData = (data: any): string => {
       try {
         const d = data || {}
@@ -234,7 +236,7 @@ export default function EnhancedDiagramComparison({
         if (typeof draft?.slug === 'string' && draft.slug.trim()) return draft.slug.trim()
         if (typeof draft?.id === 'string' && draft.id.trim()) return draft.id.trim()
         if (typeof d.articleLink === 'string' && d.articleLink.trim()) return extractSlug(d.articleLink.trim()) || ''
-        // ملاحظة: لم نعد نعتمد previousArticleLink كخيار احتياطي لكي تعكس الإحصاءات الحالة الحالية
+        // Note: We no longer rely on previousArticleLink as a fallback so statistics reflect current state
         return ''
       } catch {
         return ''
@@ -250,12 +252,12 @@ export default function EnhancedDiagramComparison({
       const o = (originalLinks.get(id) || '')
       const p = (proposedLinks.get(id) || '')
       if (o && p && o !== p) {
-        // تغيير اتصال المقال لهذه العقدة
+        // Change article connection for this node
         editedByLinkSlugs.add(o)
       }
     })
 
-    // 3) توحيد المجموعتين للحصول على الإحصاءات النهائية «تعديل المقالات»
+    // 3) Consolidate the two groups for final "Article Edits" statistics
     const unionEditedCount = new Set<string>([
       ...Array.from(editedByLinkSlugs),
       ...Array.from(editedDraftSlugs),
@@ -274,7 +276,7 @@ export default function EnhancedDiagramComparison({
 
   return (
     <div>
-      {/* مقارنة المخططات */}
+      {/* Diagram comparison */}
       <DiagramComparison
         originalData={originalData}
         proposedData={proposedData}
@@ -282,10 +284,10 @@ export default function EnhancedDiagramComparison({
         onStatsChange={handleStatsFromDiagram}
       />
 
-      {/* قائمة المسودات (فقط عند توفّر البيانات) */}
+      {/* Drafts list (only when data is available) */}
       {parsedArticlesData && parsedArticlesData.drafts && parsedArticlesData.drafts.length > 0 && (
         <div className="mt-8">
-          <h4 className="font-bold text-lg text-site-text mb-4">المقالات المقترحة</h4>
+          <h4 className="font-bold text-lg text-site-text mb-4">{t('proposedArticles')}</h4>
           <div className="grid gap-4 mb-6">
             {parsedArticlesData.drafts.map((draft) => (
               <div key={draft.id} className="card border border-gray-600">
@@ -293,7 +295,7 @@ export default function EnhancedDiagramComparison({
                   <div className="flex-1">
                     <h5 className="font-semibold text-site-text">{draft.title}</h5>
                     <p className="text-sm text-site-muted mt-1">
-                      الاسم المميز: {draft.slug}
+                      {t('slugLabel')} {draft.slug}
                     </p>
                     {draft.description && (
                       <p className="text-sm text-site-muted mt-1">
@@ -302,7 +304,7 @@ export default function EnhancedDiagramComparison({
                     )}
                     {draft.originalArticleSlug && (
                       <p className="text-xs text-blue-400 mt-1">
-                        تعديل المقال: {draft.originalArticleSlug}
+                        {t('editArticleLabel')} {draft.originalArticleSlug}
                       </p>
                     )}
                   </div>
@@ -310,7 +312,7 @@ export default function EnhancedDiagramComparison({
                     onClick={() => handleDraftSelect(draft)}
                     className="btn-primary text-sm"
                   >
-                    مقارنة
+                    {t('compare')}
                   </button>
                 </div>
               </div>
@@ -319,7 +321,7 @@ export default function EnhancedDiagramComparison({
         </div>
       )}
 
-      {/* نافذة مقارنة المقال */}
+      {/* Article comparison window */}
       {showArticleComparison && (
         <EmbeddedArticleViewer
           originalArticleLink={selectedDraft?.originalArticleSlug}
