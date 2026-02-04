@@ -13,6 +13,7 @@ import VotingSlider from '@/components/VotingSlider'
 import { SimplePostCard } from '@/components/SimplePostCard'
 import toast from 'react-hot-toast'
 import { getPostDisplayId } from '@/lib/postDisplay'
+import { useLocale, useTranslations } from 'next-intl'
 
 interface Post {
   id: string
@@ -66,6 +67,8 @@ interface RecentComment {
 export default function SupervisorDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const t = useTranslations('supervisor')
+  const locale = useLocale()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -153,6 +156,14 @@ export default function SupervisorDashboard() {
       return role === 'SUPERVISOR' || role === 'ADMIN'
     }).length
   }, [selectedPost])
+
+  const getRoleLabel = (role: string) => {
+    if (role === 'SUPERVISOR') return t('roles.supervisor')
+    if (role === 'EDITOR') return t('roles.editor')
+    if (role === 'ADMIN') return t('roles.admin')
+    if (role === 'USER') return t('roles.user')
+    return role
+  }
   
   // Memoize parsed diagram data to avoid recreating objects on every render
   const originalDiagramData = useMemo(() => {
@@ -322,7 +333,7 @@ export default function SupervisorDashboard() {
       const res = await fetch(`/api/supervisor/posts/${postId}`, { credentials: 'include' })
       if (!res.ok) {
         console.error('Failed to fetch post details:', res.status, await res.text())
-        toast.error('خطأ في تحميل المعلومات')
+        toast.error(t('toast.loadError'))
         return null
       }
       const post = await res.json()
@@ -332,7 +343,7 @@ export default function SupervisorDashboard() {
       return post
     } catch (e) {
       console.error('Failed to fetch post details', e)
-      toast.error('خطأ في تحميل المعلومات')
+      toast.error(t('toast.loadError'))
       return null
     }
   }, [])
@@ -439,7 +450,7 @@ export default function SupervisorDashboard() {
           const totalPages = Number(data?.totalPages || 1)
           setHasNext(page < totalPages)
         } else {
-          toast.error('خطأ في تحميل المعلومات')
+          toast.error(t('toast.loadError'))
         }
       } else {
         const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
@@ -455,7 +466,7 @@ export default function SupervisorDashboard() {
           setPosts(prev => append ? [...prev, ...items] : items)
           setHasNext(!!data?.hasNext)
         } else {
-          toast.error('خطأ في تحميل المعلومات')
+          toast.error(t('toast.loadError'))
         }
       }
 
@@ -468,7 +479,7 @@ export default function SupervisorDashboard() {
         }
       }
     } catch (error) {
-      toast.error('خطأ في تحميل المعلومات')
+      toast.error(t('toast.loadError'))
     } finally {
       setLoading(false)
     }
@@ -484,7 +495,7 @@ export default function SupervisorDashboard() {
     try {
       const res = await fetch(`/api/posts/${deleteTargetId}`, { method: 'DELETE', credentials: 'include' })
       if (res.ok) {
-        toast.success('تم حذف التصميم')
+        toast.success(t('toast.deleteSuccess'))
         setDeleteModalOpen(false)
         setSelectedPost(null)
         const ac = new AbortController()
@@ -492,11 +503,11 @@ export default function SupervisorDashboard() {
         setTimeout(() => fetchPosts(ac.signal, false), 0)
       } else {
         const data = await res.json().catch(() => ({} as any))
-        toast.error(data?.error || 'تعذّر حذف التصميم')
+        toast.error(data?.error || t('toast.deleteFail'))
       }
     } catch (e) {
       console.error('Delete post error:', e)
-      toast.error('خطأ في حذف التصميم')
+      toast.error(t('toast.deleteError'))
     }
   }, [deleteTargetId, fetchPosts])
 
@@ -505,17 +516,17 @@ export default function SupervisorDashboard() {
     try {
       const res = await fetch(`/api/posts/${deleteTargetId}/withdraw`, { method: 'POST', credentials: 'include' })
       if (res.ok) {
-        toast.success('تم سحب التصميم من قائمة المراجعة. يمكنك متابعة التحرير')
+        toast.success(t('toast.withdrawSuccess'))
         setDeleteModalOpen(false)
         setSelectedPost(null)
         router.push(`/create?edit=${deleteTargetId}`)
       } else {
         const data = await res.json().catch(() => ({} as any))
-        toast.error(data?.error || 'تعذّر سحب التصميم للتحرير')
+        toast.error(data?.error || t('toast.withdrawFail'))
       }
     } catch (e) {
       console.error('Withdraw post error:', e)
-      toast.error('خطأ في سحب التصميم')
+      toast.error(t('toast.withdrawError'))
     }
   }, [deleteTargetId, router])
   useEffect(() => {
@@ -543,7 +554,7 @@ export default function SupervisorDashboard() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">جارٍ التحميل...</div>
+        <div className="text-site-text">{t('loading')}</div>
       </div>
     )
   }
@@ -583,7 +594,7 @@ export default function SupervisorDashboard() {
       })
 
       if (response.ok) {
-        toast.success('تم تسجيل تصويتك')
+        toast.success(t('toast.voteSuccess'))
         setCurrentUserVote(score)
         
         // فحص النشر التلقائي
@@ -598,7 +609,7 @@ export default function SupervisorDashboard() {
         if (autoPublishResponse.ok) {
           const result = await autoPublishResponse.json()
           if (result.published) {
-            toast.success(`تم ${result.action === 'approved' ? 'الموافقة والنشر' : 'الرفض'}`)
+            toast.success(t('toast.autoPublish', { action: result.action === 'approved' ? t('autoPublish.approved') : t('autoPublish.rejected') }))
           }
         }
 
@@ -620,11 +631,11 @@ export default function SupervisorDashboard() {
          }
       } else {
         const errorData = await response.json()
-        toast.error(errorData.error || 'خطأ في تسجيل التصويت')
+        toast.error(errorData.error || t('toast.voteFail'))
       }
     } catch (error) {
       console.error('Vote error:', error)
-      toast.error('خطأ في تسجيل التصويت')
+      toast.error(t('toast.voteFail'))
     }
   }
 
@@ -635,16 +646,16 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">
-          {isEditor ? 'لوحة المحرر' : 'لوحة المشرف'}
+          {isEditor ? t('title.editor') : t('title.supervisor')}
         </h1>
 
         {reviewableNoticePost && (
           <div role="alert" className="mb-6 rounded-lg border border-amber-400 bg-amber-50 text-amber-900 p-4 dark:bg-yellow-950/40 dark:border-yellow-700 dark:text-yellow-100">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="font-bold mb-1">تنبيه مهم</div>
+                <div className="font-bold mb-1">{t('alert.title')}</div>
                 <p className="text-sm leading-6">
-                  حصل تصميمك رقم {getPostDisplayId(reviewableNoticePost)} على نقاط، لكن تعديلًا آخر سبق تعديلك ونُشر، ولذلك وُسِم تصميمك بأنه «قابل للمراجعة». يمكنك تطبيق أفکارك مجددًا على التصميم المنشور وإرساله لنا.
+                  {t('alert.text', { id: getPostDisplayId(reviewableNoticePost) })}
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
@@ -652,7 +663,7 @@ export default function SupervisorDashboard() {
                   onClick={handleDismissReviewableNotice}
                   className="px-3 py-1.5 text-sm rounded-lg bg-yellow-500 text-black hover:bg-yellow-400 transition-colors"
                 >
-                  حسنًا
+                  {t('alert.confirm')}
                 </button>
               </div>
             </div>
@@ -663,53 +674,53 @@ export default function SupervisorDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* بطاقة العُقَد */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">العُقَد</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.nodes')}</h3>
             <div className="flex justify-around mt-3">
               <div className="text-center">
                 <p className="text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
-                <p className="text-xs text-site-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
-                <p className="text-xs text-site-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
             </div>
           </div>
 
           {/* بطاقة بطاقات التذكّر */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">بطاقات البيانات</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.flashcards')}</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
-                <p className="text-xs text-site-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
-                <p className="text-xs text-site-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
-                <p className="text-xs text-site-muted">تعديل</p>
+                <p className="text-xs text-site-muted">{t('stats.edited')}</p>
               </div>
             </div>
           </div>
 
           {/* بطاقة المقالات */}
            <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">المقالات</h3>
+             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.articles')}</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="text-center">
                 <p className="text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
-                <p className="text-xs text-site-muted">أُضيفت</p>
+                <p className="text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
-                <p className="text-xs text-site-muted">حُذِفت</p>
+                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
-                <p className="text-xs text-site-muted">تعديل</p>
+                <p className="text-xs text-site-muted">{t('stats.edited')}</p>
               </div>
             </div>
           </div>
@@ -724,12 +735,12 @@ export default function SupervisorDashboard() {
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
-                <h2 className="text-xl font-bold text-site-text heading">قائمة المخططات</h2>
+                <h2 className="text-xl font-bold text-site-text heading">{t('postsList.title')}</h2>
               )}
               <button
                 onClick={() => setIsPostsListCollapsed(!isPostsListCollapsed)}
                 className="p-2 rounded-lg bg-site-card text-site-text hover:bg-gray-700 transition-colors"
-                title={isPostsListCollapsed ? 'عرض قائمة التصاميم' : 'إخفاء قائمة التصاميم'}
+                title={isPostsListCollapsed ? t('postsList.show') : t('postsList.hide')}
               >
                 {isPostsListCollapsed ? '📋' : '◀'}
               </button>
@@ -751,7 +762,7 @@ export default function SupervisorDashboard() {
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
                     onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
-                    title={`المعرّف: ${getPostDisplayId(post)}`}
+                    title={t('postIdTitle', { id: getPostDisplayId(post) })}
                   >
                     {getPostDisplayId(post).charAt(0)}
                   </div>
@@ -769,10 +780,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض التصاميم الجديدة"
+                    title={t('filters.newDesignsTitle')}
                   >
                     <span className={`${filter === 'new_designs' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{newDesignsCount}</span>
-                    <span className="whitespace-nowrap">تصاميم جديدة</span>
+                    <span className="whitespace-nowrap">{t('filters.newDesigns')}</span>
                   </button>
 
                   <button
@@ -783,10 +794,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض المنشورات التي بها تعليقات جديدة"
+                    title={t('filters.newCommentsTitle')}
                   >
                     <span className={`${filter === 'new_comments' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{totalUnreadComments}</span>
-                    <span className="whitespace-nowrap">تعليقات جديدة</span>
+                    <span className="whitespace-nowrap">{t('filters.newComments')}</span>
                   </button>
 
                   <button
@@ -797,10 +808,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض العناصر القابلة للمراجعة"
+                    title={t('filters.reviewablesTitle')}
                   >
                     <span className={`${filter === 'reviewables' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{reviewablesCount}</span>
-                    <span className="whitespace-nowrap">قابلة للمراجعة</span>
+                    <span className="whitespace-nowrap">{t('filters.reviewables')}</span>
                   </button>
                 </div>
                 <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -812,10 +823,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض تصاميمي"
+                    title={t('filters.myPostsTitle')}
                   >
                     <span className={`${filter === 'my-posts' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{myPostsCount}</span>
-                    <span className="whitespace-nowrap">تصاميمي</span>
+                    <span className="whitespace-nowrap">{t('filters.myPosts')}</span>
                   </button>
 
                   <button
@@ -826,10 +837,10 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض المشاركات ذات التعليقات المتعلقة بي"
+                    title={t('filters.relatedTitle')}
                   >
                     <span className={`${filter === 'related' ? 'bg-black/20 text-black border-black/20' : 'bg-gray-800 text-gray-200 border-gray-600'} inline-flex items-center justify-center rounded-full border w-6 h-6 text-[10px] font-bold`}>{relatedCount}</span>
-                    <span className="whitespace-nowrap">تعليقات تخصني</span>
+                    <span className="whitespace-nowrap">{t('filters.related')}</span>
                   </button>
 
                   <button
@@ -840,9 +851,9 @@ export default function SupervisorDashboard() {
                         ? 'bg-warm-primary text-black border-warm-primary shadow'
                         : 'bg-transparent text-site-text border-gray-700 hover:bg-gray-800/60'
                     }`}
-                    title="عرض الباحثين والبحث عنهم"
+                    title={t('filters.researchersTitle')}
                   >
-                    <span className="whitespace-nowrap">الباحثون</span>
+                    <span className="whitespace-nowrap">{t('filters.researchers')}</span>
                   </button>
                 </div>
 
@@ -853,15 +864,15 @@ export default function SupervisorDashboard() {
                         value={researcherQuery}
                         onChange={(e) => setResearcherQuery(e.target.value)}
                         className="w-full rounded-full border text-xs py-2 px-3 bg-site-card text-site-text border-gray-700"
-                        placeholder="ابحث بأول الحروف من الاسم"
-                        title="اكتب أول حروف الاسم"
+                        placeholder={t('researcherSearch.placeholder')}
+                        title={t('researcherSearch.title')}
                       />
                     </div>
                     <div className="max-h-48 overflow-y-auto bg-site-card border border-gray-700 rounded-lg p-2">
                       {isResearchersLoading ? (
-                        <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                        <div className="text-site-muted text-sm">{t('loading')}</div>
                       ) : researchers.length === 0 ? (
-                        <div className="text-site-muted text-sm">لا توجد نتائج</div>
+                        <div className="text-site-muted text-sm">{t('researcherSearch.noResults')}</div>
                       ) : (
                         <div className="space-y-1">
                           {(researchers.length ? researchers : allResearchers).map(r => (
@@ -869,7 +880,7 @@ export default function SupervisorDashboard() {
                               key={r.id}
                               onClick={() => { setSelectedResearcherId(r.id); fetchResearcherDetail(r.id); fetchResearcherPosts(r.id) }}
                               className="w-full text-right px-3 py-1 rounded hover:bg-gray-800/60 text-sm text-site-text flex items-center gap-2"
-                              title="عرض معلومات وبحوث الباحث"
+                              title={t('researcherSearch.viewResearcher')}
                             >
                               {r.image ? (
                                 <Image src={r.image} alt={r.name || ''} width={24} height={24} className="rounded-full" />
@@ -877,8 +888,8 @@ export default function SupervisorDashboard() {
                                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-700 text-white text-xs">{(r.name||'?').charAt(0)}</span>
                               )}
                               <span className="flex-1">
-                                {(r.name && !r.name.includes('@')) ? r.name : 'بدون اسم'}
-                                <span className="ml-2 text-xs text-site-muted">{r.role === 'SUPERVISOR' ? 'مشرف' : r.role === 'EDITOR' ? 'محرر' : r.role}</span>
+                                {(r.name && !r.name.includes('@')) ? r.name : t('researcher.noName')}
+                                <span className="ml-2 text-xs text-site-muted">{getRoleLabel(r.role)}</span>
                               </span>
                             </button>
                           ))}
@@ -896,9 +907,9 @@ export default function SupervisorDashboard() {
                             )}
                             <div>
                               <div className="text-site-text font-semibold">
-                                {selectedResearcher.name || 'بدون اسم'}
+                                {selectedResearcher.name || t('researcher.noName')}
                               </div>
-                              <div className="text-xs text-site-muted">{selectedResearcher.role === 'SUPERVISOR' ? 'مشرف' : selectedResearcher.role === 'EDITOR' ? 'محرر' : selectedResearcher.role}</div>
+                              <div className="text-xs text-site-muted">{getRoleLabel(selectedResearcher.role)}</div>
                             </div>
                           </div>
                           {selectedResearcher.bio && (
@@ -913,7 +924,7 @@ export default function SupervisorDashboard() {
                 {filter === 'new_comments' ? (
                   recentComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-site-muted text-lg">لا توجد تعليقات</p>
+                      <p className="text-site-muted text-lg">{t('emptyComments')}</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -922,14 +933,14 @@ export default function SupervisorDashboard() {
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
                           className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={`فتح التصميم المرتبط بهذا التعليق`}
+                          title={t('comment.openRelated')}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
                             </span>
                           </div>
                           <div className="text-sm text-site-text line-clamp-2">
@@ -942,7 +953,7 @@ export default function SupervisorDashboard() {
                 ) : filter === 'related' ? (
                   relatedComments.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-site-muted text-lg">لا توجد تعليقات</p>
+                      <p className="text-site-muted text-lg">{t('emptyComments')}</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -951,14 +962,14 @@ export default function SupervisorDashboard() {
                           key={c.id}
                           onClick={() => openPostById(c.post.id)}
                           className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={`فتح التصميم المتعلق بهذا التعليق`}
+                          title={t('comment.openRelatedPost')}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
                               </span>
-                              <span className="truncate">{c.author.name || 'مجهول'} • {new Date(c.createdAt).toLocaleDateString('ar')}</span>
+                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
                             </span>
                           </div>
                           <div className="text-sm text-site-text line-clamp-2">
@@ -973,7 +984,7 @@ export default function SupervisorDashboard() {
                     {filteredPosts.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-site-muted text-lg">
-                          لا توجد تصاميم في هذه الفئة
+                          {t('emptyDesigns')}
                         </p>
                       </div>
                     ) : (
@@ -997,7 +1008,7 @@ export default function SupervisorDashboard() {
                             }}
                             className="px-4 py-2 rounded bg-site-card text-site-text border border-site-border hover:bg-gray-800/60"
                           >
-                            عرض المزيد
+                            {t('showMore')}
                           </button>
                         </div>
                       )}
@@ -1013,28 +1024,28 @@ export default function SupervisorDashboard() {
           <div className="flex-1">
             {selectedPost ? (
               <div>
-                <h2 className="text-xl font-bold text-site-text mb-4 heading">تفاصيل التصميم</h2>
+                <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('details.title')}</h2>
                 <div className="card mb-6 relative">
-                  <h3 className="font-bold text-lg text-site-text mb-2 heading">المعرّف: {getPostDisplayId(selectedPost)}</h3>
+                  <h3 className="font-bold text-lg text-site-text mb-2 heading">{t('details.postId', { id: getPostDisplayId(selectedPost) })}</h3>
                   <p className="text-site-muted text-sm mb-4">
-                    الكاتب:
+                    {t('details.authorLabel')}
                     <button
                       type="button"
                       onClick={() => pickUserAndShowPosts(selectedPost.author.id)}
                       className="ml-1 text-site-text hover:underline"
-                      title="عرض منشورات هذا الباحث"
+                      title={t('details.viewAuthorPosts')}
                     >
-                      {selectedPost.author.name || 'مجهول'}
+                      {selectedPost.author.name || t('author.unknown')}
                     </button>
-                    <span className="ml-1">({selectedPost.author.role})</span>
+                    <span className="ml-1">({getRoleLabel(selectedPost.author.role)})</span>
                   </p>
                   {selectedPost.author.id === session?.user?.id && selectedPost.status === 'PENDING' && (
                     <button
                       onClick={() => handleDeletePost(selectedPost.id)}
                       className="absolute top-3 left-3 z-10 px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md"
-                      title="حذف قبل الوصول إلى العتبات"
+                      title={t('details.deleteBeforeThreshold')}
                     >
-                      حذف
+                      {t('details.delete')}
                     </button>
                   )}
                   
@@ -1042,7 +1053,7 @@ export default function SupervisorDashboard() {
                     <div className="mb-4">
                       {selectedPost.status === 'APPROVED' ? (
                         <div className="p-3 rounded-lg border border-green-200 bg-green-100 text-green-800 text-sm dark:bg-green-900/20 dark:text-green-300 dark:border-green-700">
-                          تم الوصول إلى حد المشاركة والتقييم ونُشر هذا التصميم، لذلك تم إيقاف التصويت. إذا كانت لديك ملاحظات فاذكرها في التعليقات، وأرسل أفكارك في تصميم جدید.
+                          {t('details.voteStopped')}
                         </div>
                       ) : (
                         <VotingSlider
@@ -1057,22 +1068,22 @@ export default function SupervisorDashboard() {
                   <div className="flex justify-between items-center text-sm text-site-muted">
                     {isSupervisorRole && adminStats ? (
                       <div className="flex items-center gap-4">
-                        <span>عتبة التقييم: <b>{adminStats.threshold}</b></span>
-                        <span>عتبة المشاركة: <b>{adminStats.participationThreshold}</b></span>
+                        <span>{t('details.scoreThreshold', { value: adminStats.threshold })}</span>
+                        <span>{t('details.participationThreshold', { value: adminStats.participationThreshold })}</span>
                       </div>
                     ) : (
                       <div />
                     )}
                     <div className="flex items-center gap-4">
                       <span>
-                        إجمالي التقييم: <span className={`font-bold ${
+                        {t('details.totalScoreLabel')} <span className={`font-bold ${
                           (selectedPost.totalScore || 0) > 0 ? 'text-green-600' : 
                           (selectedPost.totalScore || 0) < 0 ? 'text-red-600' : 'text-gray-600'
                         }`}>
                           {selectedPost.totalScore || 0}
                         </span>
                       </span>
-                      <span>عدد المشاركين: <b>{supervisorParticipation}</b></span>
+                      <span>{t('details.participantsLabel', { value: supervisorParticipation })}</span>
                     </div>
                   </div>
                 </div>
@@ -1084,42 +1095,42 @@ export default function SupervisorDashboard() {
                       <div>
                         {proposedDiagramData?.changeSummary && (
                           <div className="mb-4 p-4 rounded-lg border border-blue-200 bg-blue-100 text-blue-800 text-sm dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-700">
-                            <div className="font-semibold mb-1 heading">ملخص التغييرات المرسلة من المحرر</div>
+                            <div className="font-semibold mb-1 heading">{t('diagram.changeSummary')}</div>
                             <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
                           </div>
                         )}
-                        <h4 className="font-bold text-lg text-site-text mb-4 heading">المخطط المقترح</h4>
+                        <h4 className="font-bold text-lg text-site-text mb-4 heading">{t('diagram.proposed')}</h4>
                         {originalDiagramData && proposedDiagramData ? (
                           <>
                             {/* Legend: دليل الألوان */}
                             <div className="mb-4">
                               <div className="bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text">
-                                <div className="font-semibold mb-2 heading">دليل الألوان</div>
+                                <div className="font-semibold mb-2 heading">{t('legend.title')}</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {/* Nodes legend */}
                                   <div>
-                                    <div className="text-xs text-site-muted mb-1">العُقَد</div>
+                                    <div className="text-xs text-site-muted mb-1">{t('legend.nodes')}</div>
                                     <div className="flex flex-wrap gap-2">
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">أخضر: عُقدة جديدة</span>
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">أحمر: عُقدة محذوفة</span>
-                                      <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">أزرق: تغيير الاسم</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs">{t('legend.nodeNew')}</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-800 text-xs">{t('legend.nodeRemoved')}</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">{t('legend.nodeRenamed')}</span>
                                     </div>
                                   </div>
                                   {/* Stroke legend */}
                                   <div>
-                                    <div className="text-xs text-site-muted mb-1">حدود بطاقة البيانات</div>
+                                    <div className="text-xs text-site-muted mb-1">{t('legend.flashcards')}</div>
                                     <div className="flex flex-wrap items-center gap-3">
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-green-500 bg-transparent" />
-                                        بطاقة بيانات جديدة
+                                        {t('legend.flashcardNew')}
                                       </span>
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-red-500 bg-transparent" />
-                                        حذف بطاقة البيانات
+                                        {t('legend.flashcardRemoved')}
                                       </span>
                                       <span className="inline-flex items-center gap-2 text-xs">
                                         <span className="inline-block w-4 h-4 rounded border-4 border-blue-500 bg-transparent" />
-                                        تعديل بطاقة البيانات
+                                        {t('legend.flashcardEdited')}
                                       </span>
                                     </div>
                                   </div>
@@ -1136,13 +1147,13 @@ export default function SupervisorDashboard() {
                           </>
                         ) : (
                           <div className="text-red-400 text-center py-4">
-            خطأ في عرض المخططات: بيانات غير صالحة
+                            {t('diagram.invalidData')}
           </div>
                         )}
                       </div>
                     ) : (
                       <div>
-                        <h4 className="font-bold text-lg text-site-text mb-4 heading">المخطط المقترح</h4>
+                        <h4 className="font-bold text-lg text-site-text mb-4 heading">{t('diagram.proposed')}</h4>
                         {proposedDiagramData ? (
                           <div className="h-96 border border-gray-300 rounded-lg overflow-hidden">
                             <TreeDiagramEditor
@@ -1152,7 +1163,7 @@ export default function SupervisorDashboard() {
                           </div>
                         ) : (
                           <div className="text-red-400 text-center py-4">
-                            خطأ في عرض المخططات: بيانات غير صالحة
+                            {t('diagram.invalidData')}
                           </div>
                         )}
                       </div>
@@ -1168,7 +1179,7 @@ export default function SupervisorDashboard() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-site-muted text-lg">
-                  يرجى اختيار تصميم لعرض التفاصيل
+                  {t('details.empty')}
                 </p>
               </div>
             )}
@@ -1179,15 +1190,15 @@ export default function SupervisorDashboard() {
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md">
             <div className="px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text heading">اختر إجراءً:</h2>
-              <p className="text-sm text-site-text mt-1">هل تريد إلغاء، تعديل، أم حذف هذا التصميم؟</p>
-              <p className="text-sm text-site-text mt-2">ملاحظة: إذا اخترت «تعديل»، سيتم سحب التصميم من قائمة المخططات وستنتقل إلى صفحة التحرير الجديدة، ولديك فرصة واحدة فقط لإكماله وإرساله.</p>
+              <h2 className="text-xl font-bold text-site-text heading">{t('actions.title')}</h2>
+              <p className="text-sm text-site-text mt-1">{t('actions.question')}</p>
+              <p className="text-sm text-site-text mt-2">{t('actions.note')}</p>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-end gap-3">
-                <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">إلغاء</button>
-                <button type="button" onClick={confirmWithdrawEdit} className="btn-primary">تعديل</button>
-                <button type="button" onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md">حذف</button>
+                <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">{t('actions.cancel')}</button>
+                <button type="button" onClick={confirmWithdrawEdit} className="btn-primary">{t('actions.edit')}</button>
+                <button type="button" onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md">{t('actions.delete')}</button>
               </div>
             </div>
           </div>

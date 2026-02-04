@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
 import { Plus, Trash2, X, Search, Shield, ShieldCheck, User, Edit } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type DomainStub = {
   id: string
@@ -32,6 +33,7 @@ type Props = {
 }
 
 export default function UserManagement({ allDomains }: Props) {
+  const t = useTranslations('adminUsers')
   const [users, setUsers] = useState<UserWithDomains[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -55,7 +57,7 @@ export default function UserManagement({ allDomains }: Props) {
       setUsers(data)
     } catch (error) {
       console.error(error)
-      toast.error('خطأ في جلب المستخدمين')
+      toast.error(t('toast.loadError'))
     } finally {
       setLoading(false)
     }
@@ -63,11 +65,11 @@ export default function UserManagement({ allDomains }: Props) {
 
   const getGlobalRole = (user: UserWithDomains) => {
     const isGlobalSupervisor = user.domainExperts.some(de => de.domain.slug === 'philosophy')
-    if (isGlobalSupervisor) return { label: 'مشرف عام', color: 'text-red-400 bg-red-400/10 border-red-400/20' }
+    if (isGlobalSupervisor) return { label: t('roles.globalSupervisor'), color: 'text-red-400 bg-red-400/10 border-red-400/20' }
     
-    if (user.domainExperts.length > 0) return { label: 'مشرف متخصص', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
+    if (user.domainExperts.length > 0) return { label: t('roles.domainSupervisor'), color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
     
-    return { label: 'محرر', color: 'text-gray-400 bg-gray-400/10 border-gray-400/20' }
+    return { label: t('roles.editor'), color: 'text-gray-400 bg-gray-400/10 border-gray-400/20' }
   }
 
   const handleAssignDomain = async () => {
@@ -75,7 +77,7 @@ export default function UserManagement({ allDomains }: Props) {
 
     // Check if already assigned
     if (selectedUser.domainExperts.some(de => de.domain.id === assignDomainId)) {
-      toast.error('المستخدم معين بالفعل في هذا المجال')
+      toast.error(t('toast.alreadyAssigned'))
       return
     }
 
@@ -96,7 +98,7 @@ export default function UserManagement({ allDomains }: Props) {
         throw new Error(err.error || 'Failed to assign domain')
       }
 
-      toast.success('تم تعيين المجال بنجاح')
+      toast.success(t('toast.assignSuccess'))
       await fetchUsers() // Refresh list
       
       // Update local selected user state to reflect changes immediately for the modal
@@ -110,7 +112,7 @@ export default function UserManagement({ allDomains }: Props) {
       
       setAssignDomainId('')
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message || t('toast.assignFail'))
     } finally {
       setAssigning(false)
     }
@@ -118,7 +120,7 @@ export default function UserManagement({ allDomains }: Props) {
 
   const handleRemoveDomain = async (domainId: string) => {
     if (!selectedUser) return
-    if (!confirm('هل أنت متأكد من إزالة هذا المجال؟')) return
+    if (!confirm(t('confirmRemove'))) return
 
     try {
       const res = await fetch('/api/admin/domains/experts', {
@@ -132,7 +134,7 @@ export default function UserManagement({ allDomains }: Props) {
 
       if (!res.ok) throw new Error('Failed to remove domain')
 
-      toast.success('تم إزالة المجال')
+      toast.success(t('toast.removeSuccess'))
       
       // Refresh
       const updatedRes = await fetch('/api/admin/users', { cache: 'no-store' })
@@ -142,7 +144,7 @@ export default function UserManagement({ allDomains }: Props) {
       if (updatedSelected) setSelectedUser(updatedSelected)
 
     } catch (error) {
-      toast.error('خطأ في إزالة المجال')
+      toast.error(t('toast.removeFail'))
     }
   }
 
@@ -154,11 +156,11 @@ export default function UserManagement({ allDomains }: Props) {
   return (
     <div className="card mt-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-site-text heading">إدارة المستخدمين</h2>
+        <h2 className="text-xl font-bold text-site-text heading">{t('title')}</h2>
         <div className="relative">
           <input
             type="text"
-            placeholder="بحث عن مستخدم..."
+            placeholder={t('search.placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 pr-4 py-2 rounded-lg bg-site-bg border border-site-border text-site-text focus:outline-none focus:border-warm-primary text-sm w-64"
@@ -168,17 +170,17 @@ export default function UserManagement({ allDomains }: Props) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-site-muted">جارٍ تحميل المستخدمين...</div>
+        <div className="text-center py-8 text-site-muted">{t('loading')}</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead>
               <tr className="border-b border-site-border text-site-muted text-sm">
-                <th className="pb-3 pr-4 font-medium">المستخدم</th>
-                <th className="pb-3 px-4 font-medium">البريد الإلكتروني</th>
-                <th className="pb-3 px-4 font-medium">الدور العام</th>
-                <th className="pb-3 px-4 font-medium">المجالات</th>
-                <th className="pb-3 pl-4 font-medium">إجراءات</th>
+                <th className="pb-3 pr-4 font-medium">{t('columns.user')}</th>
+                <th className="pb-3 px-4 font-medium">{t('columns.email')}</th>
+                <th className="pb-3 px-4 font-medium">{t('columns.role')}</th>
+                <th className="pb-3 px-4 font-medium">{t('columns.domains')}</th>
+                <th className="pb-3 pl-4 font-medium">{t('columns.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border">
@@ -191,13 +193,13 @@ export default function UserManagement({ allDomains }: Props) {
                         <div className="w-8 h-8 rounded-full bg-warm-primary/10 flex items-center justify-center text-warm-primary">
                           <User size={16} />
                         </div>
-                        <span className="font-medium text-site-text">{user.name || 'بدون اسم'}</span>
+                        <span className="font-medium text-site-text">{user.name || t('user.noName')}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
-                        {roleInfo.label === 'مشرف عام' ? <ShieldCheck size={12} /> : roleInfo.label === 'مشرف متخصص' ? <Shield size={12} /> : null}
+                        {roleInfo.label === t('roles.globalSupervisor') ? <ShieldCheck size={12} /> : roleInfo.label === t('roles.domainSupervisor') ? <Shield size={12} /> : null}
                         {roleInfo.label}
                       </span>
                     </td>
@@ -223,7 +225,7 @@ export default function UserManagement({ allDomains }: Props) {
                         }}
                         className="btn-secondary text-xs py-1.5 px-3"
                       >
-                        تعيين المجالات
+                        {t('assignDomains')}
                       </button>
                     </td>
                   </tr>
@@ -233,7 +235,7 @@ export default function UserManagement({ allDomains }: Props) {
           </table>
           
           {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-site-muted">لا يوجد مستخدمين مطابقين للبحث.</div>
+            <div className="text-center py-8 text-site-muted">{t('emptySearch')}</div>
           )}
         </div>
       )}
@@ -243,7 +245,7 @@ export default function UserManagement({ allDomains }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-site-card border border-site-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-site-border bg-site-bg/50">
-              <h3 className="font-bold text-lg text-site-text">تعيين المجالات: {selectedUser.name}</h3>
+              <h3 className="font-bold text-lg text-site-text">{t('modal.title', { name: selectedUser.name || t('user.noName') })}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-site-muted hover:text-site-text">
                 <X size={20} />
               </button>
@@ -252,10 +254,10 @@ export default function UserManagement({ allDomains }: Props) {
             <div className="p-4 space-y-6">
               {/* Current Domains */}
               <div>
-                <h4 className="text-sm font-medium text-site-muted mb-3">المجالات الحالية</h4>
+                <h4 className="text-sm font-medium text-site-muted mb-3">{t('modal.currentDomains')}</h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                   {selectedUser.domainExperts.length === 0 ? (
-                    <p className="text-sm text-site-muted italic">لا توجد مجالات معينة لهذا المستخدم.</p>
+                    <p className="text-sm text-site-muted italic">{t('modal.noDomains')}</p>
                   ) : (
                     selectedUser.domainExperts.map(de => (
                       <div key={de.id} className="flex items-center justify-between p-2 rounded-lg bg-site-bg border border-site-border">
@@ -263,7 +265,7 @@ export default function UserManagement({ allDomains }: Props) {
                         <button
                           onClick={() => handleRemoveDomain(de.domain.id)}
                           className="text-red-400 hover:text-red-300 p-1 rounded-md hover:bg-red-400/10 transition-colors"
-                          title="إزالة"
+                          title={t('modal.remove')}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -275,14 +277,14 @@ export default function UserManagement({ allDomains }: Props) {
 
               {/* Add Domain */}
               <div className="pt-4 border-t border-site-border">
-                <h4 className="text-sm font-medium text-site-muted mb-3">إضافة مجال جديد</h4>
+                <h4 className="text-sm font-medium text-site-muted mb-3">{t('modal.addDomain')}</h4>
                 <div className="flex gap-2">
                   <select
                     value={assignDomainId}
                     onChange={(e) => setAssignDomainId(e.target.value)}
                     className="flex-1 bg-site-bg border border-site-border rounded-lg px-3 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary"
                   >
-                    <option value="">اختر مجالاً...</option>
+                    <option value="">{t('modal.selectDomain')}</option>
                     {allDomains
                       .filter(d => !selectedUser.domainExperts.some(de => de.domain.id === d.id))
                       .sort((a, b) => a.name.localeCompare(b.name))
@@ -296,7 +298,7 @@ export default function UserManagement({ allDomains }: Props) {
                     disabled={!assignDomainId || assigning}
                     className="btn-primary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {assigning ? 'جارٍ...' : 'إضافة'}
+                    {assigning ? t('loadingShort') : t('modal.add')}
                   </button>
                 </div>
               </div>
@@ -307,7 +309,7 @@ export default function UserManagement({ allDomains }: Props) {
                 onClick={() => setIsModalOpen(false)}
                 className="text-sm text-site-muted hover:text-site-text"
               >
-                إغلاق
+                {t('modal.close')}
               </button>
             </div>
           </div>

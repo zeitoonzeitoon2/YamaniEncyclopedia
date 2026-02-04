@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
@@ -84,15 +85,16 @@ function findDomainById(roots: DomainNode[], id: string): DomainNode | null {
   return null
 }
 
-function getRoleBadge(role: string) {
-  if (role === 'HEAD') return { label: 'رئيس', cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
-  if (role === 'EXPERT') return { label: 'خبير', cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
+function getRoleBadge(role: string, labels: { head: string; expert: string }) {
+  if (role === 'HEAD') return { label: labels.head, cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
+  if (role === 'EXPERT') return { label: labels.expert, cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
   return { label: role, cls: 'bg-gray-700 text-gray-200 border border-gray-600' }
 }
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const t = useTranslations('admin.dashboard')
 
   const [headerUrl, setHeaderUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -209,7 +211,7 @@ export default function AdminDashboard() {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error('يرجى اختيار ملف أولاً')
+      toast.error(t('uploadSelectFileFirst'))
       return
     }
     try {
@@ -219,16 +221,16 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/settings', { method: 'POST', body: form })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'فشل الرفع')
+        throw new Error(err.error || t('uploadFailed'))
       }
       const data = await res.json()
       setHeaderUrl(data.url)
       setPreviewUrl(null)
       setSelectedFile(null)
-      toast.success('تم تحديث صورة الترويسة بنجاح')
+      toast.success(t('uploadSuccess'))
     } catch (e: any) {
       console.error(e)
-      toast.error(e.message || 'خطا در آپلود')
+      toast.error(e.message || t('uploadErrorFallback'))
     } finally {
       setUploading(false)
     }
@@ -240,7 +242,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/domains', { cache: 'no-store' })
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(err.error || 'Failed to load domains')
+        throw new Error(err.error || t('loadDomainsError'))
       }
       const data = (await res.json()) as DomainsResponse
       const newRoots = Array.isArray(data.roots) ? data.roots : []
@@ -257,7 +259,7 @@ export default function AdminDashboard() {
       const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
       if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب المجالات'
+      const msg = e instanceof Error ? e.message : t('loadDomainsError')
       toast.error(msg)
     } finally {
       setLoadingDomains(false)
@@ -270,12 +272,12 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في جلب الترشيحات')
+        toast.error(payload.error || t('loadCandidaciesError'))
         return
       }
       setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب الترشيحات'
+      const msg = e instanceof Error ? e.message : t('loadCandidaciesError')
       toast.error(msg)
     } finally {
       setLoadingCandidacies(false)
@@ -288,12 +290,12 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/domains/courses?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { courses?: DomainCourse[]; error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في جلب الدورات')
+        toast.error(payload.error || t('loadCoursesError'))
         return
       }
       setDomainCourses(Array.isArray(payload.courses) ? payload.courses : [])
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب الدورات'
+      const msg = e instanceof Error ? e.message : t('loadCoursesError')
       toast.error(msg)
     } finally {
       setLoadingCourses(false)
@@ -348,7 +350,7 @@ export default function AdminDashboard() {
     const slug = addForm.slug.trim()
     const description = addForm.description.trim()
     if (!name) {
-      toast.error('اسم المجال مطلوب')
+      toast.error(t('domainNameRequired'))
       return
     }
     try {
@@ -366,17 +368,17 @@ export default function AdminDashboard() {
 
       const payload = (await res.json().catch(() => ({}))) as { error?: string; domain?: { id: string } }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في إنشاء المجال')
+        toast.error(payload.error || t('createDomainError'))
         return
       }
 
-      toast.success('تم إنشاء المجال')
+      toast.success(t('createDomainSuccess'))
       setAddModalOpen(false)
       if (addParentId) setExpanded((prev) => ({ ...prev, [addParentId]: true }))
       const newId = payload.domain?.id
       await fetchDomains(newId)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء المجال'
+      const msg = e instanceof Error ? e.message : t('createDomainError')
       toast.error(msg)
     } finally {
       setCreating(false)
@@ -385,11 +387,11 @@ export default function AdminDashboard() {
 
   const nominateMember = async () => {
     if (!selectedDomain) {
-      toast.error('اختر مجالاً أولاً')
+      toast.error(t('selectDomainFirst'))
       return
     }
     if (!selectedUser) {
-      toast.error('اختر مستخدماً أولاً')
+      toast.error(t('selectUserFirst'))
       return
     }
     try {
@@ -401,17 +403,17 @@ export default function AdminDashboard() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في إنشاء الترشيح')
+        toast.error(payload.error || t('createNominationError'))
         return
       }
-      toast.success('تم إرسال الترشيح')
+      toast.success(t('createNominationSuccess'))
       setSelectedUser(null)
       setNominateRole('EXPERT')
       setUserQuery('')
       setUserResults([])
       await fetchCandidacies(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء الترشيح'
+      const msg = e instanceof Error ? e.message : t('createNominationError')
       toast.error(msg)
     } finally {
       setNominating(false)
@@ -430,15 +432,15 @@ export default function AdminDashboard() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في التصويت')
+        toast.error(payload.error || t('voteError'))
         return
       }
-      if (payload.status === 'APPROVED') toast.success('تمت الموافقة')
-      else if (payload.status === 'REJECTED') toast.success('تم الرفض')
-      else toast.success('تم تسجيل التصويت')
+      if (payload.status === 'APPROVED') toast.success(t('voteApproved'))
+      else if (payload.status === 'REJECTED') toast.success(t('voteRejected'))
+      else toast.success(t('voteRecorded'))
       await Promise.all([fetchCandidacies(selectedDomain.id), fetchDomains(selectedDomain.id)])
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في التصويت'
+      const msg = e instanceof Error ? e.message : t('voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
@@ -461,11 +463,11 @@ export default function AdminDashboard() {
       return acc
     }, [])
     if (!title) {
-      toast.error('عنوان الدورة مطلوب')
+      toast.error(t('courseTitleRequired'))
       return
     }
     if (syllabus.length === 0) {
-      toast.error('المنهج مطلوب')
+      toast.error(t('syllabusRequired'))
       return
     }
     try {
@@ -477,14 +479,14 @@ export default function AdminDashboard() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في اقتراح الدورة')
+        toast.error(payload.error || t('proposeCourseError'))
         return
       }
-      toast.success('تم إرسال المقترح')
+      toast.success(t('proposeCourseSuccess'))
       setCourseForm({ title: '', description: '', syllabus: [{ title: '', description: '' }] })
       await fetchCourses(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في اقتراح الدورة'
+      const msg = e instanceof Error ? e.message : t('proposeCourseError')
       toast.error(msg)
     } finally {
       setProposingCourse(false)
@@ -503,15 +505,15 @@ export default function AdminDashboard() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في التصويت')
+        toast.error(payload.error || t('voteError'))
         return
       }
-      if (payload.status === 'APPROVED') toast.success('تمت الموافقة')
-      else if (payload.status === 'REJECTED') toast.success('تم الرفض')
-      else toast.success('تم تسجيل التصويت')
+      if (payload.status === 'APPROVED') toast.success(t('voteApproved'))
+      else if (payload.status === 'REJECTED') toast.success(t('voteRejected'))
+      else toast.success(t('voteRecorded'))
       await fetchCourses(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في التصويت'
+      const msg = e instanceof Error ? e.message : t('voteError')
       toast.error(msg)
     } finally {
       setCourseVotingKey(null)
@@ -530,13 +532,13 @@ export default function AdminDashboard() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في حذف الخبير')
+        toast.error(payload.error || t('removeExpertError'))
         return
       }
-      toast.success('تم حذف الخبير')
+      toast.success(t('removeExpertSuccess'))
       await fetchDomains(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في حذف الخبير'
+      const msg = e instanceof Error ? e.message : t('removeExpertError')
       toast.error(msg)
     } finally {
       setRemovingExpertKey(null)
@@ -551,18 +553,18 @@ export default function AdminDashboard() {
       const payload = (await res.json().catch(() => ({}))) as { error?: string; counts?: { children: number; posts: number } }
       if (!res.ok) {
         if (res.status === 409 && payload.counts) {
-          toast.error(`لا يمكن الحذف: المجالات الفرعية=${payload.counts.children}، المنشورات=${payload.counts.posts}`)
+          toast.error(t('deleteBlocked', { children: payload.counts.children, posts: payload.counts.posts }))
           return
         }
-        toast.error(payload.error || 'خطأ في حذف المجال')
+        toast.error(payload.error || t('deleteDomainError'))
         return
       }
-      toast.success('تم حذف المجال')
+      toast.success(t('deleteDomainSuccess'))
       setDeleteModalOpen(false)
       setSelectedDomainId(philosophyRoot?.id || null)
       await fetchDomains(philosophyRoot?.id || undefined)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في حذف المجال'
+      const msg = e instanceof Error ? e.message : t('deleteDomainError')
       toast.error(msg)
     } finally {
       setDeleting(false)
@@ -586,7 +588,7 @@ export default function AdminDashboard() {
               type="button"
               onClick={() => (hasChildren ? toggleExpanded(node.id) : setSelectedDomainId(node.id))}
               className="text-site-muted hover:text-site-text"
-              aria-label={hasChildren ? (isExpanded ? 'collapse' : 'expand') : 'select'}
+              aria-label={hasChildren ? (isExpanded ? t('collapse') : t('expand')) : t('select')}
             >
               {hasChildren ? (
                 isExpanded ? (
@@ -610,17 +612,17 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
-              {node.counts.posts} منشورات
+              {t('postsCount', { count: node.counts.posts })}
             </span>
             {session?.user?.role === 'ADMIN' && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-site-text text-xs dark:border-gray-700 dark:hover:bg-gray-800"
-                title="إضافة مجال فرعي"
+                title={t('addChildDomain')}
               >
                 <Plus size={14} />
-                <span className="hidden sm:inline">إضافة</span>
+                <span className="hidden sm:inline">{t('add')}</span>
               </button>
             )}
           </div>
@@ -640,7 +642,7 @@ export default function AdminDashboard() {
   if (status === 'loading' || (loadingDomains && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">جارٍ التحميل...</div>
+        <div className="text-site-text">{t('loading')}</div>
       </div>
     )
   }
@@ -650,28 +652,26 @@ export default function AdminDashboard() {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">
-          لوحة المدير
-        </h1>
+        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
         {session?.user?.role === 'ADMIN' && (
           <div className="card mb-8">
-            <h2 className="text-xl font-bold text-site-text mb-4 heading">إعدادات الموقع - صورة الترويسة</h2>
-            <p className="text-site-muted text-sm mb-3">المقاس المقترح: 1920×480 (نسبة 4:1)، الحد الأقصى للحجم 5 ميجابايت، الصيغ: JPG/PNG/WebP</p>
+            <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('siteSettingsTitle')}</h2>
+            <p className="text-site-muted text-sm mb-3">{t('headerImageHint')}</p>
             {headerUrl && (
               <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
-                <Image src={headerUrl} alt="Header" fill className="object-cover rounded-lg" unoptimized />
+                <Image src={headerUrl} alt={t('headerImageAlt')} fill className="object-cover rounded-lg" unoptimized />
               </div>
             )}
             {previewUrl && (
               <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4 ring-2 ring-warm-accent rounded-lg overflow-hidden">
-                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt={t('previewAlt')} className="w-full h-full object-cover" />
               </div>
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
               <input type="file" accept="image/*" onChange={handleFileChange} className="text-site-text" />
               <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
-                {uploading ? 'جارٍ الرفع...' : 'رفع صورة الترويسة'}
+                {uploading ? t('uploading') : t('uploadHeaderButton')}
               </button>
             </div>
           </div>
@@ -680,7 +680,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-site-text heading">شجرة العلوم</h2>
+              <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
               <button
                 type="button"
                 onClick={() => {
@@ -689,12 +689,12 @@ export default function AdminDashboard() {
                 }}
                 className="btn-secondary text-sm"
               >
-                توسيع الجذر
+                {t('expandRoot')}
               </button>
             </div>
 
             {roots.length === 0 ? (
-              <div className="text-site-muted">لا توجد نطاقات بعد.</div>
+              <div className="text-site-muted">{t('noDomainsYet')}</div>
             ) : (
               <div className="space-y-2">
                 {roots.map((r) => (
@@ -706,14 +706,16 @@ export default function AdminDashboard() {
 
           <div className="card">
             {!selectedDomain ? (
-              <div className="text-site-muted">اختر مجالاً من القائمة.</div>
+              <div className="text-site-muted">{t('selectDomainPrompt')}</div>
             ) : (
               <div className="space-y-6">
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
-                      <div className="text-xs text-site-muted mt-1">slug: {selectedDomain.slug}</div>
+                      <div className="text-xs text-site-muted mt-1">
+                        {t('slugLabel')}: {selectedDomain.slug}
+                      </div>
                       {selectedDomain.description && (
                         <div className="text-sm text-site-text mt-2 leading-6 whitespace-pre-wrap">
                           {selectedDomain.description}
@@ -725,18 +727,22 @@ export default function AdminDashboard() {
                         type="button"
                         onClick={() => setDeleteModalOpen(true)}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
-                        title="حذف المجال"
+                        title={t('deleteDomain')}
                         disabled={selectedDomain.slug === 'philosophy'}
                       >
                         <Trash2 size={16} />
-                        حذف
+                        {t('delete')}
                       </button>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
-                    <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
-                    <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">
+                      {t('postsCount', { count: selectedDomain.counts.posts })}
+                    </span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">
+                      {t('childrenCount', { count: selectedDomain.counts.children })}
+                    </span>
                   </div>
                 </div>
 
@@ -751,7 +757,7 @@ export default function AdminDashboard() {
                           : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
                       }`}
                     >
-                      الأعضاء
+                      {t('membersTab')}
                     </button>
                     <button
                       type="button"
@@ -762,27 +768,27 @@ export default function AdminDashboard() {
                           : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
                       }`}
                     >
-                      الدورات
+                      {t('coursesTab')}
                     </button>
                   </div>
 
                   {activeTab === 'members' ? (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الأعضاء</h3>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('membersSectionTitle')}</h3>
                         <div className="space-y-2">
                           {selectedDomain.experts.length === 0 ? (
-                            <div className="text-site-muted text-sm">لا يوجد أعضاء لهذا المجال.</div>
+                            <div className="text-site-muted text-sm">{t('noMembers')}</div>
                           ) : (
                             selectedDomain.experts.map((ex) => {
-                              const badge = getRoleBadge(ex.role)
+                              const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
                               const key = `${selectedDomain.id}:${ex.user.id}`
                               return (
                                 <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                       <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                                      <span className="text-site-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
+                                      <span className="text-site-text font-medium truncate">{ex.user.name || t('noName')}</span>
                                     </div>
                                     <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                                   </div>
@@ -792,9 +798,9 @@ export default function AdminDashboard() {
                                       onClick={() => removeExpert(ex.user.id)}
                                       disabled={removingExpertKey === key}
                                       className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
-                                      title="إزالة"
+                                      title={t('remove')}
                                     >
-                                      {removingExpertKey === key ? '...' : 'حذف'}
+                                      {removingExpertKey === key ? '...' : t('delete')}
                                     </button>
                                   )}
                                 </div>
@@ -805,18 +811,18 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="border-t border-site-border pt-4">
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الترشيحات قيد الانتظار</h3>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingNominationsTitle')}</h3>
                         {loadingCandidacies ? (
-                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                          <div className="text-site-muted text-sm">{t('loading')}</div>
                         ) : pendingCandidacies.length === 0 ? (
-                          <div className="text-site-muted text-sm">لا توجد ترشيحات حالياً.</div>
+                          <div className="text-site-muted text-sm">{t('noPendingNominations')}</div>
                         ) : (
                           <div className="space-y-2">
                             {pendingCandidacies.map((c) => {
                               const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
                               const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
                               const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
-                              const roleBadge = getRoleBadge(c.role)
+                              const roleBadge = getRoleBadge(c.role, { head: t('roleHead'), expert: t('roleExpert') })
                               return (
                                 <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
                                   <div className="flex items-start justify-between gap-3">
@@ -824,16 +830,25 @@ export default function AdminDashboard() {
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${roleBadge.cls}`}>{roleBadge.label}</span>
                                         <span className="text-site-text font-medium truncate">
-                                          {c.candidateUser.name || c.candidateUser.email || 'عضو'}
+                                          {c.candidateUser.name || c.candidateUser.email || t('memberFallback')}
                                         </span>
                                       </div>
                                       <div className="text-xs text-site-muted truncate mt-1">
-                                        المرشح: {c.candidateUser.email || '—'} • المقترِح: {c.proposerUser.email || c.proposerUser.name || '—'}
+                                        {t('candidateLabel')}: {c.candidateUser.email || '—'} • {t('proposerLabel')}:{' '}
+                                        {c.proposerUser.email || c.proposerUser.name || '—'}
                                       </div>
                                       <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
-                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
-                                        {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                          {t('approvals', { count: approvals })}
+                                        </span>
+                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                          {t('rejections', { count: rejections })}
+                                        </span>
+                                        {myVote && (
+                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                            {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                     {canManageSelectedDomainMembers && (
@@ -848,7 +863,7 @@ export default function AdminDashboard() {
                                               : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                           } disabled:opacity-50`}
                                         >
-                                          {votingKey === `${c.id}:APPROVE` ? '...' : 'موافقة'}
+                                          {votingKey === `${c.id}:APPROVE` ? '...' : t('approve')}
                                         </button>
                                         <button
                                           type="button"
@@ -860,7 +875,7 @@ export default function AdminDashboard() {
                                               : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                           } disabled:opacity-50`}
                                         >
-                                          {votingKey === `${c.id}:REJECT` ? '...' : 'رفض'}
+                                          {votingKey === `${c.id}:REJECT` ? '...' : t('reject')}
                                         </button>
                                       </div>
                                     )}
@@ -876,7 +891,7 @@ export default function AdminDashboard() {
                         <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
                           <div className="flex items-center gap-2 mb-2">
                             <UserPlus size={16} className="text-warm-accent" />
-                            <div className="text-site-text font-semibold">ترشيح عضو</div>
+                            <div className="text-site-text font-semibold">{t('nominateMemberTitle')}</div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -887,7 +902,7 @@ export default function AdminDashboard() {
                                   setSelectedUser(null)
                                   setUserQuery(e.target.value)
                                 }}
-                                placeholder="بحث..."
+                                placeholder={t('searchPlaceholder')}
                                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                               />
                               {selectedUser && (
@@ -899,7 +914,7 @@ export default function AdminDashboard() {
                                     setUserResults([])
                                   }}
                                   className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                                  aria-label="clear"
+                                  aria-label={t('clear')}
                                 >
                                   <X size={16} />
                                 </button>
@@ -918,7 +933,7 @@ export default function AdminDashboard() {
                                       className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
                                     >
                                       <div className="min-w-0">
-                                        <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
+                                        <div className="text-site-text text-sm truncate">{u.name || t('noName')}</div>
                                         <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
                                       </div>
                                       <div className="text-xs text-site-muted">{u.role}</div>
@@ -933,8 +948,8 @@ export default function AdminDashboard() {
                                 onChange={(e) => setNominateRole(e.target.value)}
                                 className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                               >
-                                <option value="EXPERT">خبير</option>
-                                <option value="HEAD">رئيس</option>
+                                <option value="EXPERT">{t('roleExpert')}</option>
+                                <option value="HEAD">{t('roleHead')}</option>
                               </select>
                             </div>
                           </div>
@@ -946,7 +961,7 @@ export default function AdminDashboard() {
                               disabled={nominating || !selectedUser}
                               className="btn-primary disabled:opacity-50"
                             >
-                              {nominating ? '...' : 'إرسال الترشيح'}
+                              {nominating ? '...' : t('sendNomination')}
                             </button>
                           </div>
                         </div>
@@ -955,11 +970,11 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">الدورات المعتمدة</h3>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('approvedCoursesTitle')}</h3>
                         {loadingCourses ? (
-                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                          <div className="text-site-muted text-sm">{t('loading')}</div>
                         ) : domainCourses.filter((c) => c.status === 'APPROVED').length === 0 ? (
-                          <div className="text-site-muted text-sm">لا توجد دورات معتمدة بعد.</div>
+                          <div className="text-site-muted text-sm">{t('noApprovedCourses')}</div>
                         ) : (
                           <div className="space-y-2">
                             {domainCourses
@@ -976,13 +991,13 @@ export default function AdminDashboard() {
                                         href={`/dashboard/admin/courses/${course.id}`}
                                         className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                                       >
-                                        إدارة الفصول
+                                        {t('manageChapters')}
                                       </Link>
                                       <Link
                                         href={selectedDomain ? `/academy#domain-${selectedDomain.slug}` : '/academy'}
                                         className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                                       >
-                                        عرض في الأكاديمية
+                                        {t('viewInAcademy')}
                                       </Link>
                                     </div>
                                   </div>
@@ -993,11 +1008,11 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="border-t border-site-border pt-4">
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">مقترحات قيد التصويت</h3>
+                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingCourseProposalsTitle')}</h3>
                         {loadingCourses ? (
-                          <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                          <div className="text-site-muted text-sm">{t('loading')}</div>
                         ) : domainCourses.filter((c) => c.status === 'PENDING').length === 0 ? (
-                          <div className="text-site-muted text-sm">لا توجد مقترحات حالياً.</div>
+                          <div className="text-site-muted text-sm">{t('noPendingProposals')}</div>
                         ) : (
                           <div className="space-y-2">
                             {domainCourses
@@ -1028,12 +1043,20 @@ export default function AdminDashboard() {
                                         </div>
                                       )}
                                         <div className="text-xs text-site-muted mt-1">
-                                          المقترِح: {course.proposerUser?.email || course.proposerUser?.name || '—'}
+                                          {t('proposerLabel')}: {course.proposerUser?.email || course.proposerUser?.name || '—'}
                                         </div>
                                         <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
-                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
-                                          {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                            {t('approvals', { count: approvals })}
+                                          </span>
+                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                            {t('rejections', { count: rejections })}
+                                          </span>
+                                          {myVote && (
+                                            <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                              {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
@@ -1041,7 +1064,7 @@ export default function AdminDashboard() {
                                           href={`/dashboard/admin/courses/${course.id}`}
                                           className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                                         >
-                                          إدارة الفصول
+                                          {t('manageChapters')}
                                         </Link>
                                         {canVoteOnSelectedDomainCourses && (
                                           <>
@@ -1055,7 +1078,7 @@ export default function AdminDashboard() {
                                                   : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                               } disabled:opacity-50`}
                                             >
-                                              {courseVotingKey === `${course.id}:APPROVE` ? '...' : 'موافقة'}
+                                              {courseVotingKey === `${course.id}:APPROVE` ? '...' : t('approve')}
                                             </button>
                                             <button
                                               type="button"
@@ -1067,7 +1090,7 @@ export default function AdminDashboard() {
                                                   : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                               } disabled:opacity-50`}
                                             >
-                                              {courseVotingKey === `${course.id}:REJECT` ? '...' : 'رفض'}
+                                              {courseVotingKey === `${course.id}:REJECT` ? '...' : t('reject')}
                                             </button>
                                           </>
                                         )}
@@ -1084,28 +1107,28 @@ export default function AdminDashboard() {
                         <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
                           <div className="flex items-center gap-2 mb-2">
                             <UserPlus size={16} className="text-warm-accent" />
-                            <div className="text-site-text font-semibold">اقتراح دورة</div>
+                            <div className="text-site-text font-semibold">{t('proposeCourseTitle')}</div>
                           </div>
                           <div className="grid grid-cols-1 gap-3">
                             <input
                               value={courseForm.title}
                               onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
-                              placeholder="عنوان الدورة"
+                              placeholder={t('courseTitlePlaceholder')}
                               className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                             />
                             <textarea
                               value={courseForm.description}
                               onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
-                              placeholder="وصف مختصر"
+                              placeholder={t('courseDescriptionPlaceholder')}
                               className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[90px]"
                             />
                             <div className="space-y-3">
-                              <div className="text-sm text-site-text font-medium">المنهج</div>
+                              <div className="text-sm text-site-text font-medium">{t('syllabusTitle')}</div>
                               <div className="space-y-2">
                                 {courseForm.syllabus.map((item, index) => (
                                   <div key={`syllabus-${index}`} className="p-3 rounded-lg border border-gray-700 bg-gray-900/30 space-y-2">
                                     <div className="flex items-center justify-between gap-2">
-                                      <div className="text-xs text-site-muted">الفصل {index + 1}</div>
+                                      <div className="text-xs text-site-muted">{t('chapterLabel', { index: index + 1 })}</div>
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -1117,8 +1140,8 @@ export default function AdminDashboard() {
                                           }))
                                         }
                                         className="text-gray-400 hover:text-gray-200"
-                                        title="إزالة"
-                                        aria-label="إزالة"
+                                        title={t('remove')}
+                                        aria-label={t('remove')}
                                       >
                                         <X size={16} />
                                       </button>
@@ -1133,7 +1156,7 @@ export default function AdminDashboard() {
                                           ),
                                         }))
                                       }
-                                      placeholder="عنوان الفصل"
+                                      placeholder={t('chapterTitlePlaceholder')}
                                       className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                                     />
                                     <textarea
@@ -1146,7 +1169,7 @@ export default function AdminDashboard() {
                                           ),
                                         }))
                                       }
-                                      placeholder="وصف مختصر للفصل"
+                                      placeholder={t('chapterDescriptionPlaceholder')}
                                       className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[70px]"
                                     />
                                   </div>
@@ -1163,7 +1186,7 @@ export default function AdminDashboard() {
                                   }
                                   className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
                                 >
-                                  إضافة فصل
+                                  {t('addChapter')}
                                 </button>
                               </div>
                             </div>
@@ -1175,7 +1198,7 @@ export default function AdminDashboard() {
                               disabled={proposingCourse}
                               className="btn-primary disabled:opacity-50"
                             >
-                              {proposingCourse ? '...' : 'إرسال المقترح'}
+                              {proposingCourse ? '...' : t('sendProposal')}
                             </button>
                           </div>
                         </div>
@@ -1195,20 +1218,22 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text">إضافة مجال فرعي</h2>
+              <h2 className="text-xl font-bold text-site-text">{t('addChildDomainTitle')}</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
-                aria-label="إغلاق"
-                title="إغلاق"
+                aria-label={t('close')}
+                title={t('close')}
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-site-muted">الأب: {addParentName || '-'}</div>
+              <div className="text-sm text-site-muted">
+                {t('parentLabel')}: {addParentName || t('nonePlaceholder')}
+              </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">الاسم *</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('nameRequiredLabel')}</label>
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
@@ -1216,7 +1241,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">Slug (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('slugOptionalLabel')}</label>
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
@@ -1225,7 +1250,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">توضیح (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('descriptionOptionalLabel')}</label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
@@ -1235,10 +1260,10 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setAddModalOpen(false)} className="btn-secondary">
-                  إلغاء
+                  {t('cancel')}
                 </button>
                 <button type="button" onClick={createDomain} disabled={creating} className="btn-primary disabled:opacity-50">
-                  {creating ? '...' : 'إنشاء'}
+                  {creating ? '...' : t('create')}
                 </button>
               </div>
             </div>
@@ -1250,33 +1275,38 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text">حذف المجال</h2>
+              <h2 className="text-xl font-bold text-site-text">{t('deleteDomainTitle')}</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
-                aria-label="إغلاق"
-                title="إغلاق"
+                aria-label={t('close')}
+                title={t('close')}
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="text-site-text">
-                هل أنت متأكد أنك تريد حذف المجال <b>{selectedDomain.name}</b>؟
+                <span>{t('deleteConfirmPrefix')}</span> <b>{selectedDomain.name}</b>
+                <span>{t('deleteConfirmSuffix')}</span>
               </div>
               <div className="text-sm text-site-muted">
-                شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.
+                {t('deleteRequirement')}
               </div>
               <div className="flex items-center gap-3 text-sm text-site-muted">
-                <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
-                <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">
+                  {t('postsCount', { count: selectedDomain.counts.posts })}
+                </span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">
+                  {t('childrenCount', { count: selectedDomain.counts.children })}
+                </span>
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">
-                  إلغاء
+                  {t('cancel')}
                 </button>
                 <button type="button" onClick={deleteDomain} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
-                  {deleting ? '...' : 'حذف'}
+                  {deleting ? '...' : t('delete')}
                 </button>
               </div>
             </div>
