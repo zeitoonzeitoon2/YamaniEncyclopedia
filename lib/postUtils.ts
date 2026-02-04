@@ -75,6 +75,7 @@ export async function getTopVotedApprovedPost() {
     include: {
       author: { select: { name: true, image: true } },
       votes: true,
+      originalPost: { select: { version: true } }
     },
     orderBy: { createdAt: 'desc' },
   });

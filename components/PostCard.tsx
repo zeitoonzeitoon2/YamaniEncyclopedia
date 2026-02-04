@@ -13,7 +13,7 @@ interface Post {
   status: string
   content: string
   type?: string
-  createdAt: Date
+  createdAt: Date | string
   author: {
     name: string | null
     image: string | null

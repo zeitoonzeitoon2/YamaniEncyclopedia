@@ -2,34 +2,51 @@ export const dynamic = 'force-dynamic'
 
 import React from 'react'
 import { PostCard } from '@/components/PostCard'
-import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
 import { getTopVotedApprovedPost } from '@/lib/postUtils'
-import { useTranslations } from 'next-intl'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-export default function HomePage() {
-  const t = useTranslations('home')
-  const [topVotedPost, setTopVotedPost] = React.useState<any>(null)
-  const [headerUrl, setHeaderUrl] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    async function fetchData() {
-      const post = await getTopVotedApprovedPost()
-      setTopVotedPost(post)
-
-      try {
-        const res = await fetch('/api/settings?key=home.headerImage')
-        if (res.ok) {
-          const data = await res.json()
-          setHeaderUrl(data.value || null)
-        }
-      } catch (err) {
-        console.warn('[HomePage] Failed to fetch header image setting.')
+export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
+  setRequestLocale(locale)
+  const t = await getTranslations('home')
+  
+  let topVotedPost = null
+  try {
+    const rawPost = await getTopVotedApprovedPost()
+    if (rawPost) {
+      // Pick only serializable fields needed by PostCard
+      topVotedPost = {
+        id: rawPost.id,
+        version: rawPost.version,
+        revisionNumber: rawPost.revisionNumber,
+        status: rawPost.status,
+        content: rawPost.content,
+        type: rawPost.type,
+        createdAt: rawPost.createdAt instanceof Date ? rawPost.createdAt.toISOString() : rawPost.createdAt,
+        author: rawPost.author ? {
+          name: rawPost.author.name,
+          image: rawPost.author.image,
+        } : null,
+        originalPost: rawPost.originalPost ? {
+          version: rawPost.originalPost.version
+        } : null
       }
     }
-    fetchData()
-  }, [])
+  } catch (err) {
+    console.error('[HomePage] Failed to fetch top voted post:', err)
+  }
+  
+  let headerUrl: string | null = null
+  try {
+    const { prisma } = await import('@/lib/prisma')
+    const setting = await prisma.setting.findUnique({
+      where: { key: 'home.headerImage' }
+    })
+    headerUrl = setting?.value || null
+  } catch (err) {
+    console.warn('[HomePage] Failed to fetch header image setting.')
+  }
 
   return (
     <>
