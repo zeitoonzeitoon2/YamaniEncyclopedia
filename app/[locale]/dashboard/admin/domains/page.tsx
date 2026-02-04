@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
+import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X } from 'lucide-react'
 
@@ -60,13 +61,14 @@ function findDomainById(roots: DomainNode[], id: string): DomainNode | null {
   return null
 }
 
-function getRoleBadge(role: string) {
-  if (role === 'HEAD') return { label: 'رئيس', cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
-  if (role === 'EXPERT') return { label: 'خبير', cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
+function getRoleBadge(role: string, t: any) {
+  if (role === 'HEAD') return { label: t('roleHead'), cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
+  if (role === 'EXPERT') return { label: t('roleExpert'), cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
   return { label: role, cls: 'bg-gray-700 text-gray-200 border border-gray-600' }
 }
 
 export default function AdminDomainsPage() {
+  const t = useTranslations('adminDomains')
   const { data: session, status } = useSession()
   const router = useRouter()
 
@@ -118,7 +120,7 @@ export default function AdminDomainsPage() {
       const res = await fetch('/api/admin/domains', { cache: 'no-store' })
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(err.error || 'Failed to load domains')
+        throw new Error(err.error || t('toast.fetchError'))
       }
       const data = (await res.json()) as DomainsResponse
       const newRoots = Array.isArray(data.roots) ? data.roots : []
@@ -135,7 +137,7 @@ export default function AdminDomainsPage() {
       const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
       if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب المجالات'
+      const msg = e instanceof Error ? e.message : t('toast.fetchError')
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -148,12 +150,12 @@ export default function AdminDomainsPage() {
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في جلب الترشيحات')
+        toast.error(payload.error || t('toast.candidacyFetchError'))
         return
       }
       setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في جلب الترشيحات'
+      const msg = e instanceof Error ? e.message : t('toast.candidacyFetchError')
       toast.error(msg)
     } finally {
       setLoadingCandidacies(false)
@@ -216,7 +218,7 @@ export default function AdminDomainsPage() {
     const slug = addForm.slug.trim()
     const description = addForm.description.trim()
     if (!name) {
-      toast.error('اسم المجال مطلوب')
+      toast.error(t('toast.nameRequired'))
       return
     }
     try {
@@ -234,17 +236,17 @@ export default function AdminDomainsPage() {
 
       const payload = (await res.json().catch(() => ({}))) as { error?: string; domain?: { id: string } }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في إنشاء المجال')
+        toast.error(payload.error || t('toast.createError'))
         return
       }
 
-      toast.success('تم إنشاء المجال')
+      toast.success(t('toast.createSuccess'))
       setAddModalOpen(false)
       if (addParentId) setExpanded((prev) => ({ ...prev, [addParentId]: true }))
       const newId = payload.domain?.id
       await fetchDomains(newId)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء المجال'
+      const msg = e instanceof Error ? e.message : t('toast.createError')
       toast.error(msg)
     } finally {
       setCreating(false)
@@ -253,11 +255,11 @@ export default function AdminDomainsPage() {
 
   const nominateMember = async () => {
     if (!selectedDomain) {
-      toast.error('اختر مجالاً أولاً')
+      toast.error(t('selectDomain'))
       return
     }
     if (!selectedUser) {
-      toast.error('اختر مستخدماً أولاً')
+      toast.error(t('nominateMember')) // Using existing key for prompt
       return
     }
     try {
@@ -269,16 +271,16 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في إنشاء الترشيح')
+        toast.error(payload.error || t('toast.nominateError'))
         return
       }
-      toast.success('تم إرسال الترشيح')
+      toast.success(t('toast.nominateSuccess'))
       setSelectedUser(null)
       setUserQuery('')
       setUserResults([])
       await fetchCandidacies(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في إنشاء الترشيح'
+      const msg = e instanceof Error ? e.message : t('toast.nominateError')
       toast.error(msg)
     } finally {
       setNominating(false)
@@ -297,15 +299,15 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في التصويت')
+        toast.error(payload.error || t('toast.voteError'))
         return
       }
-      if (payload.status === 'APPROVED') toast.success('تمت الموافقة')
-      else if (payload.status === 'REJECTED') toast.success('تم الرفض')
-      else toast.success('تم تسجيل التصويت')
+      if (payload.status === 'APPROVED') toast.success(t('toast.approved'))
+      else if (payload.status === 'REJECTED') toast.success(t('toast.rejected'))
+      else toast.success(t('toast.voteSuccess'))
       await Promise.all([fetchCandidacies(selectedDomain.id), fetchDomains(selectedDomain.id)])
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في التصويت'
+      const msg = e instanceof Error ? e.message : t('toast.voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
@@ -324,13 +326,13 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || 'خطأ في حذف الخبير')
+        toast.error(payload.error || t('toast.deleteExpertError'))
         return
       }
-      toast.success('تم حذف الخبير')
+      toast.success(t('toast.deleteExpertSuccess'))
       await fetchDomains(selectedDomain.id)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في حذف الخبير'
+      const msg = e instanceof Error ? e.message : t('toast.deleteExpertError')
       toast.error(msg)
     } finally {
       setRemovingExpertKey(null)
@@ -345,18 +347,18 @@ export default function AdminDomainsPage() {
       const payload = (await res.json().catch(() => ({}))) as { error?: string; counts?: { children: number; posts: number } }
       if (!res.ok) {
         if (res.status === 409 && payload.counts) {
-          toast.error(`لا يمكن الحذف: المجالات الفرعية=${payload.counts.children}، المنشورات=${payload.counts.posts}`)
+          toast.error(t('toast.deleteConflict', { children: payload.counts.children, posts: payload.counts.posts }))
           return
         }
-        toast.error(payload.error || 'خطأ في حذف المجال')
+        toast.error(payload.error || t('toast.deleteDomainError'))
         return
       }
-      toast.success('تم حذف المجال')
+      toast.success(t('toast.deleteDomainSuccess'))
       setDeleteModalOpen(false)
       setSelectedDomainId(philosophyRoot?.id || null)
       await fetchDomains(philosophyRoot?.id || undefined)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'خطأ في حذف المجال'
+      const msg = e instanceof Error ? e.message : t('toast.deleteDomainError')
       toast.error(msg)
     } finally {
       setDeleting(false)
@@ -404,17 +406,17 @@ export default function AdminDomainsPage() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
-              {node.counts.posts} منشورات
+              {t('postCount', { count: node.counts.posts })}
             </span>
             {session?.user?.role === 'ADMIN' && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-site-text text-xs"
-                title="إضافة مجال فرعي"
+                title={t('addSubtitle')}
               >
                 <Plus size={14} />
-                <span className="hidden sm:inline">إضافة</span>
+                <span className="hidden sm:inline">{t('add')}</span>
               </button>
             )}
           </div>
@@ -434,7 +436,7 @@ export default function AdminDomainsPage() {
   if (status === 'loading' || (loading && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">جارٍ التحميل...</div>
+        <div className="text-site-text">{t('loading')}</div>
       </div>
     )
   }
@@ -443,12 +445,12 @@ export default function AdminDomainsPage() {
     <div className="min-h-screen bg-site-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">إدارة المجالات العلمية</h1>
+        <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-site-text heading">شجرة العلوم</h2>
+              <h2 className="text-xl font-bold text-site-text heading">{t('treeTitle')}</h2>
               <button
                 type="button"
                 onClick={() => {
@@ -457,12 +459,12 @@ export default function AdminDomainsPage() {
                 }}
                 className="btn-secondary text-sm"
               >
-                توسيع الجذر
+                {t('expandRoot')}
               </button>
             </div>
 
             {roots.length === 0 ? (
-              <div className="text-site-muted">لا توجد نطاقات بعد.</div>
+              <div className="text-site-muted">{t('noDomains')}</div>
             ) : (
               <div className="space-y-2">
                 {roots.map((r) => (
@@ -474,7 +476,7 @@ export default function AdminDomainsPage() {
 
           <div className="card">
             {!selectedDomain ? (
-              <div className="text-site-muted">اختر مجالاً من القائمة.</div>
+              <div className="text-site-muted">{t('selectDomain')}</div>
             ) : (
               <div className="space-y-6">
                 <div>
@@ -493,37 +495,37 @@ export default function AdminDomainsPage() {
                         type="button"
                         onClick={() => setDeleteModalOpen(true)}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-200 border border-red-600/30"
-                        title="حذف المجال"
+                        title={t('delete')}
                         disabled={selectedDomain.slug === 'philosophy'}
                       >
                         <Trash2 size={16} />
-                        حذف
+                        {t('delete')}
                       </button>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
-                    <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
-                    <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
+                    <span className="border border-gray-700 rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
                   </div>
                 </div>
 
                 <div className="border-t border-site-border pt-4">
-                  <h3 className="text-lg font-bold text-site-text mb-3 heading">الأعضاء</h3>
+                  <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('members')}</h3>
 
                   <div className="space-y-2">
                     {selectedDomain.experts.length === 0 ? (
-                      <div className="text-site-muted text-sm">لا يوجد خبراء لهذا المجال.</div>
+                      <div className="text-site-muted text-sm">{t('noExperts')}</div>
                     ) : (
                       selectedDomain.experts.map((ex) => {
-                        const badge = getRoleBadge(ex.role)
+                        const badge = getRoleBadge(ex.role, t)
                         const key = `${selectedDomain.id}:${ex.user.id}`
                         return (
                           <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                                <span className="text-site-text font-medium truncate">{ex.user.name || 'بدون اسم'}</span>
+                                <span className="text-site-text font-medium truncate">{ex.user.name || t('noName')}</span>
                               </div>
                               <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                             </div>
@@ -533,9 +535,9 @@ export default function AdminDomainsPage() {
                               onClick={() => removeExpert(ex.user.id)}
                               disabled={removingExpertKey === key}
                               className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
-                              title="إزالة"
+                              title={t('remove')}
                             >
-                              {removingExpertKey === key ? '...' : 'حذف'}
+                              {removingExpertKey === key ? '...' : t('remove')}
                             </button>
                           )}
                           </div>
@@ -545,11 +547,11 @@ export default function AdminDomainsPage() {
                   </div>
 
                   <div className="mt-6 border-t border-site-border pt-4">
-                    <h3 className="text-lg font-bold text-site-text mb-3 heading">الترشيحات قيد الانتظار</h3>
+                    <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingCandidacies')}</h3>
                     {loadingCandidacies ? (
-                      <div className="text-site-muted text-sm">جارٍ التحميل...</div>
+                      <div className="text-site-muted text-sm">{t('loading')}</div>
                     ) : pendingCandidacies.length === 0 ? (
-                      <div className="text-site-muted text-sm">لا توجد ترشيحات حالياً.</div>
+                      <div className="text-site-muted text-sm">{t('noDomains')}</div>
                     ) : (
                       <div className="space-y-2">
                         {pendingCandidacies.map((c) => {
@@ -561,15 +563,15 @@ export default function AdminDomainsPage() {
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="text-site-text font-medium truncate">
-                                    {c.candidateUser.name || c.candidateUser.email || 'عضو'}
+                                    {c.candidateUser.name || c.candidateUser.email || t('members')}
                                   </div>
                                   <div className="text-xs text-site-muted truncate mt-1">
-                                    المرشح: {c.candidateUser.email || '—'} • المقترِح: {c.proposerUser.email || c.proposerUser.name || '—'}
+                                    {t('candidate')}: {c.candidateUser.email || '—'} • {t('proposer')}: {c.proposerUser.email || c.proposerUser.name || '—'}
                                   </div>
                                   <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">موافقات: {approvals}</span>
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">رفض: {rejections}</span>
-                                    {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">تصويتك: {myVote === 'APPROVE' ? 'موافقة' : 'رفض'}</span>}
+                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('approvals')}: {approvals}</span>
+                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('rejections')}: {rejections}</span>
+                                    {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('myVote')}: {myVote === 'APPROVE' ? t('approve') : t('reject')}</span>}
                                   </div>
                                 </div>
                                 {canManageSelectedDomainMembers && (
@@ -584,7 +586,7 @@ export default function AdminDomainsPage() {
                                           : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                       } disabled:opacity-50`}
                                     >
-                                      {votingKey === `${c.id}:APPROVE` ? '...' : 'موافقة'}
+                                      {votingKey === `${c.id}:APPROVE` ? '...' : t('approve')}
                                     </button>
                                     <button
                                       type="button"
@@ -596,7 +598,7 @@ export default function AdminDomainsPage() {
                                           : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
                                       } disabled:opacity-50`}
                                     >
-                                      {votingKey === `${c.id}:REJECT` ? '...' : 'رفض'}
+                                      {votingKey === `${c.id}:REJECT` ? '...' : t('reject')}
                                     </button>
                                   </div>
                                 )}
@@ -612,7 +614,7 @@ export default function AdminDomainsPage() {
                     <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
                       <div className="flex items-center gap-2 mb-2">
                         <UserPlus size={16} className="text-warm-accent" />
-                        <div className="text-site-text font-semibold">ترشيح عضو</div>
+                        <div className="text-site-text font-semibold">{t('nominateMember')}</div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -623,7 +625,7 @@ export default function AdminDomainsPage() {
                               setSelectedUser(null)
                               setUserQuery(e.target.value)
                             }}
-                            placeholder="بحث..."
+                            placeholder={t('searchPlaceholder')}
                             className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                           />
                           {selectedUser && (
@@ -635,7 +637,7 @@ export default function AdminDomainsPage() {
                                 setUserResults([])
                               }}
                               className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                              aria-label="clear"
+                              aria-label={t('clear')}
                             >
                               <X size={16} />
                             </button>
@@ -654,7 +656,7 @@ export default function AdminDomainsPage() {
                                   className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
                                 >
                                   <div className="min-w-0">
-                                    <div className="text-site-text text-sm truncate">{u.name || 'بدون اسم'}</div>
+                                    <div className="text-site-text text-sm truncate">{u.name || t('noName')}</div>
                                     <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
                                   </div>
                                   <div className="text-xs text-site-muted">{u.role}</div>
@@ -672,7 +674,7 @@ export default function AdminDomainsPage() {
                           disabled={nominating || !selectedUser}
                           className="btn-primary disabled:opacity-50"
                         >
-                          {nominating ? '...' : 'إرسال الترشيح'}
+                          {nominating ? '...' : t('sendNomination')}
                         </button>
                       </div>
                     </div>
@@ -688,20 +690,20 @@ export default function AdminDomainsPage() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text">إضافة مجال فرعي</h2>
+              <h2 className="text-xl font-bold text-site-text">{t('addModal.title')}</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
-                aria-label="إغلاق"
-                title="إغلاق"
+                aria-label="close"
+                title={t('close')}
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-site-muted">الأب: {addParentName || '-'}</div>
+              <div className="text-sm text-site-muted">{t('addModal.parent')}: {addParentName || '-'}</div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">الاسم *</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.nameLabel')}</label>
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
@@ -709,16 +711,16 @@ export default function AdminDomainsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">Slug (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.slugLabel')}</label>
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
                   className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                  placeholder="auto"
+                  placeholder={t('addModal.slugPlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">توضیح (اختیاری)</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.descLabel')}</label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
@@ -728,10 +730,10 @@ export default function AdminDomainsPage() {
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setAddModalOpen(false)} className="btn-secondary">
-                  إلغاء
+                  {t('addModal.cancel')}
                 </button>
                 <button type="button" onClick={createDomain} disabled={creating} className="btn-primary disabled:opacity-50">
-                  {creating ? '...' : 'إنشاء'}
+                  {creating ? '...' : t('addModal.create')}
                 </button>
               </div>
             </div>
@@ -743,33 +745,33 @@ export default function AdminDomainsPage() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text">حذف المجال</h2>
+              <h2 className="text-xl font-bold text-site-text">{t('deleteModal.title')}</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
-                aria-label="إغلاق"
-                title="إغلاق"
+                aria-label={t('close')}
+                title={t('close')}
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="text-site-text">
-                هل أنت متأكد أنك تريد حذف المجال <b>{selectedDomain.name}</b>؟
+                {t('deleteModal.confirm', { name: selectedDomain.name })}
               </div>
               <div className="text-sm text-site-muted">
-                شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.
+                {t('deleteModal.condition')}
               </div>
               <div className="flex items-center gap-3 text-sm text-site-muted">
-                <span className="border border-gray-700 rounded-full px-3 py-1">منشورات: {selectedDomain.counts.posts}</span>
-                <span className="border border-gray-700 rounded-full px-3 py-1">مجالات فرعية: {selectedDomain.counts.children}</span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
+                <span className="border border-gray-700 rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">
-                  إلغاء
+                  {t('deleteModal.cancel')}
                 </button>
                 <button type="button" onClick={deleteDomain} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
-                  {deleting ? '...' : 'حذف'}
+                  {deleting ? '...' : t('deleteModal.delete')}
                 </button>
               </div>
             </div>

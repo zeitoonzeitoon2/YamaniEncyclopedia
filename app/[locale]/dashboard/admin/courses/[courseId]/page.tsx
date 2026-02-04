@@ -779,7 +779,7 @@ export default function AdminCourseChaptersPage() {
         createViaAPI={false}
         editMode={!!form.title || !!form.content}
         existingDraft={{
-          title: form.title || 'عنوان الفصل',
+          title: form.title || t('chapterTitlePlaceholder'),
           description: '',
           content: form.content || '',
           slug: activeDraftId || selectedChapter?.id || 'chapter-draft',

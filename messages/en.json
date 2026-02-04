@@ -531,7 +531,11 @@
     "structureItem6": "If the ratings reach a quorum, i.e., half the number of supervisors, and at least half of them participate in the vote, the plan is published and receives a new identifier.",
     "structureItem7": "If several edits are made to one version and the publishing conditions are met for two or more, the first proposal that gained the votes is published and the rest are marked with a \"Reviewable\" tag. Then editors are asked to re-apply their ideas to the new published version and resubmit.",
     "structureItem8": "This platform is in constant development, and with God's help, more features will be added to it.",
-    "footerQuote": "So give good tidings to My servants · Who listen to speech and follow the best of it. Those are the ones Allah has guided, and those are people of understanding. (Az-Zumar: 17, 18)"
+    "footerQuote": "So give good tidings to My servants who listen to speech and follow the best of it. Those are the ones Allah has guided, and those are people of understanding. (Az-Zumar: 17, 18)"
+  },
+  "metadata": {
+    "title": "Tree of Knowledge - Collaborative Thinking Platform",
+    "description": "A knowledge management system based on conceptual diagrams"
   },
   "adminCourses": {
     "title": "Manage Chapters",
@@ -569,8 +573,74 @@
       "saveError": "Could not save chapter",
       "saveSuccess": "Chapter saved",
       "deleteError": "Could not delete chapter",
-      "deleteSuccess": "Chapter deleted",
+      "deleteDomainSuccess": "Domain deleted",
       "voteError": "Could not record vote"
+    }
+  },
+  "adminDomains": {
+    "title": "Manage Scientific Domains",
+    "treeTitle": "Science Tree",
+    "expandRoot": "Expand Root",
+    "noDomains": "No domains yet.",
+    "postCount": "{count} posts",
+    "add": "Add",
+    "addSubtitle": "Add Sub-domain",
+    "selectDomain": "Select a domain from the list.",
+    "delete": "Delete",
+    "posts": "Posts",
+    "subdomains": "Sub-domains",
+    "members": "Members",
+    "noExperts": "No experts for this domain.",
+    "noName": "No name",
+    "remove": "Remove",
+    "pendingCandidacies": "Pending Nominations",
+    "candidate": "Candidate",
+    "proposer": "Proposer",
+    "approvals": "Approvals",
+    "rejections": "Rejections",
+    "myVote": "Your vote",
+    "approve": "Approve",
+    "reject": "Reject",
+    "nominateMember": "Nominate Member",
+    "searchPlaceholder": "Search...",
+    "sendNomination": "Send Nomination",
+    "addModal": {
+      "title": "Add Sub-domain",
+      "parent": "Parent",
+      "nameLabel": "Name *",
+      "slugLabel": "Slug (Optional)",
+      "slugPlaceholder": "auto",
+      "descLabel": "Description (Optional)",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "deleteModal": {
+      "title": "Delete Domain",
+      "confirm": "Are you sure you want to delete domain {name}?",
+      "condition": "Condition: Domain must not contain sub-domains or posts.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "roleHead": "Head",
+    "roleExpert": "Expert",
+    "loading": "Loading...",
+    "toast": {
+      "fetchError": "Error fetching domains",
+      "candidacyFetchError": "Error fetching nominations",
+      "nameRequired": "Domain name is required",
+      "createError": "Error creating domain",
+      "createSuccess": "Domain created",
+      "nominateError": "Error creating nomination",
+      "nominateSuccess": "Nomination sent",
+      "voteError": "Error voting",
+      "voteSuccess": "Vote recorded",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "deleteExpertError": "Error removing expert",
+      "deleteExpertSuccess": "Expert removed",
+      "deleteDomainError": "Error deleting domain",
+      "deleteDomainSuccess": "Domain deleted",
+      "deleteConflict": "Cannot delete: Sub-domains={children}, Posts={posts}"
     }
   },
   "treeDiagramEditor": {

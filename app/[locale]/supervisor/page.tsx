@@ -337,7 +337,7 @@ export default function SupervisorDashboard() {
         return null
       }
       const post = await res.json()
-      // به‌روزرسانی selectedPost و به‌روزرسانی آیتم در لیست
+      // Update selectedPost and update item in list
       setSelectedPost(post)
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...post } : p))
       return post
@@ -351,7 +351,7 @@ export default function SupervisorDashboard() {
   const openPostById = useCallback(async (postId: string) => {
     const found = posts.find(p => p.id === postId)
     if (found) {
-      // اگر محتوا در لیست وجود ندارد، جزییات را Lazy بارگذاری کن
+      // If content is not in list, load details lazily
       if (!found.content || !found.originalPost?.content) {
         await fetchPostDetails(postId)
       } else {
@@ -371,7 +371,7 @@ export default function SupervisorDashboard() {
         setPosts(curr => {
           const f = curr.find(p => p.id === postId)
           if (f) {
-            // همان چک Lazy بعد از رفرش لیست
+            // Same lazy check after refreshing list
             if (!f.content || !f.originalPost?.content) {
               fetchPostDetails(postId)
             } else {
@@ -409,7 +409,7 @@ export default function SupervisorDashboard() {
     fetchPosts()
   }, [session, status, router])
 
-  // عند قراءة CommentSection، قم بإعادة تعيين شارة القائمة إلى الصفر
+  // Reset menu badge to zero when reading CommentSection
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { postId: string }
@@ -426,7 +426,7 @@ export default function SupervisorDashboard() {
     }
   }, [])
 
-  // الحصول على التصويت الحالي للمستخدم للمنشور المحدد
+  // Get current user's vote for the selected post
   useEffect(() => {
     if (selectedPost && session?.user) {
       const userVote = selectedPost.votes?.find(vote => vote.adminId === session.user.id)
@@ -470,7 +470,7 @@ export default function SupervisorDashboard() {
         }
       }
 
-      // الحصول على إحصائيات المشرفين للناظر فقط
+      // Get supervisor stats for the supervisor only
       if (isSupervisorRole) {
         const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
         if (statsResponse.ok) {
@@ -597,7 +597,7 @@ export default function SupervisorDashboard() {
         toast.success(t('toast.voteSuccess'))
         setCurrentUserVote(score)
         
-        // فحص النشر التلقائي
+        // Check for automatic publishing
         const autoPublishResponse = await fetch('/api/supervisor/auto-publish', {
           method: 'POST',
           headers: {
@@ -613,12 +613,12 @@ export default function SupervisorDashboard() {
           }
         }
 
-        // تحديث قائمة المنشورات
+        // Update posts list
         await fetchPosts()
         
-        // تحديث selectedPost بالبيانات الجديدة من القائمة المحدّثة
+        // Update selectedPost with new data from updated list
         if (selectedPost) {
-          // العثور على المنشور المحدّث في القائمة الجديدة
+          // Find updated post in the new list
            setTimeout(() => {
              setPosts(currentPosts => {
                const updatedPost = currentPosts.find(p => p.id === postId)
@@ -670,9 +670,9 @@ export default function SupervisorDashboard() {
           </div>
         )}
 
-        {/* إحصاءات المقارنة - عرض الإحصاءات التحليلية لبطاقة آخر منشور محدّد */}
+        {/* Comparison Stats - showing analytical stats for the last selected post card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* بطاقة العُقَد */}
+          {/* Nodes card */}
            <div className="card text-center">
              <h3 className="text-lg font-semibold text-site-text heading">{t('stats.nodes')}</h3>
             <div className="flex justify-around mt-3">
@@ -687,7 +687,7 @@ export default function SupervisorDashboard() {
             </div>
           </div>
 
-          {/* بطاقة بطاقات التذكّر */}
+          {/* Flashcards card */}
            <div className="card text-center">
              <h3 className="text-lg font-semibold text-site-text heading">{t('stats.flashcards')}</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
@@ -706,7 +706,7 @@ export default function SupervisorDashboard() {
             </div>
           </div>
 
-          {/* بطاقة المقالات */}
+          {/* Articles card */}
            <div className="card text-center">
              <h3 className="text-lg font-semibold text-site-text heading">{t('stats.articles')}</h3>
             <div className="grid grid-cols-3 gap-2 mt-3">
@@ -761,7 +761,7 @@ export default function SupervisorDashboard() {
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
-                    onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
+                    onClick={() => openPostById(post.id)}  // Change: instead of setSelectedPost(post)
                     title={t('postIdTitle', { id: getPostDisplayId(post) })}
                   >
                     {getPostDisplayId(post).charAt(0)}
@@ -994,7 +994,7 @@ export default function SupervisorDashboard() {
                           <SimplePostCard
                             post={{ ...post, createdAt: new Date(post.createdAt) } as any}
                             isSelected={selectedPost?.id === post.id}
-                            onClick={() => openPostById(post.id)}  // تغییر: به‌جای setSelectedPost(post)
+                            onClick={() => openPostById(post.id)}  // Change: instead of setSelectedPost(post)
                           />
                         </div>
                       ))}

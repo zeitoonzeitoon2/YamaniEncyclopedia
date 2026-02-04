@@ -1,12 +1,15 @@
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { locales } from '@/i18n'
 import { Providers } from '../providers'
 
-export const metadata = {
-  title: 'شجرة العلم - منصة للتفكير المشترك',
-  description: 'نظام لإدارة المعرفة قائم على المخططات المفاهيمية',
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: 'metadata' })
+  return {
+    title: t('title'),
+    description: t('description'),
+  }
 }
 
 export function generateStaticParams() {

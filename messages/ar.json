@@ -533,6 +533,10 @@
     "structureItem8": "هذه المنصة في تطور مستمر، وبعون الله ستُضاف إليها مزيد من الإمكانات.",
     "footerQuote": "فَبَشِّرْ عِبَادِ · الَّذِينَ يَسْتَمِعُونَ الْقَوْلَ فَيَتَّبِعُونَ أَحْسَنَهُ أُولَئِكَ الَّذِينَ هَدَاهُمُ اللَّهُ وَأُولَئِكَ هُمْ أُولُو الْأَلْبَابِ (زمر: 17،18)"
   },
+  "metadata": {
+    "title": "شجرة العلم - منصة للتفكير المشترك",
+    "description": "نظام لإدارة المعرفة قائم على المخططات المفاهيمية"
+  },
   "adminCourses": {
     "title": "إدارة الفصول",
     "backToAdmin": "العودة للوحة الإدارة",
@@ -571,6 +575,72 @@
       "deleteError": "تعذر حذف الفصل",
       "deleteSuccess": "تم حذف الفصل",
       "voteError": "تعذر تسجيل التصويت"
+    }
+  },
+  "adminDomains": {
+    "title": "إدارة المجالات العلمية",
+    "treeTitle": "شجرة العلوم",
+    "expandRoot": "توسيع الجذر",
+    "noDomains": "لا توجد نطاقات بعد.",
+    "postCount": "{count} منشورات",
+    "add": "إضافة",
+    "addSubtitle": "إضافة مجال فرعي",
+    "selectDomain": "اختر مجالاً من القائمة.",
+    "delete": "حذف",
+    "posts": "منشورات",
+    "subdomains": "مجالات فرعية",
+    "members": "الأعضاء",
+    "noExperts": "لا يوجد خبراء لهذا المجال.",
+    "noName": "بدون اسم",
+    "remove": "حذف",
+    "pendingCandidacies": "الترشيحات قيد الانتظار",
+    "candidate": "المرشح",
+    "proposer": "المقترح",
+    "approvals": "موافقات",
+    "rejections": "رفض",
+    "myVote": "تصويتك",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "nominateMember": "ترشيح عضو",
+    "searchPlaceholder": "بحث...",
+    "sendNomination": "إرسال الترشيح",
+    "addModal": {
+      "title": "إضافة مجال فرعي",
+      "parent": "الأب",
+      "nameLabel": "الاسم *",
+      "slugLabel": "Slug (اختياري)",
+      "slugPlaceholder": "تلقائي",
+      "descLabel": "توضيح (اختياري)",
+      "cancel": "إلغاء",
+      "create": "إنشاء"
+    },
+    "deleteModal": {
+      "title": "حذف المجال",
+      "confirm": "هل أنت متأكد أنك تريد حذف المجال {name}؟",
+      "condition": "شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.",
+      "cancel": "إلغاء",
+      "delete": "حذف"
+    },
+    "roleHead": "رئيس",
+    "roleExpert": "خبير",
+    "loading": "جارٍ التحميل...",
+    "toast": {
+      "fetchError": "خطأ في جلب المجالات",
+      "candidacyFetchError": "خطأ في جلب الترشيحات",
+      "nameRequired": "اسم المجال مطلوب",
+      "createError": "خطأ في إنشاء المجال",
+      "createSuccess": "تم إنشاء المجال",
+      "nominateError": "خطأ في إنشاء الترشيح",
+      "nominateSuccess": "تم إرسال الترشيح",
+      "voteError": "خطأ في التصويت",
+      "voteSuccess": "تم تسجيل التصويت",
+      "approved": "تمت الموافقة",
+      "rejected": "تم الرفض",
+      "deleteExpertError": "خطأ في حذف الخبير",
+      "deleteExpertSuccess": "تم حذف الخبير",
+      "deleteDomainError": "خطأ في حذف المجال",
+      "deleteDomainSuccess": "تم حذف المجال",
+      "deleteConflict": "لا يمكن الحذف: المجالات الفرعية={children}، المنشورات={posts}"
     }
   },
   "treeDiagramEditor": {
