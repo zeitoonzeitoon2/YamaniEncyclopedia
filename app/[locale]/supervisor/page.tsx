@@ -1102,7 +1102,7 @@ export default function SupervisorDashboard() {
                         <h4 className="font-bold text-lg text-site-text mb-4 heading">{t('diagram.proposed')}</h4>
                         {originalDiagramData && proposedDiagramData ? (
                           <>
-                            {/* Legend: دليل الألوان */}
+                            {/* Legend: Color Guide */}
                             <div className="mb-4">
                               <div className="bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text">
                                 <div className="font-semibold mb-2 heading">{t('legend.title')}</div>
