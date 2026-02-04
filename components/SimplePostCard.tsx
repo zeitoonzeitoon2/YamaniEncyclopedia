@@ -100,7 +100,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
       {/* Post identifier */}
       <div className="mb-2">
         <h4 className="text-site-text font-semibold text-sm">
-          {t('idLabel')} {getPostDisplayId(post)}
+          {t('idLabel')} {getPostDisplayId(post, t)}
         </h4>
       </div>
 

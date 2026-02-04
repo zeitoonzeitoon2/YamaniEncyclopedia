@@ -368,6 +368,7 @@
       "REJECTED": "رد شده",
       "REVIEWABLE": "قابل مراجبه",
       "ARCHIVED": "نسخه قبلی",
+      "NEW": "جدید",
       "UNKNOWN": "نامشخص"
     }
   },
@@ -505,6 +506,26 @@
     "uploadAvatar": "آپلود تصویر پروفایل",
     "save": "ذخیره"
   },
+  "profile": {
+    "notFound": "کاربر یافت نشد",
+    "unknownUser": "کاربر",
+    "unknownInitial": "؟",
+    "roleLabel": "نقش:",
+    "roles": {
+      "ADMIN": "مدیر",
+      "SUPERVISOR": "ناظر",
+      "EDITOR": "ویرایشگر",
+      "USER": "کاربر",
+      "UNKNOWN": "نامشخص"
+    },
+    "bioLabel": "بیوگرافی",
+    "postsTitle": "نوشته‌های {name}",
+    "totalLabel": "مجموع: {count}",
+    "noPosts": "نوشته‌ای وجود ندارد",
+    "statusLabel": "وضعیت:",
+    "previous": "قبلی",
+    "next": "بعدی"
+  },
   "votingSlider": {
     "stronglyOpposed": "کاملاً مخالف",
     "opposed": "مخالف",
@@ -545,6 +566,8 @@
     "noChapters": "هنوز فصلی وجود ندارد.",
     "chapterNumber": "فصل {number}",
     "versionCount": "{count} نسخه",
+    "versionTag": "v{number}",
+    "versionTagEmpty": "v—",
     "delete": "حذف",
     "requiredVotes": "رای‌های مورد نیاز",
     "approve": "موافقت",

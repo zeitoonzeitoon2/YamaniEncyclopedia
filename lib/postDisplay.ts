@@ -1,4 +1,4 @@
-// أدوات عميل آمنة تتعلّق بعرض المنشورات
+// Safe client-side utilities for post display
 
 export interface PostWithVersion {
   id: string
@@ -10,27 +10,22 @@ export interface PostWithVersion {
   } | null
 }
 
-/**
- * توليد معرّف عرض للمخطط
- * @param post - منشور يحوي معلومات النسخة
- * @returns معرّف للعرض (مثل "123" أو "123/3")
- */
-export function getPostDisplayId(post: PostWithVersion): string {
-  // إذا كان للمنشور رقم نسخة (سواء مُعتمد أو مؤرشف) فاعرض رقم النسخة
+export function getPostDisplayId(post: PostWithVersion, t?: (key: string) => string): string {
+  // If the post has a version number (whether approved or archived), show the version number
   if (post.version != null) {
     return String(post.version)
   }
 
-  // إذا كان المنشور مقترحًا جديدًا أو أصبح قابلاً للمراجعة، فاحتفظ بهوية المراجعة
+  // If the post is a new proposal or became reviewable, keep the revision identity
   if ((post.status === 'PENDING' || post.status === 'REVIEWABLE') && post.originalPost?.version && post.revisionNumber != null) {
     return `${post.originalPost.version}/${post.revisionNumber}`
   }
 
-  // إذا كان المنشور جديدًا (لم يحصل على نسخة بعد)
+  // If the post is new (hasn't received a version yet)
   if (post.status === 'PENDING' && !post.originalPost) {
-    return 'جديد'
+    return t ? t('status.NEW') : 'New'
   }
 
-  // الحالة الافتراضية
-  return 'غير محدد'
+  // Default case
+  return t ? t('status.UNKNOWN') : 'Unknown'
 }

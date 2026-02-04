@@ -9,7 +9,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
   setRequestLocale(locale)
-  const t = await getTranslations('home')
+  const t = await getTranslations({ locale, namespace: 'home' })
   
   let topVotedPost = null
   try {

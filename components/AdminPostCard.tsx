@@ -38,6 +38,7 @@ interface AdminPostCardProps {
 
 export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPostCardProps) {
   const t = useTranslations('adminPostCard')
+  const tPost = useTranslations('postCard')
   const locale = useLocale()
   const [isVoting, setIsVoting] = useState(false)
   
@@ -139,7 +140,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-site-text mb-3">{t('idPrefix')} {getPostDisplayId(post)}</h3>
+      <h3 className="text-xl font-bold text-site-text mb-3">{t('idPrefix')} {getPostDisplayId(post, tPost)}</h3>
       {renderContent()}
 
       {/* Voting system */}

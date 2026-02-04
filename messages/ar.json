@@ -368,6 +368,7 @@
       "REJECTED": "مرفوض",
       "REVIEWABLE": "قابل للمراجعة",
       "ARCHIVED": "نسخة سابقة",
+      "NEW": "جديد",
       "UNKNOWN": "غير معروف"
     }
   },
@@ -505,6 +506,26 @@
     "uploadAvatar": "رفع صورة الملف",
     "save": "حفظ"
   },
+  "profile": {
+    "notFound": "المستخدم غير موجود",
+    "unknownUser": "مستخدم",
+    "unknownInitial": "؟",
+    "roleLabel": "الدور:",
+    "roles": {
+      "ADMIN": "مدير",
+      "SUPERVISOR": "مشرف",
+      "EDITOR": "محرر",
+      "USER": "مستخدم",
+      "UNKNOWN": "غير معروف"
+    },
+    "bioLabel": "السيرة الذاتية",
+    "postsTitle": "منشورات {name}",
+    "totalLabel": "الإجمالي: {count}",
+    "noPosts": "لا توجد منشورات",
+    "statusLabel": "الحالة:",
+    "previous": "السابق",
+    "next": "التالي"
+  },
   "votingSlider": {
     "stronglyOpposed": "معارض بشدة",
     "opposed": "معارض",
@@ -545,6 +566,8 @@
     "noChapters": "لا توجد فصول بعد.",
     "chapterNumber": "الفصل {number}",
     "versionCount": "{count} نسخة",
+    "versionTag": "v{number}",
+    "versionTagEmpty": "v—",
     "delete": "حذف",
     "requiredVotes": "التصويتات المطلوبة",
     "approve": "موافقة",

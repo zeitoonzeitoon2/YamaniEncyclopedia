@@ -68,6 +68,7 @@ export default function SupervisorDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const t = useTranslations('supervisor')
+  const tPost = useTranslations('postCard')
   const locale = useLocale()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -655,7 +656,7 @@ export default function SupervisorDashboard() {
               <div>
                 <div className="font-bold mb-1">{t('alert.title')}</div>
                 <p className="text-sm leading-6">
-                  {t('alert.text', { id: getPostDisplayId(reviewableNoticePost) })}
+                  {t('alert.text', { id: getPostDisplayId(reviewableNoticePost, tPost) })}
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
@@ -762,9 +763,9 @@ export default function SupervisorDashboard() {
                         : 'bg-red-100 text-red-800 hover:bg-red-200'
                     }`}
                     onClick={() => openPostById(post.id)}  // Change: instead of setSelectedPost(post)
-                    title={t('postIdTitle', { id: getPostDisplayId(post) })}
+                    title={t('postIdTitle', { id: getPostDisplayId(post, tPost) })}
                   >
-                    {getPostDisplayId(post).charAt(0)}
+                    {getPostDisplayId(post, tPost).charAt(0)}
                   </div>
                 ))}
               </div>
@@ -938,7 +939,7 @@ export default function SupervisorDashboard() {
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
-                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
                               </span>
                               <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
                             </span>
@@ -967,7 +968,7 @@ export default function SupervisorDashboard() {
                           <div className="flex items-center justify-between mb-1">
                             <span className="inline-flex items-center gap-1 text-xs text-site-muted">
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
-                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null })}
+                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
                               </span>
                               <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
                             </span>
@@ -1026,7 +1027,7 @@ export default function SupervisorDashboard() {
               <div>
                 <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('details.title')}</h2>
                 <div className="card mb-6 relative">
-                  <h3 className="font-bold text-lg text-site-text mb-2 heading">{t('details.postId', { id: getPostDisplayId(selectedPost) })}</h3>
+                  <h3 className="font-bold text-lg text-site-text mb-2 heading">{t('details.postId', { id: getPostDisplayId(selectedPost, tPost) })}</h3>
                   <p className="text-site-muted text-sm mb-4">
                     {t('details.authorLabel')}
                     <button

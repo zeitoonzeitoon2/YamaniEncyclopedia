@@ -93,7 +93,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
       </div>
       
       <h3 className="text-xl font-semibold text-site-text mb-3">
-        {t('idLabel')} {getPostDisplayId(post)}
+        {t('idLabel')} {getPostDisplayId(post, t)}
       </h3>
       
       {renderContent()}

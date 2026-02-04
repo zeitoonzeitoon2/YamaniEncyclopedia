@@ -333,8 +333,13 @@ export default function AdminCourseChaptersPage() {
     return t('statusDraft')
   }
 
+  const formatVersionTag = (version?: number | null) => {
+    if (version) return t('versionTag', { number: version })
+    return t('versionTagEmpty')
+  }
+
   const versionLabel = (chapter: CourseChapter) => {
-    const v = chapter.version ? `v${chapter.version}` : 'v—'
+    const v = formatVersionTag(chapter.version)
     return `${v} • ${chapterLabel(chapter)}`
   }
 
@@ -725,7 +730,7 @@ export default function AdminCourseChaptersPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                       <div className="text-sm text-site-text">
-                        {t('previousVersion')} {selectedPreviousChapter?.version ? `v${selectedPreviousChapter.version}` : ''}
+                        {t('previousVersion')} {selectedPreviousChapter ? formatVersionTag(selectedPreviousChapter.version) : ''}
                       </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
                         <div className="whitespace-pre-wrap break-words text-sm leading-6">
@@ -745,7 +750,7 @@ export default function AdminCourseChaptersPage() {
                     </div>
                     <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
                       <div className="text-sm text-site-text">
-                        {t('selectedVersion')} {selectedChapter.version ? `v${selectedChapter.version}` : ''}
+                        {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
                       </div>
                       <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
                         <div className="whitespace-pre-wrap break-words text-sm leading-6">

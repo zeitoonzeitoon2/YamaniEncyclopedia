@@ -368,6 +368,7 @@
       "REJECTED": "Rejected",
       "REVIEWABLE": "Reviewable",
       "ARCHIVED": "Archived",
+      "NEW": "New",
       "UNKNOWN": "Unknown"
     }
   },
@@ -505,6 +506,26 @@
     "uploadAvatar": "Upload Profile Picture",
     "save": "Save"
   },
+  "profile": {
+    "notFound": "User not found",
+    "unknownUser": "User",
+    "unknownInitial": "?",
+    "roleLabel": "Role:",
+    "roles": {
+      "ADMIN": "Admin",
+      "SUPERVISOR": "Supervisor",
+      "EDITOR": "Editor",
+      "USER": "User",
+      "UNKNOWN": "Unknown"
+    },
+    "bioLabel": "Bio",
+    "postsTitle": "Posts by {name}",
+    "totalLabel": "Total: {count}",
+    "noPosts": "No posts",
+    "statusLabel": "Status:",
+    "previous": "Previous",
+    "next": "Next"
+  },
   "votingSlider": {
     "stronglyOpposed": "Strongly Opposed",
     "opposed": "Opposed",
@@ -545,6 +566,8 @@
     "noChapters": "No chapters yet.",
     "chapterNumber": "Chapter {number}",
     "versionCount": "{count} version/s",
+    "versionTag": "v{number}",
+    "versionTagEmpty": "v—",
     "delete": "Delete",
     "requiredVotes": "Required Votes",
     "approve": "Approve",
