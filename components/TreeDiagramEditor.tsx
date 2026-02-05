@@ -66,7 +66,7 @@ const CustomNode = ({ data, isConnectable }: any) => {
       <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 !bg-gray-600" />
       <div className="text-center">
         <div className="text-sm font-bold text-gray-800">{data.label}</div>
-        {!!data?.domainName && (
+        {!!data?.domainName && !!data?._showDomainName && (
           <div className="text-[11px] text-gray-600 mt-0.5">{data.domainName}</div>
         )}
       </div>
@@ -115,6 +115,7 @@ export default function TreeDiagramEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || [])
   const [nodeLabel, setNodeLabel] = useState('')
   const nodeIdRef = useRef(2)
+  const [showDomainNames, setShowDomainNames] = useState(false)
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -194,13 +195,14 @@ export default function TreeDiagramEditor({
           ...dataAny,
           domainId,
           domainName,
+          _showDomainName: showDomainNames ? true : undefined,
           _highlight: highlighted ? true : undefined,
         },
       }
     }
     if (!highlightedNodeIds.length) return nodes.map((n) => mapOne(n, false))
     return nodes.map((n) => mapOne(n, highlightedNodeIds.includes(n.id)))
-  }, [nodes, highlightedNodeIds, domainNameById])
+  }, [nodes, highlightedNodeIds, domainNameById, showDomainNames])
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
@@ -750,7 +752,7 @@ export default function TreeDiagramEditor({
 
   return (
     <div className="w-full border border-gray-300 rounded-lg overflow-hidden flex flex-col" style={{ height }}>
-      {!readOnly && (
+      {!readOnly ? (
         <div className="p-4 bg-gray-800 border-b flex gap-2 items-center">
           <input
             type="text"
@@ -770,6 +772,23 @@ export default function TreeDiagramEditor({
           </button>
           <button type="button" onClick={deleteSelectedNodes} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
             {t('deleteSelected')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDomainNames((prev) => !prev)}
+            className="px-4 py-2 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600"
+          >
+            {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 bg-gray-800 border-b flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowDomainNames((prev) => !prev)}
+            className="px-3 py-1.5 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600"
+          >
+            {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
           </button>
         </div>
       )}

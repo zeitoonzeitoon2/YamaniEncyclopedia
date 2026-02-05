@@ -671,6 +671,8 @@
     "newNodePlaceholder": "New node text...",
     "addNode": "Add Node",
     "deleteSelected": "Delete Selected",
+    "showDomainNames": "Show domain names",
+    "hideDomainNames": "Hide domain names",
     "nodePrompt": "Enter new node name:",
     "flashcardTitle": "Data card for node: {label}",
     "flashcardText": "Data card text",

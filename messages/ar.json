@@ -671,6 +671,8 @@
     "newNodePlaceholder": "نص العقدة الجديدة...",
     "addNode": "إضافة عقدة",
     "deleteSelected": "حذف المحدد",
+    "showDomainNames": "إظهار أسماء المجالات",
+    "hideDomainNames": "إخفاء أسماء المجالات",
     "nodePrompt": "أدخل اسم العقدة الجديد:",
     "flashcardTitle": "بطاقة البيانات للعقدة: {label}",
     "flashcardText": "نص بطاقة البيانات",

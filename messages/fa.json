@@ -671,6 +671,8 @@
     "newNodePlaceholder": "متن گره جدید...",
     "addNode": "افزودن گره",
     "deleteSelected": "حذف موارد انتخاب شده",
+    "showDomainNames": "نمایش نام حوزه‌ها",
+    "hideDomainNames": "عدم نمایش نام حوزه‌ها",
     "nodePrompt": "نام جدید گره را وارد کنید:",
     "flashcardTitle": "کارت داده گره: {label}",
     "flashcardText": "متن کارت داده",
