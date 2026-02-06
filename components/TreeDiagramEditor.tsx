@@ -379,7 +379,7 @@ export default function TreeDiagramEditor({
     [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId]
   )
 
-  const deleteSelectedNodes = useCallback(
+  const deleteSelectedElements = useCallback(
     (e?: React.MouseEvent) => {
       if (readOnly) return
       if (e) {
@@ -388,11 +388,21 @@ export default function TreeDiagramEditor({
       }
 
       const selectedNodes = nodes.filter((node) => node.selected)
+      const selectedEdges = edges.filter((edge) => edge.selected)
       const selectedNodeIds = selectedNodes.map((node) => node.id)
 
-      // Delete nodes and associated edges
+      if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+        return
+      }
+
+      // Delete nodes and associated edges, plus any individually selected edges
       let newNodes = nodes.filter((node) => !node.selected)
-      const newEdges = edges.filter((edge) => !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target))
+      const newEdges = edges.filter(
+        (edge) =>
+          !edge.selected &&
+          !selectedNodeIds.includes(edge.source) &&
+          !selectedNodeIds.includes(edge.target)
+      )
 
       // Clean up associated references from other nodes
       newNodes = newNodes.map((n) => {
@@ -414,7 +424,48 @@ export default function TreeDiagramEditor({
       }
       onDataChange?.({ nodes: newNodes, edges: newEdges })
     },
-    [nodes, edges, onDataChange, readOnly, selectedNodeId]
+    [nodes, edges, onDataChange, readOnly, selectedNodeId, setNodes, setEdges]
+  )
+
+  const handleNodesDelete = useCallback(
+    (deletedNodes: Node[]) => {
+      const deletedIds = deletedNodes.map((n) => n.id)
+      let nextNodes = nodes.filter((n) => !deletedIds.includes(n.id))
+      const nextEdges = edges.filter(
+        (e) => !deletedIds.includes(e.source) && !deletedIds.includes(e.target)
+      )
+
+      // Clean up references
+      nextNodes = nextNodes.map((n) => {
+        const d: any = n.data || {}
+        if (Array.isArray(d.relatedNodeIds)) {
+          const filtered = d.relatedNodeIds.filter((id: string) => !deletedIds.includes(id))
+          if (filtered.length !== d.relatedNodeIds.length) {
+            return { ...n, data: { ...d, relatedNodeIds: filtered } }
+          }
+        }
+        return n
+      })
+
+      setNodes(nextNodes)
+      setEdges(nextEdges)
+      if (selectedNodeId && deletedIds.includes(selectedNodeId)) {
+        setSelectedNodeId(null)
+        setPanelOpen(false)
+      }
+      onDataChange?.({ nodes: nextNodes, edges: nextEdges })
+    },
+    [nodes, edges, onDataChange, selectedNodeId, setNodes, setEdges]
+  )
+
+  const handleEdgesDelete = useCallback(
+    (deletedEdges: Edge[]) => {
+      const deletedIds = deletedEdges.map((e) => e.id)
+      const nextEdges = edges.filter((e) => !deletedIds.includes(e.id))
+      setEdges(nextEdges)
+      onDataChange?.({ nodes, edges: nextEdges })
+    },
+    [nodes, edges, onDataChange, setEdges]
   )
 
   const handleNodesChange = useCallback(
@@ -770,7 +821,7 @@ export default function TreeDiagramEditor({
           <button type="button" onClick={addNode} disabled={!nodeLabel.trim()} className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary disabled:opacity-50">
             {t('addNode')}
           </button>
-          <button type="button" onClick={deleteSelectedNodes} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
+          <button type="button" onClick={deleteSelectedElements} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
             {t('deleteSelected')}
           </button>
           <button
@@ -799,8 +850,10 @@ export default function TreeDiagramEditor({
             nodes={computedNodes}
             edges={edges}
              onNodesChange={handleNodesChange}
-             onEdgesChange={onEdgesChange}
-             onConnect={onConnect}
+            onEdgesChange={onEdgesChange}
+            onNodesDelete={handleNodesDelete}
+            onEdgesDelete={handleEdgesDelete}
+            onConnect={onConnect}
              onNodeClick={handleNodeClick}
              onPaneClick={handlePaneClick}
              nodeTypes={nodeTypes}
