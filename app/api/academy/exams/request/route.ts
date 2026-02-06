@@ -25,18 +25,55 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if all chapters are completed
-    const chapters = await prisma.courseChapter.findMany({
+    const approvedChapters = await prisma.courseChapter.findMany({
       where: { courseId, status: 'APPROVED' },
-      select: { id: true }
+      select: { id: true, originalChapterId: true, version: true }
     })
 
-    const progress = await prisma.courseChapterProgress.findMany({
-      where: { userId: session.user.id, chapterId: { in: chapters.map(c => c.id) } },
-      select: { chapterId: true }
+    // Group by root chapter to find unique chapters (latest versions)
+    const rootChapterIds = new Set<string>()
+    const byRoot = new Map<string, { id: string; version: number }>()
+    
+    for (const ch of approvedChapters) {
+      const rootId = ch.originalChapterId || ch.id
+      rootChapterIds.add(rootId)
+      const current = byRoot.get(rootId)
+      const nextVersion = ch.version ?? 0
+      if (!current || nextVersion >= current.version) {
+        byRoot.set(rootId, { id: ch.id, version: nextVersion })
+      }
+    }
+
+    const uniqueChapterCount = byRoot.size
+    
+    // Get all progress for this user in this course's chapters
+    const userProgress = await prisma.courseChapterProgress.findMany({
+      where: { 
+        userId: session.user.id, 
+        chapter: { courseId } 
+      },
+      select: { 
+        chapterId: true,
+        chapter: { select: { originalChapterId: true } }
+      }
     })
 
-    if (progress.length < chapters.length) {
-      return NextResponse.json({ error: 'Complete all chapters before requesting an exam' }, { status: 400 })
+    // Count how many unique root chapters the user has completed
+    const completedRootIds = new Set<string>()
+    for (const p of userProgress) {
+      // The chapter they completed might be an old version, so we find its root
+      const rootId = p.chapter.originalChapterId || p.chapterId
+      if (rootChapterIds.has(rootId)) {
+        completedRootIds.add(rootId)
+      }
+    }
+
+    if (completedRootIds.size < uniqueChapterCount) {
+      console.log(`[ExamRequest] Validation failed: completed=${completedRootIds.size}, required=${uniqueChapterCount}`)
+      return NextResponse.json({ 
+        error: 'Complete all chapters before requesting an exam',
+        details: { completed: completedRootIds.size, total: uniqueChapterCount }
+      }, { status: 400 })
     }
 
     // Check if there is already a pending or scheduled exam
