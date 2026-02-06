@@ -28,12 +28,14 @@ interface PostCardProps {
   fullWidth?: boolean
   // To control hiding article link fields when displayed on the home page
   hideArticleLinkInputs?: boolean
+  hideAuthorName?: boolean
   hideAuthorAvatar?: boolean
   hideHeaderId?: boolean
   showDomainNamesAtTop?: boolean
+  actionsPortalId?: string
 }
 
-export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false }: PostCardProps) {
+export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false, actionsPortalId }: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
 
@@ -49,6 +51,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
               height={fullWidth ? '150vh' : '24rem'}
               hideArticleLinkInputs={hideArticleLinkInputs}
               showDomainNamesAtTop={showDomainNamesAtTop}
+              actionsPortalId={actionsPortalId}
             />
           </div>
         )

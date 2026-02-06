@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import ReactFlow, {
@@ -90,6 +91,7 @@ interface TreeDiagramEditorProps {
   collectDrafts?: boolean
   isCreatePage?: boolean
   showDomainNamesAtTop?: boolean
+  actionsPortalId?: string
 }
 
 export default function TreeDiagramEditor({
@@ -101,6 +103,7 @@ export default function TreeDiagramEditor({
   collectDrafts = false,
   isCreatePage = false,
   showDomainNamesAtTop = false,
+  actionsPortalId,
 }: TreeDiagramEditorProps) {
   const t = useTranslations('treeDiagramEditor')
   const { data: session } = useSession()
@@ -117,7 +120,15 @@ export default function TreeDiagramEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || [])
   const [nodeLabel, setNodeLabel] = useState('')
   const nodeIdRef = useRef(2)
-  const [showDomainNames, setShowDomainNames] = useState(false)
+  const [showDomainNames, setShowDomainNames] = useState(showDomainNamesAtTop)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (actionsPortalId) {
+      const el = document.getElementById(actionsPortalId)
+      if (el) setPortalTarget(el)
+    }
+  }, [actionsPortalId])
 
   useEffect(() => {
     setShowDomainNames(showDomainNamesAtTop)
@@ -830,24 +841,50 @@ export default function TreeDiagramEditor({
           <button type="button" onClick={deleteSelectedElements} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
             {t('deleteSelected')}
           </button>
-          <button
-            type="button"
-            onClick={() => setShowDomainNames((prev) => !prev)}
-            className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
-          >
-            {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
-          </button>
+          {portalTarget ? (
+            createPortal(
+              <button
+                type="button"
+                onClick={() => setShowDomainNames((prev) => !prev)}
+                className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+              >
+                {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+              </button>,
+              portalTarget
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDomainNames((prev) => !prev)}
+              className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+            >
+              {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+            </button>
+          )}
         </div>
       ) : (
         <div className="p-3 bg-site-secondary border-b border-site-border flex justify-end">
           <div id="tree-actions-portal-target" className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowDomainNames((prev) => !prev)}
-              className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
-            >
-              {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
-            </button>
+            {portalTarget ? (
+              createPortal(
+                <button
+                  type="button"
+                  onClick={() => setShowDomainNames((prev) => !prev)}
+                  className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+                >
+                  {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+                </button>,
+                portalTarget
+              )
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDomainNames((prev) => !prev)}
+                className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+              >
+                {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -59,15 +59,19 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-site-text">{t('topDiagram')}</h1>
-          {topVotedPost && (
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="text-site-muted font-medium bg-site-secondary px-3 py-1 rounded-lg border border-site-border">
-                {t('postCard.idLabel', { defaultValue: 'شناسه:' })} {getPostDisplayId(topVotedPost as any, (key: string) => t(key))}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-site-border pb-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <h1 className="text-2xl font-bold text-site-text">{t('topDiagram')}</h1>
+            {topVotedPost && (
+              <span className="text-site-muted font-medium bg-site-secondary px-3 py-1 rounded-lg border border-site-border flex items-center gap-1">
+                <span className="opacity-70 text-sm">{t('postCard.idLabel', { defaultValue: 'شناسه:' })}</span>
+                <span className="text-warm-accent font-bold">{getPostDisplayId(topVotedPost as any, (key: string) => t(key))}</span>
               </span>
-            </div>
-          )}
+            )}
+          </div>
+          <div id="home-top-diagram-actions" className="flex items-center gap-2">
+            {/* TreeDiagramEditor portal will render its button here */}
+          </div>
         </div>
         <div className="mb-12">
           {topVotedPost ? (
@@ -79,6 +83,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
               hideAuthorAvatar={true} 
               hideHeaderId={true} 
               showDomainNamesAtTop={true}
+              actionsPortalId="home-top-diagram-actions"
             />
           ) : (
             <p className="text-site-muted">{t('noPosts')}</p>
