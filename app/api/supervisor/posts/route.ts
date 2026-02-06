@@ -75,6 +75,8 @@ export async function GET(request: NextRequest) {
         version: true,
         revisionNumber: true,
         createdAt: true,
+        changeReason: true,
+        changeSummary: true,
         author: {
           select: { id: true, name: true, email: true, image: true, role: true },
         },

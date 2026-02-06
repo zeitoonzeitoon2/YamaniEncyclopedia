@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     const content = typeof body.content === 'string' ? body.content : ''
     const type = typeof body.type === 'string' ? body.type : 'TREE'
     const originalPostId = typeof body.originalPostId === 'string' ? body.originalPostId : undefined
+    const changeReason = body.changeReason
+    const changeSummary = typeof body.changeSummary === 'string' ? body.changeSummary : undefined
     const articlesData = typeof body.articlesData === 'string' ? body.articlesData : undefined
     const requestedDomainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
 
@@ -132,6 +134,8 @@ export async function POST(request: NextRequest) {
         relatedDomainIds,
         ...(finalArticlesData ? { articlesData: finalArticlesData } : {}),
         ...(originalPostId ? { originalPostId } : {}),
+        ...(changeReason ? { changeReason } : {}),
+        ...(changeSummary ? { changeSummary } : {}),
       }
     })
 

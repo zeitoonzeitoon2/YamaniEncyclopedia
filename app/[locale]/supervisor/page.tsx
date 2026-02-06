@@ -48,6 +48,13 @@ interface Post {
     comments: number
   }
   unreadComments?: number
+  changeReason?: {
+    type: string
+    summary: string
+    evidence: string
+    rebuttal: string
+  } | null
+  changeSummary?: string | null
 }
 
 interface RecentComment {
@@ -68,6 +75,7 @@ export default function SupervisorDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const t = useTranslations('supervisor')
+  const tArg = useTranslations('argumentation')
   const tPost = useTranslations('postCard')
   const locale = useLocale()
   const [posts, setPosts] = useState<Post[]>([])
@@ -1092,12 +1100,58 @@ export default function SupervisorDashboard() {
                 {/* Diagram Comparison */}
                 {selectedPost.type === 'TREE' && (
                   <div className="mb-6">
+                    {/* Reasoning Card */}
+                    {selectedPost.changeReason && (
+                      <div className="mb-6 p-5 rounded-xl border border-indigo-200 bg-indigo-50/50 text-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-200 dark:border-indigo-800 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 dark:text-indigo-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                          </div>
+                          <h4 className="font-bold text-lg heading m-0">{tArg('formTitle')}</h4>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap gap-4">
+                            <div>
+                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('typeLabel')}</div>
+                              <div className="text-sm font-medium bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-md inline-block border border-indigo-100 dark:border-indigo-800">
+                                {tArg(`types.${selectedPost.changeReason.type}`)}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-[200px]">
+                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('summaryLabel')}</div>
+                              <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
+                                {selectedPost.changeReason.summary}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('evidenceLabel')}</div>
+                            <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
+                              {selectedPost.changeReason.evidence}
+                            </div>
+                          </div>
+                          
+                          {selectedPost.changeReason.rebuttal && (
+                            <div>
+                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('rebuttalLabel')}</div>
+                              <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap italic">
+                                {selectedPost.changeReason.rebuttal}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {selectedPost.originalPost ? (
                       <div>
-                        {proposedDiagramData?.changeSummary && (
+                        {/* Fallback to simple summary if no structured reason exists */}
+                        {!selectedPost.changeReason && (selectedPost.changeSummary || proposedDiagramData?.changeSummary) && (
                           <div className="mb-4 p-4 rounded-lg border border-blue-200 bg-blue-100 text-blue-800 text-sm dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-700">
                             <div className="font-semibold mb-1 heading">{t('diagram.changeSummary')}</div>
-                            <div className="whitespace-pre-wrap break-words">{proposedDiagramData.changeSummary}</div>
+                            <div className="whitespace-pre-wrap break-words">{selectedPost.changeSummary || proposedDiagramData.changeSummary}</div>
                           </div>
                         )}
                         <h4 className="font-bold text-lg text-site-text mb-4 heading">{t('diagram.proposed')}</h4>

@@ -44,6 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: { courseId
         status: true,
         version: true,
         originalChapterId: true,
+        changeReason: true,
         createdAt: true,
         updatedAt: true,
         author: { select: { id: true, name: true, email: true, role: true } },
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     const content = typeof body.content === 'string' ? body.content : ''
     const orderIndex = typeof body.orderIndex === 'number' ? body.orderIndex : 0
     const originalChapterId = typeof body.originalChapterId === 'string' ? body.originalChapterId.trim() : ''
+    const changeReason = body.changeReason
 
     if (!title || !content) {
       return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
@@ -106,6 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         courseId,
         authorId: perm.userId,
         originalChapterId: originalId,
+        ...(changeReason ? { changeReason } : {}),
       },
       select: { id: true },
     })

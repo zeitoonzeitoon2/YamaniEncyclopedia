@@ -25,6 +25,7 @@ function isTrivialTree(data: Partial<TreeData> | null | undefined): boolean {
 function CreatePost() {
   const t = useTranslations('createPost')
   const tEditor = useTranslations('treeDiagramEditor')
+  const tArg = useTranslations('argumentation')
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -45,7 +46,12 @@ function CreatePost() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSummaryOpen, setIsSummaryOpen] = useState(false)
-  const [summaryText, setSummaryText] = useState('')
+  const [argumentation, setArgumentation] = useState({
+    type: 'fact',
+    summary: '',
+    evidence: '',
+    rebuttal: ''
+  })
 
   // Load main diagram with the highest score or restore saved draft
   const hasLoadedRef = useRef(false)
@@ -207,15 +213,21 @@ function CreatePost() {
     )
   }
 
-  const doSubmit = async (summary: string) => {
+  const doSubmit = async () => {
     if (treeData.nodes.length === 0) {
       toast.error(t('minNodesError'))
+      return
+    }
+    if (!argumentation.summary.trim() || !argumentation.evidence.trim()) {
+      toast.error(tArg('evidenceQuestion')) // Or a more specific error
       return
     }
     setIsSubmitting(true)
     try {
       const body: any = {
-        content: JSON.stringify({ ...treeData, changeSummary: summary?.trim() ? summary.trim() : undefined }),
+        content: JSON.stringify({ ...treeData, changeSummary: argumentation.summary.trim() }),
+        changeReason: argumentation,
+        changeSummary: argumentation.summary.trim(),
         type: 'TREE',
       }
       if (originalPostId) body.originalPostId = originalPostId
@@ -234,7 +246,7 @@ function CreatePost() {
           ],
           edges: [],
         })
-        setSummaryText('')
+        setArgumentation({ type: 'fact', summary: '', evidence: '', rebuttal: '' })
         setIsSummaryOpen(false)
         router.push('/')
       } else {
@@ -282,6 +294,87 @@ function CreatePost() {
     })
     // Go back
     router.push('/')
+  }
+
+  if (isSummaryOpen) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl my-8">
+          <div className="px-6 py-4 border-b border-gray-700/50">
+            <h2 className="text-xl font-bold text-site-text heading">{tArg('title')}</h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-site-text mb-2">{tArg('typeLabel')}</label>
+              <select
+                value={argumentation.type}
+                onChange={(e) => setArgumentation({ ...argumentation, type: e.target.value })}
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+              >
+                <option value="fact">{tArg('types.fact')}</option>
+                <option value="logic">{tArg('types.logic')}</option>
+                <option value="structure">{tArg('types.structure')}</option>
+                <option value="style">{tArg('types.style')}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-site-text mb-1">{tArg('summaryLabel')}</label>
+              <div className="text-xs text-site-muted mb-2">{tArg('summaryQuestion')}</div>
+              <input
+                type="text"
+                value={argumentation.summary}
+                onChange={(e) => setArgumentation({ ...argumentation, summary: e.target.value })}
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                placeholder={tArg('summaryPlaceholder')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-site-text mb-1">{tArg('evidenceLabel')}</label>
+              <div className="text-xs text-site-muted mb-2">{tArg('evidenceQuestion')}</div>
+              <textarea
+                value={argumentation.evidence}
+                onChange={(e) => setArgumentation({ ...argumentation, evidence: e.target.value })}
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                rows={4}
+                placeholder={tArg('evidencePlaceholder')}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-site-text mb-1">{tArg('rebuttalLabel')}</label>
+              <div className="text-xs text-site-muted mb-2">{tArg('rebuttalQuestion')}</div>
+              <textarea
+                value={argumentation.rebuttal}
+                onChange={(e) => setArgumentation({ ...argumentation, rebuttal: e.target.value })}
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                rows={3}
+                placeholder={tArg('rebuttalPlaceholder')}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-700/50">
+              <button
+                type="button"
+                onClick={() => { setIsSummaryOpen(false) }}
+                className="px-4 py-2 rounded-lg text-site-text hover:bg-site-bg transition-colors"
+              >
+                {tArg('cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={doSubmit}
+                className="btn-primary"
+              >
+                {isSubmitting ? t('submitting') : tArg('submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -338,41 +431,6 @@ function CreatePost() {
           </div>
         </div>
       </main>
-      {isSummaryOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl">
-            <div className="px-6 py-4 border-b border-gray-700/50">
-              <h2 className="text-xl font-bold text-site-text heading">{t('summaryTitle')}</h2>
-            </div>
-            <div className="p-6">
-              <textarea
-                value={summaryText}
-                onChange={(e) => setSummaryText(e.target.value)}
-                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                rows={6}
-                placeholder={t('summaryPlaceholder')}
-              />
-              <div className="flex items-center justify-end gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => { setIsSummaryOpen(false) }}
-                  className="btn-secondary"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => doSubmit(summaryText)}
-                  className="btn-primary"
-                >
-                  {t('confirmSubmit')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

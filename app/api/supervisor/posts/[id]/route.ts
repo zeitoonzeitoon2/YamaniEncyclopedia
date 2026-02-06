@@ -36,6 +36,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         version: true,
         revisionNumber: true,
         createdAt: true,
+        changeReason: true,
+        changeSummary: true,
         content: true,            // include heavy field for details view
         articlesData: true,       // include articles meta if any
         author: { select: { id: true, name: true, email: true, image: true, role: true } },

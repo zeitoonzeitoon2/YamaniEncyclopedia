@@ -160,6 +160,7 @@ model CourseChapter {
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   authorId    String
   author      User     @relation(fields: [authorId], references: [id])
+  changeReason Json?
   originalChapterId String?
   originalChapter   CourseChapter? @relation("CourseChapterRevisions", fields: [originalChapterId], references: [id])
   revisions         CourseChapter[] @relation("CourseChapterRevisions")
@@ -263,7 +264,8 @@ model Post {
   relatedDomainIds String[]     @default([])
   authorId        String
   author          User          @relation(fields: [authorId], references: [id])
-
+  changeReason    Json?
+  changeSummary   String?
   originalPostId  String?
   originalPost    Post?         @relation("PostRevisions", fields: [originalPostId], references: [id])
   revisions       Post[]        @relation("PostRevisions")
