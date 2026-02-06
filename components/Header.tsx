@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import React from 'react'
 import { Link, usePathname, useRouter } from '@/lib/navigation'
 import Image from 'next/image'
-import { User, LogOut, Edit, Settings, Sun, Moon } from 'lucide-react'
+import { User, LogOut, Edit, Settings, Sun, Moon, Languages } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
 import { locales } from '@/i18n'
@@ -16,8 +16,10 @@ export function Header() {
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
+  const [langMenuOpen, setLangMenuOpen] = React.useState(false)
   const [logoUrl, setLogoUrl] = React.useState<string | null>(null)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
+  const langMenuRef = React.useRef<HTMLDivElement | null>(null)
   const router = useRouter()
   const rawPathname = usePathname()
   const locale = useLocale()
@@ -77,12 +79,12 @@ export function Header() {
   React.useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target as Node
-      if (!menuRef.current) return
-      if (!menuRef.current.contains(target)) setMenuOpen(false)
+      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false)
+      if (langMenuRef.current && !langMenuRef.current.contains(target)) setLangMenuOpen(false)
     }
-    if (menuOpen) document.addEventListener('mousedown', handleClick)
+    if (menuOpen || langMenuOpen) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [menuOpen])
+  }, [menuOpen, langMenuOpen])
 
   const effectiveRole = (displayRole || session?.user?.role) || ''
   const isSupervisorLike = isDomainExpert || ['SUPERVISOR', 'ADMIN'].includes(effectiveRole)
@@ -90,7 +92,6 @@ export function Header() {
 
   return (
     <header className="bg-site-card border-b border-site-border relative">
-      <div className="absolute top-2 end-4 text-xs text-site-muted">{t('tagline')}</div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center">
@@ -134,16 +135,35 @@ export function Header() {
               </button>
             )}
 
-            <select
-              value={locale}
-              onChange={(event) => router.replace(safePathname, { locale: event.target.value })}
-              className="rounded-lg border border-site-border bg-site-card text-site-text text-sm px-2 py-1"
-              aria-label={tl('label')}
-            >
-              <option value="ar">{tl('ar')}</option>
-              <option value="fa">{tl('fa')}</option>
-              <option value="en">{tl('en')}</option>
-            </select>
+            <div className="relative" ref={langMenuRef}>
+              <button
+                onClick={() => setLangMenuOpen((prev) => !prev)}
+                className="p-2 rounded-lg hover:bg-site-border transition-colors text-site-text"
+                aria-label={tl('label')}
+              >
+                <Languages size={20} />
+              </button>
+              {langMenuOpen && (
+                <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
+                  <div className="py-1">
+                    {['ar', 'fa', 'en'].map((l) => (
+                      <button
+                        key={l}
+                        onClick={() => {
+                          router.replace(safePathname, { locale: l })
+                          setLangMenuOpen(false)
+                        }}
+                        className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors ${
+                          locale === l ? 'text-warm-primary font-bold' : 'text-site-text'
+                        }`}
+                      >
+                        {tl(l)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>

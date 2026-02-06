@@ -97,7 +97,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </div>
         </section>
 
-        <div className="mt-12 border-t border-site-border pt-6 text-sm text-site-muted">
+        <div className="mt-12 border-t border-site-border pt-6 text-sm text-site-muted text-center">
           <p>
             {t('footerQuote')}
           </p>
