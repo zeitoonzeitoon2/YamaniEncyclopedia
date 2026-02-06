@@ -5,6 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 import { Prisma } from '@prisma/client'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(request: NextRequest) {
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })

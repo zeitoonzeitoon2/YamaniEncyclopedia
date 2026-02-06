@@ -14,15 +14,20 @@ const LOGO_KEY = 'site.logo'
 const BUCKET_NAME = process.env.SUPABASE_PUBLIC_BUCKET || 'public-files'
 
 export async function GET(request: NextRequest) {
-  const type = request.nextUrl.searchParams.get('type') || 'header'
-  if (type === 'logo') {
-    const logo = await prisma.setting.findUnique({ where: { key: LOGO_KEY } })
-    return NextResponse.json({ url: logo?.value || null })
+  try {
+    const type = request.nextUrl.searchParams.get('type') || 'header'
+    if (type === 'logo') {
+      const logo = await prisma.setting.findUnique({ where: { key: LOGO_KEY } })
+      return NextResponse.json({ url: logo?.value || null })
+    }
+    const primary = await prisma.setting.findUnique({ where: { key: HEADER_KEY } })
+    if (primary?.value) return NextResponse.json({ url: primary.value })
+    const legacy = await prisma.setting.findUnique({ where: { key: LEGACY_HEADER_KEY } })
+    return NextResponse.json({ url: legacy?.value || null })
+  } catch (error: any) {
+    console.error('Admin settings GET error:', error)
+    return NextResponse.json({ url: null, error: error?.message || 'Internal server error' }, { status: 500 })
   }
-  const primary = await prisma.setting.findUnique({ where: { key: HEADER_KEY } })
-  if (primary?.value) return NextResponse.json({ url: primary.value })
-  const legacy = await prisma.setting.findUnique({ where: { key: LEGACY_HEADER_KEY } })
-  return NextResponse.json({ url: legacy?.value || null })
 }
 
 export async function POST(request: NextRequest) {
