@@ -24,6 +24,11 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === 'production' ? ['error'] : ['warn', 'error'],
+    errorFormat: 'pretty',
   })
+
+// Add a connection timeout check/handler if needed, 
+// but usually this is done via the connection string.
+
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

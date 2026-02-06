@@ -52,6 +52,7 @@ export async function generateNextRevisionNumber(originalPostId: string): Promis
 export async function getTopVotedApprovedPost() {
   const { prisma } = await import('@/lib/prisma');
 
+  // Fetch only the 50 most recent approved posts to find the top voted one
   const posts = await prisma.post.findMany({
     where: { status: 'APPROVED', version: { not: null } },
     include: {
@@ -60,6 +61,7 @@ export async function getTopVotedApprovedPost() {
       originalPost: { select: { version: true } }
     },
     orderBy: { createdAt: 'desc' },
+    take: 50,
   });
 
   const postsWithScores = posts
