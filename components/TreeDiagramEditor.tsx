@@ -751,15 +751,15 @@ export default function TreeDiagramEditor({
   }, [initialData, readOnly])
 
   return (
-    <div className="w-full border border-gray-300 rounded-lg overflow-hidden flex flex-col" style={{ height }}>
+    <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col" style={{ height }}>
       {!readOnly ? (
-        <div className="p-4 bg-gray-800 border-b flex gap-2 items-center">
+        <div className="p-4 bg-site-secondary border-b border-site-border flex gap-2 items-center">
           <input
             type="text"
             value={nodeLabel}
             onChange={(e) => setNodeLabel(e.target.value)}
             placeholder={t('newNodePlaceholder')}
-            className="flex-1 px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-700 text-white placeholder-gray-400"
+            className="flex-1 px-3 py-2 border border-site-border rounded-md text-sm bg-site-card text-site-text placeholder-site-muted"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
@@ -767,7 +767,7 @@ export default function TreeDiagramEditor({
               }
             }}
           />
-          <button type="button" onClick={addNode} disabled={!nodeLabel.trim()} className="px-4 py-2 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600 disabled:opacity-50">
+          <button type="button" onClick={addNode} disabled={!nodeLabel.trim()} className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary disabled:opacity-50">
             {t('addNode')}
           </button>
           <button type="button" onClick={deleteSelectedNodes} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700">
@@ -776,17 +776,17 @@ export default function TreeDiagramEditor({
           <button
             type="button"
             onClick={() => setShowDomainNames((prev) => !prev)}
-            className="px-4 py-2 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600"
+            className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
           >
             {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
           </button>
         </div>
       ) : (
-        <div className="p-3 bg-gray-800 border-b flex justify-end">
+        <div className="p-3 bg-site-secondary border-b border-site-border flex justify-end">
           <button
             type="button"
             onClick={() => setShowDomainNames((prev) => !prev)}
-            className="px-3 py-1.5 bg-gray-700 text-white rounded-md text-sm hover:bg-gray-600"
+            className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
           >
             {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
           </button>
@@ -820,13 +820,13 @@ export default function TreeDiagramEditor({
         </div>
 
         {selectedNode && (
-          <div className="w-full lg:w-1/3 h-full overflow-y-auto p-4 bg-stone-800 border border-amber-700/40 rounded-lg">
-            <h4 className="font-semibold text-amber-100">{t('flashcardTitle', { label: selectedNode?.data?.label })}</h4>
+          <div className="w-full lg:w-1/3 h-full overflow-y-auto p-4 bg-site-card border border-site-border rounded-lg">
+            <h4 className="font-semibold text-site-text">{t('flashcardTitle', { label: selectedNode?.data?.label })}</h4>
 
             <div className="mt-3">
-              <label className="block text-sm text-amber-200 mb-1">{t('domainLabel')}</label>
+              <label className="block text-sm text-site-muted mb-1">{t('domainLabel')}</label>
               <select
-                className="w-full p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm disabled:opacity-70"
+                className="w-full p-2 rounded border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm disabled:opacity-70"
                 value={String(((selectedNode?.data as any)?.domainId || '') as any)}
                 disabled={
                   readOnly ||
@@ -848,10 +848,10 @@ export default function TreeDiagramEditor({
 
             {isCreatePage && !readOnly && (
               <div className="mt-3">
-                <label className="block text-sm text-amber-200 mb-1">{t('nodeName')}</label>
+                <label className="block text-sm text-site-muted mb-1">{t('nodeName')}</label>
                 <input
                   type="text"
-                  className="w-full p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                  className="w-full p-2 rounded border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm"
                   value={nodeTitle}
                   onChange={(e) => {
                     const v = e.target.value
@@ -870,7 +870,7 @@ export default function TreeDiagramEditor({
               return (
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs text-amber-300">{t('textLabel', { number: 1 })}</label>
+                    <label className="block text-xs text-site-muted">{t('textLabel', { number: 1 })}</label>
                     {!readOnly && (
                       <button
                         type="button"
@@ -886,7 +886,7 @@ export default function TreeDiagramEditor({
                     )}
                   </div>
                   <textarea
-                    className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                    className="w-full mt-1 p-2 rounded border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm"
                     rows={6}
                     value={field.content}
                     readOnly={readOnly}
@@ -907,7 +907,7 @@ export default function TreeDiagramEditor({
             {/* First Link (Main Article Link) */}
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs text-amber-300">{t('firstLink')}</label>
+                <label className="block text-xs text-site-muted">{t('firstLink')}</label>
                  {!readOnly && (
                    <div className="flex items-center gap-2">
                     <button
@@ -939,7 +939,7 @@ export default function TreeDiagramEditor({
               {!hideArticleLinkInputs && (
                 <input
                   type="text"
-                  className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                  className="w-full mt-1 p-2 rounded border border-site-border bg-site-bg text-blue-600 placeholder-site-muted caret-blue-600 focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm"
                   value={articleLink}
                   readOnly={readOnly}
                   disabled={readOnly}
@@ -1067,7 +1067,7 @@ export default function TreeDiagramEditor({
                 : (
                   <div key={field.id} className="mt-2">
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs text-amber-300">
+                      <label className="block text-xs text-site-muted">
                         {field.type === 'text'
                           ? t('textLabel', { number: flashcardFields.slice(0, idx + 1).filter((f) => f.type === 'text').length })
                           : (() => {
@@ -1122,7 +1122,7 @@ export default function TreeDiagramEditor({
                     </div>
                     {field.type === 'text' ? (
                       <textarea
-                        className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                        className="w-full mt-1 p-2 rounded border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm"
                         rows={6}
                         value={field.content}
                         readOnly={readOnly}
@@ -1140,7 +1140,7 @@ export default function TreeDiagramEditor({
                     !hideArticleLinkInputs ? (
                       <input
                         type="text"
-                        className="w-full mt-1 p-2 rounded border border-amber-700/40 bg-stone-900 text-blue-400 placeholder-stone-400 caret-blue-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 text-sm"
+                        className="w-full mt-1 p-2 rounded border border-site-border bg-site-bg text-blue-600 placeholder-site-muted caret-blue-600 focus:outline-none focus:ring-2 focus:ring-warm-primary/60 text-sm"
                         value={field.content}
                         readOnly={readOnly}
                         disabled={readOnly}
@@ -1213,7 +1213,7 @@ export default function TreeDiagramEditor({
                     setFlashcardFields(next)
                     updateFlashcardFields(next)
                   }}
-                  className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs"
+                  className="px-3 py-1 rounded border border-site-border text-site-text hover:bg-site-secondary text-xs"
                 >
                   {t('addTextField')}
                 </button>
@@ -1224,7 +1224,7 @@ export default function TreeDiagramEditor({
                     setFlashcardFields(next)
                     updateFlashcardFields(next)
                   }}
-                  className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs"
+                  className="px-3 py-1 rounded border border-site-border text-site-text hover:bg-site-secondary text-xs"
                 >
                   {t('addLinkField')}
                 </button>
@@ -1233,11 +1233,11 @@ export default function TreeDiagramEditor({
 
             {/* Related nodes (linked to) — bottom section of the flashcard */}
             {(relatedNodeIds.length > 0 || !readOnly) && (
-              <div className="mt-4 pt-3 border-t border-amber-700/40">
-                <label className="block text-sm text-amber-200 mb-1">{t('relatedTo')}</label>
+              <div className="mt-4 pt-3 border-t border-site-border">
+                <label className="block text-sm text-site-muted mb-1">{t('relatedTo')}</label>
                 <div className="flex flex-wrap gap-2">
                   {relatedNodeIds.length === 0 && (
-                    <span className="text-xs text-amber-300/60">{t('noNodeSelected')}</span>
+                    <span className="text-xs text-site-muted">{t('noNodeSelected')}</span>
                   )}
                   {relatedNodeIds.map((rid) => {
                     const rn = nodes.find((n) => n.id === rid)
@@ -1250,7 +1250,7 @@ export default function TreeDiagramEditor({
                             if (!selectedNodeId) return
                             focusNodesAndHighlight(selectedNodeId, rid)
                           }}
-                          className="px-2 py-1 rounded border border-amber-700/40 bg-stone-900 text-amber-100 text-xs hover:bg-stone-800"
+                          className="px-2 py-1 rounded border border-site-border bg-site-secondary text-site-text text-xs hover:bg-site-card"
                           title={t('highlightRelationWithLabel', { label })}
                         >
                           {label}
@@ -1278,7 +1278,7 @@ export default function TreeDiagramEditor({
                 {!readOnly && (
                   <div className="flex items-center gap-2 mt-2">
                     <select
-                      className="px-2 py-1 rounded border border-amber-700/40 bg-stone-900 text-amber-100 text-xs min-w-[160px]"
+                      className="px-2 py-1 rounded border border-site-border bg-site-bg text-site-text text-xs min-w-[160px]"
                       value={relationToAddId}
                       onChange={(e) => setRelationToAddId(e.target.value)}
                     >
@@ -1301,7 +1301,7 @@ export default function TreeDiagramEditor({
                         updateRelatedNodes(next)
                         setRelationToAddId('')
                       }}
-                      className="px-3 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 text-xs disabled:opacity-50"
+                      className="px-3 py-1 rounded border border-site-border text-site-text hover:bg-site-secondary text-xs disabled:opacity-50"
                     >
                       {t('add')}
                     </button>
@@ -1312,7 +1312,7 @@ export default function TreeDiagramEditor({
                           setRelatedNodeIds([])
                           updateRelatedNodes([])
                         }}
-                        className="px-3 py-1 rounded border border-red-700/40 text-red-300 hover:bg-red-900/30 text-xs"
+                        className="px-3 py-1 rounded border border-red-600/40 text-red-600 hover:bg-red-500/10 text-xs"
                       >
                         {t('deleteAll')}
                       </button>
