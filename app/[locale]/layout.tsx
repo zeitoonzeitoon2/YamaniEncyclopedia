@@ -8,9 +8,14 @@ import { prisma } from '@/lib/prisma'
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale, namespace: 'metadata' })
   
-  // Fetch logo from database for favicon
-  const logo = await prisma.setting.findUnique({ where: { key: 'site.logo' } })
-  const logoUrl = logo?.value
+  let logoUrl = null
+  try {
+    // Fetch logo from database for favicon
+    const logo = await prisma.setting.findUnique({ where: { key: 'site.logo' } })
+    logoUrl = logo?.value
+  } catch (error) {
+    console.warn('Failed to fetch logo for metadata:', error)
+  }
 
   return {
     title: t('title'),

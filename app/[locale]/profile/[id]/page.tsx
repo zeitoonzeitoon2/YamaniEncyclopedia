@@ -22,10 +22,33 @@ export default async function ProfilePage({
   const pageSize = Math.min(20, Math.max(1, parseInt(searchParams?.pageSize || '10', 10)))
   const skip = (page - 1) * pageSize
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, name: true, image: true, role: true, bio: true, createdAt: true },
-  })
+  let user = null
+  let posts: any[] = []
+  let total = 0
+
+  try {
+    user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, image: true, role: true, bio: true, createdAt: true },
+    })
+
+    if (user) {
+      posts = await prisma.post.findMany({
+        where: { authorId: id },
+        select: {
+          id: true, content: true, status: true, version: true, revisionNumber: true, createdAt: true, type: true,
+          originalPost: { select: { id: true, version: true } },
+          author: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip, take: pageSize,
+      })
+      total = await prisma.post.count({ where: { authorId: id } })
+    }
+  } catch (error) {
+    console.error('Database error in ProfilePage:', error)
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-site-bg">
@@ -43,18 +66,6 @@ export default async function ProfilePage({
     ['PENDING', 'APPROVED', 'REJECTED', 'REVIEWABLE', 'ARCHIVED', 'NEW', 'UNKNOWN'].includes(status)
       ? status
       : 'UNKNOWN'
-
-  const posts = await prisma.post.findMany({
-    where: { authorId: id },
-    select: {
-      id: true, content: true, status: true, version: true, revisionNumber: true, createdAt: true, type: true,
-      originalPost: { select: { id: true, version: true } },
-      author: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    skip, take: pageSize,
-  })
-  const total = await prisma.post.count({ where: { authorId: id } })
 
   const session = await getServerSession(authOptions)
   const isOwner = session?.user?.id === id
