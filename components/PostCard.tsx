@@ -48,6 +48,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
               readOnly={true}
               height={fullWidth ? '150vh' : '24rem'}
               hideArticleLinkInputs={hideArticleLinkInputs}
+              showDomainNamesAtTop={showDomainNamesAtTop}
             />
           </div>
         )
