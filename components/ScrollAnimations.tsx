@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, HTMLMotionProps } from 'framer-motion'
-import { ReactNode } from 'react'
+import { motion, HTMLMotionProps, useScroll, useTransform } from 'framer-motion'
+import { ReactNode, useRef } from 'react'
 
 interface ScrollRevealProps extends HTMLMotionProps<'div'> {
   children: ReactNode
@@ -46,6 +46,29 @@ export const ScrollReveal = ({
       }}
       {...props}
     >
+      {children}
+    </motion.div>
+  )
+}
+
+export const Parallax = ({
+  children,
+  offset = 50,
+  ...props
+}: {
+  children: ReactNode
+  offset?: number
+} & HTMLMotionProps<'div'>) => {
+  const ref = useRef(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+
+  const y = useTransform(scrollYProgress, [0, 1], [-offset, offset])
+
+  return (
+    <motion.div ref={ref} style={{ y }} {...props}>
       {children}
     </motion.div>
   )

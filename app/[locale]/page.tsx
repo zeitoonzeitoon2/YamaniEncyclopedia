@@ -4,7 +4,7 @@ import React from 'react'
 import { PostCard } from '@/components/PostCard'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
-import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/ScrollAnimations'
+import { ScrollReveal, StaggerContainer, StaggerItem, Parallax } from '@/components/ScrollAnimations'
 import { getTopVotedApprovedPost } from '@/lib/postUtils'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -99,49 +99,65 @@ export default async function HomePage({ params: { locale } }: { params: { local
           )}
         </ScrollReveal>
 
-        <section className="mb-10">
-          <ScrollReveal direction="up" className="card rounded-xl p-6 md:p-8 space-y-6 shadow-xl border border-site-border/50 bg-gradient-to-br from-site-card to-site-secondary/30">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-warm-accent border-r-4 border-warm-accent pr-4">{t('aboutTitle')}</h2>
-            <div className="space-y-4">
-              <p className="text-site-text leading-8 text-lg opacity-90">
-                {t('aboutDesc1')}
-              </p>
-              <p className="text-site-text leading-8 opacity-80">
-                {t('aboutDesc2')}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 mt-8">
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-warm-accent flex items-center gap-2">
-                  <span className="w-2 h-2 bg-warm-accent rounded-full" />
-                  {t('whyImportantTitle')}
-                </h3>
-                <p className="text-site-text leading-7 opacity-80">
-                  {t('whyImportantDesc1')}
-                </p>
-                <p className="text-site-text leading-7 opacity-80">
-                  {t('whyImportantDesc2')}
-                </p>
+        <section className="mb-20">
+          <ScrollReveal direction="up" className="card rounded-2xl p-8 md:p-12 shadow-2xl border border-site-border/40 bg-gradient-to-br from-site-card via-site-card to-site-secondary/20 relative overflow-hidden">
+            {/* Background decorative elements for a floating feel */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-warm-accent/30 to-transparent" />
+            
+            <Parallax offset={30} className="space-y-8">
+              <div className="space-y-6">
+                <h2 className="text-3xl md:text-4xl font-extrabold text-warm-accent flex items-center gap-4">
+                  <span className="h-10 w-1.5 bg-warm-accent rounded-full" />
+                  {t('aboutTitle')}
+                </h2>
+                <div className="space-y-4 max-w-4xl">
+                  <p className="text-site-text leading-9 text-xl opacity-90 font-medium">
+                    {t('aboutDesc1')}
+                  </p>
+                  <p className="text-site-text leading-8 text-lg opacity-80">
+                    {t('aboutDesc2')}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-warm-accent flex items-center gap-2">
-                  <span className="w-2 h-2 bg-warm-accent rounded-full" />
-                  {t('structureTitle')}
-                </h3>
-                <StaggerContainer className="text-site-text leading-7 space-y-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <StaggerItem key={i}>
-                      <li className="list-none flex items-start gap-2 group">
-                        <span className="mt-2 w-1.5 h-1.5 bg-warm-accent/40 rounded-full group-hover:bg-warm-accent transition-colors" />
-                        <span className="opacity-80 group-hover:opacity-100 transition-opacity">{t(`structureItem${i}` as any)}</span>
-                      </li>
-                    </StaggerItem>
-                  ))}
-                </StaggerContainer>
+              <div className="grid lg:grid-cols-2 gap-12 mt-12 pt-12 border-t border-site-border/30">
+                <Parallax offset={60} className="space-y-6 bg-site-secondary/10 p-6 rounded-xl border border-site-border/20 shadow-inner">
+                  <h3 className="text-2xl font-bold text-warm-accent flex items-center gap-3">
+                    <div className="p-2 bg-warm-accent/10 rounded-lg">
+                      <span className="block w-3 h-3 bg-warm-accent rounded-full animate-pulse" />
+                    </div>
+                    {t('whyImportantTitle')}
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-site-text leading-8 text-lg opacity-85">
+                      {t('whyImportantDesc1')}
+                    </p>
+                    <p className="text-site-text leading-8 text-lg opacity-85">
+                      {t('whyImportantDesc2')}
+                    </p>
+                  </div>
+                </Parallax>
+
+                <Parallax offset={-40} className="space-y-6 bg-site-secondary/5 p-6 rounded-xl border border-site-border/10">
+                  <h3 className="text-2xl font-bold text-warm-accent flex items-center gap-3">
+                    <div className="p-2 bg-warm-accent/10 rounded-lg">
+                      <span className="block w-3 h-3 bg-warm-accent rounded-full" />
+                    </div>
+                    {t('structureTitle')}
+                  </h3>
+                  <StaggerContainer className="text-site-text leading-7 grid sm:grid-cols-1 gap-3">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                      <StaggerItem key={i}>
+                        <div className="flex items-start gap-3 group p-2 rounded-lg hover:bg-site-secondary/20 transition-all duration-300">
+                          <span className="mt-2 w-2 h-2 bg-warm-accent/40 rounded-full group-hover:bg-warm-accent group-hover:scale-125 transition-all" />
+                          <span className="text-lg opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all">{t(`structureItem${i}` as any)}</span>
+                        </div>
+                      </StaggerItem>
+                    ))}
+                  </StaggerContainer>
+                </Parallax>
               </div>
-            </div>
+            </Parallax>
           </ScrollReveal>
         </section>
 
