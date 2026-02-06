@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
         ...(title !== undefined ? { title } : {}),
         ...(content !== undefined ? { content } : {}),
         ...(orderIndex !== undefined ? { orderIndex } : {}),
-        ...(changeReason !== undefined ? { changeReason } : {}),
+        ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
       },
       select: { id: true },
     })

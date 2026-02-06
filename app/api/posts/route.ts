@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextRevisionNumber } from '@/lib/postUtils'
+import { Prisma } from '@prisma/client'
 
 // واجهة برمجة التطبيقات (API) الخاصة بالمنشورات
 
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
         relatedDomainIds,
         ...(finalArticlesData ? { articlesData: finalArticlesData } : {}),
         ...(originalPostId ? { originalPostId } : {}),
-        ...(changeReason ? { changeReason } : {}),
+        ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
         ...(changeSummary ? { changeSummary } : {}),
       }
     })
