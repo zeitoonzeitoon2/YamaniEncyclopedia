@@ -20,6 +20,7 @@
     "dashboard": "لوحة المتعلم",
     "examinerDashboard": "لوحة الممتحن",
     "enroll": "تسجيل",
+    "enrollButton": "سجل الآن",
     "loadError": "خطأ في جلب الدورات",
     "enrollError": "تعذر التسجيل",
     "enrollSuccess": "تم التسجيل بنجاح",

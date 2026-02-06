@@ -289,7 +289,38 @@ export default function CourseViewerPage() {
                     </button>
                   )}
                 </div>
-                {!enrollment && <div className="text-xs text-site-muted">{t('enrollHint')}</div>}
+                {!enrollment && (
+                  <div className="p-4 rounded-lg bg-warm-primary/10 border border-warm-primary/20 flex flex-col items-center gap-3">
+                    <div className="text-sm text-site-text">{t('enrollHint')}</div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setLoading(true)
+                          const res = await fetch('/api/academy/enroll', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ courseId }),
+                          })
+                          if (res.ok) {
+                            toast.success(t('enrollSuccess'))
+                            window.location.reload()
+                          } else {
+                            const data = await res.json()
+                            toast.error(data.error || t('enrollError'))
+                          }
+                        } catch (e) {
+                          toast.error(t('enrollError'))
+                        } finally {
+                          setLoading(false)
+                        }
+                      }}
+                      className="btn-primary"
+                    >
+                      {t('enrollButton')}
+                    </button>
+                  </div>
+                )}
                 <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 <div className="flex items-center justify-between gap-2">
                   <button

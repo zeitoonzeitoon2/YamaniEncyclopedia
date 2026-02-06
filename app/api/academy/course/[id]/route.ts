@@ -57,27 +57,42 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let progress: string[] = []
 
     if (userId) {
+      // Fetch each part separately with individual try-catches to be resilient to missing tables/columns
       try {
-        const [enrolled, completed, lastExam] = await Promise.all([
-          prisma.userCourse.findFirst({
-            where: { userId, courseId },
-            select: { status: true },
-          }),
-          prisma.courseChapterProgress.findMany({
-            where: { userId, chapter: { courseId } },
-            select: { chapterId: true },
-          }),
-          prisma.examSession.findFirst({
-            where: { studentId: userId, courseId },
-            orderBy: { createdAt: 'desc' },
-            select: { id: true, status: true, scheduledAt: true, meetLink: true, score: true, feedback: true }
-          })
-        ])
-        enrollment = enrolled ? { status: enrolled.status } : null
-        progress = completed.map((c) => c.chapterId)
-        return NextResponse.json({ course, chapters, enrollment, progress, lastExam })
-      } catch (dbError) {
-        console.error('[CourseAPI] Database error during authenticated fetch:', dbError)
+        const enrolled = await prisma.userCourse.findUnique({
+          where: { userId_courseId: { userId, courseId } },
+          select: { status: true },
+        }).catch(err => {
+          console.error('[CourseAPI] Error fetching enrollment:', err)
+          return null
+        })
+        
+        const completed = await prisma.courseChapterProgress.findMany({
+          where: { userId, chapter: { courseId } },
+          select: { chapterId: true },
+        }).catch(err => {
+          console.error('[CourseAPI] Error fetching progress:', err)
+          return []
+        })
+        
+        const lastExam = await prisma.examSession.findFirst({
+          where: { studentId: userId, courseId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, status: true, scheduledAt: true, meetLink: true, score: true, feedback: true }
+        }).catch(err => {
+          console.error('[CourseAPI] Error fetching lastExam:', err)
+          return null
+        })
+ 
+        return NextResponse.json({ 
+          course, 
+          chapters, 
+          enrollment: enrolled ? { status: enrolled.status } : null, 
+          progress: Array.isArray(completed) ? completed.map((c: any) => c.chapterId) : [], 
+          lastExam 
+        })
+      } catch (globalDbError) {
+        console.error('[CourseAPI] Global database error during authenticated fetch:', globalDbError)
         return NextResponse.json({ course, chapters, enrollment: null, progress: [] })
       }
     }

@@ -20,6 +20,7 @@
     "dashboard": "Learner Dashboard",
     "examinerDashboard": "Examiner Dashboard",
     "enroll": "Enroll",
+    "enrollButton": "Enroll Now",
     "loadError": "Failed to load courses",
     "enrollError": "Enrollment failed",
     "enrollSuccess": "Enrollment completed",
