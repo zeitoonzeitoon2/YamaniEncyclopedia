@@ -93,8 +93,8 @@ export function Header() {
   return (
     <header className="bg-site-card border-b border-site-border relative">
       <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center">
+        <div className="grid grid-cols-3 items-center gap-4">
+          <div className="flex items-center justify-start">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading">
               {logoUrl ? (
                 <Image src={logoUrl} alt={t('logoAlt')} width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
@@ -103,7 +103,7 @@ export function Header() {
             </Link>
           </div>
 
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center justify-center">
             <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
               <Link
                 href="/"
@@ -124,11 +124,11 @@ export function Header() {
             </div>
           </div>
 
-          <nav className="flex items-center">
+          <nav className="flex items-center justify-end">
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
-              <div className="flex items-center gap-0.5 p-0.5 bg-site-card/30 backdrop-blur-md border border-site-border/40 rounded-full shadow-sm hover:border-site-border/80 transition-colors">
+              <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
                 {mounted && (
                   <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
