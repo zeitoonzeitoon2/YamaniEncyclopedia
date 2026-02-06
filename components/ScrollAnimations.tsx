@@ -60,7 +60,7 @@ export const StaggerContainer = ({
   children: ReactNode
   delayChildren?: number
   staggerChildren?: number
-}) => {
+} & HTMLMotionProps<'div'>) => {
   return (
     <motion.div
       initial="initial"
@@ -85,10 +85,11 @@ export const StaggerContainer = ({
 export const StaggerItem = ({
   children,
   distance = 20,
+  ...props
 }: {
   children: ReactNode
   distance?: number
-}) => {
+} & HTMLMotionProps<'div'>) => {
   return (
     <motion.div
       variants={{
@@ -96,6 +97,7 @@ export const StaggerItem = ({
         animate: { opacity: 1, y: 0 },
       }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
+      {...props}
     >
       {children}
     </motion.div>
