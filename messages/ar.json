@@ -62,18 +62,19 @@
       "structure": "تحسين الهيكلية أو التصنيف",
       "style": "تصحيح لغوي أو توضيح"
     },
-    "summaryLabel": "ملخص التغيير",
+    "summaryLabel": "ملخص التغيير *",
     "summaryQuestion": "ما هو التغيير الذي قمت به باختصار؟",
-    "summaryPlaceholder": "صف باختصار ما قمت بإضافته أو تغييره...",
-    "evidenceLabel": "الأدلة والتعليل",
+    "summaryPlaceholder": "ما هو التغيير الذي قمت به باختصار؟",
+    "evidenceLabel": "الأدلة والتعليل *",
     "evidenceQuestion": "لماذا هذا التغيير ضروری؟ وما هي أدلتك؟",
-    "evidencePlaceholder": "اذكر المصادر أو اشرح المنطق العلمي وراء التعديل...",
+    "evidencePlaceholder": "لماذا هذا التغيير ضروری؟ وما هي أدلتك؟",
     "rebuttalLabel": "دفع الإشكالات",
     "rebuttalQuestion": "كيف ترد على أي اعتراضات منطقية محتملة على هذا التغيير؟",
-    "rebuttalPlaceholder": "استبق الاعتراضات المحتملة ووضح لماذا يظل تعديلك هو الأصح...",
+    "rebuttalPlaceholder": "كيف ترد على أي اعتراضات منطقية محتملة على هذا التغيير؟",
     "submit": "تأكيد الإرسال",
     "cancel": "إلغاء",
-    "optional": "اختياري"
+    "optional": "اختياری",
+    "validationError": "يرجى ملء الحقول الإلزامية (المميزة بـ *)."
   },
   "admin": {
     "dashboard": {

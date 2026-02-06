@@ -62,18 +62,19 @@
       "structure": "Structural/Categorization Improvement",
       "style": "Language/Clarification"
     },
-    "summaryLabel": "Change Summary",
+    "summaryLabel": "Change Summary *",
     "summaryQuestion": "Briefly describe what you added or changed.",
-    "summaryPlaceholder": "Describe the core of your change...",
-    "evidenceLabel": "Evidence and Reasoning",
+    "summaryPlaceholder": "Briefly describe what you added or changed.",
+    "evidenceLabel": "Evidence and Reasoning *",
     "evidenceQuestion": "Why is this change necessary? What is your evidence?",
-    "evidencePlaceholder": "Cite sources or explain the scientific logic...",
+    "evidencePlaceholder": "Why is this change necessary? What is your evidence?",
     "rebuttalLabel": "Rebuttal",
     "rebuttalQuestion": "How do you respond to potential logical critiques?",
-    "rebuttalPlaceholder": "Anticipate objections and explain why your edit holds...",
+    "rebuttalPlaceholder": "How do you respond to potential logical critiques?",
     "submit": "Confirm Submission",
     "cancel": "Cancel",
-    "optional": "Optional"
+    "optional": "Optional",
+    "validationError": "Please fill in the required fields (marked with *)."
   },
   "admin": {
     "dashboard": {

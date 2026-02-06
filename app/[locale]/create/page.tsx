@@ -47,7 +47,7 @@ function CreatePost() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSummaryOpen, setIsSummaryOpen] = useState(false)
   const [argumentation, setArgumentation] = useState({
-    type: 'fact',
+    type: '',
     summary: '',
     evidence: '',
     rebuttal: ''
@@ -219,7 +219,7 @@ function CreatePost() {
       return
     }
     if (!argumentation.summary.trim() || !argumentation.evidence.trim()) {
-      toast.error(tArg('evidenceQuestion')) // Or a more specific error
+      toast.error(tArg('validationError'))
       return
     }
     setIsSubmitting(true)
@@ -246,7 +246,7 @@ function CreatePost() {
           ],
           edges: [],
         })
-        setArgumentation({ type: 'fact', summary: '', evidence: '', rebuttal: '' })
+        setArgumentation({ type: '', summary: '', evidence: '', rebuttal: '' })
         setIsSummaryOpen(false)
         router.push('/')
       } else {
@@ -305,46 +305,47 @@ function CreatePost() {
           </div>
           <div className="p-6 space-y-6">
             <div>
-              <label className="block text-sm font-medium text-site-text mb-2">{tArg('typeLabel')}</label>
-              <select
-                value={argumentation.type}
-                onChange={(e) => setArgumentation({ ...argumentation, type: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-              >
-                <option value="fact">{tArg('types.fact')}</option>
-                <option value="logic">{tArg('types.logic')}</option>
-                <option value="structure">{tArg('types.structure')}</option>
-                <option value="style">{tArg('types.style')}</option>
-              </select>
+              <label className="block text-sm font-medium text-site-text mb-2">{tArg('typeLabel')} ({tArg('optional')})</label>
+              <div className="flex flex-wrap gap-2">
+                {['fact', 'logic', 'structure', 'style'].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setArgumentation(prev => ({ ...prev, type: prev.type === type ? '' : type }))}
+                    className={`px-3 py-2 text-sm rounded-lg border transition-all ${
+                      argumentation.type === type 
+                        ? 'border-warm-primary bg-warm-primary/10 text-warm-accent' 
+                        : 'border-gray-700 bg-site-card/40 text-site-muted hover:border-gray-600'
+                    }`}
+                  >
+                    {tArg(`types.${type}`)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-site-text mb-1">{tArg('summaryLabel')}</label>
-              <div className="text-xs text-site-muted mb-2">{tArg('summaryQuestion')}</div>
-              <input
-                type="text"
+              <label className="block text-sm font-medium text-site-text mb-2">{tArg('summaryLabel')}</label>
+              <textarea
                 value={argumentation.summary}
                 onChange={(e) => setArgumentation({ ...argumentation, summary: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[80px]"
                 placeholder={tArg('summaryPlaceholder')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-site-text mb-1">{tArg('evidenceLabel')}</label>
-              <div className="text-xs text-site-muted mb-2">{tArg('evidenceQuestion')}</div>
+              <label className="block text-sm font-medium text-site-text mb-2">{tArg('evidenceLabel')}</label>
               <textarea
                 value={argumentation.evidence}
                 onChange={(e) => setArgumentation({ ...argumentation, evidence: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                rows={4}
+                className="w-full p-2.5 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[80px]"
                 placeholder={tArg('evidencePlaceholder')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-site-text mb-1">{tArg('rebuttalLabel')}</label>
-              <div className="text-xs text-site-muted mb-2">{tArg('rebuttalQuestion')}</div>
+              <label className="block text-sm font-medium text-site-text mb-2">{tArg('rebuttalLabel')} ({tArg('optional')})</label>
               <textarea
                 value={argumentation.rebuttal}
                 onChange={(e) => setArgumentation({ ...argumentation, rebuttal: e.target.value })}

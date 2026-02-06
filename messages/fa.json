@@ -62,18 +62,19 @@
       "structure": "بهبود ساختار یا دسته‌بندی",
       "style": "اصلاح لغوی یا شفاف‌سازی"
     },
-    "summaryLabel": "خلاصه تغییر",
+    "summaryLabel": "خلاصه تغییر *",
     "summaryQuestion": "تغییر ایجاد شده را به طور خلاصه شرح دهید.",
-    "summaryPlaceholder": "هسته اصلی تغییر خود را شرح دهید...",
-    "evidenceLabel": "شواهد و استدلال",
+    "summaryPlaceholder": "تغییر ایجاد شده را به طور خلاصه شرح دهید.",
+    "evidenceLabel": "شواهد و استدلال *",
     "evidenceQuestion": "چرا این تغییر ضروری است؟ شواهد شما چیست؟",
-    "evidencePlaceholder": "منابع را ذکر کنید یا منطق علمی پشت تغییر را توضیح دهید...",
+    "evidencePlaceholder": "چرا این تغییر ضروری است؟ شواهد شما چیست؟",
     "rebuttalLabel": "پاسخ به انتقادات",
     "rebuttalQuestion": "چگونه به انتقادات منطقی احتمالی پاسخ می‌دهید؟",
-    "rebuttalPlaceholder": "اعتراضات احتمالی را پیش‌بینی کرده و دلیل درستی تغییر خود را توضیح دهید...",
+    "rebuttalPlaceholder": "چگونه به انتقادات منطقی احتمالی پاسخ می‌دهید؟",
     "submit": "تأیید و ارسال",
     "cancel": "لغو",
-    "optional": "اختیاری"
+    "optional": "اختیاری",
+    "validationError": "لطفاً موارد اجباری (ستاره‌دار) را پر کنید."
   },
   "admin": {
     "dashboard": {

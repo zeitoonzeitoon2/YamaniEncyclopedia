@@ -1110,26 +1110,9 @@ export default function SupervisorDashboard() {
                             </div>
                             <h4 className="font-bold text-base heading m-0 text-warm-accent">{tArg('title')}</h4>
                           </div>
-                          
-                          <div className="flex items-center gap-2 bg-site-bg/40 px-3 py-1.5 rounded-lg border border-warm-primary/10">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
-                            <span className="text-sm font-medium text-site-text">
-                              {tArg(`types.${selectedPost.changeReason.type}`)}
-                            </span>
-                          </div>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Left Side: Evidence (2/3) */}
-                          <div className="md:col-span-2 space-y-3 order-2 md:order-1">
-                            <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
-                              <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
-                              <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
-                                {selectedPost.changeReason.evidence}
-                              </div>
-                            </div>
-                          </div>
-
                           {/* Right Side: Summary (1/3) */}
                           <div className="md:col-span-1 space-y-3 order-1 md:order-2">
                             <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
@@ -1140,13 +1123,33 @@ export default function SupervisorDashboard() {
                             </div>
                           </div>
 
-                          {/* Rebuttal: Full width if exists */}
-                          {selectedPost.changeReason.rebuttal && (
+                          {/* Left Side: Evidence (2/3) */}
+                          <div className="md:col-span-2 space-y-3 order-2 md:order-1">
+                            <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
+                              <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
+                                {selectedPost.changeReason.evidence}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Rebuttal: Full width if exists and not empty */}
+                          {selectedPost.changeReason.rebuttal && selectedPost.changeReason.rebuttal.trim() !== '' && (
                             <div className="md:col-span-3 bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 order-3">
                               <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('rebuttalLabel')}</div>
                               <div className="text-sm whitespace-pre-wrap italic text-site-text/90">
                                 {selectedPost.changeReason.rebuttal}
                               </div>
+                            </div>
+                          )}
+
+                          {/* Change Type: Only if not empty */}
+                          {selectedPost.changeReason.type && selectedPost.changeReason.type.trim() !== '' && (
+                            <div className="md:col-span-3 bg-site-bg/40 p-2 rounded-lg border border-warm-primary/10 order-4 flex items-center gap-2">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
+                              <span className="text-xs font-medium text-warm-primary px-2 py-0.5 bg-warm-primary/10 rounded-full">
+                                {tArg(`types.${selectedPost.changeReason.type}`)}
+                              </span>
                             </div>
                           )}
                         </div>

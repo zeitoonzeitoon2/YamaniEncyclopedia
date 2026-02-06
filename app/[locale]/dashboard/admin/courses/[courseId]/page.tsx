@@ -73,7 +73,7 @@ export default function AdminCourseChaptersPage() {
   const [mode, setMode] = useState<EditorMode>('new')
   const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '' })
   const [argumentation, setArgumentation] = useState({
-    type: 'fact',
+    type: '',
     summary: '',
     evidence: '',
     rebuttal: ''
@@ -765,26 +765,9 @@ export default function AdminCourseChaptersPage() {
                         </div>
                         <h4 className="font-bold text-base heading m-0 text-warm-accent">{tArg('title')}</h4>
                       </div>
-                      
-                      <div className="flex items-center gap-2 bg-site-bg/40 px-3 py-1.5 rounded-lg border border-warm-primary/10">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
-                        <span className="text-sm font-medium text-site-text">
-                          {tArg(`types.${selectedChapter.changeReason.type}`)}
-                        </span>
-                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Left Side: Evidence (2/3) */}
-                      <div className="md:col-span-2 space-y-3 order-2 md:order-1">
-                        <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
-                          <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
-                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
-                            {selectedChapter.changeReason.evidence}
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Right Side: Summary (1/3) */}
                       <div className="md:col-span-1 space-y-3 order-1 md:order-2">
                         <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
@@ -795,13 +778,33 @@ export default function AdminCourseChaptersPage() {
                         </div>
                       </div>
 
-                      {/* Rebuttal: Full width if exists */}
-                      {selectedChapter.changeReason.rebuttal && (
+                      {/* Left Side: Evidence (2/3) */}
+                      <div className="md:col-span-2 space-y-3 order-2 md:order-1">
+                        <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
+                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
+                            {selectedChapter.changeReason.evidence}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rebuttal: Full width if exists and not empty */}
+                      {selectedChapter.changeReason.rebuttal && selectedChapter.changeReason.rebuttal.trim() !== '' && (
                         <div className="md:col-span-3 bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 order-3">
                           <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('rebuttalLabel')}</div>
                           <div className="text-sm whitespace-pre-wrap italic text-site-text/90">
                             {selectedChapter.changeReason.rebuttal}
                           </div>
+                        </div>
+                      )}
+
+                      {/* Change Type: Only if not empty */}
+                      {selectedChapter.changeReason.type && selectedChapter.changeReason.type.trim() !== '' && (
+                        <div className="md:col-span-3 bg-site-bg/40 p-2 rounded-lg border border-warm-primary/10 order-4 flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
+                          <span className="text-xs font-medium text-warm-primary px-2 py-0.5 bg-warm-primary/10 rounded-full">
+                            {tArg(`types.${selectedChapter.changeReason.type}`)}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -879,13 +882,13 @@ export default function AdminCourseChaptersPage() {
             <div className="p-6 overflow-y-auto space-y-4">
               {/* Change Type */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-site-text">{tArg('typeLabel')}</label>
+                <label className="text-sm font-medium text-site-text">{tArg('typeLabel')} ({tArg('optional')})</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['fact', 'logic', 'structure', 'style'].map((type) => (
                     <button
                       key={type}
                       type="button"
-                      onClick={() => setArgumentation(prev => ({ ...prev, type }))}
+                      onClick={() => setArgumentation(prev => ({ ...prev, type: prev.type === type ? '' : type }))}
                       className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                         argumentation.type === type 
                           ? 'border-warm-primary bg-warm-primary/10 text-warm-accent' 
@@ -905,7 +908,7 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.summary}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, summary: e.target.value }))}
                   className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
-                  placeholder={tArg('summaryQuestion')}
+                  placeholder={tArg('summaryPlaceholder')}
                 />
               </div>
 
@@ -916,7 +919,7 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.evidence}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, evidence: e.target.value }))}
                   className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
-                  placeholder={tArg('evidenceQuestion')}
+                  placeholder={tArg('evidencePlaceholder')}
                 />
               </div>
 
@@ -927,7 +930,7 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.rebuttal}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, rebuttal: e.target.value }))}
                   className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[60px]"
-                  placeholder={tArg('rebuttalQuestion')}
+                  placeholder={tArg('rebuttalPlaceholder')}
                 />
               </div>
             </div>
