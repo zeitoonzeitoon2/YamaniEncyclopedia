@@ -1102,41 +1102,49 @@ export default function SupervisorDashboard() {
                   <div className="mb-6">
                     {/* Reasoning Card */}
                     {selectedPost.changeReason && (
-                      <div className="mb-6 p-5 rounded-xl border border-indigo-200 bg-indigo-50/50 text-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-200 dark:border-indigo-800 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 dark:text-indigo-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                      <div className="mb-6 p-4 rounded-xl border border-warm-primary/20 bg-warm-primary/5 text-site-text shadow-sm backdrop-blur-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b border-warm-primary/10 pb-3 gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-warm-primary/10 rounded-lg text-warm-accent">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            </div>
+                            <h4 className="font-bold text-base heading m-0 text-warm-accent">{tArg('title')}</h4>
                           </div>
-                          <h4 className="font-bold text-lg heading m-0">{tArg('formTitle')}</h4>
+                          
+                          <div className="flex items-center gap-2 bg-site-bg/40 px-3 py-1.5 rounded-lg border border-warm-primary/10">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
+                            <span className="text-sm font-medium text-site-text">
+                              {tArg(`types.${selectedPost.changeReason.type}`)}
+                            </span>
+                          </div>
                         </div>
                         
-                        <div className="space-y-4">
-                          <div className="flex flex-wrap gap-4">
-                            <div>
-                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('typeLabel')}</div>
-                              <div className="text-sm font-medium bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-md inline-block border border-indigo-100 dark:border-indigo-800">
-                                {tArg(`types.${selectedPost.changeReason.type}`)}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Left Side: Evidence (2/3) */}
+                          <div className="md:col-span-2 space-y-3 order-2 md:order-1">
+                            <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
+                              <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
+                                {selectedPost.changeReason.evidence}
                               </div>
                             </div>
-                            <div className="flex-1 min-w-[200px]">
-                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('summaryLabel')}</div>
-                              <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
+                          </div>
+
+                          {/* Right Side: Summary (1/3) */}
+                          <div className="md:col-span-1 space-y-3 order-1 md:order-2">
+                            <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('summaryLabel')}</div>
+                              <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
                                 {selectedPost.changeReason.summary}
                               </div>
                             </div>
                           </div>
-                          
-                          <div>
-                            <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('evidenceLabel')}</div>
-                            <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
-                              {selectedPost.changeReason.evidence}
-                            </div>
-                          </div>
-                          
+
+                          {/* Rebuttal: Full width if exists */}
                           {selectedPost.changeReason.rebuttal && (
-                            <div>
-                              <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('rebuttalLabel')}</div>
-                              <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap italic">
+                            <div className="md:col-span-3 bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 order-3">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('rebuttalLabel')}</div>
+                              <div className="text-sm whitespace-pre-wrap italic text-site-text/90">
                                 {selectedPost.changeReason.rebuttal}
                               </div>
                             </div>

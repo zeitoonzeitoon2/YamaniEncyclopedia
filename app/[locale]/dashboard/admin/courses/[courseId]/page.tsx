@@ -757,41 +757,49 @@ export default function AdminCourseChaptersPage() {
                 
                 {/* Reasoning Card */}
                 {selectedChapter?.changeReason && (
-                  <div className="mb-6 p-5 rounded-xl border border-indigo-200 bg-indigo-50/50 text-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-200 dark:border-indigo-800 shadow-sm">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 dark:text-indigo-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  <div className="mb-6 p-4 rounded-xl border border-warm-primary/20 bg-warm-primary/5 text-site-text shadow-sm backdrop-blur-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b border-warm-primary/10 pb-3 gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-warm-primary/10 rounded-lg text-warm-accent">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        </div>
+                        <h4 className="font-bold text-base heading m-0 text-warm-accent">{tArg('title')}</h4>
                       </div>
-                      <h4 className="font-bold text-lg heading m-0">{tArg('formTitle')}</h4>
+                      
+                      <div className="flex items-center gap-2 bg-site-bg/40 px-3 py-1.5 rounded-lg border border-warm-primary/10">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
+                        <span className="text-sm font-medium text-site-text">
+                          {tArg(`types.${selectedChapter.changeReason.type}`)}
+                        </span>
+                      </div>
                     </div>
                     
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-4">
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('typeLabel')}</div>
-                          <div className="text-sm font-medium bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-md inline-block border border-indigo-100 dark:border-indigo-800">
-                            {tArg(`types.${selectedChapter.changeReason.type}`)}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Left Side: Evidence (2/3) */}
+                      <div className="md:col-span-2 space-y-3 order-2 md:order-1">
+                        <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
+                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
+                            {selectedChapter.changeReason.evidence}
                           </div>
                         </div>
-                        <div className="flex-1 min-w-[200px]">
-                          <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('summaryLabel')}</div>
-                          <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
+                      </div>
+
+                      {/* Right Side: Summary (1/3) */}
+                      <div className="md:col-span-1 space-y-3 order-1 md:order-2">
+                        <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('summaryLabel')}</div>
+                          <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
                             {selectedChapter.changeReason.summary}
                           </div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('evidenceLabel')}</div>
-                        <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap">
-                          {selectedChapter.changeReason.evidence}
-                        </div>
-                      </div>
-                      
+
+                      {/* Rebuttal: Full width if exists */}
                       {selectedChapter.changeReason.rebuttal && (
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1">{tArg('rebuttalLabel')}</div>
-                          <div className="text-sm bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800 whitespace-pre-wrap italic">
+                        <div className="md:col-span-3 bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 order-3">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('rebuttalLabel')}</div>
+                          <div className="text-sm whitespace-pre-wrap italic text-site-text/90">
                             {selectedChapter.changeReason.rebuttal}
                           </div>
                         </div>
@@ -862,7 +870,7 @@ export default function AdminCourseChaptersPage() {
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-700/50 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-site-text heading">{tArg('formTitle')}</h2>
+              <h2 className="text-xl font-bold text-site-text heading">{tArg('title')}</h2>
               <button onClick={() => setShowArgModal(false)} className="text-site-muted hover:text-site-text">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
@@ -873,14 +881,14 @@ export default function AdminCourseChaptersPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-site-text">{tArg('typeLabel')}</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['fact', 'policy', 'value', 'interpretation'].map((type) => (
+                  {['fact', 'logic', 'structure', 'style'].map((type) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setArgumentation(prev => ({ ...prev, type }))}
                       className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                         argumentation.type === type 
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
+                          ? 'border-warm-primary bg-warm-primary/10 text-warm-accent' 
                           : 'border-gray-700 bg-site-card/40 text-site-muted hover:border-gray-600'
                       }`}
                     >
@@ -896,7 +904,7 @@ export default function AdminCourseChaptersPage() {
                 <textarea
                   value={argumentation.summary}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, summary: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px]"
+                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
                   placeholder={tArg('summaryQuestion')}
                 />
               </div>
@@ -907,7 +915,7 @@ export default function AdminCourseChaptersPage() {
                 <textarea
                   value={argumentation.evidence}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, evidence: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px]"
+                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
                   placeholder={tArg('evidenceQuestion')}
                 />
               </div>
@@ -918,7 +926,7 @@ export default function AdminCourseChaptersPage() {
                 <textarea
                   value={argumentation.rebuttal}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, rebuttal: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-indigo-500 outline-none min-h-[60px]"
+                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[60px]"
                   placeholder={tArg('rebuttalQuestion')}
                 />
               </div>

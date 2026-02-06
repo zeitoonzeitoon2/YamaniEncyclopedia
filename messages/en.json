@@ -54,7 +54,7 @@
     "en": "English"
   },
   "argumentation": {
-    "title": "Edit Justification (Toulmin Model)",
+    "title": "Editor Explanations",
     "typeLabel": "Change Type",
     "types": {
       "fact": "Adding or Correcting Facts",
@@ -62,17 +62,18 @@
       "structure": "Structural/Categorization Improvement",
       "style": "Language/Clarification"
     },
-    "summaryLabel": "Change Summary (The Claim)",
+    "summaryLabel": "Change Summary",
     "summaryQuestion": "Briefly describe what you added or changed.",
     "summaryPlaceholder": "Describe the core of your change...",
-    "evidenceLabel": "Evidence and Reasoning (The Warrant)",
+    "evidenceLabel": "Evidence and Reasoning",
     "evidenceQuestion": "Why is this change necessary? What is your evidence?",
     "evidencePlaceholder": "Cite sources or explain the scientific logic...",
-    "rebuttalLabel": "Rebuttal (Optional)",
+    "rebuttalLabel": "Rebuttal",
     "rebuttalQuestion": "How do you respond to potential logical critiques?",
     "rebuttalPlaceholder": "Anticipate objections and explain why your edit holds...",
     "submit": "Confirm Submission",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "optional": "Optional"
   },
   "admin": {
     "dashboard": {
