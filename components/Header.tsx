@@ -16,6 +16,7 @@ export function Header() {
   const [displayRole, setDisplayRole] = React.useState<string | undefined>(undefined)
   const [isDomainExpert, setIsDomainExpert] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(null)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
   const router = useRouter()
   const rawPathname = usePathname()
@@ -37,6 +38,19 @@ export function Header() {
 
   React.useEffect(() => {
     setMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    let active = true
+    fetch('/api/admin/settings?type=logo', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setLogoUrl(data?.url || null)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
   }, [])
 
   React.useEffect(() => {
@@ -80,8 +94,11 @@ export function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center">
-            <Link href="/" className="text-2xl font-bold text-site-text heading">
-              {t('title')}
+            <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-site-text heading">
+              {logoUrl ? (
+                <Image src={logoUrl} alt={t('logoAlt')} width={36} height={36} className="h-9 w-9 object-contain" unoptimized />
+              ) : null}
+              <span>{t('title')}</span>
             </Link>
           </div>
 

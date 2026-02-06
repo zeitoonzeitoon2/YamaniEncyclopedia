@@ -100,6 +100,10 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
 
   const [loadingDomains, setLoadingDomains] = useState(true)
   const [roots, setRoots] = useState<DomainNode[]>([])
@@ -184,6 +188,7 @@ export default function AdminDashboard() {
     }
     if (session.user?.role === 'ADMIN') {
       fetchHeader()
+      fetchLogo()
     }
     fetchDomains()
   }, [session, status, router])
@@ -198,6 +203,16 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchLogo = async () => {
+    try {
+      const res = await fetch('/api/admin/settings?type=logo', { cache: 'no-store' })
+      const data = await res.json()
+      setLogoUrl(data.url || null)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setSelectedFile(file)
@@ -206,6 +221,17 @@ export default function AdminDashboard() {
       setPreviewUrl(url)
     } else {
       setPreviewUrl(null)
+    }
+  }
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setLogoFile(file)
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setLogoPreviewUrl(url)
+    } else {
+      setLogoPreviewUrl(null)
     }
   }
 
@@ -233,6 +259,34 @@ export default function AdminDashboard() {
       toast.error(e.message || t('uploadErrorFallback'))
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleLogoUpload = async () => {
+    if (!logoFile) {
+      toast.error(t('uploadSelectFileFirst'))
+      return
+    }
+    try {
+      setLogoUploading(true)
+      const form = new FormData()
+      form.append('file', logoFile)
+      form.append('type', 'logo')
+      const res = await fetch('/api/admin/settings', { method: 'POST', body: form })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || t('uploadFailed'))
+      }
+      const data = await res.json()
+      setLogoUrl(data.url)
+      setLogoPreviewUrl(null)
+      setLogoFile(null)
+      toast.success(t('uploadLogoSuccess'))
+    } catch (e: any) {
+      console.error(e)
+      toast.error(e.message || t('uploadErrorFallback'))
+    } finally {
+      setLogoUploading(false)
     }
   }
 
@@ -672,6 +726,30 @@ export default function AdminDashboard() {
               <input type="file" accept="image/*" onChange={handleFileChange} className="text-site-text" />
               <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
                 {uploading ? t('uploading') : t('uploadHeaderButton')}
+              </button>
+            </div>
+          </div>
+        )}
+        {session?.user?.role === 'ADMIN' && (
+          <div className="card mb-8">
+            <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('logoSettingsTitle')}</h2>
+            <p className="text-site-muted text-sm mb-3">{t('logoHint')}</p>
+            {logoUrl && (
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative w-20 h-20">
+                  <Image src={logoUrl} alt={t('logoAlt')} fill className="object-contain" unoptimized />
+                </div>
+              </div>
+            )}
+            {logoPreviewUrl && (
+              <div className="flex items-center gap-4 mb-4 ring-2 ring-warm-accent rounded-lg p-3">
+                <img src={logoPreviewUrl} alt={t('previewAlt')} className="w-20 h-20 object-contain" />
+              </div>
+            )}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+              <input type="file" accept="image/*" onChange={handleLogoFileChange} className="text-site-text" />
+              <button onClick={handleLogoUpload} disabled={logoUploading || !logoFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
+                {logoUploading ? t('uploading') : t('uploadLogoButton')}
               </button>
             </div>
           </div>

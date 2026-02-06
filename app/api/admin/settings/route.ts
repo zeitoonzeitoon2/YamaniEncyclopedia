@@ -10,9 +10,15 @@ export const revalidate = 0
 
 const HEADER_KEY = 'header_image'
 const LEGACY_HEADER_KEY = 'home.headerImage'
+const LOGO_KEY = 'site.logo'
 const BUCKET_NAME = process.env.SUPABASE_PUBLIC_BUCKET || 'public-files'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const type = request.nextUrl.searchParams.get('type') || 'header'
+  if (type === 'logo') {
+    const logo = await prisma.setting.findUnique({ where: { key: LOGO_KEY } })
+    return NextResponse.json({ url: logo?.value || null })
+  }
   const primary = await prisma.setting.findUnique({ where: { key: HEADER_KEY } })
   if (primary?.value) return NextResponse.json({ url: primary.value })
   const legacy = await prisma.setting.findUnique({ where: { key: LEGACY_HEADER_KEY } })
@@ -43,6 +49,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'فایل ارسال نشده است' }, { status: 400 })
     }
 
+    const type = String(formData.get('type') || 'header')
+    if (type !== 'header' && type !== 'logo') {
+      return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
+    }
+
     const MAX_SIZE = 5 * 1024 * 1024
     if ((file as any).size > MAX_SIZE) {
       return NextResponse.json({ error: 'حجم فایل باید حداکثر 5 مگابایت باشد' }, { status: 400 })
@@ -57,7 +68,7 @@ export async function POST(request: NextRequest) {
     const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_')
     const ext = safeName.includes('.') ? safeName.split('.').pop() : undefined
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext ? '.' + ext : ''}`
-    const path = `header-images/${filename}`
+    const path = `${type === 'logo' ? 'site-logos' : 'header-images'}/${filename}`
 
     const { error: uploadError } = await supabase
       .storage
@@ -75,20 +86,28 @@ export async function POST(request: NextRequest) {
 
     const publicUrl = data.publicUrl
 
-    await prisma.$transaction([
-      prisma.setting.upsert({
-        where: { key: HEADER_KEY },
-        create: { key: HEADER_KEY, value: publicUrl },
+    if (type === 'logo') {
+      await prisma.setting.upsert({
+        where: { key: LOGO_KEY },
+        create: { key: LOGO_KEY, value: publicUrl },
         update: { value: publicUrl },
-      }),
-      prisma.setting.upsert({
-        where: { key: LEGACY_HEADER_KEY },
-        create: { key: LEGACY_HEADER_KEY, value: publicUrl },
-        update: { value: publicUrl },
-      }),
-    ])
+      })
+    } else {
+      await prisma.$transaction([
+        prisma.setting.upsert({
+          where: { key: HEADER_KEY },
+          create: { key: HEADER_KEY, value: publicUrl },
+          update: { value: publicUrl },
+        }),
+        prisma.setting.upsert({
+          where: { key: LEGACY_HEADER_KEY },
+          create: { key: LEGACY_HEADER_KEY, value: publicUrl },
+          update: { value: publicUrl },
+        }),
+      ])
+    }
 
-    return NextResponse.json({ url: publicUrl })
+    return NextResponse.json({ url: publicUrl, type })
   } catch (error) {
     console.error('Admin settings upload error:', error)
     const message = error instanceof Error ? error.message : (typeof error === 'string' ? error : 'Unknown error')
