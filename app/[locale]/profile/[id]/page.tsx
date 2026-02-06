@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Link } from '@/lib/navigation'
+import { Header } from '@/components/Header'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -27,8 +28,11 @@ export default async function ProfilePage({
   })
   if (!user) {
     return (
-      <div className="min-h-screen bg-site-bg flex items-center justify-center">
-        <div className="text-site-text">{t('notFound')}</div>
+      <div className="min-h-screen bg-site-bg">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-site-text">{t('notFound')}</div>
+        </div>
       </div>
     )
   }
@@ -57,6 +61,7 @@ export default async function ProfilePage({
 
   return (
     <div className="min-h-screen bg-site-bg">
+      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-start gap-6 mb-8">
           {user.image ? (
