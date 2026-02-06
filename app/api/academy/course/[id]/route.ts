@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     let progress: string[] = []
 
     if (userId) {
-      const [enrolled, completed] = await Promise.all([
+      const [enrolled, completed, lastExam] = await Promise.all([
         prisma.userCourse.findUnique({
           where: { userId_courseId: { userId, courseId } },
           select: { status: true },
@@ -66,9 +66,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           where: { userId, chapter: { courseId } },
           select: { chapterId: true },
         }),
+        prisma.examSession.findFirst({
+          where: { studentId: userId, courseId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, status: true, scheduledAt: true, meetLink: true, score: true, feedback: true }
+        })
       ])
       enrollment = enrolled ? { status: enrolled.status } : null
       progress = completed.map((c) => c.chapterId)
+      return NextResponse.json({ course, chapters, enrollment, progress, lastExam })
     }
 
     return NextResponse.json({ course, chapters, enrollment, progress })

@@ -33,6 +33,14 @@ type CourseViewerResponse = {
   chapters: Chapter[]
   enrollment: Enrollment
   progress: string[]
+  lastExam?: {
+    id: string
+    status: string
+    scheduledAt: string | null
+    meetLink: string | null
+    score: number | null
+    feedback: string | null
+  } | null
 }
 
 export default function CourseViewerPage() {
@@ -45,8 +53,10 @@ export default function CourseViewerPage() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [enrollment, setEnrollment] = useState<Enrollment>(null)
   const [progress, setProgress] = useState<string[]>([])
+  const [lastExam, setLastExam] = useState<CourseViewerResponse['lastExam']>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [markingId, setMarkingId] = useState<string | null>(null)
+  const [requestingExam, setRequestingExam] = useState(false)
   const [previewHtml, setPreviewHtml] = useState('')
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
@@ -57,6 +67,7 @@ export default function CourseViewerPage() {
     [chapters, currentIndex]
   )
   const completedCount = progress.filter((id) => chapters.some((c) => c.id === id)).length
+  const allCompleted = chapters.length > 0 && completedCount === chapters.length
 
   useEffect(() => {
     if (!courseId) return
@@ -74,6 +85,7 @@ export default function CourseViewerPage() {
         setChapters(nextChapters)
         setEnrollment(payload.enrollment ?? null)
         setProgress(Array.isArray(payload.progress) ? payload.progress : [])
+        setLastExam(payload.lastExam || null)
         if (nextChapters.length > 0) {
           setSelectedId((prev) => (prev && nextChapters.some((c) => c.id === prev) ? prev : nextChapters[0].id))
         }
@@ -112,6 +124,30 @@ export default function CourseViewerPage() {
       toast.error(msg)
     } finally {
       setMarkingId(null)
+    }
+  }
+
+  const requestExam = async () => {
+    if (!courseId || requestingExam) return
+    try {
+      setRequestingExam(true)
+      const res = await fetch('/api/academy/exams/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; examRequest?: any }
+      if (!res.ok) {
+        toast.error(payload.error || t('examRequestError'))
+        return
+      }
+      setLastExam(payload.examRequest)
+      toast.success(t('examRequestSuccess'))
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t('examRequestError')
+      toast.error(msg)
+    } finally {
+      setRequestingExam(false)
     }
   }
 
@@ -176,6 +212,61 @@ export default function CourseViewerPage() {
                     )
                   })}
                 </div>
+
+                {enrollment && allCompleted && (
+                  <div className="pt-4 border-t border-site-border space-y-3">
+                    <h4 className="text-sm font-bold text-site-text">{t('examSectionTitle')}</h4>
+                    {!lastExam ? (
+                      <button
+                        type="button"
+                        onClick={requestExam}
+                        disabled={requestingExam}
+                        className="btn-primary w-full text-sm"
+                      >
+                        {requestingExam ? '...' : t('requestExamButton')}
+                      </button>
+                    ) : (
+                      <div className="p-3 rounded-lg bg-warm-primary/10 border border-warm-primary/20 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-site-muted">{t('examStatus')}:</span>
+                          <span className="font-bold text-warm-primary">{t(`examStatus_${lastExam.status}` as any)}</span>
+                        </div>
+                        {lastExam.scheduledAt && (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-site-muted">{t('examDate')}:</span>
+                            <span className="text-site-text">{new Date(lastExam.scheduledAt).toLocaleString()}</span>
+                          </div>
+                        )}
+                        {lastExam.meetLink && (
+                          <a
+                            href={lastExam.meetLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-secondary w-full text-xs text-center block"
+                          >
+                            {t('joinExam')}
+                          </a>
+                        )}
+                        {lastExam.status === 'FAILED' && (
+                          <button
+                            type="button"
+                            onClick={requestExam}
+                            disabled={requestingExam}
+                            className="btn-primary w-full text-sm mt-2"
+                          >
+                            {requestingExam ? '...' : t('requestExamButton')}
+                          </button>
+                        )}
+                        {lastExam.status === 'PASSED' && lastExam.score !== null && (
+                          <div className="flex items-center justify-between text-xs pt-1 border-t border-warm-primary/20">
+                            <span className="text-site-muted">{t('examScore')}:</span>
+                            <span className="font-bold text-green-500">{lastExam.score}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

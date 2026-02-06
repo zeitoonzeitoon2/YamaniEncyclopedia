@@ -128,6 +128,7 @@ model Course {
   votes       CourseVote[]
   chapters    CourseChapter[]
   requirements DomainRequirement[]
+  examSessions ExamSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -235,16 +236,21 @@ model DomainRequirement {
 
 model ExamSession {
   id         String   @id @default(cuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id])
   studentId  String
   student    User     @relation("ExamSessionStudent", fields: [studentId], references: [id])
-  examinerId String
-  examiner   User     @relation("ExamSessionExaminer", fields: [examinerId], references: [id])
+  examinerId String?
+  examiner   User?    @relation("ExamSessionExaminer", fields: [examinerId], references: [id])
   meetLink   String?
-  scheduledAt DateTime
-  status     String   @default("SCHEDULED")
+  scheduledAt DateTime?
+  status     String   @default("REQUESTED")
+  score      Int?
+  feedback   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@index([courseId])
   @@index([studentId])
   @@index([examinerId])
   @@index([scheduledAt])
