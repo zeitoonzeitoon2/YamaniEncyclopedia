@@ -789,7 +789,7 @@ export default function AdminCourseChaptersPage() {
                       </div>
 
                       {/* Rebuttal: Full width if exists and not empty */}
-                      {selectedChapter.changeReason.rebuttal && selectedChapter.changeReason.rebuttal.trim() !== '' && (
+                      {selectedChapter.changeReason.rebuttal && selectedChapter.changeReason.rebuttal.trim().length > 0 && (
                         <div className="md:col-span-3 bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 order-3">
                           <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('rebuttalLabel')}</div>
                           <div className="text-sm whitespace-pre-wrap italic text-site-text/90">
@@ -799,7 +799,7 @@ export default function AdminCourseChaptersPage() {
                       )}
 
                       {/* Change Type: Only if not empty */}
-                      {selectedChapter.changeReason.type && selectedChapter.changeReason.type.trim() !== '' && (
+                      {selectedChapter.changeReason.type && selectedChapter.changeReason.type.trim().length > 0 && (
                         <div className="md:col-span-3 bg-site-bg/40 p-2 rounded-lg border border-warm-primary/10 order-4 flex items-center gap-2">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-site-muted">{tArg('typeLabel')}:</span>
                           <span className="text-xs font-medium text-warm-primary px-2 py-0.5 bg-warm-primary/10 rounded-full">
