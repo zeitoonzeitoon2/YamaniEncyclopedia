@@ -202,7 +202,7 @@ export function Header() {
                     )}
                   </button>
                   {menuOpen && (
-                    <div className="absolute start-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
+                    <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-gray-700">
                         <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
                         <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
