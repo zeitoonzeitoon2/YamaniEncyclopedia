@@ -5,6 +5,7 @@ import { PostCard } from '@/components/PostCard'
 import { Header } from '@/components/Header'
 import Image from 'next/image'
 import { getTopVotedApprovedPost } from '@/lib/postUtils'
+import { getPostDisplayId } from '@/lib/postDisplay'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
@@ -58,10 +59,27 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </div>
         )}
 
-        <h1 className="text-2xl font-bold mb-6 text-site-text">{t('topDiagram')}</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-site-text">{t('topDiagram')}</h1>
+          {topVotedPost && (
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-site-muted font-medium bg-site-secondary px-3 py-1 rounded-lg border border-site-border">
+                {t('postCard.idLabel', { defaultValue: 'شناسه:' })} {getPostDisplayId(topVotedPost as any, (key: string) => t(key))}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="mb-12">
           {topVotedPost ? (
-            <PostCard post={topVotedPost as any} fullWidth={true} hideArticleLinkInputs={true} hideAuthorName={true} hideAuthorAvatar={true} />
+            <PostCard 
+              post={topVotedPost as any} 
+              fullWidth={true} 
+              hideArticleLinkInputs={true} 
+              hideAuthorName={true} 
+              hideAuthorAvatar={true} 
+              hideHeaderId={true} 
+              showDomainNamesAtTop={true}
+            />
           ) : (
             <p className="text-site-muted">{t('noPosts')}</p>
           )}

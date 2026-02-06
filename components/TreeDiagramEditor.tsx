@@ -89,6 +89,7 @@ interface TreeDiagramEditorProps {
   hideArticleLinkInputs?: boolean
   collectDrafts?: boolean
   isCreatePage?: boolean
+  showDomainNamesAtTop?: boolean
 }
 
 export default function TreeDiagramEditor({
@@ -99,6 +100,7 @@ export default function TreeDiagramEditor({
   hideArticleLinkInputs = false,
   collectDrafts = false,
   isCreatePage = false,
+  showDomainNamesAtTop = false,
 }: TreeDiagramEditorProps) {
   const t = useTranslations('treeDiagramEditor')
   const { data: session } = useSession()
@@ -116,6 +118,10 @@ export default function TreeDiagramEditor({
   const [nodeLabel, setNodeLabel] = useState('')
   const nodeIdRef = useRef(2)
   const [showDomainNames, setShowDomainNames] = useState(false)
+
+  useEffect(() => {
+    setShowDomainNames(showDomainNamesAtTop)
+  }, [showDomainNamesAtTop])
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -834,13 +840,15 @@ export default function TreeDiagramEditor({
         </div>
       ) : (
         <div className="p-3 bg-site-secondary border-b border-site-border flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowDomainNames((prev) => !prev)}
-            className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
-          >
-            {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
-          </button>
+          <div id="tree-actions-portal-target" className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDomainNames((prev) => !prev)}
+              className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+            >
+              {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+            </button>
+          </div>
         </div>
       )}
 

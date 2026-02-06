@@ -28,11 +28,12 @@ interface PostCardProps {
   fullWidth?: boolean
   // To control hiding article link fields when displayed on the home page
   hideArticleLinkInputs?: boolean
-  hideAuthorName?: boolean
   hideAuthorAvatar?: boolean
+  hideHeaderId?: boolean
+  showDomainNamesAtTop?: boolean
 }
 
-export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false }: PostCardProps) {
+export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false }: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
 
@@ -92,9 +93,11 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
         </div>
       </div>
       
-      <h3 className="text-xl font-semibold text-site-text mb-3">
-        {t('idLabel')} {getPostDisplayId(post, t)}
-      </h3>
+      {!hideHeaderId && (
+        <h3 className="text-xl font-semibold text-site-text mb-3">
+          {t('idLabel')} {getPostDisplayId(post, t)}
+        </h3>
+      )}
       
       {renderContent()}
     </div>
