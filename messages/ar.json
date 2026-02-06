@@ -562,6 +562,11 @@
     "stronglySupportive": "مؤيد بشدة"
   },
   "home": {
+    "idLabel": "المعرف:",
+    "status": {
+      "NEW": "جديد",
+      "UNKNOWN": "غير معروف"
+    },
     "headerAlt": "رأس الصفحة",
     "topDiagram": "المخطط الأبرز",
     "noPosts": "لا توجد منشورات بعد.",

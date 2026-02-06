@@ -562,7 +562,12 @@
     "stronglySupportive": "Strongly Supportive"
   },
   "home": {
-    "headerAlt": "Header Image",
+    "idLabel": "ID:",
+    "status": {
+      "NEW": "New",
+      "UNKNOWN": "Unknown"
+    },
+    "headerAlt": "Page Header",
     "topDiagram": "Featured Diagram",
     "noPosts": "No posts yet.",
     "aboutTitle": "About \"Tree of Knowledge\"",

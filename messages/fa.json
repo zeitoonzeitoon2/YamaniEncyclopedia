@@ -562,6 +562,11 @@
     "stronglySupportive": "کاملاً موافق"
   },
   "home": {
+    "idLabel": "شناسه:",
+    "status": {
+      "NEW": "جدید",
+      "UNKNOWN": "نامشخص"
+    },
     "headerAlt": "هدر صفحه",
     "topDiagram": "نمودار برگزیده",
     "noPosts": "هنوز پستی وجود ندارد.",

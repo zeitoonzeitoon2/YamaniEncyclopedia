@@ -64,7 +64,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
             <h1 className="text-2xl font-bold text-site-text">{t('topDiagram')}</h1>
             {topVotedPost && (
               <span className="text-site-muted font-medium bg-site-secondary px-3 py-1 rounded-lg border border-site-border flex items-center gap-1">
-                <span className="opacity-70 text-sm">{t('postCard.idLabel', { defaultValue: 'شناسه:' })}</span>
+                <span className="opacity-70 text-sm">{t('idLabel')}</span>
                 <span className="text-warm-accent font-bold">{getPostDisplayId(topVotedPost as any, (key: string) => t(key))}</span>
               </span>
             )}
