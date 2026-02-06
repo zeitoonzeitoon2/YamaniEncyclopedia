@@ -1114,7 +1114,7 @@ export default function SupervisorDashboard() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {/* Right Side: Summary (1/3) */}
-                          <div className="md:col-span-1 space-y-3 order-1 md:order-2">
+                          <div className="md:col-span-1 space-y-3 order-1 md:order-1">
                             <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
                               <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('summaryLabel')}</div>
                               <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
@@ -1124,7 +1124,7 @@ export default function SupervisorDashboard() {
                           </div>
 
                           {/* Left Side: Evidence (2/3) */}
-                          <div className="md:col-span-2 space-y-3 order-2 md:order-1">
+                          <div className="md:col-span-2 space-y-3 order-2 md:order-2">
                             <div className="bg-site-bg/40 p-3 rounded-lg border border-warm-primary/10 h-full">
                               <div className="text-[10px] font-bold uppercase tracking-wider text-site-muted mb-2">{tArg('evidenceLabel')}</div>
                               <div className="text-sm whitespace-pre-wrap leading-relaxed text-site-text">
