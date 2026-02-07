@@ -24,6 +24,8 @@ export async function GET() {
     // اطمینان از وجود تک تک ستون‌ها (اگر جدول از قبل ناقص ساخته شده باشد)
     const columns = [
       'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "courseId" TEXT',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "studentId" TEXT',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "examinerId" TEXT',
       'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "score" INTEGER',
       'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "feedback" TEXT',
       'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "meetLink" TEXT',
@@ -35,6 +37,10 @@ export async function GET() {
         await prisma.$executeRawUnsafe(sql).catch(() => {})
       } catch (e) {}
     }
+
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "ExamSession" ALTER COLUMN "examinerId" DROP NOT NULL')
+    } catch (e) {}
 
     return NextResponse.json({ 
       success: true, 
