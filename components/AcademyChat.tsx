@@ -37,8 +37,8 @@ type ExamSession = {
       }[]
     }
   }
-  student: { id: string, name: string | null; email: string | null }
-  examiner: { id: string, name: string | null } | null
+  student: { id: string, name: string | null; email: string | null; image?: string | null }
+  examiner: { id: string, name: string | null; image?: string | null } | null
 }
 
 export function AcademyChat() {

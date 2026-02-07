@@ -18,13 +18,23 @@ export async function GET() {
             { examinerId: session.user.id }
           ]
         },
-        include: {
+        select: {
+          id: true,
+          status: true,
+          studentId: true,
+          examinerId: true,
+          courseId: true,
+          scheduledAt: true,
+          meetLink: true,
+          createdAt: true,
           course: {
-            include: {
+            select: {
+              id: true,
+              title: true,
               domain: {
-                include: {
+                select: {
                   experts: {
-                    include: {
+                    select: {
                       user: {
                         select: {
                           id: true,
@@ -38,13 +48,32 @@ export async function GET() {
               }
             }
           },
-          student: { select: { id: true, name: true, email: true } },
-          examiner: { select: { id: true, name: true } },
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true
+            }
+          },
+          examiner: {
+            select: {
+              id: true,
+              name: true,
+              image: true
+            }
+          },
           chatMessages: {
             orderBy: { createdAt: 'desc' },
             take: 1,
-            include: {
-              sender: { select: { name: true } }
+            select: {
+              content: true,
+              createdAt: true,
+              sender: {
+                select: {
+                  name: true
+                }
+              }
             }
           }
         },
@@ -52,13 +81,17 @@ export async function GET() {
       }),
       prisma.userCourse.findMany({
         where: { userId: session.user.id },
-        include: {
+        select: {
+          createdAt: true,
+          courseId: true,
           course: {
-            include: {
+            select: {
+              id: true,
+              title: true,
               domain: {
-                include: {
+                select: {
                   experts: {
-                    include: {
+                    select: {
                       user: {
                         select: {
                           id: true,
@@ -83,10 +116,19 @@ export async function GET() {
         id: `course-${enrollment.courseId}`, // Virtual ID
         status: 'ENROLLED',
         studentId: session.user.id,
+        examinerId: null,
+        scheduledAt: null,
+        meetLink: null,
         courseId: enrollment.courseId,
         course: enrollment.course,
-        student: { id: session.user.id, name: session.user.name, email: session.user.email },
-        createdAt: enrollment.createdAt || new Date().toISOString(),
+        student: { 
+          id: session.user.id, 
+          name: session.user.name || null, 
+          email: session.user.email || null,
+          image: (session.user as any).image || null
+        },
+        examiner: null,
+        createdAt: enrollment.createdAt,
         chatMessages: []
       }))
 
