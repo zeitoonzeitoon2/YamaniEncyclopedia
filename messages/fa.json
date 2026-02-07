@@ -60,6 +60,7 @@
     "examStatus_PASSED": "قبول شده",
     "examStatus_FAILED": "مردود",
     "examStatus_CANCELED": "لغو شده",
+    "examStatus_ENROLLED": "ارتباط با اساتید",
     "examHistory": "تاریخچه آزمون‌ها",
     "studentName": "نام دانش‌آموز",
     "courseTitle": "نام دوره",

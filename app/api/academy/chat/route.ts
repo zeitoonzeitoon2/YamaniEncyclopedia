@@ -11,10 +11,15 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url)
-    const examSessionId = searchParams.get('examSessionId')
+    let examSessionId = searchParams.get('examSessionId')
 
     if (!examSessionId) {
       return NextResponse.json({ error: 'Exam session ID is required' }, { status: 400 })
+    }
+
+    // Handle virtual course-based session IDs
+    if (examSessionId.startsWith('course-')) {
+      return NextResponse.json({ messages: [] })
     }
 
     // Verify user is part of this session
@@ -54,10 +59,33 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { examSessionId, content } = body
+    let { examSessionId, content } = body
 
     if (!examSessionId || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Handle virtual course-based session IDs by creating a real one
+    if (examSessionId.startsWith('course-')) {
+      const courseId = examSessionId.replace('course-', '')
+      
+      // Check if real session was created in the meantime
+      const existing = await prisma.examSession.findFirst({
+        where: { studentId: session.user.id, courseId, status: 'ENROLLED' }
+      })
+
+      if (existing) {
+        examSessionId = existing.id
+      } else {
+        const newSession = await prisma.examSession.create({
+          data: {
+            studentId: session.user.id,
+            courseId,
+            status: 'ENROLLED'
+          }
+        })
+        examSessionId = newSession.id
+      }
     }
 
     // Verify user is part of this session

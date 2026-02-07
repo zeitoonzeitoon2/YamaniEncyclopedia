@@ -117,6 +117,13 @@ export function AcademyChat() {
       if (res.ok) {
         setMessages([...messages, data.message])
         setInput('')
+        
+        // If it was a virtual session, we should update the ID to the real one
+        if (selectedExam.id.startsWith('course-') && data.message.examSessionId) {
+          const updatedExam = { ...selectedExam, id: data.message.examSessionId }
+          setSelectedExam(updatedExam)
+          setExams(prev => prev.map(e => e.id === selectedExam.id ? updatedExam : e))
+        }
       } else {
         toast.error(data.error || t('updateError'))
       }
