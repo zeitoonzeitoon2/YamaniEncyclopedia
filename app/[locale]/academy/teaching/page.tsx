@@ -65,20 +65,20 @@ export default function AcademyTeachingPage() {
     setFeedback(exam.feedback || '')
   }
 
-  const updateExam = async (status: ExamSession['status']) => {
+  const updateExam = async (payload: {
+    status?: ExamSession['status']
+    scheduledAt?: string
+    meetLink?: string
+    score?: number
+    feedback?: string
+  }) => {
     if (!editingExam) return
     try {
       setUpdating(true)
       const res = await fetch(`/api/academy/exams/${editingExam.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status,
-          scheduledAt: scheduledAt || undefined,
-          meetLink: meetLink || undefined,
-          score: score ? parseFloat(score) : undefined,
-          feedback: feedback || undefined,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (res.ok) {
@@ -94,6 +94,24 @@ export default function AcademyTeachingPage() {
     } finally {
       setUpdating(false)
     }
+  }
+
+  const saveSchedule = async () => {
+    if (!editingExam) return
+    const nextStatus = editingExam.status === 'REQUESTED' ? 'SCHEDULED' : undefined
+    await updateExam({
+      status: nextStatus,
+      scheduledAt: scheduledAt || undefined,
+      meetLink: meetLink || undefined,
+    })
+  }
+
+  const saveResult = async (status: ExamSession['status']) => {
+    await updateExam({
+      status,
+      score: score ? parseFloat(score) : undefined,
+      feedback: feedback || undefined,
+    })
   }
 
   return (
@@ -248,53 +266,55 @@ export default function AcademyTeachingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-site-muted">{t('score')}</label>
-                    <input
-                      type="number"
-                      value={score}
-                      onChange={(e) => setScore(e.target.value)}
-                      placeholder="0 - 100"
-                      className="w-full bg-site-bg border border-site-border rounded-lg px-3 py-2 text-site-text outline-none focus:border-warm-primary"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium text-site-muted">{t('feedback')}</label>
-                    <textarea
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      rows={2}
-                      className="w-full bg-site-bg border border-site-border rounded-lg px-3 py-2 text-site-text outline-none focus:border-warm-primary resize-none"
-                    />
-                  </div>
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-site-border">
+                  <button
+                    disabled={updating}
+                    onClick={saveSchedule}
+                    className="btn-primary py-2 px-6 flex-1 flex items-center justify-center gap-2"
+                  >
+                    <Check size={18} />
+                    {t('saveSchedule')}
+                  </button>
+                  {editingExam.status === 'REQUESTED' && (
+                    <button
+                      disabled={updating}
+                      onClick={() => updateExam({ status: 'CANCELED' })}
+                      className="btn-secondary py-2 px-6 flex-1 flex items-center justify-center gap-2"
+                    >
+                      <X size={18} />
+                      {t('reject')}
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-site-border">
-                  {editingExam.status === 'REQUESTED' ? (
-                    <>
+                {editingExam.status !== 'REQUESTED' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-site-muted">{t('score')}</label>
+                        <input
+                          type="number"
+                          value={score}
+                          onChange={(e) => setScore(e.target.value)}
+                          placeholder="0 - 100"
+                          className="w-full bg-site-bg border border-site-border rounded-lg px-3 py-2 text-site-text outline-none focus:border-warm-primary"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-site-muted">{t('feedback')}</label>
+                        <textarea
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          rows={2}
+                          className="w-full bg-site-bg border border-site-border rounded-lg px-3 py-2 text-site-text outline-none focus:border-warm-primary resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-site-border">
                       <button
                         disabled={updating}
-                        onClick={() => updateExam('SCHEDULED')}
-                        className="btn-primary py-2 px-6 flex-1 flex items-center justify-center gap-2"
-                      >
-                        <Check size={18} />
-                        {t('approve')}
-                      </button>
-                      <button
-                        disabled={updating}
-                        onClick={() => updateExam('CANCELED')}
-                        className="btn-secondary py-2 px-6 flex-1 flex items-center justify-center gap-2"
-                      >
-                        <X size={18} />
-                        {t('reject')}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        disabled={updating}
-                        onClick={() => updateExam('PASSED')}
+                        onClick={() => saveResult('PASSED')}
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 flex items-center justify-center gap-2"
                       >
                         <Award size={18} />
@@ -302,15 +322,15 @@ export default function AcademyTeachingPage() {
                       </button>
                       <button
                         disabled={updating}
-                        onClick={() => updateExam('FAILED')}
+                        onClick={() => saveResult('FAILED')}
                         className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 flex items-center justify-center gap-2"
                       >
                         <X size={18} />
                         {t('fail')}
                       </button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
