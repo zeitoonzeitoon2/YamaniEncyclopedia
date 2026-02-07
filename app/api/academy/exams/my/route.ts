@@ -25,7 +25,7 @@ export async function GET() {
             domain: {
               select: {
                 experts: {
-                  include: {
+                  select: {
                     user: {
                       select: {
                         id: true,
