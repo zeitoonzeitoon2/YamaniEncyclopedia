@@ -20,6 +20,8 @@ type Message = {
 type ExamSession = {
   id: string
   status: string
+  studentId: string
+  examinerId: string | null
   scheduledAt: string | null
   meetLink: string | null
   course: { title: string }

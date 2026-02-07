@@ -21,6 +21,8 @@ export async function GET() {
         course: { select: { title: true } },
         student: { select: { name: true, email: true } },
         examiner: { select: { name: true } },
+        studentId: true,
+        examinerId: true,
         chatMessages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
