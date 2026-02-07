@@ -42,6 +42,10 @@ export async function GET() {
       await prisma.$executeRawUnsafe('ALTER TABLE "ExamSession" ALTER COLUMN "examinerId" DROP NOT NULL')
     } catch (e) {}
 
+    try {
+      await prisma.$executeRawUnsafe('ALTER TABLE "ExamSession" ALTER COLUMN "scheduledAt" DROP NOT NULL')
+    } catch (e) {}
+
     return NextResponse.json({ 
       success: true, 
       message: "ساختار دیتابیس با موفقیت بروزرسانی شد. حالا می‌توانید درخواست آزمون بدهید." 
