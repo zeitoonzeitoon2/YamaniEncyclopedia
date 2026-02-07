@@ -93,7 +93,9 @@
     "examScheduledMsg": "آزمون شما برای تاریخ {date} برنامه‌ریزی شده است.",
     "meetLinkMsg": "لینک جلسه:",
     "you": "شما",
-    "examsAndChat": "آزمون‌ها و گفتگو"
+    "examsAndChat": "آزمون‌ها و گفتگو",
+    "instructors": "اساتید دوره",
+    "noInstructors": "استادی یافت نشد"
   },
   "language": {
     "label": "زبان",

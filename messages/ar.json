@@ -84,7 +84,11 @@
     "passedCourses": "الدورات المكتملة",
     "examiner": "الممتحن",
     "passDate": "تاريخ الإكمال",
-    "noPassedCourses": "لم تقم بإكمال أي دورات بعد."
+    "noPassedCourses": "لم تقم بإكمال أي دورات بعد.",
+    "you": "أنت",
+    "examsAndChat": "الامتحانات والدردشة",
+    "instructors": "مدرسي الدورة",
+    "noInstructors": "لم يتم العثور على مدرسين"
   },
   "language": {
     "label": "اللغة",

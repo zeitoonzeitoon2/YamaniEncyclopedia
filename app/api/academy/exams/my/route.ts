@@ -18,9 +18,29 @@ export async function GET() {
         ]
       },
       include: {
-        course: { select: { title: true } },
-        student: { select: { name: true, email: true } },
-        examiner: { select: { name: true } },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            domain: {
+              select: {
+                experts: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        image: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        student: { select: { id: true, name: true, email: true } },
+        examiner: { select: { id: true, name: true } },
         chatMessages: {
           orderBy: { createdAt: 'desc' },
           take: 1,

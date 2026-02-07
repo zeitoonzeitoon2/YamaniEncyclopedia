@@ -84,7 +84,11 @@
     "passedCourses": "Passed Courses",
     "examiner": "Examiner",
     "passDate": "Completion Date",
-    "noPassedCourses": "You haven't completed any courses yet."
+    "noPassedCourses": "You haven't completed any courses yet.",
+    "you": "You",
+    "examsAndChat": "Exams & Chat",
+    "instructors": "Course Instructors",
+    "noInstructors": "No instructors found"
   },
   "language": {
     "label": "Language",

@@ -24,9 +24,21 @@ type ExamSession = {
   examinerId: string | null
   scheduledAt: string | null
   meetLink: string | null
-  course: { title: string }
-  student: { name: string | null; email: string | null }
-  examiner: { name: string | null } | null
+  course: { 
+    id: string
+    title: string
+    domain: {
+      experts: {
+        user: {
+          id: string
+          name: string | null
+          image: string | null
+        }
+      }[]
+    }
+  }
+  student: { id: string, name: string | null; email: string | null }
+  examiner: { id: string, name: string | null } | null
 }
 
 export function AcademyChat() {
@@ -192,6 +204,31 @@ export function AcademyChat() {
                       </a>
                     )}
                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* Instructors Section */}
+            <div className="px-4 py-3 border-b border-gray-700 bg-site-card/30">
+              <div className="text-[10px] font-bold text-site-muted mb-2 uppercase tracking-wider">
+                {t('instructors')}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedExam.course.domain.experts.length > 0 ? (
+                  selectedExam.course.domain.experts.map((expert) => (
+                    <div key={expert.user.id} className="flex items-center gap-2 bg-site-bg/50 rounded-full pr-1 pl-3 py-1 border border-gray-700">
+                      {expert.user.image ? (
+                        <img src={expert.user.image} alt={expert.user.name || ''} className="w-5 h-5 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-warm-primary/20 flex items-center justify-center text-[10px] text-warm-primary">
+                          <User size={10} />
+                        </div>
+                      )}
+                      <span className="text-xs text-site-text">{expert.user.name || '---'}</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-xs text-site-muted italic">{t('noInstructors' as any) || '---'}</span>
                 )}
               </div>
             </div>
