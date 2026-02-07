@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // ایجاد جدول ExamSession اگر وجود ندارد و اضافه کردن ستون‌های لازم
+    // ایجاد جدول ExamSession با تمام ستون‌های مورد نیاز
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "ExamSession" (
         "id" TEXT NOT NULL,
@@ -21,10 +21,20 @@ export async function GET() {
       );
     `)
 
-    // اضافه کردن ستون courseId اگر قبلاً اضافه نشده (برای اطمینان)
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE "ExamSession" ADD COLUMN "courseId" TEXT;`).catch(() => {});
-    } catch (e) {}
+    // اطمینان از وجود تک تک ستون‌ها (اگر جدول از قبل ناقص ساخته شده باشد)
+    const columns = [
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "courseId" TEXT',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "score" INTEGER',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "feedback" TEXT',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "meetLink" TEXT',
+      'ALTER TABLE "ExamSession" ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3)'
+    ]
+
+    for (const sql of columns) {
+      try {
+        await prisma.$executeRawUnsafe(sql).catch(() => {})
+      } catch (e) {}
+    }
 
     return NextResponse.json({ 
       success: true, 
