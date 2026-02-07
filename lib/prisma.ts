@@ -14,6 +14,7 @@ const normalizedDbUrl = (() => {
       u.searchParams.delete('supavisor_session_id')
       u.searchParams.set('pgbouncer', 'true')
       u.searchParams.set('sslmode', 'require')
+      u.searchParams.set('connection_limit', '1')
       return u.toString()
     }
   } catch (e) {
@@ -34,4 +35,4 @@ export const prisma =
 // but usually this is done via the connection string.
 
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+globalForPrisma.prisma = prisma
