@@ -5,7 +5,8 @@ import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Check, X, Calendar, Video, Award, History, Clock } from 'lucide-react'
+import { Check, X, Calendar, Video, Award, History, Clock, MessageCircle } from 'lucide-react'
+import { AcademyChat } from '@/components/AcademyChat'
 
 type ExamSession = {
   id: string
@@ -26,7 +27,7 @@ export default function AcademyTeachingPage() {
   const t = useTranslations('academy')
   const [exams, setExams] = useState<ExamSession[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'pending' | 'history'>('pending')
+  const [tab, setTab] = useState<'pending' | 'history' | 'communication'>('pending')
   const [editingExam, setEditingExam] = useState<ExamSession | null>(null)
   const [updating, setUpdating] = useState(false)
 
@@ -37,6 +38,7 @@ export default function AcademyTeachingPage() {
   const [feedback, setFeedback] = useState('')
 
   const fetchExams = async () => {
+    if (tab === 'communication') return // Communication handled by AcademyChat
     try {
       setLoading(true)
       const res = await fetch(`/api/academy/exams?type=${tab}`)
@@ -156,9 +158,24 @@ export default function AcademyTeachingPage() {
               {t('examHistory')}
             </div>
           </button>
+          <button
+            onClick={() => setTab('communication')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              tab === 'communication'
+                ? 'border-warm-primary text-site-text'
+                : 'border-transparent text-site-muted hover:text-site-text'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <MessageCircle size={16} />
+              {t('communication')}
+            </div>
+          </button>
         </div>
 
-        {loading ? (
+        {tab === 'communication' ? (
+          <AcademyChat />
+        ) : loading ? (
           <div className="py-12 text-center text-site-muted">{t('loading')}</div>
         ) : exams.length === 0 ? (
           <div className="card py-12 text-center text-site-muted">

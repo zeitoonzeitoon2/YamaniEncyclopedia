@@ -84,7 +84,16 @@
     "passedCourses": "دوره‌های گذرانده شده",
     "examiner": "ممتحن",
     "passDate": "تاریخ قبولی",
-    "noPassedCourses": "هنوز دوره‌ای را به پایان نرسانده‌اید."
+    "noPassedCourses": "هنوز دوره‌ای را به پایان نرسانده‌اید.",
+    "communication": "ارتباط با اساتید",
+    "noExams": "هنوز درخواست آزمونی ثبت نکرده‌اید.",
+    "chatPlaceholder": "پیام خود را اینجا بنویسید...",
+    "send": "ارسال",
+    "examApprovedMsg": "درخواست آزمون شما تایید شده است.",
+    "examScheduledMsg": "آزمون شما برای تاریخ {date} برنامه‌ریزی شده است.",
+    "meetLinkMsg": "لینک جلسه:",
+    "you": "شما",
+    "examsAndChat": "آزمون‌ها و گفتگو"
   },
   "language": {
     "label": "زبان",

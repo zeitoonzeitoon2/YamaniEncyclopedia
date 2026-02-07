@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
-import { Award, BookOpen, User, Calendar, FileText } from 'lucide-react'
+import { Award, BookOpen, User, Calendar, FileText, MessageCircle } from 'lucide-react'
+import { AcademyChat } from '@/components/AcademyChat'
 
 type AcademyCourse = {
   id: string
@@ -39,7 +40,7 @@ export default function AcademyDashboardPage() {
   const [domains, setDomains] = useState<AcademyDomain[]>([])
   const [transcript, setTranscript] = useState<TranscriptItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'courses' | 'transcript'>('courses')
+  const [tab, setTab] = useState<'courses' | 'transcript' | 'communication'>('courses')
 
   useEffect(() => {
     const load = async () => {
@@ -109,6 +110,19 @@ export default function AcademyDashboardPage() {
               {t('transcript')}
             </div>
           </button>
+          <button
+            onClick={() => setTab('communication')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              tab === 'communication'
+                ? 'border-warm-primary text-site-text'
+                : 'border-transparent text-site-muted hover:text-site-text'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <MessageCircle size={16} />
+              {t('communication')}
+            </div>
+          </button>
         </div>
 
         {loading ? (
@@ -140,7 +154,7 @@ export default function AcademyDashboardPage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === 'transcript' ? (
           <div className="card">
             <h2 className="text-xl font-bold text-site-text heading mb-3">{t('passedCourses')}</h2>
             {transcript.length === 0 ? (
@@ -176,6 +190,8 @@ export default function AcademyDashboardPage() {
               </div>
             )}
           </div>
+        ) : (
+          <AcademyChat />
         )}
       </main>
     </div>
