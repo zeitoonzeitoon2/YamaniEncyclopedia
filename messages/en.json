@@ -688,6 +688,7 @@
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
     "quizTitle": "Self-Assessment Quiz",
+    "noQuizQuestions": "No questions added yet.",
     "addQuestion": "Add Question",
     "questionPlaceholder": "Question text...",
     "optionPlaceholder": "Option {index}...",

@@ -690,6 +690,7 @@
     "statusApproved": "تایید شده",
     "statusRejected": "رد شده",
     "quizTitle": "پرسشنامه خودارزیابی",
+    "noQuizQuestions": "هنوز سوالی اضافه نشده است.",
     "addQuestion": "افزودن سوال",
     "questionPlaceholder": "متن سوال...",
     "optionPlaceholder": "گزینه {index}...",

@@ -688,6 +688,7 @@
     "statusApproved": "معتمد",
     "statusRejected": "مرفوض",
     "quizTitle": "استطلاع التقييم الذاتي",
+    "noQuizQuestions": "لم يتم إضافة أسئلة بعد.",
     "addQuestion": "إضافة سؤال",
     "questionPlaceholder": "نص السؤال...",
     "optionPlaceholder": "خيار {index}...",
