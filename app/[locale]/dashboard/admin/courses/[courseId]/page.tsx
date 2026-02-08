@@ -275,7 +275,16 @@ export default function AdminCourseChaptersPage() {
     
     try {
       setSaving(true)
-      const targetId = activeDraftId || (mode === 'edit' ? selectedId : null)
+      
+      // Determine if we should update an existing record or create a new one
+      // 1. If we already have an active draft ID, update that draft.
+      // 2. If we are in edit mode and the selected chapter is NOT approved, update it directly.
+      // 3. Otherwise (new mode OR editing an approved chapter), create a new record (POST).
+      let targetId = activeDraftId
+      if (!targetId && mode === 'edit' && selectedChapter && selectedChapter.status !== 'APPROVED') {
+        targetId = selectedId
+      }
+
       const body: any = { 
         title, 
         content, 
@@ -296,18 +305,26 @@ export default function AdminCourseChaptersPage() {
           return
         }
       } else {
+        // Create new chapter OR new version of an approved chapter
+        const rootId = selectedChapter ? getRootId(selectedChapter) : ''
+        
         const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...body,
-            ...(form.originalChapterId ? { originalChapterId: form.originalChapterId } : {}),
+            originalChapterId: rootId || form.originalChapterId || undefined,
           }),
         })
-        const payload = (await res.json().catch(() => ({}))) as { error?: string }
+        const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
         if (!res.ok) {
           toast.error(payload.error || t('toast.draftCreateError'))
           return
+        }
+        
+        // If we created a new version, select it
+        if (payload.chapter?.id) {
+          setSelectedId(payload.chapter.id)
         }
       }
       await fetchChapters()
