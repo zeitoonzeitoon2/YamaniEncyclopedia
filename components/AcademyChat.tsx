@@ -87,18 +87,26 @@ export function AcademyChat() {
 
   useEffect(() => {
     if (selectedExam) {
+      let isFirstLoad = true
       const fetchMessages = async () => {
         try {
-          setLoadingMessages(true)
+          if (isFirstLoad) setLoadingMessages(true)
           const res = await fetch(`/api/academy/chat?examSessionId=${selectedExam.id}`)
           const data = await res.json()
           if (res.ok) {
-            setMessages(data.messages)
+            // Only update messages if we actually got something or if it's the first load
+            // This prevents the "Hotfix" empty responses from wiping out locally sent messages
+            if (data.messages && (data.messages.length > 0 || isFirstLoad)) {
+              setMessages(data.messages)
+            }
           }
         } catch (error) {
           console.error(error)
         } finally {
-          setLoadingMessages(false)
+          if (isFirstLoad) {
+            setLoadingMessages(false)
+            isFirstLoad = false
+          }
         }
       }
       fetchMessages()
