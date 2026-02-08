@@ -821,7 +821,7 @@ export default function TreeDiagramEditor({
   }, [initialData, readOnly, selectedNodeId, setNodes, setEdges, setSelectedNodeId, setPanelOpen])
 
   return (
-    <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col relative isolate" style={{ height }}>
+    <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col relative" style={{ height }}>
       {!readOnly ? (
         <div className="p-4 bg-site-secondary border-b border-site-border flex gap-2 items-center">
           <input

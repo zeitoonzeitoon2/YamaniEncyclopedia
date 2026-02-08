@@ -36,6 +36,8 @@ interface PostCardProps {
   actionsPortalId?: string
 }
 
+import { ErrorBoundary } from './ErrorBoundary'
+
 export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false, actionsPortalId }: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
@@ -51,14 +53,16 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
         const treeData = JSON.parse(post.content)
         return (
           <div className={`mt-4 ${fullWidth ? 'w-full h-full flex-1' : ''}`}>
-            <TreeDiagramEditor
-              initialData={treeData}
-              readOnly={true}
-              height={fullWidth ? '150vh' : '24rem'}
-              hideArticleLinkInputs={hideArticleLinkInputs}
-              showDomainNamesAtTop={showDomainNamesAtTop}
-              actionsPortalId={actionsPortalId}
-            />
+            <ErrorBoundary fallback={<p className="text-red-400 text-sm">{t('treeError')}</p>}>
+              <TreeDiagramEditor
+                initialData={treeData}
+                readOnly={true}
+                height={fullWidth ? '150vh' : '24rem'}
+                hideArticleLinkInputs={hideArticleLinkInputs}
+                showDomainNamesAtTop={showDomainNamesAtTop}
+                actionsPortalId={actionsPortalId}
+              />
+            </ErrorBoundary>
           </div>
         )
       } catch (error) {

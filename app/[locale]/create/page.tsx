@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl'
 import { Header } from '@/components/Header'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
-import { Node, Edge } from 'reactflow'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Helper: Identify a "trivial/empty" tree to prevent default saving
 type TreeData = { nodes: Node[]; edges: Edge[] }
@@ -418,13 +418,15 @@ function CreatePost() {
                 }
               </div>
               <div className="w-full min-h-[150vh]">
-                <TreeDiagramEditor
-                  initialData={treeData}
-                  onDataChange={setTreeData}
-                  height="150vh"
-                  collectDrafts={false}
-                  isCreatePage={true}
-                />
+                <ErrorBoundary fallback={<div className="p-4 text-red-500 border border-red-300 rounded bg-red-50">{t('treeDiagramLabel')} - {t('loadError')}</div>}>
+                  <TreeDiagramEditor
+                    initialData={treeData}
+                    onDataChange={setTreeData}
+                    height="150vh"
+                    collectDrafts={false}
+                    isCreatePage={true}
+                  />
+                </ErrorBoundary>
               </div>
             </div>
 
