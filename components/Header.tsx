@@ -38,6 +38,11 @@ export function Header() {
   }, [pathname])
   const isAcademy = safePathname.startsWith('/academy')
 
+  const closeMenus = () => {
+    setMenuOpen(false)
+    setLangMenuOpen(false)
+  }
+
   React.useEffect(() => {
     setMounted(true)
   }, [])
@@ -107,6 +112,7 @@ export function Header() {
             <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
               <Link
                 href="/"
+                onClick={closeMenus}
                 className={`px-3 py-1 rounded-full text-xs transition-colors ${
                   isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/20 text-site-text font-medium'
                 }`}
@@ -115,6 +121,7 @@ export function Header() {
               </Link>
               <Link
                 href="/academy"
+                onClick={closeMenus}
                 className={`px-3 py-1 rounded-full text-xs transition-colors ${
                   isAcademy ? 'bg-warm-primary/20 text-site-text font-medium' : 'text-site-muted hover:text-site-text'
                 }`}
@@ -141,7 +148,11 @@ export function Header() {
 
                 <div className="relative" ref={langMenuRef}>
                   <button
-                    onClick={() => setLangMenuOpen((prev) => !prev)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setLangMenuOpen((prev) => !prev)
+                      setMenuOpen(false)
+                    }}
                     className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
                     aria-label={tl('label')}
                   >
@@ -174,6 +185,7 @@ export function Header() {
                 {!isAcademy && (
                   <Link 
                     href="/create" 
+                    onClick={closeMenus}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
                   >
                     <Edit size={14} />
@@ -184,7 +196,11 @@ export function Header() {
                 <div className="relative" ref={menuRef}>
                   <button
                     type="button"
-                    onClick={() => setMenuOpen((prev) => !prev)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpen((prev) => !prev)
+                      setLangMenuOpen(false)
+                    }}
                     className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
                   >
                     {session.user?.image ? (
@@ -210,6 +226,7 @@ export function Header() {
                       <div className="py-1">
                         <Link
                           href={`/profile/${session.user?.id}`}
+                          onClick={closeMenus}
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                         >
                           <User size={16} />
@@ -218,6 +235,7 @@ export function Header() {
                         {session && (
                           <Link
                             href="/supervisor"
+                            onClick={closeMenus}
                             className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
@@ -227,6 +245,7 @@ export function Header() {
                         {(isDomainExpert || session.user?.role === 'ADMIN') && (
                           <Link
                             href="/dashboard/admin"
+                            onClick={closeMenus}
                             className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             <Settings size={16} />
@@ -235,7 +254,10 @@ export function Header() {
                         )}
                         <button
                           type="button"
-                          onClick={() => signOut()}
+                          onClick={() => {
+                            closeMenus()
+                            signOut()
+                          }}
                           className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
                         >
                           <LogOut size={16} />

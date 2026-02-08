@@ -255,7 +255,9 @@ export default function AdminCourseChaptersPage() {
   const handleSave = async () => {
     const title = form.title.trim()
     const content = form.content.trim()
-    if (!title || !content) {
+    const hasQuiz = Array.isArray(form.quizQuestions) && form.quizQuestions.length > 0
+    
+    if (!title || (!content && !hasQuiz)) {
       toast.error(t('toast.requiredFields'))
       return
     }

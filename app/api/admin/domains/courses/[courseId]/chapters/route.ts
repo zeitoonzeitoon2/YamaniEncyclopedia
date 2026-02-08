@@ -77,8 +77,8 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     const changeReason = body.changeReason
     const quizQuestions = body.quizQuestions
 
-    if (!title || !content) {
-      return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
+    if (!title || (!content && (!Array.isArray(quizQuestions) || quizQuestions.length === 0))) {
+      return NextResponse.json({ error: 'title and content (or quiz) are required' }, { status: 400 })
     }
 
     const course = await prisma.course.findUnique({
