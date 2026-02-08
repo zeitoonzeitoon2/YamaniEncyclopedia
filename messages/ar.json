@@ -822,5 +822,35 @@
       "ninth": "التاسع",
       "tenth": "العاشر"
     }
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول إلى حسابك",
+    "loginSubtitle": "مرحباً بك، يرجى إدخال بياناتك",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "loginButton": "تسجيل الدخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
+    "loginError": "خطا في الاتصال بالخادم",
+    "noAccount": "ليس لديك حساب؟",
+    "signupLink": "إنشاء حساب جديد",
+    "signupTitle": "إنشاء حساب جديد",
+    "signupSubtitle": "انضم إلى مجتمعنا وابدأ التعلم",
+    "name": "الاسم الكامل",
+    "namePlaceholder": "أدخل اسمك الكامل",
+    "passwordHint": "6 أحرف على الأقل",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "registering": "جاري التسجيل...",
+    "signupButton": "إنشاء الحساب",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "signupSuccess": "تم إنشاء الحساب بنجاح",
+    "signupError": "خطأ في إنشاء الحساب. ربما البريد الإلكتروني مسجل بالفعل",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "loginLink": "تسجيل الدخول"
   }
 }
