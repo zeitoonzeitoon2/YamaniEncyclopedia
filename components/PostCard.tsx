@@ -34,11 +34,22 @@ interface PostCardProps {
   hideHeaderId?: boolean
   showDomainNamesAtTop?: boolean
   actionsPortalId?: string
+  height?: string
 }
 
 import { ErrorBoundary } from './ErrorBoundary'
 
-export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false, actionsPortalId }: PostCardProps) {
+export function PostCard({ 
+  post, 
+  fullWidth = false, 
+  hideArticleLinkInputs = false, 
+  hideAuthorName = false, 
+  hideAuthorAvatar = false, 
+  hideHeaderId = false, 
+  showDomainNamesAtTop = false, 
+  actionsPortalId,
+  height
+}: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
   const [dateLabel, setDateLabel] = useState('')
@@ -57,7 +68,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
               <TreeDiagramEditor
                 initialData={treeData}
                 readOnly={true}
-                height={fullWidth ? '150vh' : '24rem'}
+                height={height || (fullWidth ? '150vh' : '24rem')}
                 hideArticleLinkInputs={hideArticleLinkInputs}
                 showDomainNamesAtTop={showDomainNamesAtTop}
                 actionsPortalId={actionsPortalId}

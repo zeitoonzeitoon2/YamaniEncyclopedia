@@ -418,12 +418,12 @@ function CreatePost() {
                   : t('createMainDesc')
                 }
               </div>
-              <div className="w-full min-h-[150vh]">
+              <div className="w-full min-h-[80vh]">
                 <ErrorBoundary fallback={<div className="p-4 text-red-500 border border-red-300 rounded bg-red-50">{t('treeDiagramLabel')} - {t('loadError')}</div>}>
                   <TreeDiagramEditor
                     initialData={treeData}
                     onDataChange={setTreeData}
-                    height="150vh"
+                    height="80vh"
                     collectDrafts={false}
                     isCreatePage={true}
                   />

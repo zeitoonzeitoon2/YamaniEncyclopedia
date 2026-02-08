@@ -82,22 +82,21 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={0.4} className="mb-12">
-          {topVotedPost ? (
-            <PostCard 
-              post={topVotedPost as any} 
-              fullWidth={true} 
-              hideArticleLinkInputs={true} 
-              hideAuthorName={true} 
-              hideAuthorAvatar={true} 
-              hideHeaderId={true} 
-              showDomainNamesAtTop={true}
-              actionsPortalId="home-top-diagram-actions"
-            />
-          ) : (
-            <p className="text-site-muted">{t('noPosts')}</p>
-          )}
-        </ScrollReveal>
+        {topVotedPost ? (
+          <PostCard 
+            post={topVotedPost as any} 
+            fullWidth={true} 
+            hideArticleLinkInputs={true} 
+            hideAuthorName={true} 
+            hideAuthorAvatar={true} 
+            hideHeaderId={true} 
+            showDomainNamesAtTop={true}
+            actionsPortalId="home-top-diagram-actions"
+            height="80vh"
+          />
+        ) : (
+          <p className="text-site-muted">{t('noPosts')}</p>
+        )}
 
         <section className="mb-20">
           <ScrollReveal direction="up" className="card rounded-2xl p-8 md:p-12 shadow-2xl border border-site-border/40 bg-gradient-to-br from-site-card via-site-card to-site-secondary/20 relative overflow-hidden">

@@ -96,8 +96,8 @@ export function Header() {
   const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
-    <header className="bg-site-card/95 backdrop-blur-md border-b border-site-border sticky top-0 z-[10000] shadow-sm">
-      <div className="container mx-auto px-4 py-2">
+    <header className="bg-site-card/95 backdrop-blur-md border-b border-site-border sticky top-0 z-[100000] shadow-sm pointer-events-auto">
+      <div className="container mx-auto px-4 py-2 relative z-[100001]">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="flex items-center justify-start min-w-0">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading shrink-0 hover:opacity-80 transition-opacity">
