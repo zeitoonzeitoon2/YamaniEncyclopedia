@@ -10,6 +10,7 @@ export async function GET() {
     const latest = await prisma.post.findFirst({
       where: {
         status: 'APPROVED',
+        type: 'TREE',
         version: { not: null },
       },
       orderBy: [

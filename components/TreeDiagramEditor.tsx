@@ -907,7 +907,7 @@ export default function TreeDiagramEditor({
              elementsSelectable={!readOnly}
              onInit={(instance) => { reactFlowInstanceRef.current = instance }}
              onNodeDoubleClick={handleNodeDoubleClick}
-             style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', position: 'relative' }}
           >
             <Background />
             <Controls />
