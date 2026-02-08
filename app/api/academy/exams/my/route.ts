@@ -97,8 +97,8 @@ export async function GET() {
         })
       : []
 
-    const parentIds = Array.from(new Set(domains.map(d => d.parentId).filter(Boolean)))
-    const expertDomainIds = Array.from(new Set([...domainIds, ...parentIds]))
+    const parentIds = Array.from(new Set(domains.map(d => d.parentId).filter((id): id is string => Boolean(id))))
+    const expertDomainIds = Array.from(new Set([...domainIds, ...parentIds].filter((id): id is string => Boolean(id))))
 
     const domainExperts = expertDomainIds.length > 0
       ? await prisma.domainExpert.findMany({
