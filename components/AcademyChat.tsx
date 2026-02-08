@@ -68,10 +68,13 @@ export function AcademyChat() {
         const res = await fetch('/api/academy/exams/my')
         const data = await res.json()
         if (res.ok) {
-          setExams(data.exams)
-          if (data.exams.length > 0) {
+          setExams(data.exams || [])
+          if (data.exams && data.exams.length > 0 && !selectedExam) {
             setSelectedExam(data.exams[0])
           }
+        } else {
+          console.error('API Error:', data)
+          toast.error(data.message || data.error || t('loadError'))
         }
       } catch (error) {
         toast.error(t('loadError'))
