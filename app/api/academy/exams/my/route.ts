@@ -27,13 +27,6 @@ export async function GET() {
           scheduledAt: true,
           meetLink: true,
           createdAt: true,
-          course: {
-            select: {
-              id: true,
-              title: true,
-              domainId: true
-            }
-          },
           student: {
             select: {
               id: true,
@@ -71,23 +64,29 @@ export async function GET() {
         where: { userId: session.user.id },
         select: {
           createdAt: true,
-          courseId: true,
-          course: {
-            select: {
-              id: true,
-              title: true,
-              domainId: true
-            }
-          }
+          courseId: true
         }
       })
     ])
 
-    const domainIds = Array.from(new Set(
+    const courseIds = Array.from(new Set(
       [
-        ...exams.map(exam => exam.course.domainId),
-        ...enrollments.map(enrollment => enrollment.course.domainId)
-      ].filter(Boolean)
+        ...exams.map(exam => exam.courseId),
+        ...enrollments.map(enrollment => enrollment.courseId)
+      ].filter((id): id is string => Boolean(id))
+    ))
+
+    const courses = courseIds.length > 0
+      ? await prisma.course.findMany({
+          where: { id: { in: courseIds } },
+          select: { id: true, title: true, domainId: true }
+        })
+      : []
+
+    const courseById = new Map(courses.map(course => [course.id, course]))
+
+    const domainIds = Array.from(new Set(
+      courses.map(course => course.domainId).filter((id): id is string => Boolean(id))
     ))
 
     const domains = domainIds.length > 0
@@ -127,12 +126,13 @@ export async function GET() {
 
     const parentIdByDomainId = new Map(domains.map(d => [d.id, d.parentId]))
 
-    const enrichCourse = (course: { id: string; title: string; domainId: string | null }) => {
-      const domainId = course.domainId
+    const enrichCourse = (courseId: string) => {
+      const course = courseById.get(courseId)
+      const domainId = course?.domainId || null
       const parentId = domainId ? parentIdByDomainId.get(domainId) ?? null : null
       return {
-        id: course.id,
-        title: course.title,
+        id: course?.id || courseId,
+        title: course?.title || '---',
         domain: {
           experts: domainId ? (expertsByDomainId.get(domainId) || []) : [],
           parent: {
@@ -144,7 +144,7 @@ export async function GET() {
 
     const normalizedExams = exams.map(exam => ({
       ...exam,
-      course: enrichCourse(exam.course)
+      course: enrichCourse(exam.courseId)
     }))
 
     const virtualExams = enrollments
@@ -157,7 +157,7 @@ export async function GET() {
         scheduledAt: null,
         meetLink: null,
         courseId: enrollment.courseId,
-        course: enrichCourse(enrollment.course),
+        course: enrichCourse(enrollment.courseId),
         student: { 
           id: session.user.id, 
           name: session.user.name || null, 
