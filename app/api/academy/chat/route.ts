@@ -36,13 +36,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const messages = await prisma.chatMessage.findMany({
-      where: { examSessionId },
-      include: {
-        sender: { select: { name: true, image: true, id: true } }
-      },
-      orderBy: { createdAt: 'asc' }
-    })
+    let messages = []
+    try {
+      messages = await prisma.chatMessage.findMany({
+        where: { examSessionId },
+        include: {
+          sender: { select: { name: true, image: true, id: true } }
+        },
+        orderBy: { createdAt: 'asc' }
+      })
+    } catch (dbError) {
+      console.error('[DEBUG] ChatMessage table might be missing:', dbError)
+      // Return empty messages if table doesn't exist yet
+    }
 
     return NextResponse.json({ messages })
   } catch (error) {

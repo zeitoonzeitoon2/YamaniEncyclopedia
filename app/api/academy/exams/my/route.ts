@@ -21,12 +21,8 @@ export async function GET() {
       include: {
         student: { select: { id: true, name: true, email: true, image: true } },
         examiner: { select: { id: true, name: true, image: true } },
-        course: { select: { id: true, title: true, domainId: true } },
-        chatMessages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          include: { sender: { select: { id: true, name: true, image: true } } }
-        }
+        course: { select: { id: true, title: true, domainId: true } }
+        // Temporarily removed chatMessages include because table doesn't exist in production DB yet
       },
       orderBy: { createdAt: 'desc' }
     })
@@ -86,6 +82,7 @@ export async function GET() {
     // 7. Assemble Normalized Exams
     const normalizedExams = rawExams.map(exam => ({
       ...exam,
+      chatMessages: [], // Ensure this property exists
       course: exam.course ? {
         ...exam.course,
         domain: domainMap.get(exam.course.domainId) || { id: exam.course.domainId, experts: [] }
