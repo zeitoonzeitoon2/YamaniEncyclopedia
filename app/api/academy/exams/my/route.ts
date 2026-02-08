@@ -10,182 +10,183 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [exams, enrollments] = await Promise.all([
-      prisma.examSession.findMany({
+    console.log('[DEBUG] Fetching exams for user:', session.user.id)
+    let exams: any[] = []
+    try {
+      exams = await prisma.examSession.findMany({
         where: {
           OR: [
             { studentId: session.user.id },
             { examinerId: session.user.id }
           ]
         },
-        select: {
-          id: true,
-          status: true,
-          studentId: true,
-          examinerId: true,
-          courseId: true,
-          scheduledAt: true,
-          meetLink: true,
-          createdAt: true,
-          student: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true
-            }
-          },
-          examiner: {
-            select: {
-              id: true,
-              name: true,
-              image: true
+        include: {
+          student: { select: { id: true, name: true, email: true, image: true } },
+          examiner: { select: { id: true, name: true, image: true } },
+          course: {
+            include: {
+              domain: {
+                include: {
+                  parent: true,
+                  experts: {
+                    include: {
+                      user: { select: { id: true, name: true, image: true } }
+                    }
+                  }
+                }
+              }
             }
           },
           chatMessages: {
             orderBy: { createdAt: 'desc' },
             take: 1,
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              sender: {
-                select: {
-                  id: true,
-                  name: true
-                }
-              }
+            include: {
+              sender: { select: { id: true, name: true, image: true } }
             }
           }
         },
         orderBy: { createdAt: 'desc' }
-      }),
-      prisma.userCourse.findMany({
-        where: { userId: session.user.id },
-        select: {
-          createdAt: true,
-          courseId: true
-        }
       })
-    ])
+    } catch (e: any) {
+      console.error('[DEBUG] Error fetching exams:', e)
+      throw new Error(`Exams fetch failed: ${e.message}`)
+    }
 
-    const courseIds = Array.from(new Set(
-      [
-        ...exams.map(exam => exam.courseId),
-        ...enrollments.map(enrollment => enrollment.courseId)
-      ].filter((id): id is string => Boolean(id))
-    ))
-
-    const courses = courseIds.length > 0
-      ? await prisma.course.findMany({
-          where: { id: { in: courseIds } },
-          select: { id: true, title: true, domainId: true }
-        })
-      : []
-
-    const courseById = new Map(courses.map(course => [course.id, course]))
-
-    const domainIds = Array.from(new Set(
-      courses.map(course => course.domainId).filter((id): id is string => Boolean(id))
-    ))
-
-    const domains = domainIds.length > 0
-      ? await prisma.domain.findMany({
-          where: { id: { in: domainIds } },
-          select: { id: true, parentId: true }
-        })
-      : []
-
-    const parentIds = Array.from(new Set(domains.map(d => d.parentId).filter((id): id is string => Boolean(id))))
-    const expertDomainIds = Array.from(new Set([...domainIds, ...parentIds].filter((id): id is string => Boolean(id))))
-
-    // Use explicit type for the map values to avoid inference issues
-    type ExpertWithUser = {
-      id: string;
-      role: string;
-      domainId: string;
-      user: {
-        id: string;
-        name: string | null;
-        image: string | null;
-      };
-    };
-
-    const domainExperts = expertDomainIds.length > 0
-      ? await prisma.domainExpert.findMany({
-          where: { domainId: { in: expertDomainIds } },
-          select: {
-            id: true,
-            role: true,
-            domainId: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                image: true
+    console.log('[DEBUG] Fetching enrollments for user:', session.user.id)
+    let enrollments: any[] = []
+    try {
+      enrollments = await prisma.userCourse.findMany({
+        where: { userId: session.user.id },
+        include: {
+          course: {
+            include: {
+              domain: {
+                include: {
+                  parent: true,
+                  experts: {
+                    include: {
+                      user: { select: { id: true, name: true, image: true } }
+                    }
+                  }
+                }
               }
             }
           }
-        })
-      : []
-
-    const expertsByDomainId = new Map<string, ExpertWithUser[]>()
-    for (const expert of domainExperts) {
-      const list = expertsByDomainId.get(expert.domainId)
-      if (list) list.push(expert)
-      else expertsByDomainId.set(expert.domainId, [expert])
+        }
+      })
+    } catch (e: any) {
+      console.error('[DEBUG] Error fetching enrollments:', e)
+      throw new Error(`Enrollments fetch failed: ${e.message}`)
     }
 
-    const parentIdByDomainId = new Map(domains.map(d => [d.id, d.parentId]))
+    console.log(`[DEBUG] Found ${exams.length} exams and ${enrollments.length} enrollments`)
 
-    const enrichCourse = (courseId: string) => {
-      const course = courseById.get(courseId)
-      const domainId = course?.domainId || null
-      const parentId = domainId ? parentIdByDomainId.get(domainId) ?? null : null
-      return {
-        id: course?.id || courseId,
-        title: course?.title || '---',
-        domain: {
-          experts: domainId ? (expertsByDomainId.get(domainId) || []) : [],
-          parent: {
-            experts: parentId ? (expertsByDomainId.get(parentId) || []) : []
+    // 3. We also need experts for parent domains
+    const parentDomainIds = new Set<string>()
+    exams.forEach(e => {
+      if (e.course?.domain?.parent?.id) parentDomainIds.add(e.course.domain.parent.id)
+    })
+    enrollments.forEach(e => {
+      if (e.course?.domain?.parent?.id) parentDomainIds.add(e.course.domain.parent.id)
+    })
+
+    console.log('[DEBUG] Parent domain IDs:', Array.from(parentDomainIds))
+
+    let parentExperts: any[] = []
+    if (parentDomainIds.size > 0) {
+      try {
+        parentExperts = await prisma.domainExpert.findMany({
+          where: { domainId: { in: Array.from(parentDomainIds) } },
+          include: {
+            user: { select: { id: true, name: true, image: true } }
           }
-        }
+        })
+      } catch (e: any) {
+        console.error('[DEBUG] Error fetching parent experts:', e)
+        // Non-critical, just log it
       }
     }
 
-    const normalizedExams = exams.map(exam => ({
-      ...exam,
-      course: enrichCourse(exam.courseId)
-    }))
+    const parentExpertsByDomainId = new Map<string, any[]>()
+    parentExperts.forEach(pe => {
+      const list = parentExpertsByDomainId.get(pe.domainId) || []
+      list.push(pe)
+      parentExpertsByDomainId.set(pe.domainId, list)
+    })
 
+    // 4. Transform data with safety checks
+    const enrichDomain = (domain: any) => {
+      if (!domain) return null
+      const parentId = domain.parent?.id
+      return {
+        ...domain,
+        experts: domain.experts || [],
+        parent: domain.parent ? {
+          ...domain.parent,
+          experts: parentId ? (parentExpertsByDomainId.get(parentId) || []) : []
+        } : null
+      }
+    }
+
+    console.log('[DEBUG] Normalizing exams')
+    const normalizedExams = exams.map(exam => {
+      try {
+        return {
+          ...exam,
+          course: exam.course ? {
+            ...exam.course,
+            domain: enrichDomain(exam.course.domain)
+          } : null
+        }
+      } catch (e) {
+        console.error('[DEBUG] Error normalizing exam:', exam.id, e)
+        return null
+      }
+    }).filter(Boolean)
+
+    console.log('[DEBUG] Generating virtual exams')
     const virtualExams = enrollments
-      .filter(enrollment => !exams.some(exam => exam.courseId === enrollment.courseId))
-      .map(enrollment => ({
-        id: `course-${enrollment.courseId}`,
-        status: 'ENROLLED',
-        studentId: session.user.id,
-        examinerId: null,
-        scheduledAt: null,
-        meetLink: null,
-        courseId: enrollment.courseId,
-        course: enrichCourse(enrollment.courseId),
-        student: { 
-          id: session.user.id, 
-          name: session.user.name || null, 
-          email: session.user.email || null,
-          image: (session.user as any).image || null
-        },
-        examiner: null,
-        createdAt: enrollment.createdAt,
-        chatMessages: []
-      }))
+      .filter(enrollment => enrollment.courseId && !exams.some(exam => exam.courseId === enrollment.courseId))
+      .map(enrollment => {
+        try {
+          return {
+            id: `course-${enrollment.courseId}`,
+            status: 'ENROLLED',
+            studentId: session.user.id,
+            examinerId: null,
+            scheduledAt: null,
+            meetLink: null,
+            courseId: enrollment.courseId,
+            course: enrollment.course ? {
+              ...enrollment.course,
+              domain: enrichDomain(enrollment.course.domain)
+            } : null,
+            student: { 
+              id: session.user.id, 
+              name: session.user.name || null, 
+              email: session.user.email || null,
+              image: (session.user as any)?.image || (session.user as any)?.picture || null
+            },
+            examiner: null,
+            createdAt: enrollment.createdAt || new Date().toISOString(),
+            chatMessages: []
+          }
+        } catch (e) {
+          console.error('[DEBUG] Error generating virtual exam for enrollment:', enrollment.courseId, e)
+          return null
+        }
+      }).filter(Boolean)
 
-    const allExams = [...normalizedExams, ...virtualExams].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    console.log('[DEBUG] Sorting all exams')
+    const allExams = [...normalizedExams, ...virtualExams].sort((a: any, b: any) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
 
-    return NextResponse.json({ exams: allExams })
+    // 5. Final serialization check - ensure everything is a plain object
+    const finalResult = JSON.parse(JSON.stringify({ exams: allExams }))
+    return NextResponse.json(finalResult)
   } catch (error: any) {
     console.error('Error fetching my exams:', error)
     return NextResponse.json({ 
