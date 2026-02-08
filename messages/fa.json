@@ -291,6 +291,7 @@
     "loadingShort": "در حال بارگذاری..."
   },
   "supervisor": {
+    "loading": "در حال بارگذاری...",
     "title": {
       "editor": "داشبورد ویراستار",
       "supervisor": "داشبورد ناظر"

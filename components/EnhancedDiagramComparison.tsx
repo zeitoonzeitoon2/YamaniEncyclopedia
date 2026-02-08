@@ -90,7 +90,7 @@ export default function EnhancedDiagramComparison({
     } finally {
       setLoadingOriginal(false)
     }
-  }, [])
+  }, [t])
 
   const handleDraftSelect = React.useCallback((draft: ArticleDraft) => {
     setSelectedDraft(draft)
@@ -102,8 +102,6 @@ export default function EnhancedDiagramComparison({
 
   // Function to display article comparison via the diagram
   const handleShowArticleComparison = React.useCallback((originalLink?: string, proposedLink?: string) => {
-    console.log('handleShowArticleComparison called with:', { originalLink, proposedLink })
-
     const originalLinkStr = originalLink ?? ''
     const proposedLinkStr = proposedLink ?? ''
 
@@ -120,7 +118,6 @@ export default function EnhancedDiagramComparison({
     if (parsedArticlesData?.drafts && cleanedProposed) {
       const draft = parsedArticlesData.drafts.find(d => d.id === cleanedProposed || d.slug === cleanedProposed)
       if (draft) {
-        console.log('Found draft in articlesData:', draft)
         handleDraftSelect(draft)
         return
       }
@@ -133,7 +130,6 @@ export default function EnhancedDiagramComparison({
           const res = await fetch(`/api/drafts/${cleanedProposed}`)
           if (res.ok) {
             const draft = await res.json()
-            console.log('Fetched draft by id:', draft)
             setSelectedDraft(draft)
             if (draft?.originalArticleSlug) {
               fetchOriginalArticle(draft.originalArticleSlug)
@@ -207,9 +203,19 @@ export default function EnhancedDiagramComparison({
         }
       })()
     } else {
+      // Even if no proposed link, show comparison with whatever original link we have
+      if (originalSlug) {
+        setSelectedDraft({
+          id: 'temp-original',
+          title: originalSlug,
+          slug: '',
+          content: '',
+          originalArticleSlug: originalSlug
+        })
+      }
       setShowArticleComparison(true)
     }
-  }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect])
+  }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect, t])
 
   // Upgrade article statistics based on drafts to calculate edits
   const handleStatsFromDiagram = React.useCallback((incomingStats: {

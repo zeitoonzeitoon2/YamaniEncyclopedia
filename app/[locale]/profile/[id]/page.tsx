@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { Link } from '@/lib/navigation'
 import { Header } from '@/components/Header'
+import Image from 'next/image'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -76,7 +77,13 @@ export default async function ProfilePage({
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-start gap-6 mb-8">
           {user.image ? (
-            <img src={user.image} alt={nameText} className="w-24 h-24 rounded-full object-cover" />
+            <Image
+              src={user.image}
+              alt={nameText}
+              width={96}
+              height={96}
+              className="rounded-full object-cover"
+            />
           ) : (
             <span className="w-24 h-24 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-3xl">
               {(user.name || t('unknownInitial')).charAt(0)}

@@ -181,7 +181,7 @@ function CreatePost() {
         await loadTopPost()
       }
     })()
-  }, [status, editId, draftKey])
+  }, [status, editId, draftKey, t])
 
   // Auto-save draft in localStorage with every change
   useEffect(() => {

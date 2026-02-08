@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
@@ -130,7 +130,7 @@ export default function AdminCourseChaptersPage() {
       .filter((c) => getRootId(c) === rootId && c.status === 'APPROVED')
       .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
     return approved.length ? approved[approved.length - 1] : null
-  }, [chapters, selectedChapter?.id])
+  }, [chapters, selectedChapter])
 
   const resetFormForNew = (nextOrderIndex: number) => {
     setMode('new')
@@ -140,7 +140,7 @@ export default function AdminCourseChaptersPage() {
     autoDraftingRef.current = false
   }
 
-  const fetchChapters = async () => {
+  const fetchChapters = useCallback(async () => {
     if (!courseId) return
     try {
       setLoading(true)
@@ -162,7 +162,7 @@ export default function AdminCourseChaptersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [courseId, selectedId, t])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -171,7 +171,7 @@ export default function AdminCourseChaptersPage() {
       return
     }
     fetchChapters()
-  }, [session, status, courseId, router])
+  }, [session, status, router, fetchChapters])
 
   useEffect(() => {
     chaptersRef.current = chapters
@@ -405,7 +405,7 @@ export default function AdminCourseChaptersPage() {
     const idx = versions.findIndex((c) => c.id === selectedChapter.id)
     if (idx <= 0) return null
     return versions[idx - 1]
-  }, [chapters, selectedChapter?.id])
+  }, [chapters, selectedChapter])
 
   const previewDiffOps = useMemo(() => {
     if (!selectedChapter) return null
@@ -509,7 +509,7 @@ export default function AdminCourseChaptersPage() {
     const base = selectedPreviousChapter?.content || ''
     const current = form.content || ''
     return diffTokens(tokenize(base), tokenize(current))
-  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.content])
+  }, [form.content, selectedChapter, selectedPreviousChapter])
 
   const parsedDiagramForPreview = useMemo(() => {
     const unwrapFence = (text: string) => {
@@ -538,7 +538,7 @@ export default function AdminCourseChaptersPage() {
     const previous = selectedPreviousChapter ? tryParseDiagram(selectedPreviousChapter.content || '') : null
     const current = selectedChapter ? tryParseDiagram(form.content || '') : null
     return { previous, current }
-  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.id])
+  }, [form.content, selectedChapter, selectedPreviousChapter])
 
   return (
     <div className="min-h-screen bg-site-bg">

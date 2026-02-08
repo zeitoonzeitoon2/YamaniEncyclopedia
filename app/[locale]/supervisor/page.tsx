@@ -355,97 +355,9 @@ export default function SupervisorDashboard() {
       toast.error(t('toast.loadError'))
       return null
     }
-  }, [])
+  }, [t])
 
-  const openPostById = useCallback(async (postId: string) => {
-    const found = posts.find(p => p.id === postId)
-    if (found) {
-      // If content is not in list, load details lazily
-      if (!found.content || !found.originalPost?.content) {
-        await fetchPostDetails(postId)
-      } else {
-        setSelectedPost(found)
-      }
-      setTimeout(() => {
-        const el = document.getElementById('comments')
-        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 50)
-      return
-    }
-
-    try {
-      // Ensure posts are loaded, then select
-      await fetchPosts()
-      setTimeout(async () => {
-        setPosts(curr => {
-          const f = curr.find(p => p.id === postId)
-          if (f) {
-            // Same lazy check after refreshing list
-            if (!f.content || !f.originalPost?.content) {
-              fetchPostDetails(postId)
-            } else {
-              setSelectedPost(f)
-            }
-            setTimeout(() => {
-              const el = document.getElementById('comments')
-              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 50)
-          }
-          return curr
-        })
-      }, 200)
-    } catch (e) {
-      console.error('Failed to open post by id', e)
-    }
-  }, [posts, fetchPostDetails])
-
-  useEffect(() => {
-    console.log('useEffect triggered - status:', status, 'session:', !!session, 'role:', session?.user?.role)
-    if (status === 'loading') {
-      console.log('Status is loading, returning')
-      return
-    }
-    
-    if (!session) {
-      console.log('No session, redirecting to /')
-      router.push('/')
-      return
-    }
-
-    // Allow any logged-in user to enter; visibility inside page is role-based
-
-    console.log('Calling fetchPosts')
-    fetchPosts()
-  }, [session, status, router])
-
-  // Reset menu badge to zero when reading CommentSection
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { postId: string }
-      if (!detail?.postId) return
-      setPosts(prev => prev.map(p => p.id === detail.postId ? { ...p, unreadComments: 0 } : p))
-    }
-    if (typeof window !== 'undefined') {
-      window.addEventListener('comments:read', handler as EventListener)
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('comments:read', handler as EventListener)
-      }
-    }
-  }, [])
-
-  // Get current user's vote for the selected post
-  useEffect(() => {
-    if (selectedPost && session?.user) {
-      const userVote = selectedPost.votes?.find(vote => vote.adminId === session.user.id)
-      setCurrentUserVote(userVote?.score)
-    } else {
-      setCurrentUserVote(undefined)
-    }
-  }, [selectedPost, session?.user])
-
-  const fetchPosts = async (signal?: AbortSignal, append: boolean = false) => {
+  const fetchPosts = useCallback(async (signal?: AbortSignal, append: boolean = false) => {
     try {
       if (filter === 'researchers' && selectedResearcherId) {
         const url = new URL(`/api/researchers/${selectedResearcherId}/posts`, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
@@ -492,7 +404,95 @@ export default function SupervisorDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter, selectedResearcherId, page, pageSize, userQuery, t, isSupervisorRole])
+
+  const openPostById = useCallback(async (postId: string) => {
+    const found = posts.find(p => p.id === postId)
+    if (found) {
+      // If content is not in list, load details lazily
+      if (!found.content || !found.originalPost?.content) {
+        await fetchPostDetails(postId)
+      } else {
+        setSelectedPost(found)
+      }
+      setTimeout(() => {
+        const el = document.getElementById('comments')
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
+      return
+    }
+
+    try {
+      // Ensure posts are loaded, then select
+      await fetchPosts()
+      setTimeout(async () => {
+        setPosts(curr => {
+          const f = curr.find(p => p.id === postId)
+          if (f) {
+            // Same lazy check after refreshing list
+            if (!f.content || !f.originalPost?.content) {
+              fetchPostDetails(postId)
+            } else {
+              setSelectedPost(f)
+            }
+            setTimeout(() => {
+              const el = document.getElementById('comments')
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 50)
+          }
+          return curr
+        })
+      }, 200)
+    } catch (e) {
+      console.error('Failed to open post by id', e)
+    }
+  }, [posts, fetchPostDetails, fetchPosts])
+
+  useEffect(() => {
+    console.log('useEffect triggered - status:', status, 'session:', !!session, 'role:', session?.user?.role)
+    if (status === 'loading') {
+      console.log('Status is loading, returning')
+      return
+    }
+    
+    if (!session) {
+      console.log('No session, redirecting to /')
+      router.push('/')
+      return
+    }
+
+    // Allow any logged-in user to enter; visibility inside page is role-based
+
+    console.log('Calling fetchPosts')
+    fetchPosts()
+  }, [session, status, router, fetchPosts])
+
+  // Reset menu badge to zero when reading CommentSection
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { postId: string }
+      if (!detail?.postId) return
+      setPosts(prev => prev.map(p => p.id === detail.postId ? { ...p, unreadComments: 0 } : p))
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('comments:read', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('comments:read', handler as EventListener)
+      }
+    }
+  }, [])
+
+  // Get current user's vote for the selected post
+  useEffect(() => {
+    if (selectedPost && session?.user) {
+      const userVote = selectedPost.votes?.find(vote => vote.adminId === session.user.id)
+      setCurrentUserVote(userVote?.score)
+    } else {
+      setCurrentUserVote(undefined)
+    }
+  }, [selectedPost, session?.user])
 
   const handleDeletePost = useCallback((postId: string) => {
     setDeleteTargetId(postId)
@@ -518,7 +518,7 @@ export default function SupervisorDashboard() {
       console.error('Delete post error:', e)
       toast.error(t('toast.deleteError'))
     }
-  }, [deleteTargetId, fetchPosts])
+  }, [deleteTargetId, fetchPosts, t])
 
   const confirmWithdrawEdit = useCallback(async () => {
     if (!deleteTargetId) return
@@ -537,7 +537,7 @@ export default function SupervisorDashboard() {
       console.error('Withdraw post error:', e)
       toast.error(t('toast.withdrawError'))
     }
-  }, [deleteTargetId, router])
+  }, [deleteTargetId, router, t])
   useEffect(() => {
     if (status === 'authenticated') {
       const ac = new AbortController()
@@ -546,7 +546,7 @@ export default function SupervisorDashboard() {
       fetchPosts(ac.signal, false)
       return () => ac.abort()
     }
-  }, [status, pageSize, filter])
+  }, [status, pageSize, filter, fetchPosts])
 
   useEffect(() => {
     if (status === 'authenticated' && filter === 'researchers' && selectedResearcherId) {
@@ -556,7 +556,7 @@ export default function SupervisorDashboard() {
       fetchPosts(ac.signal, false)
       return () => ac.abort()
     }
-  }, [status, filter, selectedResearcherId])
+  }, [status, filter, selectedResearcherId, fetchPosts])
 
 
 
@@ -567,30 +567,6 @@ export default function SupervisorDashboard() {
       </div>
     )
   }
-
-  const filteredPosts = posts.filter(post => {
-    switch (filter) {
-      case 'new_designs':
-        return true
-      case 'new_comments':
-        return (post.unreadComments || 0) > 0
-      case 'reviewables':
-        return post.status === 'REVIEWABLE'
-      case 'my-posts':
-        return post.author.id === session?.user?.id
-      default:
-        return true
-    }
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-  const newDesignsCount = posts.length
-  const totalUnreadComments = posts.reduce((sum, p) => sum + (p.unreadComments || 0), 0)
-  const reviewablesCount = posts.filter(p => p.status === 'REVIEWABLE').length
-  const myPostsCount = posts.filter(p => p.author.id === session?.user?.id).length
-  const relatedCount = relatedPostIds.size
-  const pendingCount = posts.filter(p => p.status === 'PENDING').length
-  const approvedCount = posts.filter(p => p.status === 'APPROVED').length
-  const rejectedCount = posts.filter(p => p.status === 'REJECTED').length
 
   const handleVote = async (postId: string, score: number) => {
     try {
@@ -647,6 +623,30 @@ export default function SupervisorDashboard() {
       toast.error(t('toast.voteFail'))
     }
   }
+
+  const filteredPosts = posts.filter(post => {
+    switch (filter) {
+      case 'new_designs':
+        return true
+      case 'new_comments':
+        return (post.unreadComments || 0) > 0
+      case 'reviewables':
+        return post.status === 'REVIEWABLE'
+      case 'my-posts':
+        return post.author.id === session?.user?.id
+      default:
+        return true
+    }
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  const newDesignsCount = posts.length
+  const totalUnreadComments = posts.reduce((sum, p) => sum + (p.unreadComments || 0), 0)
+  const reviewablesCount = posts.filter(p => p.status === 'REVIEWABLE').length
+  const myPostsCount = posts.filter(p => p.author.id === session?.user?.id).length
+  const relatedCount = relatedPostIds.size
+  const pendingCount = posts.filter(p => p.status === 'PENDING').length
+  const approvedCount = posts.filter(p => p.status === 'APPROVED').length
+  const rejectedCount = posts.filter(p => p.status === 'REJECTED').length
 
   return (
     <div className="min-h-screen bg-site-bg">

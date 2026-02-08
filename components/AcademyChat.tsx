@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 import { Send, User, Calendar, ExternalLink, MessageCircle, Reply, Edit2, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
@@ -83,8 +84,8 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
         const data = await res.json()
         if (res.ok) {
           setExams(data.exams || [])
-          if (data.exams && data.exams.length > 0 && !selectedExam) {
-            setSelectedExam(data.exams[0])
+          if (data.exams && data.exams.length > 0) {
+            setSelectedExam(prev => prev || data.exams[0])
           }
         } else {
           console.error('API Error:', data)
@@ -315,7 +316,13 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                     instructors.map((expert) => (
                       <div key={expert.user.id} className="flex items-center gap-2 bg-site-bg/50 rounded-full pr-1 pl-3 py-1 border border-gray-700">
                         {expert.user.image ? (
-                          <img src={expert.user.image} alt={expert.user.name || ''} className="w-5 h-5 rounded-full object-cover" />
+                          <Image
+                            src={expert.user.image}
+                            alt={expert.user.name || ''}
+                            width={20}
+                            height={20}
+                            className="rounded-full object-cover"
+                          />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-warm-primary/20 flex items-center justify-center text-[10px] text-warm-primary">
                             <User size={10} />
@@ -428,7 +435,7 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                       <>
                         <Reply size={12} className="text-warm-primary" />
                         <span>{t('replyingTo' as any) || 'Replying to'} <strong>{replyingTo.sender.name}</strong></span>
-                        <span className="truncate max-w-[200px] italic">"{replyingTo.content}"</span>
+                        <span className="truncate max-w-[200px] italic">&quot;{replyingTo.content}&quot;</span>
                       </>
                     ) : (
                       <>

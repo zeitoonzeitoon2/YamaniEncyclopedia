@@ -289,6 +289,7 @@
     "loadingShort": "جارٍ التحميل..."
   },
   "supervisor": {
+    "loading": "جاري التحميل...",
     "title": {
       "editor": "لوحة تحكم المحرر",
       "supervisor": "لوحة تحكم المشرف"
