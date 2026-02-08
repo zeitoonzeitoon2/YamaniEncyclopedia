@@ -10,6 +10,7 @@ import { Header } from '@/components/Header'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Node, Edge } from 'reactflow'
 
 // Helper: Identify a "trivial/empty" tree to prevent default saving
 type TreeData = { nodes: Node[]; edges: Edge[] }
