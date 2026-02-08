@@ -170,6 +170,7 @@ model CourseChapter {
   votes       ChapterVote[]
   progress    CourseChapterProgress[]
   comments    Comment[]
+  quizQuestions Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

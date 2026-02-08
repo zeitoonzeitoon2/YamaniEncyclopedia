@@ -44,6 +44,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
     const content = typeof body.content === 'string' ? body.content : undefined
     const orderIndex = typeof body.orderIndex === 'number' ? body.orderIndex : undefined
     const changeReason = body.changeReason
+    const quizQuestions = body.quizQuestions
 
     if (!title && !content && orderIndex === undefined) {
       return NextResponse.json({ error: 'No changes provided' }, { status: 400 })
@@ -56,6 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
         ...(content !== undefined ? { content } : {}),
         ...(orderIndex !== undefined ? { orderIndex } : {}),
         ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
+        ...(quizQuestions !== undefined ? { quizQuestions: (quizQuestions as any) as Prisma.InputJsonValue } : {}),
       },
       select: { id: true },
     })

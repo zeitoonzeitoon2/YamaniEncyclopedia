@@ -107,7 +107,13 @@
     "delete": "حذف",
     "edited": "ویرایش شده",
     "replyingTo": "پاسخ به",
-    "editingMessage": "در حال ویرایش پیام"
+    "editingMessage": "در حال ویرایش پیام",
+    "quizTitle": "پرسشنامه خودارزیابی",
+    "checkQuiz": "بررسی پاسخ‌ها",
+    "quizCorrect": "پاسخ صحیح است!",
+    "quizIncorrect": "پاسخ نادرست است. پاسخ صحیح گزینه {index} می‌باشد.",
+    "quizScore": "شما به {correct} سوال از {total} سوال پاسخ درست دادید.",
+    "resetQuiz": "تلاش مجدد"
   },
   "language": {
     "label": "زبان",
@@ -683,6 +689,13 @@
     "selectedVersion": "نسخه انتخاب شده",
     "statusApproved": "تایید شده",
     "statusRejected": "رد شده",
+    "quizTitle": "پرسشنامه خودارزیابی",
+    "addQuestion": "افزودن سوال",
+    "questionPlaceholder": "متن سوال...",
+    "optionPlaceholder": "گزینه {index}...",
+    "correctAnswerLabel": "پاسخ صحیح:",
+    "removeQuestion": "حذف سوال",
+    "versionLabel": "نسخه {version}",
     "statusDraft": "پیش‌نویس",
     "loading": "در حال بارگذاری...",
     "toast": {

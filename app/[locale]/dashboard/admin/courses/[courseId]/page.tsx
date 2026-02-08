@@ -42,6 +42,7 @@ type CourseChapter = {
   updatedAt: string
   author: ChapterAuthor
   votes: ChapterVote[]
+  quizQuestions?: any
 }
 
 type CourseInfo = {
@@ -71,7 +72,7 @@ export default function AdminCourseChaptersPage() {
   const [chapters, setChapters] = useState<CourseChapter[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [mode, setMode] = useState<EditorMode>('new')
-  const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '' })
+  const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '', quizQuestions: [] as any[] })
   const [argumentation, setArgumentation] = useState({
     type: '',
     summary: '',
@@ -135,7 +136,7 @@ export default function AdminCourseChaptersPage() {
   const resetFormForNew = (nextOrderIndex: number) => {
     setMode('new')
     setSelectedId(null)
-    setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '' })
+    setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '', quizQuestions: [] })
     setActiveDraftId(null)
     autoDraftingRef.current = false
   }
@@ -187,6 +188,7 @@ export default function AdminCourseChaptersPage() {
       content: current.content || '',
       orderIndex: current.orderIndex ?? 0,
       originalChapterId: current.originalChapterId || '',
+      quizQuestions: Array.isArray(current.quizQuestions) ? current.quizQuestions : [],
     })
     setMode('edit')
   }, [selectedId])
@@ -278,6 +280,7 @@ export default function AdminCourseChaptersPage() {
         title, 
         content, 
         orderIndex: form.orderIndex,
+        quizQuestions: form.quizQuestions,
         changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
       }
 
@@ -352,12 +355,42 @@ export default function AdminCourseChaptersPage() {
         return
       }
       await fetchChapters()
+      toast.success(t('toast.voteSuccess'))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
     }
+  }
+
+  const addQuizQuestion = () => {
+    const newQuestion = {
+      id: crypto.randomUUID(),
+      question: '',
+      options: ['', '', '', ''],
+      correctAnswer: 0
+    }
+    setForm(prev => ({
+      ...prev,
+      quizQuestions: [...prev.quizQuestions, newQuestion]
+    }))
+  }
+
+  const removeQuizQuestion = (id: string) => {
+    setForm(prev => ({
+      ...prev,
+      quizQuestions: prev.quizQuestions.filter((q: any) => q.id !== id)
+    }))
+  }
+
+  const updateQuizQuestion = (id: string, updates: any) => {
+    setForm(prev => ({
+      ...prev,
+      quizQuestions: prev.quizQuestions.map((q: any) => 
+        q.id === id ? { ...q, ...updates } : q
+      )
+    }))
   }
 
   const chapterLabel = (chapter: CourseChapter) => {
@@ -737,6 +770,72 @@ export default function AdminCourseChaptersPage() {
                     <div className="text-xs text-site-muted">
                       {form.content ? t('charCount', { count: form.content.length }) : t('noContent')}
                     </div>
+                  </div>
+
+                  {/* Quiz Editor */}
+                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-md font-bold text-site-text heading">{t('quizTitle')}</h4>
+                      <button
+                        type="button"
+                        onClick={addQuizQuestion}
+                        className="px-3 py-1 text-xs rounded-lg border border-warm-primary/40 bg-warm-primary/10 hover:bg-warm-primary/20 text-site-text"
+                      >
+                        {t('addQuestion')}
+                      </button>
+                    </div>
+                    
+                    {form.quizQuestions.length === 0 ? (
+                      <div className="text-xs text-site-muted italic text-center py-2">
+                        {t('noQuizQuestions', { defaultValue: 'No questions added yet.' })}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {form.quizQuestions.map((q: any, qIdx: number) => (
+                          <div key={q.id} className="p-3 rounded-lg border border-gray-700 bg-black/20 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs text-site-muted font-mono">Q{qIdx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeQuizQuestion(q.id)}
+                                className="text-xs text-red-400 hover:text-red-300"
+                              >
+                                {t('removeQuestion')}
+                              </button>
+                            </div>
+                            <input
+                              value={q.question}
+                              onChange={(e) => updateQuizQuestion(q.id, { question: e.target.value })}
+                              placeholder={t('questionPlaceholder')}
+                              className="w-full p-2 text-sm rounded border border-gray-600 bg-site-bg text-site-text"
+                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {q.options.map((opt: string, oIdx: number) => (
+                                <div key={oIdx} className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name={`correct-${q.id}`}
+                                    checked={q.correctAnswer === oIdx}
+                                    onChange={() => updateQuizQuestion(q.id, { correctAnswer: oIdx })}
+                                    className="text-warm-primary focus:ring-warm-primary bg-site-bg border-gray-600"
+                                  />
+                                  <input
+                                    value={opt}
+                                    onChange={(e) => {
+                                      const newOpts = [...q.options]
+                                      newOpts[oIdx] = e.target.value
+                                      updateQuizQuestion(q.id, { options: newOpts })
+                                    }}
+                                    placeholder={t('optionPlaceholder', { index: oIdx + 1 })}
+                                    className="flex-1 p-2 text-xs rounded border border-gray-600 bg-site-bg text-site-text"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">

@@ -105,7 +105,13 @@
     "delete": "Delete",
     "edited": "edited",
     "replyingTo": "Replying to",
-    "editingMessage": "Editing message"
+    "editingMessage": "Editing message",
+    "quizTitle": "Self-Assessment Quiz",
+    "checkQuiz": "Check Answers",
+    "quizCorrect": "Correct!",
+    "quizIncorrect": "Incorrect. The correct answer is option {index}.",
+    "quizScore": "You got {correct} out of {total} questions correct.",
+    "resetQuiz": "Try Again"
   },
   "language": {
     "label": "Language",
@@ -681,6 +687,13 @@
     "selectedVersion": "Selected Version",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
+    "quizTitle": "Self-Assessment Quiz",
+    "addQuestion": "Add Question",
+    "questionPlaceholder": "Question text...",
+    "optionPlaceholder": "Option {index}...",
+    "correctAnswerLabel": "Correct Answer:",
+    "removeQuestion": "Remove Question",
+    "versionLabel": "Version {version}",
     "statusDraft": "Draft",
     "loading": "Loading...",
     "toast": {

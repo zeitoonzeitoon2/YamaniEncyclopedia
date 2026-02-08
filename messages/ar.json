@@ -105,7 +105,13 @@
     "delete": "حذف",
     "edited": "معدلة",
     "replyingTo": "الرد على",
-    "editingMessage": "تعديل الرسالة"
+    "editingMessage": "تعديل الرسالة",
+    "quizTitle": "استطلاع التقييم الذاتی",
+    "checkQuiz": "تحقق من الإجابات",
+    "quizCorrect": "الإجابة صحيحة!",
+    "quizIncorrect": "الإجابة خاطئة. الإجابة الصحيحة هی الخيار {index}.",
+    "quizScore": "لقد أجبت بشكل صحيح على {correct} من أصل {total} أسئلة.",
+    "resetQuiz": "إعادة المحاولة"
   },
   "language": {
     "label": "اللغة",
@@ -681,6 +687,13 @@
     "selectedVersion": "النسخة المحددة",
     "statusApproved": "معتمد",
     "statusRejected": "مرفوض",
+    "quizTitle": "استطلاع التقييم الذاتي",
+    "addQuestion": "إضافة سؤال",
+    "questionPlaceholder": "نص السؤال...",
+    "optionPlaceholder": "خيار {index}...",
+    "correctAnswerLabel": "الإجابة الصحيحة:",
+    "removeQuestion": "حذف السؤال",
+    "versionLabel": "إصدار {version}",
     "statusDraft": "مسودة",
     "loading": "جارٍ التحميل...",
     "toast": {

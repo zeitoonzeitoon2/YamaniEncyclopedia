@@ -15,6 +15,7 @@ type Chapter = {
   orderIndex: number
   version: number | null
   originalChapterId: string | null
+  quizQuestions?: any
 }
 
 type CourseInfo = {
@@ -58,6 +59,8 @@ export default function CourseViewerPage() {
   const [markingId, setMarkingId] = useState<string | null>(null)
   const [requestingExam, setRequestingExam] = useState(false)
   const [previewHtml, setPreviewHtml] = useState('')
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
+  const [quizSubmitted, setQuizSubmitted] = useState(false)
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
   const currentIndex = useMemo(() => chapters.findIndex((c) => c.id === selectedId), [chapters, selectedId])
@@ -101,6 +104,8 @@ export default function CourseViewerPage() {
 
   useEffect(() => {
     setPreviewHtml(applyArticleTransforms(selectedChapter?.content || ''))
+    setQuizAnswers({})
+    setQuizSubmitted(false)
   }, [selectedChapter?.id, selectedChapter?.content])
 
   const markComplete = async () => {
@@ -322,6 +327,97 @@ export default function CourseViewerPage() {
                   </div>
                 )}
                 <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+
+                {/* Self-Assessment Quiz Section */}
+                {selectedChapter?.quizQuestions && Array.isArray(selectedChapter.quizQuestions) && selectedChapter.quizQuestions.length > 0 && (
+                  <div className="mt-12 pt-8 border-t border-site-border space-y-6">
+                    <h3 className="text-xl font-bold text-site-text heading flex items-center gap-2">
+                      <span className="w-2 h-6 bg-warm-primary rounded-full"></span>
+                      {t('quizTitle')}
+                    </h3>
+                    
+                    <div className="space-y-8">
+                      {selectedChapter.quizQuestions.map((q: any, qIdx: number) => (
+                        <div key={q.id || qIdx} className="space-y-4">
+                          <div className="text-site-text font-medium">
+                            {qIdx + 1}. {q.question}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {q.options.map((opt: string, oIdx: number) => {
+                              const isSelected = quizAnswers[q.id] === oIdx
+                              const isCorrect = q.correctAnswer === oIdx
+                              let bgColor = 'bg-site-card/40 border-gray-700'
+                              
+                              if (quizSubmitted) {
+                                if (isCorrect) bgColor = 'bg-green-500/20 border-green-500/50'
+                                else if (isSelected) bgColor = 'bg-red-500/20 border-red-500/50'
+                              } else if (isSelected) {
+                                bgColor = 'bg-warm-primary/20 border-warm-primary/50'
+                              }
+
+                              return (
+                                <button
+                                  key={oIdx}
+                                  type="button"
+                                  disabled={quizSubmitted}
+                                  onClick={() => setQuizAnswers(prev => ({ ...prev, [q.id]: oIdx }))}
+                                  className={`p-3 rounded-lg border text-right transition-all ${bgColor} ${!quizSubmitted && 'hover:border-warm-primary/40'}`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-warm-primary' : 'border-gray-500'}`}>
+                                      {isSelected && <div className="w-2 h-2 rounded-full bg-warm-primary"></div>}
+                                    </div>
+                                    <span className="text-sm text-site-text">{opt}</span>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {quizSubmitted && (
+                            <div className={`text-xs font-medium ${quizAnswers[q.id] === q.correctAnswer ? 'text-green-400' : 'text-red-400'}`}>
+                              {quizAnswers[q.id] === q.correctAnswer 
+                                ? t('quizCorrect') 
+                                : t('quizIncorrect', { index: q.correctAnswer + 1 })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4">
+                      {quizSubmitted ? (
+                        <>
+                          <div className="text-site-text font-bold">
+                            {t('quizScore', { 
+                              correct: selectedChapter.quizQuestions.filter((q: any) => quizAnswers[q.id] === q.correctAnswer).length,
+                              total: selectedChapter.quizQuestions.length
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setQuizAnswers({})
+                              setQuizSubmitted(false)
+                            }}
+                            className="btn-secondary text-sm"
+                          >
+                            {t('resetQuiz')}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={Object.keys(quizAnswers).length < selectedChapter.quizQuestions.length}
+                          onClick={() => setQuizSubmitted(true)}
+                          className="btn-primary disabled:opacity-50"
+                        >
+                          {t('checkQuiz')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between gap-2">
                   <button
                     type="button"
