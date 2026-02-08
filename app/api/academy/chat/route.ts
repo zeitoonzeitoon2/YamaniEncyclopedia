@@ -22,18 +22,50 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ messages: [] })
     }
 
-    // Verify user is part of this session
+    // Verify user is part of this session or is an expert for this course's domain
     const examSession = await prisma.examSession.findUnique({
       where: { id: examSessionId },
-      select: { studentId: true, examinerId: true }
+      include: {
+        course: { select: { domainId: true } }
+      }
     })
 
     if (!examSession) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 })
     }
 
-    if (examSession.studentId !== session.user.id && examSession.examinerId !== session.user.id && session.user.role !== 'ADMIN') {
+    // Check if user is an expert in this domain
+    const isExpert = await prisma.domainExpert.findFirst({
+      where: {
+        userId: session.user.id,
+        domainId: examSession.course.domainId
+      }
+    })
+
+    const isAuthorized = 
+      examSession.studentId === session.user.id || 
+      examSession.examinerId === session.user.id || 
+      !!isExpert ||
+      session.user.role === 'ADMIN'
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
+    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
+      await prisma.examSession.update({
+        where: { id: examSessionId },
+        data: { examinerId: session.user.id }
+      })
+    }
+
+    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
+    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
+      await prisma.examSession.update({
+        where: { id: examSessionId },
+        data: { examinerId: session.user.id }
+      })
     }
 
     let messages: any[] = []
@@ -99,18 +131,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Verify user is part of this session
+    // Verify user is part of this session or is an expert for this course's domain
     const examSession = await prisma.examSession.findUnique({
       where: { id: examSessionId },
-      select: { studentId: true, examinerId: true }
+      include: {
+        course: { select: { domainId: true } }
+      }
     })
 
     if (!examSession) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 })
     }
 
-    if (examSession.studentId !== session.user.id && examSession.examinerId !== session.user.id && session.user.role !== 'ADMIN') {
+    // Check if user is an expert in this domain
+    const isExpert = await prisma.domainExpert.findFirst({
+      where: {
+        userId: session.user.id,
+        domainId: examSession.course.domainId
+      }
+    })
+
+    const isAuthorized = 
+      examSession.studentId === session.user.id || 
+      examSession.examinerId === session.user.id || 
+      !!isExpert ||
+      session.user.role === 'ADMIN'
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
+    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
+      await prisma.examSession.update({
+        where: { id: examSessionId },
+        data: { examinerId: session.user.id }
+      })
     }
 
     try {

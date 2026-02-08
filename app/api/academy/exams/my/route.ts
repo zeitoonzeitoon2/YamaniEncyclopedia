@@ -13,31 +13,56 @@ export async function GET() {
     const userId = session.user.id
     console.log(`[DEBUG] Starting optimized fetch for user: ${userId}`)
 
-    // 1. Fetch Exam Sessions (Flat)
-    const rawExams = await prisma.examSession.findMany({
-      where: {
-        OR: [{ studentId: userId }, { examinerId: userId }]
-      },
-      include: {
-        student: { select: { id: true, name: true, email: true, image: true } },
-        examiner: { select: { id: true, name: true, image: true } },
-        course: { select: { id: true, title: true, domainId: true } }
-        // Temporarily removed chatMessages include because table doesn't exist in production DB yet
-      },
-      orderBy: { createdAt: 'desc' }
-    })
-
-    // 2. Fetch Enrollments (Flat)
-    // For students: fetch their own enrollments
-    // For examiners/experts: fetch students enrolled in courses they oversee
-    
-    // Check if user is an expert in any domain
+    // 0. Check if user is an expert in any domain
     const myExpertDomains = await prisma.domainExpert.findMany({
       where: { userId },
       select: { domainId: true }
     })
     const myExpertDomainIds = myExpertDomains.map(d => d.domainId)
     const isExpert = myExpertDomainIds.length > 0
+
+    // 1. Fetch Exam Sessions (Flat)
+    let rawExams: any[] = []
+    try {
+      rawExams = await prisma.examSession.findMany({
+        where: {
+          OR: [
+            { studentId: userId }, 
+            { examinerId: userId },
+            ...(isExpert ? [{ course: { domainId: { in: myExpertDomainIds } } }] : [])
+          ]
+        },
+        include: {
+          student: { select: { id: true, name: true, email: true, image: true } },
+          examiner: { select: { id: true, name: true, image: true } },
+          course: { select: { id: true, title: true, domainId: true } },
+          chatMessages: {
+            include: {
+              sender: { select: { id: true, name: true, image: true } }
+            },
+            orderBy: { createdAt: 'asc' }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (error: any) {
+      console.error('[DEBUG] Failed to fetch with chatMessages, trying without:', error.message)
+      rawExams = await prisma.examSession.findMany({
+        where: {
+          OR: [
+            { studentId: userId }, 
+            { examinerId: userId },
+            ...(isExpert ? [{ course: { domainId: { in: myExpertDomainIds } } }] : [])
+          ]
+        },
+        include: {
+          student: { select: { id: true, name: true, email: true, image: true } },
+          examiner: { select: { id: true, name: true, image: true } },
+          course: { select: { id: true, title: true, domainId: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    }
 
     let rawEnrollments: any[] = []
     
@@ -122,7 +147,7 @@ export async function GET() {
     // 7. Assemble Normalized Exams
     const normalizedExams = rawExams.map(exam => ({
       ...exam,
-      chatMessages: [], // Ensure this property exists
+      chatMessages: exam.chatMessages || [], // Ensure this property exists
       course: exam.course ? {
         ...exam.course,
         domain: domainMap.get(exam.course.domainId) || { id: exam.course.domainId, experts: [] }
