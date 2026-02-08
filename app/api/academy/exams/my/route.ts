@@ -33,8 +33,12 @@ export async function GET() {
               title: true,
               domain: {
                 select: {
+                  id: true,
+                  name: true,
                   experts: {
                     select: {
+                      id: true,
+                      role: true,
                       user: {
                         select: {
                           id: true,
@@ -67,10 +71,12 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
             take: 1,
             select: {
+              id: true,
               content: true,
               createdAt: true,
               sender: {
                 select: {
+                  id: true,
                   name: true
                 }
               }
@@ -90,8 +96,12 @@ export async function GET() {
               title: true,
               domain: {
                 select: {
+                  id: true,
+                  name: true,
                   experts: {
                     select: {
+                      id: true,
+                      role: true,
                       user: {
                         select: {
                           id: true,
