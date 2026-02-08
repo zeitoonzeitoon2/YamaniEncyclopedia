@@ -224,12 +224,14 @@ export default function AdminCourseChaptersPage() {
     autoDraftingRef.current = true
     try {
       const content = draft.content
+      const quizQuestions = form.quizQuestions || []
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: draftTitle,
           content,
+          quizQuestions,
           orderIndex: selectedChapter.orderIndex ?? 0,
           originalChapterId: rootId,
         }),
@@ -253,11 +255,17 @@ export default function AdminCourseChaptersPage() {
   }
 
   const handleSave = async () => {
-    const title = form.title.trim()
-    const content = form.content.trim()
-    const hasQuiz = Array.isArray(form.quizQuestions) && form.quizQuestions.length > 0
+    const title = (form.title || '').trim()
+    const content = (form.content || '').trim()
+    const quizQuestions = form.quizQuestions || []
+    const hasQuiz = Array.isArray(quizQuestions) && quizQuestions.length > 0
     
-    if (!title || (!content && !hasQuiz)) {
+    if (!title) {
+      toast.error(t('toast.requiredFields'))
+      return
+    }
+
+    if (!content && !hasQuiz) {
       toast.error(t('toast.requiredFields'))
       return
     }
@@ -272,8 +280,8 @@ export default function AdminCourseChaptersPage() {
 
   const doSave = async () => {
     if (!courseId) return
-    const title = form.title.trim()
-    const content = form.content.trim()
+    const title = (form.title || '').trim()
+    const content = (form.content || '').trim()
     
     try {
       setSaving(true)

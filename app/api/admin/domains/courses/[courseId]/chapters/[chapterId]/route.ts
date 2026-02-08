@@ -48,7 +48,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
 
     // If updating, we don't strictly require title/content unless they are being changed to empty
     // But if they are being changed, we should ensure at least one exists (content or quiz)
-    if (title === '' || (content === '' && (!Array.isArray(quizQuestions) || quizQuestions.length === 0))) {
+    const isTitleEmpty = title === ''
+    const isContentEmpty = content === ''
+    const isQuizEmpty = !Array.isArray(quizQuestions) || quizQuestions.length === 0
+
+    if (isTitleEmpty || (isContentEmpty && isQuizEmpty)) {
       return NextResponse.json({ error: 'title and content (or quiz) cannot be empty' }, { status: 400 })
     }
 

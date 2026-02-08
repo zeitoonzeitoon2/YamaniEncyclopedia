@@ -77,7 +77,11 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     const changeReason = body.changeReason
     const quizQuestions = body.quizQuestions
 
-    if (!title || (!content && (!Array.isArray(quizQuestions) || quizQuestions.length === 0))) {
+    const isTitleEmpty = !title
+    const isContentEmpty = !content
+    const isQuizEmpty = !Array.isArray(quizQuestions) || quizQuestions.length === 0
+
+    if (isTitleEmpty || (isContentEmpty && isQuizEmpty)) {
       return NextResponse.json({ error: 'title and content (or quiz) are required' }, { status: 400 })
     }
 
