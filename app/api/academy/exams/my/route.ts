@@ -31,44 +31,7 @@ export async function GET() {
             select: {
               id: true,
               title: true,
-              domain: {
-                select: {
-                  id: true,
-                  name: true,
-                  experts: {
-                    select: {
-                      id: true,
-                      role: true,
-                      user: {
-                        select: {
-                          id: true,
-                          name: true,
-                          image: true
-                        }
-                      }
-                    }
-                  },
-                  parent: {
-                    select: {
-                      id: true,
-                      name: true,
-                      experts: {
-                        select: {
-                          id: true,
-                          role: true,
-                          user: {
-                            select: {
-                              id: true,
-                              name: true,
-                              image: true
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              domainId: true
             }
           },
           student: {
@@ -113,62 +76,88 @@ export async function GET() {
             select: {
               id: true,
               title: true,
-              domain: {
-                select: {
-                  id: true,
-                  name: true,
-                  experts: {
-                    select: {
-                      id: true,
-                      role: true,
-                      user: {
-                        select: {
-                          id: true,
-                          name: true,
-                          image: true
-                        }
-                      }
-                    }
-                  },
-                  parent: {
-                    select: {
-                      id: true,
-                      name: true,
-                      experts: {
-                        select: {
-                          id: true,
-                          role: true,
-                          user: {
-                            select: {
-                              id: true,
-                              name: true,
-                              image: true
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              domainId: true
             }
           }
         }
       })
     ])
 
-    // Create "virtual" exam sessions for courses without one
+    const domainIds = Array.from(new Set(
+      [
+        ...exams.map(exam => exam.course.domainId),
+        ...enrollments.map(enrollment => enrollment.course.domainId)
+      ].filter(Boolean)
+    ))
+
+    const domains = domainIds.length > 0
+      ? await prisma.domain.findMany({
+          where: { id: { in: domainIds } },
+          select: { id: true, parentId: true }
+        })
+      : []
+
+    const parentIds = Array.from(new Set(domains.map(d => d.parentId).filter(Boolean)))
+    const expertDomainIds = Array.from(new Set([...domainIds, ...parentIds]))
+
+    const domainExperts = expertDomainIds.length > 0
+      ? await prisma.domainExpert.findMany({
+          where: { domainId: { in: expertDomainIds } },
+          select: {
+            id: true,
+            role: true,
+            domainId: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true
+              }
+            }
+          }
+        })
+      : []
+
+    const expertsByDomainId = new Map<string, typeof domainExperts>()
+    for (const expert of domainExperts) {
+      const list = expertsByDomainId.get(expert.domainId)
+      if (list) list.push(expert)
+      else expertsByDomainId.set(expert.domainId, [expert])
+    }
+
+    const parentIdByDomainId = new Map(domains.map(d => [d.id, d.parentId]))
+
+    const enrichCourse = (course: { id: string; title: string; domainId: string | null }) => {
+      const domainId = course.domainId
+      const parentId = domainId ? parentIdByDomainId.get(domainId) ?? null : null
+      return {
+        id: course.id,
+        title: course.title,
+        domain: {
+          experts: domainId ? (expertsByDomainId.get(domainId) || []) : [],
+          parent: {
+            experts: parentId ? (expertsByDomainId.get(parentId) || []) : []
+          }
+        }
+      }
+    }
+
+    const normalizedExams = exams.map(exam => ({
+      ...exam,
+      course: enrichCourse(exam.course)
+    }))
+
     const virtualExams = enrollments
       .filter(enrollment => !exams.some(exam => exam.courseId === enrollment.courseId))
       .map(enrollment => ({
-        id: `course-${enrollment.courseId}`, // Virtual ID
+        id: `course-${enrollment.courseId}`,
         status: 'ENROLLED',
         studentId: session.user.id,
         examinerId: null,
         scheduledAt: null,
         meetLink: null,
         courseId: enrollment.courseId,
-        course: enrollment.course,
+        course: enrichCourse(enrollment.course),
         student: { 
           id: session.user.id, 
           name: session.user.name || null, 
@@ -180,7 +169,7 @@ export async function GET() {
         chatMessages: []
       }))
 
-    const allExams = [...exams, ...virtualExams].sort((a, b) => 
+    const allExams = [...normalizedExams, ...virtualExams].sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
