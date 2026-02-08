@@ -99,6 +99,18 @@ export async function GET() {
     const parentIds = Array.from(new Set(domains.map(d => d.parentId).filter((id): id is string => Boolean(id))))
     const expertDomainIds = Array.from(new Set([...domainIds, ...parentIds].filter((id): id is string => Boolean(id))))
 
+    // Use explicit type for the map values to avoid inference issues
+    type ExpertWithUser = {
+      id: string;
+      role: string;
+      domainId: string;
+      user: {
+        id: string;
+        name: string | null;
+        image: string | null;
+      };
+    };
+
     const domainExperts = expertDomainIds.length > 0
       ? await prisma.domainExpert.findMany({
           where: { domainId: { in: expertDomainIds } },
@@ -117,7 +129,7 @@ export async function GET() {
         })
       : []
 
-    const expertsByDomainId = new Map<string, typeof domainExperts>()
+    const expertsByDomainId = new Map<string, ExpertWithUser[]>()
     for (const expert of domainExperts) {
       const list = expertsByDomainId.get(expert.domainId)
       if (list) list.push(expert)
@@ -174,8 +186,12 @@ export async function GET() {
     )
 
     return NextResponse.json({ exams: allExams })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching my exams:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      stack: error.stack 
+    }, { status: 500 })
   }
 }
