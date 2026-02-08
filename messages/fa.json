@@ -100,7 +100,14 @@
     "instructors": "اساتید دوره",
     "students": "دانشجویان دوره",
     "noInstructors": "استادی یافت نشد",
-    "noStudents": "دانشجویی یافت نشد"
+    "noStudents": "دانشجویی یافت نشد",
+    "confirmDelete": "آیا از حذف این پیام اطمینان دارید؟",
+    "reply": "پاسخ",
+    "edit": "ویرایش",
+    "delete": "حذف",
+    "edited": "ویرایش شده",
+    "replyingTo": "پاسخ به",
+    "editingMessage": "در حال ویرایش پیام"
   },
   "language": {
     "label": "زبان",
