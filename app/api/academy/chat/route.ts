@@ -73,11 +73,14 @@ export async function POST(req: NextRequest) {
 
     // Handle virtual course-based session IDs by creating a real one
     if (examSessionId.startsWith('course-')) {
-      const courseId = examSessionId.replace('course-', '')
+      const parts = examSessionId.split('-')
+      const courseId = parts[1]
+      const targetStudentId = parts[2] || session.user.id
+      const finalStudentId = body.studentId || targetStudentId
       
       // Check if real session was created in the meantime
       const existing = await prisma.examSession.findFirst({
-        where: { studentId: session.user.id, courseId, status: 'ENROLLED' }
+        where: { studentId: finalStudentId, courseId, status: 'ENROLLED' }
       })
 
       if (existing) {
@@ -85,9 +88,11 @@ export async function POST(req: NextRequest) {
       } else {
         const newSession = await prisma.examSession.create({
           data: {
-            studentId: session.user.id,
+            studentId: finalStudentId,
             courseId,
-            status: 'ENROLLED'
+            status: 'ENROLLED',
+            // If the sender is not the student, they are likely an examiner/expert
+            examinerId: session.user.id !== finalStudentId ? session.user.id : null
           }
         })
         examSessionId = newSession.id

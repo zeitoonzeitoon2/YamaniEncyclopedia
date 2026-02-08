@@ -174,7 +174,7 @@ export default function AcademyTeachingPage() {
         </div>
 
         {tab === 'communication' ? (
-          <AcademyChat />
+          <AcademyChat role="examiner" />
         ) : loading ? (
           <div className="py-12 text-center text-site-muted">{t('loading')}</div>
         ) : exams.length === 0 ? (

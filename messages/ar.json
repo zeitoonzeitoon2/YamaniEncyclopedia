@@ -87,6 +87,7 @@
     "passDate": "تاريخ الإكمال",
     "noPassedCourses": "لم تقم بإكمال أي دورات بعد.",
     "communication": "التواصل مع الأساتذة",
+    "communicationStudent": "التواصل مع الطلاب",
     "noExams": "لم يتم العثور على طلبات اختبار.",
     "chatPlaceholder": "اكتب رسالتك هنا...",
     "examApprovedMsg": "تمت الموافقة على طلب الاختبار الخاص بك.",
@@ -95,7 +96,9 @@
     "you": "أنت",
     "examsAndChat": "الامتحانات والدردشة",
     "instructors": "مدرسي الدورة",
-    "noInstructors": "لم يتم العثور على مدرسين"
+    "students": "طلاب الدورة",
+    "noInstructors": "لم يتم العثور على مدرسين",
+    "noStudents": "لم يتم العثور على طلاب"
   },
   "language": {
     "label": "اللغة",

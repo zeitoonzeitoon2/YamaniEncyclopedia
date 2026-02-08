@@ -87,6 +87,7 @@
     "passDate": "Completion Date",
     "noPassedCourses": "You haven't completed any courses yet.",
     "communication": "Instructor Support",
+    "communicationStudent": "Student Support",
     "noExams": "No exam requests found.",
     "chatPlaceholder": "Type your message here...",
     "examApprovedMsg": "Your exam request has been approved.",
@@ -95,7 +96,9 @@
     "you": "You",
     "examsAndChat": "Exams & Chat",
     "instructors": "Course Instructors",
-    "noInstructors": "No instructors found"
+    "students": "Course Students",
+    "noInstructors": "No instructors found",
+    "noStudents": "No students found"
   },
   "language": {
     "label": "Language",

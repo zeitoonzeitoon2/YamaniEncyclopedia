@@ -88,6 +88,8 @@
     "noPassedCourses": "هنوز دوره‌ای را به پایان نرسانده‌اید.",
     "communication": "ارتباط با اساتید",
     "noExams": "هنوز درخواست آزمونی ثبت نکرده‌اید.",
+    "communication": "ارتباط با اساتید",
+    "communicationStudent": "ارتباط با دانشجو",
     "chatPlaceholder": "پیام خود را اینجا بنویسید...",
     "send": "ارسال",
     "examApprovedMsg": "درخواست آزمون شما تایید شده است.",
@@ -96,7 +98,9 @@
     "you": "شما",
     "examsAndChat": "آزمون‌ها و گفتگو",
     "instructors": "اساتید دوره",
-    "noInstructors": "استادی یافت نشد"
+    "students": "دانشجویان دوره",
+    "noInstructors": "استادی یافت نشد",
+    "noStudents": "دانشجویی یافت نشد"
   },
   "language": {
     "label": "زبان",
