@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    let messages = []
+    let messages: any[] = []
     try {
       messages = await prisma.chatMessage.findMany({
         where: { examSessionId },
