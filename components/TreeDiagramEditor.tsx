@@ -223,10 +223,15 @@ export default function TreeDiagramEditor({
   }, [nodes, highlightedNodeIds, domainNameById, showDomainNames])
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
   const [modalTarget, setModalTarget] = useState<'main' | string | null>(null)
   const [nodeTitle, setNodeTitle] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     setNodes((prev) => prev.map((n) => ({ ...n, data: { ...(n.data as any), _readOnly: readOnly } })))
@@ -888,30 +893,34 @@ export default function TreeDiagramEditor({
 
       <div className="h-full flex-1 flex min-h-0">
         <div className="flex-1 min-h-0">
-          <ReactFlow
-            nodes={computedNodes}
-            edges={edges}
-             onNodesChange={handleNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodesDelete={handleNodesDelete}
-            onEdgesDelete={handleEdgesDelete}
-            onConnect={onConnect}
-             onNodeClick={handleNodeClick}
-             onPaneClick={handlePaneClick}
-             nodeTypes={nodeTypes}
-             edgeTypes={edgeTypes}
-             fitView
-             attributionPosition="bottom-left"
-             nodesDraggable={!readOnly}
-             nodesConnectable={!readOnly}
-             elementsSelectable={!readOnly}
-             onInit={(instance) => { reactFlowInstanceRef.current = instance }}
-             onNodeDoubleClick={handleNodeDoubleClick}
-            style={{ width: '100%', height: '100%', position: 'relative' }}
-          >
-            <Background />
-            <Controls />
-          </ReactFlow>
+          {mounted ? (
+            <ReactFlow
+              nodes={computedNodes}
+              edges={edges}
+               onNodesChange={handleNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodesDelete={handleNodesDelete}
+              onEdgesDelete={handleEdgesDelete}
+              onConnect={onConnect}
+               onNodeClick={handleNodeClick}
+               onPaneClick={handlePaneClick}
+               nodeTypes={nodeTypes}
+               edgeTypes={edgeTypes}
+               fitView
+               attributionPosition="bottom-left"
+               nodesDraggable={!readOnly}
+               nodesConnectable={!readOnly}
+               elementsSelectable={!readOnly}
+               onInit={(instance) => { reactFlowInstanceRef.current = instance }}
+               onNodeDoubleClick={handleNodeDoubleClick}
+              style={{ width: '100%', height: '100%', position: 'relative' }}
+            >
+              <Background />
+              <Controls />
+            </ReactFlow>
+          ) : (
+            <div className="w-full h-full" />
+          )}
         </div>
 
         {selectedNode && (

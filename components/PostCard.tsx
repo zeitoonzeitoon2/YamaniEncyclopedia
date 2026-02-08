@@ -5,6 +5,7 @@ import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { useTranslations, useLocale } from 'next-intl'
+import { useEffect, useState } from 'react'
 
 interface Post {
   id: string
@@ -38,6 +39,11 @@ interface PostCardProps {
 export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false, actionsPortalId }: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
+  const [dateLabel, setDateLabel] = useState('')
+
+  useEffect(() => {
+    setDateLabel(new Date(post.createdAt).toLocaleDateString(locale))
+  }, [post.createdAt, locale])
 
   const renderContent = () => {
     if (post.type === 'TREE') {
@@ -92,7 +98,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
             <p className="text-site-text font-medium">{post.author.name}</p>
           )}
           <p className="text-site-muted text-sm">
-            {new Date(post.createdAt).toLocaleDateString(locale)}
+            {dateLabel}
           </p>
         </div>
       </div>
