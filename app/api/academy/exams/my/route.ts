@@ -47,6 +47,25 @@ export async function GET() {
                         }
                       }
                     }
+                  },
+                  parent: {
+                    select: {
+                      id: true,
+                      name: true,
+                      experts: {
+                        select: {
+                          id: true,
+                          role: true,
+                          user: {
+                            select: {
+                              id: true,
+                              name: true,
+                              image: true
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -107,6 +126,25 @@ export async function GET() {
                           id: true,
                           name: true,
                           image: true
+                        }
+                      }
+                    }
+                  },
+                  parent: {
+                    select: {
+                      id: true,
+                      name: true,
+                      experts: {
+                        select: {
+                          id: true,
+                          role: true,
+                          user: {
+                            select: {
+                              id: true,
+                              name: true,
+                              image: true
+                            }
+                          }
                         }
                       }
                     }

@@ -35,6 +35,15 @@ type ExamSession = {
           image: string | null
         }
       }[]
+      parent?: {
+        experts: {
+          user: {
+            id: string
+            name: string | null
+            image: string | null
+          }
+        }[]
+      } | null
     }
   }
   student: { id: string, name: string | null; email: string | null; image?: string | null }
@@ -145,6 +154,18 @@ export function AcademyChat() {
     )
   }
 
+  const instructors = selectedExam ? (() => {
+    const primary = selectedExam.course.domain.experts || []
+    const parent = selectedExam.course.domain.parent?.experts || []
+    const merged = [...primary, ...parent]
+    const byId = new Map<string, typeof merged[number]>()
+    for (const expert of merged) {
+      const userId = expert.user?.id
+      if (userId && !byId.has(userId)) byId.set(userId, expert)
+    }
+    return Array.from(byId.values())
+  })() : []
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
       {/* Exam List */}
@@ -221,8 +242,8 @@ export function AcademyChat() {
                 {t('instructors')}
               </div>
               <div className="flex flex-wrap gap-2">
-                {selectedExam.course.domain.experts.length > 0 ? (
-                  selectedExam.course.domain.experts.map((expert) => (
+                {instructors.length > 0 ? (
+                  instructors.map((expert) => (
                     <div key={expert.user.id} className="flex items-center gap-2 bg-site-bg/50 rounded-full pr-1 pl-3 py-1 border border-gray-700">
                       {expert.user.image ? (
                         <img src={expert.user.image} alt={expert.user.name || ''} className="w-5 h-5 rounded-full object-cover" />
