@@ -87,8 +87,8 @@ export function Header() {
       if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false)
       if (langMenuRef.current && !langMenuRef.current.contains(target)) setLangMenuOpen(false)
     }
-    if (menuOpen || langMenuOpen) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    if (menuOpen || langMenuOpen) document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
   }, [menuOpen, langMenuOpen])
 
   const effectiveRole = (displayRole || session?.user?.role) || ''
@@ -96,11 +96,11 @@ export function Header() {
   const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
-    <header className="bg-site-card border-b border-site-border sticky top-0 z-[100] shadow-sm">
+    <header className="bg-site-card/95 backdrop-blur-md border-b border-site-border sticky top-0 z-[10000] shadow-sm">
       <div className="container mx-auto px-4 py-2">
-        <div className="grid grid-cols-3 items-center gap-4">
-          <div className="flex items-center justify-start">
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading">
+        <div className="flex items-center justify-between gap-4 relative">
+          <div className="flex items-center justify-start z-20">
+            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading shrink-0 hover:opacity-80 transition-opacity">
               {logoUrl ? (
                 <Image src={logoUrl} alt={t('logoAlt')} width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
               ) : null}
@@ -108,8 +108,8 @@ export function Header() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-center">
-            <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50 shrink-0 pointer-events-auto z-20">
               <Link
                 href="/"
                 onClick={closeMenus}
@@ -131,11 +131,11 @@ export function Header() {
             </div>
           </div>
 
-          <nav className="flex items-center justify-end">
+          <nav className="flex items-center justify-end gap-2 z-20">
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
-              <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
+              <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all relative z-30">
                 {mounted && (
                   <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
