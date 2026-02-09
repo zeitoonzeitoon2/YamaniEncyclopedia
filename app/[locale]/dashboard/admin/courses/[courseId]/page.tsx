@@ -172,7 +172,10 @@ export default function AdminCourseChaptersPage() {
       router.push('/')
       return
     }
-    fetchChapters(true)
+    // Only fetch chapters if they haven't been loaded yet or the courseId changed
+    if (chapters.length === 0) {
+      fetchChapters(true)
+    }
   }, [session, status, courseId])
 
   useEffect(() => {
