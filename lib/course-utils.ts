@@ -52,6 +52,10 @@ export async function canExamineCourse(userId: string, courseId: string): Promis
     where: { id: userId },
     select: { role: true }
   })
+  
+  // Optional: If you want ADMINs to be exempt, keep this. 
+  // But based on user request, maybe everyone should be checked.
+  // For now, let's keep ADMINs exempt but ensure other roles are strictly checked.
   if (user?.role === 'ADMIN') return true
 
   // Get course details (domainId)
@@ -112,7 +116,10 @@ export async function canEditDomainDiagram(userId: string, domainId: string | nu
     where: { id: userId },
     select: { role: true }
   })
-  if (user?.role === 'ADMIN') return true
+  
+  // According to user request, even admins/experts must pass prerequisites to edit.
+  // If you want to allow ADMINs to bypass this, uncomment the next line:
+  // if (user?.role === 'ADMIN') return true
 
   // 2. Fetch research prerequisites for the domain
   const researchPrereqs = await prisma.domainPrerequisite.findMany({

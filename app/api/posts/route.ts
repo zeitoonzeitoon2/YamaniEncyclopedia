@@ -4,6 +4,49 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextRevisionNumber } from '@/lib/postUtils'
 import { Prisma } from '@prisma/client'
+import { canEditDomainDiagram } from '@/lib/course-utils'
+
+function isSeriousChange(oldContent: string, newContent: string): boolean {
+  try {
+    const oldTree = JSON.parse(oldContent)
+    const newTree = JSON.parse(newContent)
+
+    const oldNodes = Array.isArray(oldTree?.nodes) ? oldTree.nodes : []
+    const newNodes = Array.isArray(newTree?.nodes) ? newTree.nodes : []
+    const oldEdges = Array.isArray(oldTree?.edges) ? oldTree.edges : []
+    const newEdges = Array.isArray(newTree?.edges) ? newTree.edges : []
+
+    // 1. Check if number of nodes or edges changed
+    if (oldNodes.length !== newNodes.length) return true
+    if (oldEdges.length !== newEdges.length) return true
+
+    // 2. Check if any node's critical data changed (label, domainId, flashText, etc.)
+    for (let i = 0; i < newNodes.length; i++) {
+      const newNode = newNodes[i]
+      const oldNode = oldNodes.find((n: any) => n.id === newNode.id)
+      
+      if (!oldNode) return true // Node added or ID changed
+      
+      if (newNode.data?.label !== oldNode.data?.label) return true
+      if (newNode.data?.domainId !== oldNode.data?.domainId) return true
+      if (newNode.data?.flashText !== oldNode.data?.flashText) return true
+      if (newNode.data?.articleLink !== oldNode.data?.articleLink) return true
+      // Position changes are NOT serious
+    }
+
+    // 3. Check if any edge's structure changed
+    for (let i = 0; i < newEdges.length; i++) {
+      const newEdge = newEdges[i]
+      const oldEdge = oldEdges.find((e: any) => e.id === newEdge.id)
+      if (!oldEdge) return true
+      if (newEdge.source !== oldEdge.source || newEdge.target !== oldEdge.target) return true
+    }
+
+    return false
+  } catch {
+    return true // If parsing fails, assume it's serious
+  }
+}
 
 // واجهة برمجة التطبيقات (API) الخاصة بالمنشورات
 
@@ -38,6 +81,51 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    // --- PERMISSION CHECK START ---
+    let seriousChange = true
+    if (originalPostId) {
+      const originalPost = await prisma.post.findUnique({
+        where: { id: originalPostId },
+        select: { content: true }
+      })
+      if (originalPost) {
+        seriousChange = isSeriousChange(originalPost.content, content)
+      }
+    }
+
+    if (seriousChange) {
+      // Extract all domainIds from the new content
+      let affectedDomainIds = new Set<string>()
+      try {
+        const tree = JSON.parse(content)
+        if (Array.isArray(tree?.nodes)) {
+          tree.nodes.forEach((n: any) => {
+            const did = n?.data?.domainId
+            if (did && typeof did === 'string') affectedDomainIds.add(did.trim())
+          })
+        }
+      } catch {}
+
+      // If requestedDomainId is provided, add it too
+      if (requestedDomainId && typeof requestedDomainId === 'string') {
+        affectedDomainIds.add(requestedDomainId.trim())
+      }
+
+      // Check permission for each unique domain
+      const domainIdsArray = Array.from(affectedDomainIds).filter(Boolean)
+      for (const dId of domainIdsArray) {
+        const hasPermission = await canEditDomainDiagram(user.id, dId)
+        if (!hasPermission) {
+          return NextResponse.json({ 
+            error: `You do not have the required research prerequisites for domain: ${dId}`,
+            code: 'INSUFFICIENT_PREREQUISITES',
+            domainId: dId
+          }, { status: 403 })
+        }
+      }
+    }
+    // --- PERMISSION CHECK END ---
 
     let version = null
     let revisionNumber = null
