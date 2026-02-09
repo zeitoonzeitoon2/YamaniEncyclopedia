@@ -293,8 +293,8 @@
       "supervisor": "داشبورد ناظر"
     },
     "alert": {
-      "title": "نوشته قابل ویرایش",
-      "text": "نوشته با شناسه {id} در وضعیت قابل ویرایش است. لطفاً آن را بررسی کنید.",
+      "title": "طرح قابل ویرایش",
+      "text": "طرح با شناسه {id} در وضعیت قابل ویرایش است. لطفاً آن را بررسی کنید.",
       "confirm": "تایید"
     },
     "stats": {
@@ -306,22 +306,22 @@
       "edited": "ویرایش شده"
     },
     "postsList": {
-      "title": "لیست نوشته‌ها",
+      "title": "لیست طرح‌ها",
       "show": "نمایش لیست",
       "hide": "پنهان‌سازی لیست"
     },
-    "postIdTitle": "شناسه نوشته: {id}",
+    "postIdTitle": "شناسه طرح: {id}",
     "filters": {
       "newDesigns": "طرح‌های جدید",
       "newDesignsTitle": "مشاهده طرح‌های جدید",
       "newComments": "نظرات جدید",
       "newCommentsTitle": "مشاهده نظرات جدید",
       "reviewables": "قابل ویرایش",
-      "reviewablesTitle": "مشاهده نوشته‌های قابل ویرایش",
-      "myPosts": "نوشته‌های من",
-      "myPostsTitle": "مشاهده نوشته‌های من",
+      "reviewablesTitle": "مشاهده طرح‌های قابل ویرایش",
+      "myPosts": "طرح‌های من",
+      "myPostsTitle": "مشاهده طرح‌های من",
       "related": "مرتبط",
-      "relatedTitle": "مشاهده نوشته‌های مرتبط",
+      "relatedTitle": "مشاهده طرح‌های مرتبط",
       "researchers": "پژوهشگران",
       "researchersTitle": "مشاهده لیست پژوهشگران"
     },
@@ -336,8 +336,8 @@
     },
     "emptyComments": "نظری یافت نشد.",
     "comment": {
-      "openRelated": "باز کردن نوشته مرتبط",
-      "openRelatedPost": "باز کردن نوشته"
+      "openRelated": "باز کردن طرح مرتبط",
+      "openRelatedPost": "باز کردن طرح"
     },
     "author": {
       "unknown": "ناشناس"
@@ -345,18 +345,18 @@
     "emptyDesigns": "طرحی یافت نشد.",
     "showMore": "نمایش بیشتر",
     "details": {
-      "title": "جزئیات نوشته",
-      "postId": "شناسه: {id}",
+      "title": "جزئیات طرح",
+      "postId": "شناسه طرح: {id}",
       "authorLabel": "نویسنده: ",
-      "viewAuthorPosts": "مشاهده تمام نوشته‌های این نویسنده",
-      "deleteBeforeThreshold": "حذف قبل از رسیدن به حد نصاب",
+      "viewAuthorPosts": "مشاهده تمام طرح‌های این نویسنده",
+      "deleteBeforeThreshold": "حذف پیش از رسیدن به حد نصاب",
       "delete": "حذف",
-      "voteStopped": "رأی‌گیری برای این نوشته متوقف شده است (تأیید شده).",
+      "voteStopped": "رای‌گیری برای این طرح متوقف شده است (تایید شده).",
       "scoreThreshold": "حد نصاب امتیاز: {value}",
       "participationThreshold": "حد نصاب مشارکت: {value}",
-      "totalScoreLabel": "امتیاز کل:",
+      "totalScoreLabel": "مجموع امتیاز:",
       "participantsLabel": "مشارکت‌کنندگان: {value}",
-      "empty": "لطفاً یک نوشته را از لیست انتخاب کنید."
+      "empty": "لطفاً یک طرح را از لیست انتخاب کنید."
     },
     "diagram": {
       "changeSummary": "خلاصه تغییرات",
@@ -377,7 +377,7 @@
     "actions": {
       "title": "عملیات",
       "question": "چه عملیاتی می‌خواهید انجام دهید؟",
-      "note": "توجه: با انتخاب ویرایش، نوشته به وضعیت پیش‌نویس باز می‌گردد.",
+      "note": "توجه: با انتخاب ویرایش، طرح به وضعیت پیش‌نویس باز می‌گردد.",
       "cancel": "انصراف",
       "edit": "ویرایش",
       "delete": "حذف"
@@ -390,15 +390,15 @@
     },
     "toast": {
       "loadError": "خطا در بارگذاری داده‌ها",
-      "deleteSuccess": "نوشته با موفقیت حذف شد",
-      "deleteFail": "حذف نوشته ناموفق بود",
-      "deleteError": "خطا در حذف نوشته",
-      "withdrawSuccess": "نوشته برای ویرایش آماده شد",
+      "deleteSuccess": "طرح با موفقیت حذف شد",
+      "deleteFail": "حذف طرح ناموفق بود",
+      "deleteError": "خطا در حذف طرح",
+      "withdrawSuccess": "طرح برای ویرایش آماده شد",
       "withdrawFail": "آماده‌سازی برای ویرایش ناموفق بود",
       "withdrawError": "خطا در آماده‌سازی برای ویرایش",
       "voteSuccess": "رأی شما با موفقیت ثبت شد",
       "voteFail": "ثبت رأی ناموفق بود",
-      "autoPublish": "نوشته به‌طور خودکار {action} شد"
+      "autoPublish": "طرح به‌طور خودکار {action} شد"
     },
     "autoPublish": {
       "approved": "تأیید",

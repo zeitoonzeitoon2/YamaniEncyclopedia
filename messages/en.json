@@ -343,18 +343,18 @@
     "emptyDesigns": "No designs found.",
     "showMore": "Show More",
     "details": {
-      "title": "Post Details",
-      "postId": "ID: {id}",
+      "title": "Design Details",
+      "postId": "Design ID: {id}",
       "authorLabel": "Author: ",
-      "viewAuthorPosts": "View all posts by this author",
-      "deleteBeforeThreshold": "Delete before reaching threshold",
+      "viewAuthorPosts": "View all designs by this author",
+      "deleteBeforeThreshold": "Delete before threshold reached",
       "delete": "Delete",
-      "voteStopped": "Voting for this post has stopped (Approved).",
+      "voteStopped": "Voting for this design has stopped (Approved).",
       "scoreThreshold": "Score Threshold: {value}",
       "participationThreshold": "Participation Threshold: {value}",
       "totalScoreLabel": "Total Score:",
       "participantsLabel": "Participants: {value}",
-      "empty": "Please select a post from the list."
+      "empty": "Please select a design from the list."
     },
     "diagram": {
       "changeSummary": "Change Summary",

@@ -71,7 +71,7 @@ export default function AdminCourseChaptersPage() {
   const [course, setCourse] = useState<CourseInfo | null>(null)
   const [chapters, setChapters] = useState<CourseChapter[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [mode, setMode] = useState<EditorMode>('new')
+  const [mode, setMode] = useState<EditorMode | null>(null)
   const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '' })
   const [argumentation, setArgumentation] = useState({
     type: '',
@@ -154,6 +154,10 @@ export default function AdminCourseChaptersPage() {
       }
       setCourse(data.course || null)
       setChapters(Array.isArray(data.chapters) ? data.chapters : [])
+      if (isInitial) {
+        setSelectedId(null)
+        setMode(null)
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.fetchError')
       toast.error(msg)

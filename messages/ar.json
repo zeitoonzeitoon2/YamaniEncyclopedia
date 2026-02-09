@@ -343,18 +343,18 @@
     "emptyDesigns": "لم يتم العثور على تصاميم.",
     "showMore": "عرض المزيد",
     "details": {
-      "title": "تفاصيل المنشور",
-      "postId": "المعرف: {id}",
+      "title": "تفاصيل التصميم",
+      "postId": "معرف التصميم: {id}",
       "authorLabel": "المؤلف: ",
-      "viewAuthorPosts": "عرض جميع منشورات هذا المؤلف",
+      "viewAuthorPosts": "عرض جميع تصاميم هذا المؤلف",
       "deleteBeforeThreshold": "حذف قبل الوصول إلى الحد الأدنى",
       "delete": "حذف",
-      "voteStopped": "توقف التصويت لهذا المنشور (تمت الموافقة).",
+      "voteStopped": "توقف التصويت لهذا التصميم (تمت الموافقة).",
       "scoreThreshold": "حد النقاط: {value}",
       "participationThreshold": "حد المشاركة: {value}",
       "totalScoreLabel": "إجمالي النقاط:",
       "participantsLabel": "المشاركون: {value}",
-      "empty": "يرجى اختيار منشور من القائمة."
+      "empty": "يرجى اختيار طرح من القائمة."
     },
     "diagram": {
       "changeSummary": "ملخص التغييرات",
