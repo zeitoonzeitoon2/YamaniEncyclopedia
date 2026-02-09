@@ -43,7 +43,7 @@
 }
 
 .ProseMirror blockquote:has(p:first-child:contains('!ayah')) {
-  color: #FFD700;
+  color: var(--site-text);
   text-align: center;
   font-family: 'Neirizi', 'Scheherazade New', serif;
   font-size: 36px;
@@ -51,15 +51,20 @@
 }
 
 .ProseMirror blockquote:has(p:first-child:contains('!quote')) {
-  color: #E67E22;
+  color: var(--site-text);
   font-family: 'Sahel', 'Vazir', sans-serif;
   font-size: 24px;
   line-height: 1.7;
 }
 
 .ProseMirror h2 { font-size: 1.75rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #f59e0b; }
+[class~="light"] .ProseMirror h2 { color: #1c1917; }
+
 .ProseMirror h3 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #f59e0b; }
+[class~="light"] .ProseMirror h3 { color: #1c1917; }
+
 .ProseMirror h4 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #f59e0b; }
+[class~="light"] .ProseMirror h4 { color: #1c1917; }
 .ProseMirror ul { list-style-type: disc; padding-right: 1.5rem; }
 .ProseMirror ol { list-style-type: decimal; padding-right: 1.5rem; }
 
@@ -191,7 +196,7 @@ mark {
   text-align: center;
   font-family: 'Neirizi', 'Scheherazade New', serif;
   font-size: 36px;
-  color: #FFD700;
+  color: var(--site-text);
   position: relative;
   overflow: hidden;
 }
@@ -201,17 +206,29 @@ mark {
   font-family: 'Sahel', 'Vazir', sans-serif;
   font-size: 24px;
   line-height: 1.7;
-  color: #E67E22;
+  color: var(--site-text);
   border-right-color: #E67E22;
 }
 
-/* Force dark text for Ayah in light mode if needed, or keep gold */
-[class~="dark"] .article-content-body blockquote.q-ayah {
-  color: #FFD700;
+/* Custom header colors for article body */
+.article-content-body h2, 
+.article-content-body h3, 
+.article-content-body h4,
+.article-content-body details > summary a {
+  color: #f59e0b; /* Amber/Orange in Dark mode */
 }
-/* In light mode, Gold might be hard to read on white. Let's use a darker gold/orange */
-:root .article-content-body blockquote.q-ayah {
-  color: #b45309; /* Darker amber */
+
+:root .article-content-body h2, 
+:root .article-content-body h3, 
+:root .article-content-body h4,
+:root .article-content-body details > summary a {
+  color: #1c1917; /* Dark in Light mode */
+}
+
+/* Specific colors for dark mode if we want creamy white for quotes/ayahs */
+[class~="dark"] .article-content-body blockquote.q-ayah,
+[class~="dark"] .article-content-body blockquote.q-quote {
+  color: #fff9f0; /* Slightly creamy white */
 }
 
 @layer components {

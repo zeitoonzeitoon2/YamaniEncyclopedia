@@ -174,12 +174,12 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
       headings.push({ level, text, id })
       if (level === 2) {
         if (sectionOpen) out.push('</div></details>')
-        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold text-amber-200 flex items-center justify-between"><a href="#h-${id}" class="text-amber-200 no-underline text-2xl md:text-3xl" style="font-size: calc(var(--article-scale,1) * 1.75rem)">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
+        out.push(`<details class="group my-3 rounded-md border border-amber-700/40 bg-stone-900/30" open><summary class="cursor-pointer select-none px-3 py-2 font-semibold flex items-center justify-between"><a href="#h-${id}" class="no-underline text-2xl md:text-3xl" style="font-size: calc(var(--article-scale,1) * 1.75rem)">${escapeHtml(text)}</a><span class="text-amber-300 group-open:rotate-180 transition-transform">▾</span></summary><div id="h-${id}" class="px-3 py-2">`)
         sectionOpen = true
       } else if (level === 3) {
-        out.push(`<h3 id="h-${id}" class="mt-3 text-amber-200 font-semibold text-xl" style="font-size: calc(var(--article-scale,1) * 1.25rem)">${escapeHtml(text)}</h3>`)
+        out.push(`<h3 id="h-${id}" class="mt-3 font-semibold text-xl" style="font-size: calc(var(--article-scale,1) * 1.25rem)">${escapeHtml(text)}</h3>`)
       } else {
-        out.push(`<h4 id="h-${id}" class="mt-2 text-amber-200 text-lg font-medium" style="font-size: calc(var(--article-scale,1) * 1.125rem)">${escapeHtml(text)}</h4>`)
+        out.push(`<h4 id="h-${id}" class="mt-2 text-lg font-medium" style="font-size: calc(var(--article-scale,1) * 1.125rem)">${escapeHtml(text)}</h4>`)
       }
       i += 1
       continue
