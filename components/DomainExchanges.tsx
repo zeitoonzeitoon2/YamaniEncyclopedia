@@ -63,6 +63,17 @@ export default function DomainExchanges() {
   const [submitting, setSubmitting] = useState(false)
   const [votingId, setVotingId] = useState<string | null>(null)
 
+  const flattenTree = (nodes: any[]): Domain[] => {
+    let result: Domain[] = []
+    for (const node of nodes) {
+      result.push({ id: node.id, name: node.name, slug: node.slug })
+      if (node.children && node.children.length > 0) {
+        result = [...result, ...flattenTree(node.children)]
+      }
+    }
+    return result
+  }
+
   const fetchData = async () => {
     try {
       setLoading(true)
@@ -71,15 +82,9 @@ export default function DomainExchanges() {
       const domainsData = await domainsRes.json()
       
       if (domainsRes.ok) {
-        setAllDomains(domainsData.domains || [])
-        // Filter domains where user is expert/head
-        // We might need a separate API for this or check the data
-        // For now, let's assume we can see all but only act for ours
-        // In a real scenario, the backend handles the permission
-        
-        // Let's get the expert domains from a specialized endpoint if exists
-        // or just use the session if it has them.
-        // For now, let's fetch proposals which will also give us context
+        // If the API returns a tree (roots), flatten it. If it returns domains directly, use that.
+        const domains = domainsData.roots ? flattenTree(domainsData.roots) : (domainsData.domains || [])
+        setAllDomains(domains)
       }
 
       const proposalsRes = await fetch('/api/admin/domains/exchanges')
