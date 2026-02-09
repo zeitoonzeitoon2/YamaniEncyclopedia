@@ -57,14 +57,9 @@
   line-height: 1.7;
 }
 
-.ProseMirror h2 { font-size: 1.75rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #f59e0b; }
-[class~="light"] .ProseMirror h2 { color: #1c1917; }
-
-.ProseMirror h3 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #f59e0b; }
-[class~="light"] .ProseMirror h3 { color: #1c1917; }
-
-.ProseMirror h4 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #f59e0b; }
-[class~="light"] .ProseMirror h4 { color: #1c1917; }
+.ProseMirror h2 { font-size: 1.75rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--site-accent); }
+.ProseMirror h3 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: var(--site-accent); }
+.ProseMirror h4 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--site-accent); }
 .ProseMirror ul { list-style-type: disc; padding-right: 1.5rem; }
 .ProseMirror ol { list-style-type: decimal; padding-right: 1.5rem; }
 
@@ -82,23 +77,25 @@
 @tailwind utilities;
 
 :root {
-  /* Light Mode (Warm) */
-  --site-bg: 253 251 247;      /* Warm Off-White #fdfbf7 */
-  --site-card: 255 255 255;    /* White #ffffff */
-  --site-border: 231 229 228;  /* Warm Gray 200 #e7e5e4 */
-  --site-text: 28 25 23;       /* Warm Gray 900 #1c1917 */
-  --site-muted: 120 113 108;   /* Warm Gray 500 #78716c */
-  --site-secondary: 245 245 244; /* Warm Gray 100 #f5f5f4 */
+  /* Light Mode (Warm Creamy Theme) */
+  --site-bg: 252 248 242;      /* Creamy Off-White #fcf8f2 */
+  --site-card: 255 255 255;    /* Pure White for cards */
+  --site-border: 225 210 190;  /* Warm Sand Border */
+  --site-text: 45 40 35;       /* Deep Charcoal Brown */
+  --site-muted: 110 100 90;    /* Muted Warm Brown */
+  --site-secondary: 245 235 220; /* Soft Sand */
+  --site-accent: 180 83 9;     /* Deep Amber/Orange */
 }
 
 [class~="dark"] {
-  /* Dark Mode (Original) */
-  --site-bg: 10 10 10;         /* #0a0a0a */
-  --site-card: 26 26 26;       /* #1a1a1a */
-  --site-border: 42 42 42;     /* #2a2a2a */
-  --site-text: 229 229 229;    /* #e5e5e5 */
-  --site-muted: 115 115 115;   /* #737373 */
-  --site-secondary: 38 38 38;  /* Neutral 800 #262626 */
+  /* Dark Mode (Warm Dark Theme) */
+  --site-bg: 20 18 16;         /* Very Dark Warm Brown #141210 */
+  --site-card: 32 28 24;       /* Dark Chocolate Card #201c18 */
+  --site-border: 60 50 40;     /* Muted Bronze Border */
+  --site-text: 240 230 215;    /* Soft Creamy White text */
+  --site-muted: 150 140 130;   /* Muted Grayish Sand */
+  --site-secondary: 45 40 35;  /* Dark Sand */
+  --site-accent: 245 158 11;   /* Bright Warm Amber */
 }
 
 body {
@@ -215,20 +212,19 @@ mark {
 .article-content-body h3, 
 .article-content-body h4,
 .article-content-body details > summary a {
-  color: #f59e0b; /* Amber/Orange in Dark mode */
-}
-
-:root .article-content-body h2, 
-:root .article-content-body h3, 
-:root .article-content-body h4,
-:root .article-content-body details > summary a {
-  color: #1c1917; /* Dark in Light mode */
+  color: var(--site-accent);
 }
 
 /* Specific colors for dark mode if we want creamy white for quotes/ayahs */
 [class~="dark"] .article-content-body blockquote.q-ayah,
 [class~="dark"] .article-content-body blockquote.q-quote {
   color: #fff9f0; /* Slightly creamy white */
+}
+
+/* Light mode overrides for quotes/ayahs to be dark/standard text */
+:root .article-content-body blockquote.q-ayah,
+:root .article-content-body blockquote.q-quote {
+  color: var(--site-text);
 }
 
 @layer components {
