@@ -1,17 +1,60 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const domains = await prisma.domain.findMany({
-      where: {
+    const { searchParams } = new URL(request.url)
+    const mine = searchParams.get('mine') === 'true'
+
+    let whereClause: any = {
+      courses: {
+        some: {
+          status: 'APPROVED',
+          isActive: true,
+        },
+      },
+    }
+
+    let courseWhereClause: any = {
+      status: 'APPROVED',
+      isActive: true,
+    }
+
+    if (mine) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      whereClause = {
         courses: {
           some: {
             status: 'APPROVED',
             isActive: true,
+            userCourses: {
+              some: {
+                userId: session.user.id
+              }
+            }
           },
         },
-      },
+      }
+
+      courseWhereClause = {
+        status: 'APPROVED',
+        isActive: true,
+        userCourses: {
+          some: {
+            userId: session.user.id
+          }
+        }
+      }
+    }
+
+    const domains = await prisma.domain.findMany({
+      where: whereClause,
       orderBy: [{ name: 'asc' }],
       select: {
         id: true,
@@ -19,10 +62,7 @@ export async function GET() {
         slug: true,
         description: true,
         courses: {
-          where: {
-            status: 'APPROVED',
-            isActive: true,
-          },
+          where: courseWhereClause,
           orderBy: [{ createdAt: 'desc' }],
           select: { id: true, title: true, description: true },
         },

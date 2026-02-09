@@ -47,7 +47,7 @@ export default function AcademyDashboardPage() {
       try {
         setLoading(true)
         const [coursesRes, transcriptRes] = await Promise.all([
-          fetch('/api/academy/courses', { cache: 'no-store' }),
+          fetch('/api/academy/courses?mine=true', { cache: 'no-store' }),
           fetch('/api/academy/transcript', { cache: 'no-store' })
         ])
 
