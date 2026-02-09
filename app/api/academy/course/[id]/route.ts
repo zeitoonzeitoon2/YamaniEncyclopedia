@@ -32,7 +32,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         orderIndex: true,
         version: true,
         originalChapterId: true,
-        quizQuestions: true,
       },
     })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
@@ -179,92 +179,6 @@ export default function AdminDashboard() {
     return list
   }, [roots])
 
-  const fetchHeader = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/settings', { cache: 'no-store' })
-      const data = await res.json()
-      setHeaderUrl(data.url || null)
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
-  const fetchLogo = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/settings?type=logo', { cache: 'no-store' })
-      const data = await res.json()
-      setLogoUrl(data.url || null)
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
-  const fetchDomains = useCallback(async (selectDomainId?: string) => {
-    try {
-      setLoadingDomains(true)
-      const res = await fetch('/api/admin/domains', { cache: 'no-store' })
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(err.error || t('loadDomainsError'))
-      }
-      const data = (await res.json()) as DomainsResponse
-      const newRoots = Array.isArray(data.roots) ? data.roots : []
-      setRoots(newRoots)
-
-      const preferred = selectDomainId || selectedDomainId
-      if (preferred && findDomainById(newRoots, preferred)) {
-        setSelectedDomainId(preferred)
-      } else if (!selectedDomainId) {
-        const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
-        if (root) setSelectedDomainId(root.id)
-      }
-
-      const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
-      if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('loadDomainsError')
-      toast.error(msg)
-    } finally {
-      setLoadingDomains(false)
-    }
-  }, [selectedDomainId, t])
-
-  const fetchCandidacies = useCallback(async (domainId: string) => {
-    try {
-      setLoadingCandidacies(true)
-      const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
-      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
-      if (!res.ok) {
-        toast.error(payload.error || t('loadCandidaciesError'))
-        return
-      }
-      setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('loadCandidaciesError')
-      toast.error(msg)
-    } finally {
-      setLoadingCandidacies(false)
-    }
-  }, [t])
-
-  const fetchCourses = useCallback(async (domainId: string) => {
-    try {
-      setLoadingCourses(true)
-      const res = await fetch(`/api/admin/domains/courses?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
-      const payload = (await res.json().catch(() => ({}))) as { courses?: DomainCourse[]; error?: string }
-      if (!res.ok) {
-        toast.error(payload.error || t('loadCoursesError'))
-        return
-      }
-      setDomainCourses(Array.isArray(payload.courses) ? payload.courses : [])
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('loadCoursesError')
-      toast.error(msg)
-    } finally {
-      setLoadingCourses(false)
-    }
-  }, [t])
-
   useEffect(() => {
     if (status === 'loading') return
     
@@ -277,7 +191,27 @@ export default function AdminDashboard() {
       fetchLogo()
     }
     fetchDomains()
-  }, [session, status, router, fetchHeader, fetchLogo, fetchDomains])
+  }, [session, status, router])
+
+  const fetchHeader = async () => {
+    try {
+      const res = await fetch('/api/admin/settings', { cache: 'no-store' })
+      const data = await res.json()
+      setHeaderUrl(data.url || null)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const fetchLogo = async () => {
+    try {
+      const res = await fetch('/api/admin/settings?type=logo', { cache: 'no-store' })
+      const data = await res.json()
+      setLogoUrl(data.url || null)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -356,12 +290,78 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchDomains = async (selectDomainId?: string) => {
+    try {
+      setLoadingDomains(true)
+      const res = await fetch('/api/admin/domains', { cache: 'no-store' })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(err.error || t('loadDomainsError'))
+      }
+      const data = (await res.json()) as DomainsResponse
+      const newRoots = Array.isArray(data.roots) ? data.roots : []
+      setRoots(newRoots)
+
+      const preferred = selectDomainId || selectedDomainId
+      if (preferred && findDomainById(newRoots, preferred)) {
+        setSelectedDomainId(preferred)
+      } else if (!selectedDomainId) {
+        const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
+        if (root) setSelectedDomainId(root.id)
+      }
+
+      const root = newRoots.find((r) => r.slug === 'philosophy') || newRoots[0]
+      if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t('loadDomainsError')
+      toast.error(msg)
+    } finally {
+      setLoadingDomains(false)
+    }
+  }
+
+  const fetchCandidacies = async (domainId: string) => {
+    try {
+      setLoadingCandidacies(true)
+      const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
+      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || t('loadCandidaciesError'))
+        return
+      }
+      setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t('loadCandidaciesError')
+      toast.error(msg)
+    } finally {
+      setLoadingCandidacies(false)
+    }
+  }
+
+  const fetchCourses = async (domainId: string) => {
+    try {
+      setLoadingCourses(true)
+      const res = await fetch(`/api/admin/domains/courses?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
+      const payload = (await res.json().catch(() => ({}))) as { courses?: DomainCourse[]; error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || t('loadCoursesError'))
+        return
+      }
+      setDomainCourses(Array.isArray(payload.courses) ? payload.courses : [])
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : t('loadCoursesError')
+      toast.error(msg)
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
+
   useEffect(() => {
     const id = selectedDomainId
     if (!id) return
     fetchCandidacies(id)
     fetchCourses(id)
-  }, [selectedDomainId, fetchCandidacies, fetchCourses])
+  }, [selectedDomainId])
 
   useEffect(() => {
     let active = true
@@ -719,7 +719,7 @@ export default function AdminDashboard() {
             )}
             {previewUrl && (
               <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4 ring-2 ring-warm-accent rounded-lg overflow-hidden">
-                <Image src={previewUrl} alt={t('previewAlt')} fill className="object-cover" unoptimized />
+                <img src={previewUrl} alt={t('previewAlt')} className="w-full h-full object-cover" />
               </div>
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
@@ -743,9 +743,7 @@ export default function AdminDashboard() {
             )}
             {logoPreviewUrl && (
               <div className="flex items-center gap-4 mb-4 ring-2 ring-warm-accent rounded-lg p-3">
-                <div className="relative w-20 h-20">
-                  <Image src={logoPreviewUrl} alt={t('previewAlt')} fill className="object-contain" unoptimized />
-                </div>
+                <img src={logoPreviewUrl} alt={t('previewAlt')} className="w-20 h-20 object-contain" />
               </div>
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">

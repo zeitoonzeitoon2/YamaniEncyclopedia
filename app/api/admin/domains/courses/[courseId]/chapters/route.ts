@@ -46,7 +46,6 @@ export async function GET(request: NextRequest, { params }: { params: { courseId
         version: true,
         originalChapterId: true,
         changeReason: true,
-        quizQuestions: true,
         createdAt: true,
         updatedAt: true,
         author: { select: { id: true, name: true, email: true, role: true } },
@@ -75,14 +74,9 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     const orderIndex = typeof body.orderIndex === 'number' ? body.orderIndex : 0
     const originalChapterId = typeof body.originalChapterId === 'string' ? body.originalChapterId.trim() : ''
     const changeReason = body.changeReason
-    const quizQuestions = body.quizQuestions
 
-    const isTitleEmpty = !title
-    const isContentEmpty = !content
-    const isQuizEmpty = !Array.isArray(quizQuestions) || quizQuestions.length === 0
-
-    if (isTitleEmpty || (isContentEmpty && isQuizEmpty)) {
-      return NextResponse.json({ error: 'title and content (or quiz) are required' }, { status: 400 })
+    if (!title || !content) {
+      return NextResponse.json({ error: 'title and content are required' }, { status: 400 })
     }
 
     const course = await prisma.course.findUnique({
@@ -116,7 +110,6 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         authorId: perm.userId,
         originalChapterId: originalId,
         ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-        ...(quizQuestions ? { quizQuestions: (quizQuestions as any) as Prisma.InputJsonValue } : {}),
       },
       select: { id: true },
     })

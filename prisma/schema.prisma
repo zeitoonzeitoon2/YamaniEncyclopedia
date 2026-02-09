@@ -170,7 +170,6 @@ model CourseChapter {
   votes       ChapterVote[]
   progress    CourseChapterProgress[]
   comments    Comment[]
-  quizQuestions Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -426,19 +425,9 @@ model ChatMessage {
   sender        User        @relation("SentMessages", fields: [senderId], references: [id])
   examSessionId String
   examSession   ExamSession @relation(fields: [examSessionId], references: [id], onDelete: Cascade)
-  
-  // New fields for Edit/Delete/Reply
-  isEdited      Boolean     @default(false)
-  isDeleted     Boolean     @default(false)
-  parentId      String?
-  parent        ChatMessage? @relation("MessageReplies", fields: [parentId], references: [id])
-  replies       ChatMessage[] @relation("MessageReplies")
-
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt @default(now())
 
   @@index([senderId])
   @@index([examSessionId])
   @@index([createdAt])
-  @@index([parentId])
 }

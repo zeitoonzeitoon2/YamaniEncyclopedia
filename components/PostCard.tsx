@@ -5,7 +5,6 @@ import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { useTranslations, useLocale } from 'next-intl'
-import { useEffect, useState } from 'react'
 
 interface Post {
   id: string
@@ -34,29 +33,11 @@ interface PostCardProps {
   hideHeaderId?: boolean
   showDomainNamesAtTop?: boolean
   actionsPortalId?: string
-  height?: string
 }
 
-import { ErrorBoundary } from './ErrorBoundary'
-
-export function PostCard({ 
-  post, 
-  fullWidth = false, 
-  hideArticleLinkInputs = false, 
-  hideAuthorName = false, 
-  hideAuthorAvatar = false, 
-  hideHeaderId = false, 
-  showDomainNamesAtTop = false, 
-  actionsPortalId,
-  height
-}: PostCardProps) {
+export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = false, hideAuthorName = false, hideAuthorAvatar = false, hideHeaderId = false, showDomainNamesAtTop = false, actionsPortalId }: PostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
-  const [dateLabel, setDateLabel] = useState('')
-
-  useEffect(() => {
-    setDateLabel(new Date(post.createdAt).toLocaleDateString(locale))
-  }, [post.createdAt, locale])
 
   const renderContent = () => {
     if (post.type === 'TREE') {
@@ -64,16 +45,14 @@ export function PostCard({
         const treeData = JSON.parse(post.content)
         return (
           <div className={`mt-4 ${fullWidth ? 'w-full h-full flex-1' : ''}`}>
-            <ErrorBoundary fallback={<p className="text-red-400 text-sm">{t('treeError')}</p>}>
-              <TreeDiagramEditor
-                initialData={treeData}
-                readOnly={true}
-                height={height || (fullWidth ? '150vh' : '24rem')}
-                hideArticleLinkInputs={hideArticleLinkInputs}
-                showDomainNamesAtTop={showDomainNamesAtTop}
-                actionsPortalId={actionsPortalId}
-              />
-            </ErrorBoundary>
+            <TreeDiagramEditor
+              initialData={treeData}
+              readOnly={true}
+              height={fullWidth ? '150vh' : '24rem'}
+              hideArticleLinkInputs={hideArticleLinkInputs}
+              showDomainNamesAtTop={showDomainNamesAtTop}
+              actionsPortalId={actionsPortalId}
+            />
           </div>
         )
       } catch (error) {
@@ -113,7 +92,7 @@ export function PostCard({
             <p className="text-site-text font-medium">{post.author.name}</p>
           )}
           <p className="text-site-muted text-sm">
-            {dateLabel}
+            {new Date(post.createdAt).toLocaleDateString(locale)}
           </p>
         </div>
       </div>

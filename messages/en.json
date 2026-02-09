@@ -98,20 +98,7 @@
     "instructors": "Course Instructors",
     "students": "Course Students",
     "noInstructors": "No instructors found",
-    "noStudents": "No students found",
-    "confirmDelete": "Are you sure you want to delete this message?",
-    "reply": "Reply",
-    "edit": "Edit",
-    "delete": "Delete",
-    "edited": "edited",
-    "replyingTo": "Replying to",
-    "editingMessage": "Editing message",
-    "quizTitle": "Self-Assessment Quiz",
-    "checkQuiz": "Check Answers",
-    "quizCorrect": "Correct!",
-    "quizIncorrect": "Incorrect. The correct answer is option {index}.",
-    "quizScore": "You got {correct} out of {total} questions correct.",
-    "resetQuiz": "Try Again"
+    "noStudents": "No students found"
   },
   "language": {
     "label": "Language",
@@ -295,7 +282,6 @@
     "loadingShort": "Loading..."
   },
   "supervisor": {
-    "loading": "Loading...",
     "title": {
       "editor": "Editor Dashboard",
       "supervisor": "Supervisor Dashboard"
@@ -687,14 +673,6 @@
     "selectedVersion": "Selected Version",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
-    "quizTitle": "Self-Assessment Quiz",
-    "noQuizQuestions": "No questions added yet.",
-    "addQuestion": "Add Question",
-    "questionPlaceholder": "Question text...",
-    "optionPlaceholder": "Option {index}...",
-    "correctAnswerLabel": "Correct Answer:",
-    "removeQuestion": "Remove Question",
-    "versionLabel": "Version {version}",
     "statusDraft": "Draft",
     "loading": "Loading...",
     "toast": {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
@@ -42,7 +42,6 @@ type CourseChapter = {
   updatedAt: string
   author: ChapterAuthor
   votes: ChapterVote[]
-  quizQuestions?: any
 }
 
 type CourseInfo = {
@@ -72,7 +71,7 @@ export default function AdminCourseChaptersPage() {
   const [chapters, setChapters] = useState<CourseChapter[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [mode, setMode] = useState<EditorMode>('new')
-  const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '', quizQuestions: [] as any[] })
+  const [form, setForm] = useState({ title: '', content: '', orderIndex: 0, originalChapterId: '' })
   const [argumentation, setArgumentation] = useState({
     type: '',
     summary: '',
@@ -131,17 +130,17 @@ export default function AdminCourseChaptersPage() {
       .filter((c) => getRootId(c) === rootId && c.status === 'APPROVED')
       .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
     return approved.length ? approved[approved.length - 1] : null
-  }, [chapters, selectedChapter])
+  }, [chapters, selectedChapter?.id])
 
   const resetFormForNew = (nextOrderIndex: number) => {
     setMode('new')
     setSelectedId(null)
-    setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '', quizQuestions: [] })
+    setForm({ title: '', content: '', orderIndex: nextOrderIndex, originalChapterId: '' })
     setActiveDraftId(null)
     autoDraftingRef.current = false
   }
 
-  const fetchChapters = useCallback(async () => {
+  const fetchChapters = async () => {
     if (!courseId) return
     try {
       setLoading(true)
@@ -163,7 +162,7 @@ export default function AdminCourseChaptersPage() {
     } finally {
       setLoading(false)
     }
-  }, [courseId, selectedId, t])
+  }
 
   useEffect(() => {
     if (status === 'loading') return
@@ -172,7 +171,7 @@ export default function AdminCourseChaptersPage() {
       return
     }
     fetchChapters()
-  }, [session, status, router, fetchChapters])
+  }, [session, status, courseId, router])
 
   useEffect(() => {
     chaptersRef.current = chapters
@@ -188,7 +187,6 @@ export default function AdminCourseChaptersPage() {
       content: current.content || '',
       orderIndex: current.orderIndex ?? 0,
       originalChapterId: current.originalChapterId || '',
-      quizQuestions: Array.isArray(current.quizQuestions) ? current.quizQuestions : [],
     })
     setMode('edit')
   }, [selectedId])
@@ -224,14 +222,12 @@ export default function AdminCourseChaptersPage() {
     autoDraftingRef.current = true
     try {
       const content = draft.content
-      const quizQuestions = form.quizQuestions || []
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: draftTitle,
           content,
-          quizQuestions,
           orderIndex: selectedChapter.orderIndex ?? 0,
           originalChapterId: rootId,
         }),
@@ -255,17 +251,9 @@ export default function AdminCourseChaptersPage() {
   }
 
   const handleSave = async () => {
-    const title = (form.title || '').trim()
-    const content = (form.content || '').trim()
-    const quizQuestions = form.quizQuestions || []
-    const hasQuiz = Array.isArray(quizQuestions) && quizQuestions.length > 0
-    
-    if (!title) {
-      toast.error(t('toast.requiredFields'))
-      return
-    }
-
-    if (!content && !hasQuiz) {
+    const title = form.title.trim()
+    const content = form.content.trim()
+    if (!title || !content) {
       toast.error(t('toast.requiredFields'))
       return
     }
@@ -280,26 +268,16 @@ export default function AdminCourseChaptersPage() {
 
   const doSave = async () => {
     if (!courseId) return
-    const title = (form.title || '').trim()
-    const content = (form.content || '').trim()
+    const title = form.title.trim()
+    const content = form.content.trim()
     
     try {
       setSaving(true)
-      
-      // Determine if we should update an existing record or create a new one
-      // 1. If we already have an active draft ID, update that draft.
-      // 2. If we are in edit mode and the selected chapter is NOT approved, update it directly.
-      // 3. Otherwise (new mode OR editing an approved chapter), create a new record (POST).
-      let targetId = activeDraftId
-      if (!targetId && mode === 'edit' && selectedChapter && selectedChapter.status !== 'APPROVED') {
-        targetId = selectedId
-      }
-
+      const targetId = activeDraftId || (mode === 'edit' ? selectedId : null)
       const body: any = { 
         title, 
         content, 
         orderIndex: form.orderIndex,
-        quizQuestions: form.quizQuestions,
         changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
       }
 
@@ -315,26 +293,18 @@ export default function AdminCourseChaptersPage() {
           return
         }
       } else {
-        // Create new chapter OR new version of an approved chapter
-        const rootId = selectedChapter ? getRootId(selectedChapter) : ''
-        
         const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...body,
-            originalChapterId: rootId || form.originalChapterId || undefined,
+            ...(form.originalChapterId ? { originalChapterId: form.originalChapterId } : {}),
           }),
         })
-        const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
+        const payload = (await res.json().catch(() => ({}))) as { error?: string }
         if (!res.ok) {
           toast.error(payload.error || t('toast.draftCreateError'))
           return
-        }
-        
-        // If we created a new version, select it
-        if (payload.chapter?.id) {
-          setSelectedId(payload.chapter.id)
         }
       }
       await fetchChapters()
@@ -382,42 +352,12 @@ export default function AdminCourseChaptersPage() {
         return
       }
       await fetchChapters()
-      toast.success(t('toast.voteSuccess'))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
     }
-  }
-
-  const addQuizQuestion = () => {
-    const newQuestion = {
-      id: crypto.randomUUID(),
-      question: '',
-      options: ['', '', '', ''],
-      correctAnswer: 0
-    }
-    setForm(prev => ({
-      ...prev,
-      quizQuestions: [...prev.quizQuestions, newQuestion]
-    }))
-  }
-
-  const removeQuizQuestion = (id: string) => {
-    setForm(prev => ({
-      ...prev,
-      quizQuestions: prev.quizQuestions.filter((q: any) => q.id !== id)
-    }))
-  }
-
-  const updateQuizQuestion = (id: string, updates: any) => {
-    setForm(prev => ({
-      ...prev,
-      quizQuestions: prev.quizQuestions.map((q: any) => 
-        q.id === id ? { ...q, ...updates } : q
-      )
-    }))
   }
 
   const chapterLabel = (chapter: CourseChapter) => {
@@ -465,7 +405,7 @@ export default function AdminCourseChaptersPage() {
     const idx = versions.findIndex((c) => c.id === selectedChapter.id)
     if (idx <= 0) return null
     return versions[idx - 1]
-  }, [chapters, selectedChapter])
+  }, [chapters, selectedChapter?.id])
 
   const previewDiffOps = useMemo(() => {
     if (!selectedChapter) return null
@@ -569,7 +509,7 @@ export default function AdminCourseChaptersPage() {
     const base = selectedPreviousChapter?.content || ''
     const current = form.content || ''
     return diffTokens(tokenize(base), tokenize(current))
-  }, [form.content, selectedChapter, selectedPreviousChapter])
+  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.content])
 
   const parsedDiagramForPreview = useMemo(() => {
     const unwrapFence = (text: string) => {
@@ -598,7 +538,7 @@ export default function AdminCourseChaptersPage() {
     const previous = selectedPreviousChapter ? tryParseDiagram(selectedPreviousChapter.content || '') : null
     const current = selectedChapter ? tryParseDiagram(form.content || '') : null
     return { previous, current }
-  }, [form.content, selectedChapter, selectedPreviousChapter])
+  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.id])
 
   return (
     <div className="min-h-screen bg-site-bg">
@@ -797,72 +737,6 @@ export default function AdminCourseChaptersPage() {
                     <div className="text-xs text-site-muted">
                       {form.content ? t('charCount', { count: form.content.length }) : t('noContent')}
                     </div>
-                  </div>
-
-                  {/* Quiz Editor */}
-                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-md font-bold text-site-text heading">{t('quizTitle')}</h4>
-                      <button
-                        type="button"
-                        onClick={addQuizQuestion}
-                        className="px-3 py-1 text-xs rounded-lg border border-warm-primary/40 bg-warm-primary/10 hover:bg-warm-primary/20 text-site-text"
-                      >
-                        {t('addQuestion')}
-                      </button>
-                    </div>
-                    
-                    {form.quizQuestions.length === 0 ? (
-                      <div className="text-xs text-site-muted italic text-center py-2">
-                        {t('noQuizQuestions', { defaultValue: 'No questions added yet.' })}
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {form.quizQuestions.map((q: any, qIdx: number) => (
-                          <div key={q.id} className="p-3 rounded-lg border border-gray-700 bg-black/20 space-y-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs text-site-muted font-mono">Q{qIdx + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => removeQuizQuestion(q.id)}
-                                className="text-xs text-red-400 hover:text-red-300"
-                              >
-                                {t('removeQuestion')}
-                              </button>
-                            </div>
-                            <input
-                              value={q.question}
-                              onChange={(e) => updateQuizQuestion(q.id, { question: e.target.value })}
-                              placeholder={t('questionPlaceholder')}
-                              className="w-full p-2 text-sm rounded border border-gray-600 bg-site-bg text-site-text"
-                            />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {q.options.map((opt: string, oIdx: number) => (
-                                <div key={oIdx} className="flex items-center gap-2">
-                                  <input
-                                    type="radio"
-                                    name={`correct-${q.id}`}
-                                    checked={q.correctAnswer === oIdx}
-                                    onChange={() => updateQuizQuestion(q.id, { correctAnswer: oIdx })}
-                                    className="text-warm-primary focus:ring-warm-primary bg-site-bg border-gray-600"
-                                  />
-                                  <input
-                                    value={opt}
-                                    onChange={(e) => {
-                                      const newOpts = [...q.options]
-                                      newOpts[oIdx] = e.target.value
-                                      updateQuizQuestion(q.id, { options: newOpts })
-                                    }}
-                                    placeholder={t('optionPlaceholder', { index: oIdx + 1 })}
-                                    className="flex-1 p-2 text-xs rounded border border-gray-600 bg-site-bg text-site-text"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">

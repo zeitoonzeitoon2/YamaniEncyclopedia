@@ -73,12 +73,7 @@ export async function GET(req: NextRequest) {
       messages = await prisma.chatMessage.findMany({
         where: { examSessionId },
         include: {
-          sender: { select: { name: true, image: true, id: true } },
-          parent: {
-            include: {
-              sender: { select: { name: true, id: true } }
-            }
-          }
+          sender: { select: { name: true, image: true, id: true } }
         },
         orderBy: { createdAt: 'asc' }
       })
@@ -102,7 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    let { examSessionId, content, parentId } = body
+    let { examSessionId, content } = body
 
     if (!examSessionId || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -179,16 +174,10 @@ export async function POST(req: NextRequest) {
         data: {
           content,
           senderId: session.user.id,
-          examSessionId,
-          parentId: parentId || null
+          examSessionId
         },
         include: {
-          sender: { select: { name: true, image: true, id: true } },
-          parent: {
-            include: {
-              sender: { select: { name: true, id: true } }
-            }
-          }
+          sender: { select: { name: true, image: true, id: true } }
         }
       })
       return NextResponse.json({ message })
@@ -217,135 +206,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error('Error creating chat message:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function PATCH(req: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await req.json()
-    const { messageId, content } = body
-
-    if (!messageId || !content) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        examSession: {
-          include: {
-            course: { select: { domainId: true } }
-          }
-        }
-      }
-    })
-
-    if (!message) {
-      return NextResponse.json({ error: 'Message not found' }, { status: 404 })
-    }
-
-    // Only sender or admin can edit
-    if (message.senderId !== session.user.id && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const updatedMessage = await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: {
-        content,
-        isEdited: true
-      },
-      include: {
-        sender: { select: { name: true, image: true, id: true } },
-        parent: {
-          include: {
-            sender: { select: { name: true, id: true } }
-          }
-        }
-      }
-    })
-
-    return NextResponse.json({ message: updatedMessage })
-  } catch (error) {
-    console.error('Error updating chat message:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function DELETE(req: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(req.url)
-    const messageId = searchParams.get('messageId')
-
-    if (!messageId) {
-      return NextResponse.json({ error: 'Message ID is required' }, { status: 400 })
-    }
-
-    const message = await prisma.chatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        examSession: {
-          include: {
-            course: { select: { domainId: true } }
-          }
-        }
-      }
-    })
-
-    if (!message) {
-      return NextResponse.json({ error: 'Message not found' }, { status: 404 })
-    }
-
-    // Check if user is an expert in this domain
-    const isExpert = await prisma.domainExpert.findFirst({
-      where: {
-        userId: session.user.id,
-        domainId: message.examSession.course.domainId
-      }
-    })
-
-    // Sender, Examiner, Expert, or Admin can delete
-    const isAuthorized = 
-      message.senderId === session.user.id || 
-      message.examSession.examinerId === session.user.id || 
-      !!isExpert ||
-      session.user.role === 'ADMIN'
-
-    if (!isAuthorized) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    // Soft delete
-    const deletedMessage = await prisma.chatMessage.update({
-      where: { id: messageId },
-      data: {
-        content: 'This message was deleted',
-        isDeleted: true
-      },
-      include: {
-        sender: { select: { name: true, image: true, id: true } },
-        parent: {
-          include: {
-            sender: { select: { name: true, id: true } }
-          }
-        }
-      }
-    })
-
-    return NextResponse.json({ message: deletedMessage })
-  } catch (error) {
-    console.error('Error deleting chat message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

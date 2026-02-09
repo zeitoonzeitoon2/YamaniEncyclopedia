@@ -100,20 +100,7 @@
     "instructors": "اساتید دوره",
     "students": "دانشجویان دوره",
     "noInstructors": "استادی یافت نشد",
-    "noStudents": "دانشجویی یافت نشد",
-    "confirmDelete": "آیا از حذف این پیام اطمینان دارید؟",
-    "reply": "پاسخ",
-    "edit": "ویرایش",
-    "delete": "حذف",
-    "edited": "ویرایش شده",
-    "replyingTo": "پاسخ به",
-    "editingMessage": "در حال ویرایش پیام",
-    "quizTitle": "پرسشنامه خودارزیابی",
-    "checkQuiz": "بررسی پاسخ‌ها",
-    "quizCorrect": "پاسخ صحیح است!",
-    "quizIncorrect": "پاسخ نادرست است. پاسخ صحیح گزینه {index} می‌باشد.",
-    "quizScore": "شما به {correct} سوال از {total} سوال پاسخ درست دادید.",
-    "resetQuiz": "تلاش مجدد"
+    "noStudents": "دانشجویی یافت نشد"
   },
   "language": {
     "label": "زبان",
@@ -297,7 +284,6 @@
     "loadingShort": "در حال بارگذاری..."
   },
   "supervisor": {
-    "loading": "در حال بارگذاری...",
     "title": {
       "editor": "داشبورد ویراستار",
       "supervisor": "داشبورد ناظر"
@@ -689,14 +675,6 @@
     "selectedVersion": "نسخه انتخاب شده",
     "statusApproved": "تایید شده",
     "statusRejected": "رد شده",
-    "quizTitle": "پرسشنامه خودارزیابی",
-    "noQuizQuestions": "هنوز سوالی اضافه نشده است.",
-    "addQuestion": "افزودن سوال",
-    "questionPlaceholder": "متن سوال...",
-    "optionPlaceholder": "گزینه {index}...",
-    "correctAnswerLabel": "پاسخ صحیح:",
-    "removeQuestion": "حذف سوال",
-    "versionLabel": "نسخه {version}",
     "statusDraft": "پیش‌نویس",
     "loading": "در حال بارگذاری...",
     "toast": {

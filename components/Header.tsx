@@ -38,11 +38,6 @@ export function Header() {
   }, [pathname])
   const isAcademy = safePathname.startsWith('/academy')
 
-  const closeMenus = () => {
-    setMenuOpen(false)
-    setLangMenuOpen(false)
-  }
-
   React.useEffect(() => {
     setMounted(true)
   }, [])
@@ -87,8 +82,8 @@ export function Header() {
       if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false)
       if (langMenuRef.current && !langMenuRef.current.contains(target)) setLangMenuOpen(false)
     }
-    if (menuOpen || langMenuOpen) document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
+    if (menuOpen || langMenuOpen) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen, langMenuOpen])
 
   const effectiveRole = (displayRole || session?.user?.role) || ''
@@ -96,11 +91,11 @@ export function Header() {
   const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
-    <header className="bg-site-card/95 backdrop-blur-md border-b border-site-border sticky top-0 z-[100000] shadow-sm pointer-events-auto">
-      <div className="container mx-auto px-4 py-2 relative z-[100001]">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <div className="flex items-center justify-start min-w-0">
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading shrink-0 hover:opacity-80 transition-opacity">
+    <header className="bg-site-card border-b border-site-border relative z-50">
+      <div className="container mx-auto px-4 py-2">
+        <div className="grid grid-cols-3 items-center gap-4">
+          <div className="flex items-center justify-start">
+            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading">
               {logoUrl ? (
                 <Image src={logoUrl} alt={t('logoAlt')} width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
               ) : null}
@@ -109,10 +104,9 @@ export function Header() {
           </div>
 
           <div className="flex items-center justify-center">
-            <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50 shrink-0">
+            <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
               <Link
                 href="/"
-                onClick={closeMenus}
                 className={`px-3 py-1 rounded-full text-xs transition-colors ${
                   isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/20 text-site-text font-medium'
                 }`}
@@ -121,7 +115,6 @@ export function Header() {
               </Link>
               <Link
                 href="/academy"
-                onClick={closeMenus}
                 className={`px-3 py-1 rounded-full text-xs transition-colors ${
                   isAcademy ? 'bg-warm-primary/20 text-site-text font-medium' : 'text-site-muted hover:text-site-text'
                 }`}
@@ -131,11 +124,11 @@ export function Header() {
             </div>
           </div>
 
-          <nav className="flex items-center justify-end gap-2 min-w-0">
+          <nav className="flex items-center justify-end">
             {status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
-              <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all relative">
+              <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
                 {mounted && (
                   <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -148,11 +141,7 @@ export function Header() {
 
                 <div className="relative" ref={langMenuRef}>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setLangMenuOpen((prev) => !prev)
-                      setMenuOpen(false)
-                    }}
+                    onClick={() => setLangMenuOpen((prev) => !prev)}
                     className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
                     aria-label={tl('label')}
                   >
@@ -185,7 +174,6 @@ export function Header() {
                 {!isAcademy && (
                   <Link 
                     href="/create" 
-                    onClick={closeMenus}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
                   >
                     <Edit size={14} />
@@ -196,11 +184,7 @@ export function Header() {
                 <div className="relative" ref={menuRef}>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setMenuOpen((prev) => !prev)
-                      setLangMenuOpen(false)
-                    }}
+                    onClick={() => setMenuOpen((prev) => !prev)}
                     className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
                   >
                     {session.user?.image ? (
@@ -226,7 +210,6 @@ export function Header() {
                       <div className="py-1">
                         <Link
                           href={`/profile/${session.user?.id}`}
-                          onClick={closeMenus}
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                         >
                           <User size={16} />
@@ -235,7 +218,6 @@ export function Header() {
                         {session && (
                           <Link
                             href="/supervisor"
-                            onClick={closeMenus}
                             className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
@@ -245,7 +227,6 @@ export function Header() {
                         {(isDomainExpert || session.user?.role === 'ADMIN') && (
                           <Link
                             href="/dashboard/admin"
-                            onClick={closeMenus}
                             className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             <Settings size={16} />
@@ -254,10 +235,7 @@ export function Header() {
                         )}
                         <button
                           type="button"
-                          onClick={() => {
-                            closeMenus()
-                            signOut()
-                          }}
+                          onClick={() => signOut()}
                           className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
                         >
                           <LogOut size={16} />

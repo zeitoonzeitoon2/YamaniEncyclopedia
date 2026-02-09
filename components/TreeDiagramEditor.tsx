@@ -22,7 +22,6 @@ import 'reactflow/dist/style.css'
 import QuickArticleModal from './QuickArticleModal'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
-import { normalizeSlugFromLink } from '@/lib/article-utils'
 
 interface FlashcardField {
   id: string
@@ -142,7 +141,7 @@ export default function TreeDiagramEditor({
   const [articleLink, setArticleLink] = useState('')
 
   const [flashcardFields, setFlashcardFields] = useState<FlashcardField[]>([])
-  const createFieldId = useCallback(() => Math.random().toString(36).slice(2) + Date.now().toString(36), [])
+  const createFieldId = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
   // Temporary storage for extra link titles to display article titles for those links
   const [extraLinkTitles, setExtraLinkTitles] = useState<Record<string, string>>({})
@@ -223,15 +222,10 @@ export default function TreeDiagramEditor({
   }, [nodes, highlightedNodeIds, domainNameById, showDomainNames])
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
   const [modalTarget, setModalTarget] = useState<'main' | string | null>(null)
   const [nodeTitle, setNodeTitle] = useState('')
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     setNodes((prev) => prev.map((n) => ({ ...n, data: { ...(n.data as any), _readOnly: readOnly } })))
@@ -327,7 +321,7 @@ export default function TreeDiagramEditor({
     }
     run()
     return () => controller.abort()
-  }, [flashcardFields, articleLink, extraLinkContentCache])
+  }, [flashcardFields, articleLink])
 
   const [quickArticleModalEditMode, setQuickArticleModalEditMode] = useState(false)
   const [quickArticleExistingDraft, setQuickArticleExistingDraft] = useState<
@@ -364,7 +358,7 @@ export default function TreeDiagramEditor({
       setEdges(newEdge)
       onDataChange?.({ nodes: nextNodes, edges: newEdge })
     },
-    [edges, nodes, onDataChange, readOnly, setNodes, setEdges]
+    [edges, nodes, onDataChange, readOnly, setNodes]
   )
 
   const addNode = useCallback(
@@ -399,7 +393,7 @@ export default function TreeDiagramEditor({
       setNodeLabel('')
       onDataChange?.({ nodes: newNodes, edges })
     },
-    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId, setNodes]
+    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId]
   )
 
   const deleteSelectedElements = useCallback(
@@ -552,7 +546,7 @@ export default function TreeDiagramEditor({
     setFlashcardFields(items)
     setRelatedNodeIds(Array.isArray(dataAny.relatedNodeIds) ? dataAny.relatedNodeIds : [])
     setRelationToAddId('')
-  }, [onDataChange, edges, createFieldId, setNodes])
+  }, [onDataChange, edges, createFieldId])
 
   const handlePaneClick = useCallback(() => {
     setSelectedNodeId(null)
@@ -562,88 +556,92 @@ export default function TreeDiagramEditor({
   const updateFlashText = useCallback(
     (text: string) => {
       if (!selectedNodeId) return
-      setNodes((prev) => {
-        const next = prev.map((n) => (n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), flashText: text } } : n))
-        onDataChange?.({ nodes: next, edges })
-        return next
-      })
+      const next = nodes.map((n) => (n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), flashText: text } } : n))
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges]
   )
 
   const updateArticleLink = useCallback(
     (link: string) => {
       if (!selectedNodeId) return
-      setNodes((prev) => {
-        const next = prev.map((n) => {
-          if (n.id !== selectedNodeId) return n
-          const dataAny = (n.data as any) || {}
-          const prevLink = (dataAny.articleLink || '').trim()
-          const updatedData: any = { ...dataAny, articleLink: link, _readOnly: readOnly }
-          if (prevLink && prevLink !== link) {
-            updatedData.previousArticleLink = prevLink
-          }
-          return { ...n, data: updatedData }
-        })
-        onDataChange?.({ nodes: next, edges })
-        return next
+      const next = nodes.map((n) => {
+        if (n.id !== selectedNodeId) return n
+        const dataAny = (n.data as any) || {}
+        const prevLink = (dataAny.articleLink || '').trim()
+        const updatedData: any = { ...dataAny, articleLink: link, _readOnly: readOnly }
+        if (prevLink && prevLink !== link) {
+          updatedData.previousArticleLink = prevLink
+        }
+        return { ...n, data: updatedData }
       })
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, setNodes, onDataChange, edges, readOnly]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, readOnly]
   )
 
   const updateNodeLabel = useCallback(
     (label: string) => {
       if (!selectedNodeId) return
-      setNodes((prev) => {
-        const next = prev.map((n) => (
-          n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), label } } : n
-        ))
-        onDataChange?.({ nodes: next, edges })
-        return next
-      })
+      const next = nodes.map((n) => (
+        n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), label } } : n
+      ))
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges]
   )
 
   const updateNodeDomainId = useCallback(
     (domainId: string | null) => {
       if (!selectedNodeId) return
-      setNodes((prev) => {
-        const next = prev.map((n) => (
-          n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), domainId } } : n
-        ))
-        onDataChange?.({ nodes: next, edges })
-        return next
-      })
+      const next = nodes.map((n) => (
+        n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), domainId } } : n
+      ))
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges]
   )
 
+  const normalizeSlugFromLink = (link: string): string => {
+    try {
+      let path = link || ''
+      if (/^https?:\/\//i.test(link)) {
+        const u = new URL(link)
+        path = u.pathname
+      }
+      path = path.split('?')[0].split('#')[0]
+      const after = path.replace(/^\/?articles\//, '')
+      return decodeURIComponent(after.replace(/\/+$/g, ''))
+    } catch {
+      return (link || '').replace(/^\/?articles\//, '').replace(/\/+$/g, '')
+    }
+  }
 
   const updateFlashcardFields = useCallback(
     (items: FlashcardField[]) => {
       if (!selectedNodeId) return
-      setNodes((prev) => {
-        const next = prev.map((n) => {
-          if (n.id !== selectedNodeId) return n
-          const extraTexts = items.filter((i) => i.type === 'text').map((i) => i.content)
-          const extraLinks = items.filter((i) => i.type === 'link').map((i) => i.content)
-          return {
-            ...n,
-            data: {
-              ...(n.data as any),
-              extraItems: items,
-              extraTexts,
-              extraLinks,
-            },
-          }
-        })
-        onDataChange?.({ nodes: next, edges })
-        return next
+      const next = nodes.map((n) => {
+        if (n.id !== selectedNodeId) return n
+        const extraTexts = items.filter((i) => i.type === 'text').map((i) => i.content)
+        const extraLinks = items.filter((i) => i.type === 'link').map((i) => i.content)
+        return {
+          ...n,
+          data: {
+            ...(n.data as any),
+            extraItems: items,
+            extraTexts,
+            extraLinks,
+          },
+        }
       })
+      setNodes(next)
+      onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges]
   )
 
   // Helper function to update related nodes
@@ -679,7 +677,7 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, t]
+    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields]
   )
 
   const handleDraftCreated = useCallback(
@@ -725,7 +723,7 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, flashcardFields, updateFlashcardFields, nodes, t, setNodes, onDataChange, edges]
+    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes, t]
   )
 
   const openCreateArticleModal = useCallback((nodeId: string) => {
@@ -742,7 +740,7 @@ export default function TreeDiagramEditor({
       setQuickArticleExistingDraft(draft)
       setModalTarget('main')
     },
-    [setSelectedNodeId, setQuickArticleModalEditMode, setQuickArticleExistingDraft, setModalTarget]
+    []
   )
 
   const openEditExtraLinkModal = useCallback(
@@ -773,7 +771,7 @@ export default function TreeDiagramEditor({
         toast.error(t('prepareEditError'))
       }
     },
-    [t, setQuickArticleExistingDraft, setQuickArticleModalEditMode, setModalTarget]
+    [t]
   )
 
   const handleNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -790,7 +788,7 @@ export default function TreeDiagramEditor({
     setSelectedNodeId(node.id)
     setNodeTitle(trimmed)
     toast.success(t('nodeLabelUpdated'))
-  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t, setNodes, setSelectedNodeId, setNodeTitle])
+  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t])
 
   useEffect(() => {
     if (!isPreviewOpen || typeof window === 'undefined') return
@@ -818,10 +816,10 @@ export default function TreeDiagramEditor({
       setPanelOpen(false)
     }
     hasHydratedInitialData.current = true
-  }, [initialData, readOnly, selectedNodeId, setNodes, setEdges, setSelectedNodeId, setPanelOpen])
+  }, [initialData, readOnly])
 
   return (
-    <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col relative" style={{ height }}>
+    <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col" style={{ height }}>
       {!readOnly ? (
         <div className="p-4 bg-site-secondary border-b border-site-border flex gap-2 items-center">
           <input
@@ -893,34 +891,30 @@ export default function TreeDiagramEditor({
 
       <div className="h-full flex-1 flex min-h-0">
         <div className="flex-1 min-h-0">
-          {mounted ? (
-            <ReactFlow
-              nodes={computedNodes}
-              edges={edges}
-               onNodesChange={handleNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={handleNodesDelete}
-              onEdgesDelete={handleEdgesDelete}
-              onConnect={onConnect}
-               onNodeClick={handleNodeClick}
-               onPaneClick={handlePaneClick}
-               nodeTypes={nodeTypes}
-               edgeTypes={edgeTypes}
-               fitView
-               attributionPosition="bottom-left"
-               nodesDraggable={!readOnly}
-               nodesConnectable={!readOnly}
-               elementsSelectable={!readOnly}
-               onInit={(instance) => { reactFlowInstanceRef.current = instance }}
-               onNodeDoubleClick={handleNodeDoubleClick}
-              style={{ width: '100%', height: '100%', position: 'relative' }}
-            >
-              <Background />
-              <Controls />
-            </ReactFlow>
-          ) : (
-            <div className="w-full h-full" />
-          )}
+          <ReactFlow
+            nodes={computedNodes}
+            edges={edges}
+             onNodesChange={handleNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodesDelete={handleNodesDelete}
+            onEdgesDelete={handleEdgesDelete}
+            onConnect={onConnect}
+             onNodeClick={handleNodeClick}
+             onPaneClick={handlePaneClick}
+             nodeTypes={nodeTypes}
+             edgeTypes={edgeTypes}
+             fitView
+             attributionPosition="bottom-left"
+             nodesDraggable={!readOnly}
+             nodesConnectable={!readOnly}
+             elementsSelectable={!readOnly}
+             onInit={(instance) => { reactFlowInstanceRef.current = instance }}
+             onNodeDoubleClick={handleNodeDoubleClick}
+             style={{ width: '100%', height: '100%' }}
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
         </div>
 
         {selectedNode && (

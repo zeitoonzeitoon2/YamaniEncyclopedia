@@ -7,10 +7,9 @@ export const revalidate = 0
 export async function GET() {
   try {
     // آخرین نسخه تاییدشده (بر اساس بزرگ‌ترین version)
-    let latest = await prisma.post.findFirst({
+    const latest = await prisma.post.findFirst({
       where: {
         status: 'APPROVED',
-        type: 'TREE',
         version: { not: null },
       },
       orderBy: [
@@ -22,20 +21,6 @@ export async function GET() {
         votes: true,
       },
     })
-
-    if (!latest) {
-      latest = await prisma.post.findFirst({
-        where: {
-          status: 'APPROVED',
-          type: 'TREE',
-        },
-        orderBy: [{ createdAt: 'desc' }],
-        include: {
-          author: { select: { name: true, image: true } },
-          votes: true,
-        },
-      })
-    }
 
     return NextResponse.json(latest || null, {
       headers: {

@@ -1,12 +1,11 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-hot-toast'
 import { useTranslations, useLocale } from 'next-intl'
 // Remove date-fns dependency and use internal JavaScript
 import { User, Calendar } from 'lucide-react'
-import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
 
@@ -45,7 +44,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
   
   const votingFinalized = ['APPROVED', 'REJECTED', 'ARCHIVED'].includes(post.status)
 
-  const handleVote = useCallback(async (score: number) => {
+  const handleVote = async (score: number) => {
     if (!currentAdminId) return
     
     setIsVoting(true)
@@ -70,7 +69,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
     } finally {
       setIsVoting(false)
     }
-  }, [currentAdminId, post.id, onStatusChange, t])
+  }
 
   const getCurrentUserVote = () => {
     if (!currentAdminId || !post.votes) return null
@@ -111,12 +110,10 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {post.author.image ? (
-            <Image
+            <img
               src={post.author.image}
               alt={post.author.name || t('authorAlt')}
-              width={40}
-              height={40}
-              className="rounded-full"
+              className="w-10 h-10 rounded-full"
             />
           ) : (
             <div className="w-10 h-10 bg-site-card rounded-full flex items-center justify-center">

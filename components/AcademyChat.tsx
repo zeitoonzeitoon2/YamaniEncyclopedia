@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
-import { Send, User, Calendar, ExternalLink, MessageCircle, Reply, Edit2, Trash2, X } from 'lucide-react'
+import { Send, User, Calendar, ExternalLink, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 
@@ -16,17 +15,6 @@ type Message = {
     name: string | null
     image: string | null
   }
-  isEdited?: boolean
-  isDeleted?: boolean
-  parentId?: string | null
-  parent?: {
-    id: string
-    content: string
-    sender: {
-      id: string
-      name: string | null
-    }
-  } | null
 }
 
 type ExamSession = {
@@ -72,8 +60,6 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
   const [input, setInput] = useState('')
   const [loadingExams, setLoadingExams] = useState(true)
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null)
-  const [editingMessage, setEditingMessage] = useState<Message | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -84,8 +70,8 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
         const data = await res.json()
         if (res.ok) {
           setExams(data.exams || [])
-          if (data.exams && data.exams.length > 0) {
-            setSelectedExam(prev => prev || data.exams[0])
+          if (data.exams && data.exams.length > 0 && !selectedExam) {
+            setSelectedExam(data.exams[0])
           }
         } else {
           console.error('API Error:', data)
@@ -140,65 +126,26 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
     if (!input.trim() || !selectedExam) return
 
     try {
-      if (editingMessage) {
-        const res = await fetch('/api/academy/chat', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messageId: editingMessage.id,
-            content: input
-          })
-        })
-        const data = await res.json()
-        if (res.ok) {
-          setMessages(prev => prev.map(m => m.id === editingMessage.id ? data.message : m))
-          setEditingMessage(null)
-          setInput('')
-        } else {
-          toast.error(data.error || t('updateError'))
-        }
-        return
-      }
-
       const res = await fetch('/api/academy/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           examSessionId: selectedExam.id,
           content: input,
-          parentId: replyingTo?.id,
-          studentId: isExaminer ? selectedExam.studentId : undefined
+          studentId: isExaminer ? selectedExam.studentId : undefined // Pass studentId if it's a virtual session from examiner
         })
       })
       const data = await res.json()
       if (res.ok) {
         setMessages([...messages, data.message])
         setInput('')
-        setReplyingTo(null)
         
+        // If it was a virtual session, we should update the ID to the real one
         if (selectedExam.id.startsWith('course-') && data.message.examSessionId) {
           const updatedExam = { ...selectedExam, id: data.message.examSessionId }
           setSelectedExam(updatedExam)
           setExams(prev => prev.map(e => e.id === selectedExam.id ? updatedExam : e))
         }
-      } else {
-        toast.error(data.error || t('updateError'))
-      }
-    } catch (error) {
-      toast.error(t('updateError'))
-    }
-  }
-
-  const handleDelete = async (messageId: string) => {
-    if (!confirm(t('confirmDelete' as any) || 'Are you sure you want to delete this message?')) return
-
-    try {
-      const res = await fetch(`/api/academy/chat?messageId=${messageId}`, {
-        method: 'DELETE'
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setMessages(prev => prev.map(m => m.id === messageId ? data.message : m))
       } else {
         toast.error(data.error || t('updateError'))
       }
@@ -316,13 +263,7 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                     instructors.map((expert) => (
                       <div key={expert.user.id} className="flex items-center gap-2 bg-site-bg/50 rounded-full pr-1 pl-3 py-1 border border-gray-700">
                         {expert.user.image ? (
-                          <Image
-                            src={expert.user.image}
-                            alt={expert.user.name || ''}
-                            width={20}
-                            height={20}
-                            className="rounded-full object-cover"
-                          />
+                          <img src={expert.user.image} alt={expert.user.name || ''} className="w-5 h-5 rounded-full object-cover" />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-warm-primary/20 flex items-center justify-center text-[10px] text-warm-primary">
                             <User size={10} />
@@ -349,74 +290,21 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
               ) : (
                 messages.map((msg) => {
                   const isMe = msg.sender.id === session?.user?.id
-                  const isDeleted = msg.isDeleted
-                  
                   return (
                     <div
                       key={msg.id}
-                      className={`flex flex-col group ${isMe ? 'items-start' : 'items-end'}`}
+                      className={`flex flex-col ${isMe ? 'items-start' : 'items-end'}`}
                     >
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm border shadow-sm relative ${
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm border shadow-sm ${
                         isMe 
                           ? 'bg-warm-primary/10 border-warm-primary/20 text-site-text' 
                           : 'bg-site-card border-gray-700 text-site-text'
-                      } ${isDeleted ? 'opacity-50 italic' : ''}`}>
-                        
-                        {/* Parent Message (Reply) */}
-                        {msg.parent && !isDeleted && (
-                          <div className="mb-2 p-2 bg-black/20 rounded border-r-2 border-warm-primary text-xs opacity-70">
-                            <div className="font-bold mb-1">{msg.parent.sender.name}</div>
-                            <div className="truncate">{msg.parent.content}</div>
-                          </div>
-                        )}
-
+                      }`}>
                         <div className="text-[10px] text-site-muted mb-1 flex justify-between gap-4">
                           <span>{isMe ? t('you' as any) || 'You' : msg.sender.name}</span>
-                          <div className="flex items-center gap-2">
-                            {msg.isEdited && <span className="text-[9px] italic">({t('edited' as any) || 'edited'})</span>}
-                            <span>{new Date(msg.createdAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
+                          <span>{new Date(msg.createdAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-
                         <div className="whitespace-pre-wrap">{msg.content}</div>
-
-                        {/* Action Buttons (Visible on hover) */}
-                        {!isDeleted && (
-                          <div className={`absolute top-0 ${isMe ? '-left-12' : '-right-12'} hidden group-hover:flex flex-col gap-1`}>
-                            <button 
-                              onClick={() => {
-                                setReplyingTo(msg)
-                                setEditingMessage(null)
-                              }}
-                              className="p-1.5 bg-site-card border border-gray-700 rounded-full text-site-muted hover:text-warm-primary transition-colors"
-                              title={t('reply' as any) || 'Reply'}
-                            >
-                              <Reply size={14} />
-                            </button>
-                            {isMe && (
-                              <>
-                                <button 
-                                  onClick={() => {
-                                    setEditingMessage(msg)
-                                    setInput(msg.content)
-                                    setReplyingTo(null)
-                                  }}
-                                  className="p-1.5 bg-site-card border border-gray-700 rounded-full text-site-muted hover:text-blue-400 transition-colors"
-                                  title={t('edit' as any) || 'Edit'}
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button 
-                                  onClick={() => handleDelete(msg.id)}
-                                  className="p-1.5 bg-site-card border border-gray-700 rounded-full text-site-muted hover:text-red-400 transition-colors"
-                                  title={t('delete' as any) || 'Delete'}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   )
@@ -426,54 +314,22 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
             </div>
 
             {/* Input */}
-            <div className="border-t border-gray-700 bg-site-card/50">
-              {/* Reply/Edit Indicator */}
-              {(replyingTo || editingMessage) && (
-                <div className="px-4 py-2 border-b border-gray-700 bg-site-bg/30 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-site-muted">
-                    {replyingTo ? (
-                      <>
-                        <Reply size={12} className="text-warm-primary" />
-                        <span>{t('replyingTo' as any) || 'Replying to'} <strong>{replyingTo.sender.name}</strong></span>
-                        <span className="truncate max-w-[200px] italic">&quot;{replyingTo.content}&quot;</span>
-                      </>
-                    ) : (
-                      <>
-                        <Edit2 size={12} className="text-blue-400" />
-                        <span>{t('editingMessage' as any) || 'Editing message'}</span>
-                      </>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setReplyingTo(null)
-                      setEditingMessage(null)
-                      if (editingMessage) setInput('')
-                    }}
-                    className="p-1 hover:bg-gray-700 rounded-full transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-              
-              <form onSubmit={handleSend} className="p-4 flex gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={t('chatPlaceholder')}
-                  className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-4 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="btn-primary p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send size={18} />
-                </button>
-              </form>
-            </div>
+            <form onSubmit={handleSend} className="p-4 border-t border-gray-700 bg-site-card/50 flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t('chatPlaceholder')}
+                className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-4 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className="btn-primary p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send size={18} />
+              </button>
+            </form>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-site-muted">

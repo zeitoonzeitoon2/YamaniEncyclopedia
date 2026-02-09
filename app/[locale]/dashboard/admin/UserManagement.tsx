@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
 import { Plus, Trash2, X, Search, Shield, ShieldCheck, User, Edit } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -44,7 +44,11 @@ export default function UserManagement({ allDomains }: Props) {
   const [assignDomainId, setAssignDomainId] = useState('')
   const [assigning, setAssigning] = useState(false)
 
-  const fetchUsers = useCallback(async () => {
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
     try {
       setLoading(true)
       const res = await fetch('/api/admin/users', { cache: 'no-store' })
@@ -57,11 +61,7 @@ export default function UserManagement({ allDomains }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [t])
-
-  useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
+  }
 
   const getGlobalRole = (user: UserWithDomains) => {
     const isGlobalSupervisor = user.domainExperts.some(de => de.domain.slug === 'philosophy')
