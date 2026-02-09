@@ -75,7 +75,7 @@ export default function ArticlePage() {
           <div className="text-red-500">{error}</div>
         ) : article ? (
           <article className="max-w-[1000px] mx-auto">
-            <h1 className="text-3xl font-bold text-site-text mb-4">{article.title}</h1>
+            <h1 className="text-3xl font-bold text-site-accent mb-4">{article.title}</h1>
           {article.description && (
             <p className="text-gray-400 mb-6">{article.description}</p>
           )}

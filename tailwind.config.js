@@ -21,7 +21,8 @@ module.exports = {
           border: 'rgb(var(--site-border) / <alpha-value>)',
           text: 'rgb(var(--site-text) / <alpha-value>)',
           muted: 'rgb(var(--site-muted) / <alpha-value>)',
-          secondary: 'rgb(var(--site-secondary) / <alpha-value>)'
+          secondary: 'rgb(var(--site-secondary) / <alpha-value>)',
+          accent: 'rgb(var(--site-accent) / <alpha-value>)'
         },
         warm: {
           primary: '#d97706',
