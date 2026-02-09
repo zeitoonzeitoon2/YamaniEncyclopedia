@@ -104,8 +104,8 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
   if (!input) return ''
 
   // ۰. آن‌اسکیپ کردن کاراکترهای اسکیپ شده توسط Tiptap
-  // Tiptap-markdown کاراکترهایی مثل ! و [ را با \ اسکیپ می‌کند
-  const unescapedInput = input.replace(/\\([!\[\]^|_#])/g, '$1')
+  // Tiptap-markdown کاراکترهایی مثل ! و [ و ( را با \ اسکیپ می‌کند
+  const unescapedInput = input.replace(/\\([!\[\]\(\)^|_#])/g, '$1')
 
   // ۱. استخراج و حذف تعاریف پاورقی در ابتدای کار
   const definitions: Record<string, string> = {}
@@ -196,7 +196,8 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
     const trimmedLine = line.trim()
     const imgMatch = trimmedLine.match(/^[^\[]*image[^\[]*\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\].*$/i)
     if (imgMatch) {
-      const url = imgMatch[1].trim()
+      // حذف علامت تعجب‌های ناخواسته از URL که ممکن است به دلیل باگ RTL جابجا شده باشند
+      const url = imgMatch[1].trim().replace(/!/g, '')
       const caption = (imgMatch[2] || '').trim()
       const imgHtml = `
 <figure class="my-6">
