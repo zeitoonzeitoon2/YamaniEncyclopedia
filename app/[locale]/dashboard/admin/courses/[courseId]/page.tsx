@@ -913,8 +913,11 @@ export default function AdminCourseChaptersPage() {
                   )}
                 </div>
               )}
-            </div>
-          ) : (
+            </>
+          )}
+        </div>
+      </div>
+    ) : (
               <CoursePrerequisitesManager courseId={courseId} />
             )}
           </>
