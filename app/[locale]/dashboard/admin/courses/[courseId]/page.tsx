@@ -11,6 +11,7 @@ import EnhancedDiagramComparison from '@/components/EnhancedDiagramComparison'
 import { useTranslations, useLocale } from 'next-intl'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
+import CoursePrerequisitesManager from '@/components/CoursePrerequisitesManager'
 
 type ChapterVote = {
   voterId: string
@@ -84,6 +85,7 @@ export default function AdminCourseChaptersPage() {
   const [previewHtml, setPreviewHtml] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'chapters' | 'prerequisites'>('chapters')
   const [expandedRoots, setExpandedRoots] = useState<Record<string, boolean>>({})
   const autoDraftingRef = useRef(false)
   const chaptersRef = useRef<CourseChapter[]>([])
@@ -559,7 +561,32 @@ export default function AdminCourseChaptersPage() {
         {loading ? (
           <div className="text-site-muted">{t('loading')}</div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <>
+            <div className="flex border-b border-gray-700/50 mb-6">
+              <button
+                onClick={() => setActiveTab('chapters')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'chapters'
+                    ? 'border-warm-primary text-warm-accent'
+                    : 'border-transparent text-site-muted hover:text-site-text'
+                }`}
+              >
+                {t('chaptersTab')}
+              </button>
+              <button
+                onClick={() => setActiveTab('prerequisites')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'prerequisites'
+                    ? 'border-warm-primary text-warm-accent'
+                    : 'border-transparent text-site-muted hover:text-site-text'
+                }`}
+              >
+                {t('prerequisitesTab')}
+              </button>
+            </div>
+
+            {activeTab === 'chapters' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
             <div className="space-y-4">
               <div className="card">
                 <div className="flex items-center justify-between mb-3">
@@ -863,8 +890,10 @@ export default function AdminCourseChaptersPage() {
                   <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 )}
               </div>
-            </div>
-          </div>
+            ) : (
+              <CoursePrerequisitesManager courseId={courseId} />
+            )}
+          </>
         )}
       </main>
 

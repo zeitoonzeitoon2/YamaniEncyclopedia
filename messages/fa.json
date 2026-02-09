@@ -23,6 +23,7 @@
     "enrollButton": "همین الان ثبت‌نام کنید",
     "loadError": "خطا در دریافت دوره‌ها",
     "enrollError": "ثبت‌نام ممکن نیست",
+    "prerequisitesNotMet": "پیش‌نیازهای این دوره رعایت نشده است. دوره‌های مورد نیاز: {courses}",
     "enrollSuccess": "ثبت‌نام با موفقیت انجام شد",
     "loading": "در حال بارگذاری...",
     "empty": "هنوز دوره تأییدشده‌ای وجود ندارد.",
@@ -653,6 +654,8 @@
     "backToAdmin": "بازگشت به پنل مدیریت",
     "chapters": "فصل‌ها",
     "newChapter": "فصل جدید",
+    "chaptersTab": "فصل‌ها",
+    "prerequisitesTab": "پیش‌نیازها",
     "noChapters": "هنوز فصلی وجود ندارد.",
     "chapterNumber": "فصل {number}",
     "versionCount": "{count} نسخه",
@@ -680,14 +683,31 @@
     "statusDraft": "پیش‌نویس",
     "loading": "در حال بارگذاری...",
     "toast": {
-      "fetchError": "خطا در دریافت فصل‌ها",
-      "draftCreateError": "خطا در ایجاد پیش‌نویس",
-      "requiredFields": "عنوان و محتوا الزامی هستند",
-      "saveError": "خطا در ذخیره فصل",
-      "saveSuccess": "فصل ذخیره شد",
+      "fetchError": "خطا در دریافت لیست فصل‌ها",
+      "saveSuccess": "تغییرات با موفقیت ذخیره شد",
+      "saveError": "خطا در ذخیره تغییرات",
+      "deleteSuccess": "فصل با موفقیت حذف شد",
       "deleteError": "خطا در حذف فصل",
-      "deleteSuccess": "فصل حذف شد",
-      "voteError": "خطا در ثبت رای"
+      "voteError": "خطا در ثبت رای",
+      "draftCreateError": "خطا در ایجاد پیش‌نویس"
+    },
+    "prerequisites": {
+      "proposeTitle": "پیشنهاد پیش‌نیاز جدید",
+      "selectCourse": "انتخاب دوره...",
+      "proposeBtn": "پیشنهاد",
+      "listTitle": "پیش‌نیازهای دوره",
+      "noPrerequisites": "هنوز هیچ پیش‌نیازی برای این دوره تعیین نشده است.",
+      "proposedBy": "پیشنهاد دهنده",
+      "status": {
+        "PENDING": "در انتظار بررسی",
+        "APPROVED": "تأیید شده",
+        "REJECTED": "رد شده"
+      },
+      "approve": "تأیید",
+      "reject": "رد",
+      "voted": "رای شما با موفقیت ثبت شد",
+      "proposed": "پیشنهاد پیش‌نیاز با موفقیت ثبت شد و در انتظار رای‌گیری است",
+      "error": "خطایی رخ داده است"
     }
   },
   "adminDomains": {

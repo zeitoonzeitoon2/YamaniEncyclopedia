@@ -111,6 +111,8 @@ model User {
   commentReads CommentRead[]
   createdCommentPolls CommentPoll[]
   commentPollVotes    CommentPollVote[]
+  coursePrerequisites CoursePrerequisite[]
+  prerequisiteVotes   PrerequisiteVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -130,6 +132,8 @@ model Course {
   votes       CourseVote[]
   chapters    CourseChapter[]
   requirements DomainRequirement[]
+  prerequisites CoursePrerequisite[] @relation("CoursePrerequisites")
+  requiredBy    CoursePrerequisite[] @relation("CourseRequiredBy")
   examSessions ExamSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -430,4 +434,35 @@ model ChatMessage {
   @@index([senderId])
   @@index([examSessionId])
   @@index([createdAt])
+}
+
+model CoursePrerequisite {
+  id                   String             @id @default(cuid())
+  courseId             String
+  course               Course             @relation("CoursePrerequisites", fields: [courseId], references: [id], onDelete: Cascade)
+  prerequisiteCourseId String
+  prerequisiteCourse   Course             @relation("CourseRequiredBy", fields: [prerequisiteCourseId], references: [id], onDelete: Cascade)
+  status               String             @default("PENDING")
+  proposerId           String
+  proposer             User               @relation(fields: [proposerId], references: [id])
+  votes                PrerequisiteVote[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@unique([courseId, prerequisiteCourseId])
+  @@index([courseId])
+  @@index([prerequisiteCourseId])
+  @@index([status])
+}
+
+model PrerequisiteVote {
+  prerequisiteId String
+  prerequisite   CoursePrerequisite @relation(fields: [prerequisiteId], references: [id], onDelete: Cascade)
+  voterId        String
+  voter          User               @relation(fields: [voterId], references: [id])
+  vote           String             @default("APPROVE")
+  createdAt      DateTime           @default(now())
+
+  @@id([prerequisiteId, voterId])
+  @@index([voterId])
 }

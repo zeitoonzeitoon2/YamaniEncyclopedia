@@ -34,6 +34,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course not available' }, { status: 404 })
     }
 
+    // Check prerequisites
+    const prerequisites = await prisma.coursePrerequisite.findMany({
+      where: { courseId, status: 'APPROVED' },
+      select: { prerequisiteCourseId: true, prerequisiteCourse: { select: { title: true } } }
+    })
+
+    if (prerequisites.length > 0) {
+      const passedCourses = await prisma.userCourse.findMany({
+        where: {
+          userId,
+          status: 'PASSED',
+          courseId: { in: prerequisites.map(p => p.prerequisiteCourseId) }
+        },
+        select: { courseId: true }
+      })
+
+      if (passedCourses.length < prerequisites.length) {
+        const missing = prerequisites.filter(p => !passedCourses.some(pc => pc.courseId === p.prerequisiteCourseId))
+        const titles = missing.map(p => p.prerequisiteCourse.title).join(', ')
+        return NextResponse.json({ 
+          error: 'PREREQUISITES_NOT_MET', 
+          missingPrerequisites: titles 
+        }, { status: 403 })
+      }
+    }
+
     const existing = await prisma.userCourse.findUnique({
       where: { userId_courseId: { userId, courseId } },
       select: { userId: true, courseId: true, status: true },

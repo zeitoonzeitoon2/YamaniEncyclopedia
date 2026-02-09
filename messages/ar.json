@@ -22,7 +22,8 @@
     "enroll": "تسجيل",
     "enrollButton": "سجل الآن",
     "loadError": "خطأ في جلب الدورات",
-    "enrollError": "تعذر التسجيل",
+    "enrollError": "فشل التسجيل",
+    "prerequisitesNotMet": "لم يتم استيفاء المتطلبات السابقة لهذه الدورة. الدورات المطلوبة: {courses}",
     "enrollSuccess": "تم التسجيل بنجاح",
     "loading": "جارٍ التحميل...",
     "empty": "لا توجد دورات معتمدة بعد.",
@@ -651,7 +652,9 @@
     "backToAdmin": "العودة للوحة الإدارة",
     "chapters": "الفصول",
     "newChapter": "فصل جديد",
-    "noChapters": "لا توجد فصول بعد.",
+    "chaptersTab": "الفصول",
+    "prerequisitesTab": "المتطلبات السابقة",
+    "noChapters": "لا توجد فصول بعد."
     "chapterNumber": "الفصل {number}",
     "versionCount": "{count} نسخة",
     "versionTag": "v{number}",
@@ -679,13 +682,30 @@
     "loading": "جارٍ التحميل...",
     "toast": {
       "fetchError": "خطأ في جلب الفصول",
-      "draftCreateError": "تعذر إنشاء المسودة",
-      "requiredFields": "العنوان والمحتوى مطلوبان",
-      "saveError": "تعذر حفظ الفصل",
-      "saveSuccess": "تم حفظ الفصل",
-      "deleteError": "تعذر حذف الفصل",
-      "deleteSuccess": "تم حذف الفصل",
-      "voteError": "تعذر تسجيل التصويت"
+      "saveSuccess": "تم حفظ التغييرات بنجاح",
+      "saveError": "خطأ في حفظ التغييرات",
+      "deleteSuccess": "تم حذف الفصل بنجاح",
+      "deleteError": "خطأ في حذف الفصل",
+      "voteError": "خطأ في تسجيل التصويت",
+      "draftCreateError": "خطأ في إنشاء المسودة"
+    },
+    "prerequisites": {
+      "proposeTitle": "اقتراح متطلب سابق جديد",
+      "selectCourse": "اختر الدورة...",
+      "proposeBtn": "اقتراح",
+      "listTitle": "المتطلبات السابقة للدورة",
+      "noPrerequisites": "لم يتم تحديد متطلبات سابقة لهذه الدورة بعد.",
+      "proposedBy": "مقترح من قبل",
+      "status": {
+        "PENDING": "قيد المراجعة",
+        "APPROVED": "تمت الموافقة",
+        "REJECTED": "مرفوض"
+      },
+      "approve": "موافقة",
+      "reject": "رفض",
+      "voted": "تم تسجيل صوتك بنجاح",
+      "proposed": "تم تقديم الاقتراح بنجاح وهو قيد المراجعة",
+      "error": "حدث خطأ ما"
     }
   },
   "adminDomains": {

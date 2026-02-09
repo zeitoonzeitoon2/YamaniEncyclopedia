@@ -56,9 +56,13 @@ export default function AcademyLandingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId }),
       })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; missingPrerequisites?: string }
       if (!res.ok) {
-        toast.error(payload.error || t('enrollError'))
+        if (payload.error === 'PREREQUISITES_NOT_MET' && payload.missingPrerequisites) {
+          toast.error(t('prerequisitesNotMet', { courses: payload.missingPrerequisites }))
+        } else {
+          toast.error(payload.error || t('enrollError'))
+        }
         return
       }
       toast.success(t('enrollSuccess'))

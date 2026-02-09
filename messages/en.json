@@ -23,7 +23,8 @@
     "enrollButton": "Enroll Now",
     "loadError": "Failed to load courses",
     "enrollError": "Enrollment failed",
-    "enrollSuccess": "Enrollment completed",
+    "prerequisitesNotMet": "Prerequisites for this course are not met. Required courses: {courses}",
+    "enrollSuccess": "Enrolled successfully",
     "loading": "Loading...",
     "empty": "No approved courses yet.",
     "dashboardSubtitle": "Track your courses and exams.",
@@ -651,6 +652,8 @@
     "backToAdmin": "Back to Admin Dashboard",
     "chapters": "Chapters",
     "newChapter": "New Chapter",
+    "chaptersTab": "Chapters",
+    "prerequisitesTab": "Prerequisites",
     "noChapters": "No chapters yet.",
     "chapterNumber": "Chapter {number}",
     "versionCount": "{count} version/s",
@@ -679,13 +682,30 @@
     "loading": "Loading...",
     "toast": {
       "fetchError": "Error fetching chapters",
-      "draftCreateError": "Could not create draft",
-      "requiredFields": "Title and content are required",
-      "saveError": "Could not save chapter",
-      "saveSuccess": "Chapter saved",
-      "deleteError": "Could not delete chapter",
-      "deleteDomainSuccess": "Domain deleted",
-      "voteError": "Could not record vote"
+      "saveSuccess": "Changes saved successfully",
+      "saveError": "Error saving changes",
+      "deleteSuccess": "Chapter deleted successfully",
+      "deleteError": "Error deleting chapter",
+      "voteError": "Error casting vote",
+      "draftCreateError": "Error creating draft"
+    },
+    "prerequisites": {
+      "proposeTitle": "Propose New Prerequisite",
+      "selectCourse": "Select course...",
+      "proposeBtn": "Propose",
+      "listTitle": "Course Prerequisites",
+      "noPrerequisites": "No prerequisites defined yet.",
+      "proposedBy": "Proposed by",
+      "status": {
+        "PENDING": "Pending Review",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected"
+      },
+      "approve": "Approve",
+      "reject": "Reject",
+      "voted": "Vote cast successfully",
+      "proposed": "Prerequisite proposed successfully and is pending review",
+      "error": "An error occurred"
     }
   },
   "adminDomains": {
