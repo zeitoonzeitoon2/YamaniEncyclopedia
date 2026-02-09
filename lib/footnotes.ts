@@ -191,10 +191,10 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
       continue
     }
 
-    // پردازش تگ تصویر: !image[url|caption] یا image![url|caption]
-    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL و فضاهای خالی اطراف
+    // پردازش تگ تصویر: !image[url|caption] یا image![url|caption] یا image[url|caption]!
+    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL و جابجایی احتمالی علامت تعجب توسط ویرایشگر
     const trimmedLine = line.trim()
-    const imgMatch = trimmedLine.match(/^!?image!?\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]$/i)
+    const imgMatch = trimmedLine.match(/^[^\[]*image[^\[]*\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\].*$/i)
     if (imgMatch) {
       const url = imgMatch[1].trim()
       const caption = (imgMatch[2] || '').trim()
