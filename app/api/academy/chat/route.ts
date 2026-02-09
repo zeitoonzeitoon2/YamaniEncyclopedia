@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { canExamineCourse } from '@/lib/course-utils'
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,7 +36,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user is an authorized examiner
-    const { canExamineCourse } = await import('@/lib/course-utils')
     const isQualifiedExaminer = await canExamineCourse(session.user.id, examSession.courseId)
 
     const isAuthorized = 

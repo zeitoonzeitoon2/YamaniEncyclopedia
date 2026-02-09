@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { canExamineCourse } from '@/lib/course-utils'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -23,7 +24,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     // Check permissions
-    const { canExamineCourse } = await import('@/lib/course-utils')
     const isAuthorized = await canExamineCourse(session.user.id, exam.course.id)
 
     if (!isAuthorized) {
