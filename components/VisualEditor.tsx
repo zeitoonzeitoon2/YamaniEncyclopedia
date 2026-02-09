@@ -98,7 +98,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-[300px] p-4 text-site-text',
+        class: 'article-content-body focus:outline-none min-h-[300px] p-4 text-site-text',
         dir: 'rtl',
       },
     },

@@ -72,13 +72,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         ) : error ? (
           <div className="text-red-500">{error}</div>
         ) : article ? (
-          <article className="prose prose-invert max-w-[1000px] mx-auto">
+          <article className="max-w-[1000px] mx-auto">
             <h1 className="text-3xl font-bold text-site-text mb-4">{article.title}</h1>
           {article.description && (
             <p className="text-gray-400 mb-6">{article.description}</p>
           )}
           <div
-              className="text-site-text whitespace-pre-wrap leading-7 prose prose-invert max-w-none"
+              className="text-site-text whitespace-pre-wrap leading-7"
               dangerouslySetInnerHTML={{ __html: html }}
             />
         </article>
