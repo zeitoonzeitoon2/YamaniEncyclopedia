@@ -98,7 +98,9 @@
     "instructors": "مدرسي الدورة",
     "students": "طلاب الدورة",
     "noInstructors": "لم يتم العثور على مدرسين",
-    "noStudents": "لم يتم العثور على طلاب"
+    "noStudents": "لم يتم العثور على طلاب",
+    "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الرسالة؟",
+    "deleteSuccess": "تم حذف الرسالة بنجاح"
   },
   "language": {
     "label": "اللغة",

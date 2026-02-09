@@ -198,14 +198,78 @@ export async function POST(req: NextRequest) {
               name: session.user.name,
               image: (session.user as any).image || null
             }
-          },
-          warning: 'Database sync in progress. Message visible locally but not saved yet.'
+          }
         })
       }
-      throw dbError
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
   } catch (error) {
-    console.error('Error creating chat message:', error)
+    console.error('Error sending chat message:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const messageId = searchParams.get('messageId')
+
+    if (!messageId) {
+      return NextResponse.json({ error: 'Message ID is required' }, { status: 400 })
+    }
+
+    // Find the message to check ownership
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: {
+        examSession: {
+          select: {
+            studentId: true,
+            examinerId: true,
+            course: { select: { domainId: true } }
+          }
+        }
+      }
+    })
+
+    if (!message) {
+      // If it's a temporary message from fallback, just return success
+      if (messageId.startsWith('temp-')) {
+        return NextResponse.json({ success: true })
+      }
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 })
+    }
+
+    // Check if user is an expert in this domain (to allow admins/experts to delete if needed, 
+    // but usually only the sender can delete. Let's stick to sender or admin for now)
+    const isExpert = await prisma.domainExpert.findFirst({
+      where: {
+        userId: session.user.id,
+        domainId: message.examSession.course.domainId
+      }
+    })
+
+    const isAuthorized = 
+      message.senderId === session.user.id || 
+      session.user.role === 'ADMIN' ||
+      !!isExpert // Allow experts/instructors to moderate chat
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    await prisma.chatMessage.delete({
+      where: { id: messageId }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting chat message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

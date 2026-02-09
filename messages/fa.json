@@ -100,7 +100,9 @@
     "instructors": "اساتید دوره",
     "students": "دانشجویان دوره",
     "noInstructors": "استادی یافت نشد",
-    "noStudents": "دانشجویی یافت نشد"
+    "noStudents": "دانشجویی یافت نشد",
+    "deleteConfirm": "آیا از حذف این پیام اطمینان دارید؟",
+    "deleteSuccess": "پیام با موفقیت حذف شد"
   },
   "language": {
     "label": "زبان",

@@ -98,7 +98,9 @@
     "instructors": "Course Instructors",
     "students": "Course Students",
     "noInstructors": "No instructors found",
-    "noStudents": "No students found"
+    "noStudents": "No students found",
+    "deleteConfirm": "Are you sure you want to delete this message?",
+    "deleteSuccess": "Message deleted successfully"
   },
   "language": {
     "label": "Language",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { Send, User, Calendar, ExternalLink, MessageCircle } from 'lucide-react'
+import { Send, User, Calendar, ExternalLink, MessageCircle, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 
@@ -154,6 +154,25 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
     }
   }
 
+  const handleDelete = async (messageId: string) => {
+    if (!window.confirm(t('deleteConfirm' as any) || 'Are you sure you want to delete this message?')) return
+
+    try {
+      const res = await fetch(`/api/academy/chat?messageId=${messageId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setMessages(messages.filter(m => m.id !== messageId))
+        toast.success(t('deleteSuccess' as any) || 'Message deleted')
+      } else {
+        const data = await res.json()
+        toast.error(data.error || t('updateError'))
+      }
+    } catch (error) {
+      toast.error(t('updateError'))
+    }
+  }
+
   if (loadingExams) {
     return <div className="py-12 text-center text-site-muted">{t('loading')}</div>
   }
@@ -293,15 +312,26 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                   return (
                     <div
                       key={msg.id}
-                      className={`flex flex-col ${isMe ? 'items-start' : 'items-end'}`}
+                      className={`flex flex-col ${isMe ? 'items-start' : 'items-end'} group`}
                     >
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm border shadow-sm ${
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm border shadow-sm relative ${
                         isMe 
                           ? 'bg-warm-primary/10 border-warm-primary/20 text-site-text' 
                           : 'bg-site-card border-gray-700 text-site-text'
                       }`}>
                         <div className="text-[10px] text-site-muted mb-1 flex justify-between gap-4">
-                          <span>{isMe ? t('you' as any) || 'You' : msg.sender.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{isMe ? t('you' as any) || 'You' : msg.sender.name}</span>
+                            {isMe && (
+                              <button
+                                onClick={() => handleDelete(msg.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500/50 hover:text-red-500 p-0.5"
+                                title={t('delete' as any) || 'Delete'}
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            )}
+                          </div>
                           <span>{new Date(msg.createdAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div className="whitespace-pre-wrap">{msg.content}</div>
