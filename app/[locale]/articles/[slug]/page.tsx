@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
@@ -16,7 +17,8 @@ interface Article {
   description?: string | null
 }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
+export default function ArticlePage() {
+  const params = useParams() as { locale: string; slug: string }
   // const { data: session } = useSession()
   const router = useRouter()
   const [article, setArticle] = useState<Article | null>(null)
