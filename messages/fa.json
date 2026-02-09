@@ -720,6 +720,7 @@
     "statusRejected": "رد شده",
     "statusDraft": "پیش‌نویس",
     "loading": "در حال بارگذاری...",
+    "strategicExchanges": "تبادلات استراتژیک سهام رای",
     "toast": {
       "fetchError": "خطا در دریافت لیست فصل‌ها",
       "saveSuccess": "تغییرات با موفقیت ذخیره شد",
@@ -810,6 +811,7 @@
     "roleHead": "رئیس",
     "roleExpert": "کارشناس",
     "loading": "در حال بارگذاری...",
+    "strategicExchanges": "تبادلات استراتژیک سهام رای",
     "toast": {
       "fetchError": "خطا در دریافت حوزه‌ها",
       "candidacyFetchError": "خطا در دریافت ترشیحات",

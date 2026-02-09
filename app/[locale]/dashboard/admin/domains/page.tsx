@@ -685,6 +685,15 @@ export default function AdminDomainsPage() {
             )}
           </div>
         </div>
+
+        {/* بخش مبادلات استراتژیک سهام رای */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-site-text mb-6 flex items-center gap-3 px-2 heading">
+            <ArrowRightLeft className="text-warm-primary" />
+            {t('strategicExchanges')}
+          </h2>
+          <DomainExchanges />
+        </div>
       </main>
 
       {addModalOpen && (
