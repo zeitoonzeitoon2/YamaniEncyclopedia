@@ -398,7 +398,9 @@ export default function AdminDashboard() {
       setLoadingAllCourses(true)
       const res = await fetch('/api/academy/courses', { cache: 'no-store' })
       const payload = await res.json()
-      setAllCourses(Array.isArray(payload.courses) ? payload.courses : [])
+      // The API returns { domains: [ { courses: [...] }, ... ] }
+      const flatCourses = (payload.domains || []).flatMap((d: any) => d.courses || [])
+      setAllCourses(flatCourses)
     } catch (e) {
       console.error(e)
     } finally {
