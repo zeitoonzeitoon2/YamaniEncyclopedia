@@ -142,10 +142,10 @@ export default function AdminCourseChaptersPage() {
     autoDraftingRef.current = false
   }
 
-  const fetchChapters = async () => {
+  const fetchChapters = async (isInitial = false) => {
     if (!courseId) return
     try {
-      setLoading(true)
+      if (isInitial) setLoading(true)
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, { cache: 'no-store' })
       const data = (await res.json().catch(() => ({}))) as Partial<ChaptersResponse> & { error?: string }
       if (!res.ok) {
@@ -162,7 +162,7 @@ export default function AdminCourseChaptersPage() {
       const msg = e instanceof Error ? e.message : t('toast.fetchError')
       toast.error(msg)
     } finally {
-      setLoading(false)
+      if (isInitial) setLoading(false)
     }
   }
 
@@ -172,8 +172,8 @@ export default function AdminCourseChaptersPage() {
       router.push('/')
       return
     }
-    fetchChapters()
-  }, [session, status, courseId, router])
+    fetchChapters(true)
+  }, [session, status, courseId])
 
   useEffect(() => {
     chaptersRef.current = chapters
