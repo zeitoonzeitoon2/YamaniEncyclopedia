@@ -30,6 +30,22 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
+    const domainPrerequisites = await prisma.domainPrerequisite.findMany({
+      where: { courseId: params.courseId },
+      include: {
+        domain: {
+          select: { id: true, name: true, slug: true }
+        },
+        proposer: {
+          select: { name: true }
+        },
+        _count: {
+          select: { votes: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
     // Find courses that depend on this course (reverse prerequisites)
     const dependents = await prisma.coursePrerequisite.findMany({
       where: { 
@@ -47,7 +63,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ prerequisites, dependents })
+    return NextResponse.json({ prerequisites, domainPrerequisites, dependents })
   } catch (error) {
     console.error('Error fetching prerequisites:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
