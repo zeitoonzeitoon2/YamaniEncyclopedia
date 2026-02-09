@@ -52,7 +52,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         }
         const data = await res.json()
         setArticle(data)
-        setHtml(applyArticleTransforms(data.content || ''))
+        setHtml(applyArticleTransforms(data.content || '', params.locale || params.slug.split('/')[0] || 'ar'))
       } catch (e) {
         setError(e instanceof Error ? e.message : 'مقاله یافت نشد')
       } finally {

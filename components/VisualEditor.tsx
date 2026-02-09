@@ -125,7 +125,9 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
   const addLink = () => {
     const url = window.prompt('URL:')
     if (url) {
-      editor.chain().focus().setLink({ href: url }).run()
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    } else if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
     }
   }
 

@@ -1,4 +1,4 @@
-export function applyFootnotes(input: string): string {
+export function applyFootnotes(input: string, locale: string = 'ar'): string {
   if (!input) return ''
 
   let content = input
@@ -42,10 +42,12 @@ export function applyFootnotes(input: string): string {
     })
     .join('')
 
+  const footnotesTitle = locale === 'fa' ? 'پاورقی‌ها' : 'الحواشي'
+
   const section = `
 <hr class="my-4 border-amber-700/40">
 <section class="footnotes text-sm text-amber-200">
-  <h5 class="font-semibold text-amber-300 mb-2">الحواشي</h5>
+  <h5 class="font-semibold text-amber-300 mb-2">${footnotesTitle}</h5>
   <ol class="list-none ms-5">
     ${items}
   </ol>
@@ -95,7 +97,7 @@ function slugifyHeading(text: string): string {
   return slug || 'section'
 }
 
-export function applyArticleTransforms(input: string): string {
+export function applyArticleTransforms(input: string, locale: string = 'ar'): string {
   const raw = input || ''
   const lines = raw.split(/\r?\n/)
 
@@ -175,10 +177,11 @@ export function applyArticleTransforms(input: string): string {
     }
 
     // پردازش تگ تصویر: !image[url|caption]
-    const imgMatch = line.match(/^!image\[([^|\]]+)(?:\|([^\]]*))?\]$/)
+    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL
+    const imgMatch = line.match(/^!image\[([^|\]\s]+(?: [^|\]\s]+)*)(?:\|([^\]]*))?\]$/)
     if (imgMatch) {
-      const url = imgMatch[1]
-      const caption = imgMatch[2] || ''
+      const url = imgMatch[1].trim()
+      const caption = (imgMatch[2] || '').trim()
       const imgHtml = `
 <figure class="my-6">
   <img src="${url}" alt="${escapeHtml(caption)}" class="w-full rounded-lg shadow-lg border border-amber-700/20" />
@@ -204,11 +207,12 @@ export function applyArticleTransforms(input: string): string {
       })
       .join('')
     const controls = `<div style="background:#222;border:1px solid #E67E22;border-radius:8px;padding:4px;display:flex;gap:6px"><button onclick="window.__articleResize && window.__articleResize.dec && window.__articleResize.dec()" title="کوچک‌کردن" aria-label="کوچک‌کردن" style="background:#222;color:#ffd7a3;border:1px solid #E67E22;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">−</button><button onclick="window.__articleResize && window.__articleResize.inc && window.__articleResize.inc()" title="بزرگ‌کردن" aria-label="بزرگ‌کردن" style="background:#222;color:#ffd7a3;border:1px solid #E67E22;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">＋</button></div>`
-    const title = `<div class="mb-2 flex flex-row-reverse items-center justify-between"><span style="color:#E67E22;font-size:1.35rem">المحتويات</span>${controls}</div><div class="mt-1" style="border-top:1px solid #E67E22;opacity:.6"></div>`
+    const tocTitle = locale === 'fa' ? 'فهرست مطالب' : 'المحتويات'
+    const title = `<div class="mb-2 flex flex-row-reverse items-center justify-between"><span style="color:#E67E22;font-size:1.35rem">${tocTitle}</span>${controls}</div><div class="mt-1" style="border-top:1px solid #E67E22;opacity:.6"></div>`
     toc = `<nav class="relative mb-4 text-sm text-amber-200 bg-stone-900/40 border border-amber-700/40 rounded-md p-3" dir="rtl">${title}<ol class="list-none m-0 p-0 text-right" style="padding-right:20px">${items}</ol></nav>`
   }
 
   const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 20px)">${out.join('\n')}</div>`
   const combined = toc + body
-  return applyFootnotes(combined)
+  return applyFootnotes(combined, locale)
 }
