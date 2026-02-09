@@ -168,7 +168,7 @@ export default function AcademyTeachingPage() {
           >
             <div className="flex items-center gap-2">
               <MessageCircle size={16} />
-              {t('communication')}
+              {t('communicationStudent')}
             </div>
           </button>
         </div>
