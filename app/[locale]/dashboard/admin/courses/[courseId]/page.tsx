@@ -586,10 +586,10 @@ export default function AdminCourseChaptersPage() {
             </div>
 
             {activeTab === 'chapters' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-                <div className="space-y-4">
-                  <div className="card">
-                    <div className="flex items-center justify-between mb-3">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <div className="space-y-4">
+              <div className="card">
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-site-text heading">{t('chapters')}</h3>
                   <button
                     type="button"
@@ -891,9 +891,10 @@ export default function AdminCourseChaptersPage() {
                 )}
               </div>
             </div>
-          ) : (
-            <CoursePrerequisitesManager courseId={courseId} />
-          )}
+          </div>
+            ) : (
+              <CoursePrerequisitesManager courseId={courseId} />
+            )}
           </>
         )}
       </main>
