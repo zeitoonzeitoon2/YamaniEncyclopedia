@@ -301,9 +301,9 @@ export default function QuickArticleModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+    <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 flex-shrink-0">
           <h2 className="text-xl font-bold text-site-text">
             {editMode ? t('modalTitleEdit') : t('modalTitleCreate')}
           </h2>
@@ -317,10 +317,10 @@ export default function QuickArticleModal({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[70vh]">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-6 overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col">
             {/* Article title */}
-            <div>
+            <div className="flex-shrink-0">
               <label className="block text-sm font-medium text-site-text mb-2">
                 {t('titleLabel')}
               </label>
@@ -347,7 +347,7 @@ export default function QuickArticleModal({
             </div>
 
             {/* Article summary */}
-            <div>
+            <div className="flex-shrink-0">
               <label className="block text-sm font-medium text-site-text mb-2">
                 {t('descriptionLabel')}
               </label>
@@ -367,20 +367,20 @@ export default function QuickArticleModal({
             </div>
 
             {/* Article content */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between mb-2 flex-shrink-0">
                 <label className="block text-sm font-medium text-site-text">
                   {t('contentLabel')}
                 </label>
-                <button
-                  type="button"
-                  onClick={insertFootnoteAtCursor}
-                  className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                  title={t('footnoteTitle')}
-                >
-                  {t('addFootnote')}
-                </button>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={insertFootnoteAtCursor}
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    title={t('footnoteTitle')}
+                  >
+                    {t('addFootnote')}
+                  </button>
                   <button
                     type="button"
                     onClick={() => insertAtCursor('\n## ')}
@@ -396,14 +396,6 @@ export default function QuickArticleModal({
                     title={t('h3Title')}
                   >
                     {t('addH3')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n#### ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title={t('h4Title')}
-                  >
-                    {t('addH4')}
                   </button>
                   
                   <button
@@ -423,7 +415,6 @@ export default function QuickArticleModal({
                     {t('addQuote')}
                   </button>
 
-                  {/* Image upload */}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -452,15 +443,14 @@ export default function QuickArticleModal({
                     return next
                   })
                 }
-                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words"
-                rows={10}
+                className="flex-1 w-full p-4 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words resize-none"
                 placeholder={t('contentPlaceholder')}
                 required
               />
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-4 pt-4">
+            <div className="flex items-center gap-4 pt-4 flex-shrink-0">
               <button
                 type="submit"
                 disabled={loading || !formData.title || !formData.content}
