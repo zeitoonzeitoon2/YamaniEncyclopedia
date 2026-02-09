@@ -336,7 +336,7 @@ export default function TreeDiagramEditor({
     const fetchPermissions = async () => {
       const newPermissions: Record<string, boolean> = { ...permissions }
       let changed = false
-      for (const domainId of uniqueDomains) {
+      for (const domainId of Array.from(uniqueDomains)) {
         const key = domainId || 'null'
         if (newPermissions[key] === undefined) {
           try {
@@ -482,7 +482,7 @@ export default function TreeDiagramEditor({
         if (tgtNode) affectedDomains.add((tgtNode.data as any)?.domainId ?? null)
       })
 
-      for (const domainId of affectedDomains) {
+      for (const domainId of Array.from(affectedDomains)) {
         const isAuthorized = await checkPermission(domainId)
         if (!isAuthorized) return
       }
@@ -535,7 +535,7 @@ export default function TreeDiagramEditor({
       const affectedDomains = new Set<string | null>()
       deletedNodes.forEach(n => affectedDomains.add((n.data as any)?.domainId ?? null))
 
-      for (const domainId of affectedDomains) {
+      for (const domainId of Array.from(affectedDomains)) {
         const isAuthorized = await checkPermission(domainId)
         if (!isAuthorized) return
       }
@@ -580,7 +580,7 @@ export default function TreeDiagramEditor({
         if (tgtNode) affectedDomains.add((tgtNode.data as any)?.domainId ?? null)
       })
 
-      for (const domainId of affectedDomains) {
+      for (const domainId of Array.from(affectedDomains)) {
         const isAuthorized = await checkPermission(domainId)
         if (!isAuthorized) return
       }
