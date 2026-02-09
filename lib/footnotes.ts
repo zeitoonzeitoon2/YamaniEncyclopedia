@@ -103,10 +103,14 @@ function slugifyHeading(text: string): string {
 export function applyArticleTransforms(input: string, locale: string = 'ar'): string {
   if (!input) return ''
 
+  // ۰. آن‌اسکیپ کردن کاراکترهای اسکیپ شده توسط Tiptap
+  // Tiptap-markdown کاراکترهایی مثل ! و [ را با \ اسکیپ می‌کند
+  const unescapedInput = input.replace(/\\([!\[\]^|_#])/g, '$1')
+
   // ۱. استخراج و حذف تعاریف پاورقی در ابتدای کار
   const definitions: Record<string, string> = {}
-  const defRegex = /^\[\^([^\]]+)\]:\s*(.+)$/gm
-  const processedInput = input.replace(defRegex, (_m, id: string, def: string) => {
+  const defRegex = /^\s*\[\^([^\]]+)\]:\s*(.+)$/gm
+  const processedInput = unescapedInput.replace(defRegex, (_m, id: string, def: string) => {
     definitions[id] = def.trim()
     return ''
   })
@@ -187,10 +191,10 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
       continue
     }
 
-    // پردازش تگ تصویر: !image[url|caption]
+    // پردازش تگ تصویر: !image[url|caption] یا image![url|caption]
     // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL و فضاهای خالی اطراف
     const trimmedLine = line.trim()
-    const imgMatch = trimmedLine.match(/^!image\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]$/)
+    const imgMatch = trimmedLine.match(/^!?image!?\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]$/i)
     if (imgMatch) {
       const url = imgMatch[1].trim()
       const caption = (imgMatch[2] || '').trim()
