@@ -30,7 +30,24 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ prerequisites })
+    // Find courses that depend on this course (reverse prerequisites)
+    const dependents = await prisma.coursePrerequisite.findMany({
+      where: { 
+        prerequisiteCourseId: params.courseId,
+        status: 'APPROVED' // Only show approved ones as dependencies
+      },
+      include: {
+        course: {
+          select: { id: true, title: true }
+        },
+        proposer: {
+          select: { name: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json({ prerequisites, dependents })
   } catch (error) {
     console.error('Error fetching prerequisites:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

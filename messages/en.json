@@ -694,17 +694,30 @@
     "prerequisites": {
       "proposeTitle": "Propose New Prerequisite",
       "selectCourse": "Select course...",
+      "typeLabel": "Prerequisite Type:",
+      "studyType": "Study (for Student)",
+      "teachType": "Teach (for Instructor/Examiner)",
       "proposeBtn": "Propose",
       "listTitle": "Course Prerequisites",
+      "thisCoursePrerequisites": "Prerequisites for This Course",
+      "otherCoursesDependencies": "Where is this course a prerequisite? (Dependencies)",
+      "studyPrerequisites": "Study Prerequisites",
+      "teachPrerequisites": "Teach Prerequisites",
+      "dependencyNote": "This information is gathered from other sections and cannot be changed here.",
       "noPrerequisites": "No prerequisites defined yet.",
+      "noDependencies": "This course is not yet a prerequisite for any other course.",
       "proposedBy": "Proposed by",
+      "approve": "Approve",
+      "reject": "Reject",
+      "types": {
+        "STUDY": "Study",
+        "TEACH": "Teach"
+      },
       "status": {
         "PENDING": "Pending Review",
         "APPROVED": "Approved",
         "REJECTED": "Rejected"
       },
-      "approve": "Approve",
-      "reject": "Reject",
       "toast": {
         "voted": "Vote cast successfully",
         "proposed": "Prerequisite proposed successfully",

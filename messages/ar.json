@@ -694,17 +694,30 @@
     "prerequisites": {
       "proposeTitle": "اقتراح متطلب سابق جديد",
       "selectCourse": "اختر الدورة...",
+      "typeLabel": "نوع المتطلب السابق:",
+      "studyType": "دراسة (للطالب)",
+      "teachType": "تدريس (للمدرس/الممتحن)",
       "proposeBtn": "اقتراح",
       "listTitle": "المتطلبات السابقة للدورة",
+      "thisCoursePrerequisites": "المتطلبات السابقة لهذه الدورة",
+      "otherCoursesDependencies": "أين تعتبر هذه الدورة متطلباً سابقاً؟ (التبعيات)",
+      "studyPrerequisites": "متطلبات الدراسة",
+      "teachPrerequisites": "متطلبات التدريس",
+      "dependencyNote": "يتم جمع هذه المعلومات من أقسام أخرى ولا يمكن تغييرها هنا.",
       "noPrerequisites": "لم يتم تحديد متطلبات سابقة لهذه الدورة بعد.",
+      "noDependencies": "هذه الدورة ليست متطلباً سابقاً لأي دورة أخرى بعد.",
       "proposedBy": "مقترح من قبل",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "types": {
+        "STUDY": "دراسة",
+        "TEACH": "تدريس"
+      },
       "status": {
         "PENDING": "قيد المراجعة",
         "APPROVED": "تمت الموافقة",
         "REJECTED": "مرفوض"
       },
-      "approve": "موافقة",
-      "reject": "رفض",
       "toast": {
         "voted": "تم تسجيل صوتك بنجاح",
         "proposed": "تم تقديم الاقتراح بنجاح",
