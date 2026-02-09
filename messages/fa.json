@@ -696,12 +696,19 @@
     "prerequisites": {
       "proposeTitle": "پیشنهاد پیش‌نیاز جدید",
       "selectCourse": "انتخاب دوره...",
+      "typeLabel": "نوع پیش‌نیاز:",
+      "studyType": "تحصیلی (برای دانشجو)",
+      "teachType": "تدریس (برای مدرس/ممتحن)",
       "proposeBtn": "پیشنهاد دادن",
       "listTitle": "لیست پیش‌نیازها",
       "noPrerequisites": "هنوز پیش‌نیازی ثبت نشده است.",
       "proposedBy": "پیشنهاد از",
       "approve": "تایید",
       "reject": "رد",
+      "types": {
+        "STUDY": "تحصیلی",
+        "TEACH": "تدریس"
+      },
       "status": {
         "PENDING": "در انتظار",
         "APPROVED": "تایید شده",

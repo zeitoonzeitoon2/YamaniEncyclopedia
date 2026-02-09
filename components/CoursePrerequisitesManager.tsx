@@ -9,6 +9,7 @@ type Prerequisite = {
   id: string
   courseId: string
   prerequisiteCourseId: string
+  type: 'STUDY' | 'TEACH'
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   proposer: { name: string | null }
   prerequisiteCourse: { id: string; title: string }
@@ -28,6 +29,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [selectedCourseId, setSelectedCourseId] = useState('')
+  const [selectedType, setSelectedType] = useState<'STUDY' | 'TEACH'>('STUDY')
   const [votingKey, setVotingKey] = useState<string | null>(null)
 
   const fetchPrerequisites = async () => {
@@ -68,7 +70,10 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
       const res = await fetch(`/api/admin/domains/courses/${courseId}/prerequisites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prerequisiteCourseId: selectedCourseId })
+        body: JSON.stringify({ 
+          prerequisiteCourseId: selectedCourseId,
+          type: selectedType
+        })
       })
       const data = await res.json()
       if (res.ok) {
@@ -113,24 +118,55 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     <div className="space-y-6">
       <div className="bg-site-card/40 border border-gray-700 rounded-lg p-4">
         <h3 className="text-lg font-bold text-site-text mb-4 heading">{t('proposeTitle')}</h3>
-        <div className="flex gap-3">
-          <select
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-3 py-2 text-site-text focus:ring-2 focus:ring-warm-primary outline-none"
-          >
-            <option value="">{t('selectCourse')}</option>
-            {allCourses.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
-          <button
-            onClick={handlePropose}
-            disabled={submitting || !selectedCourseId}
-            className="btn-primary"
-          >
-            {submitting ? '...' : t('proposeBtn')}
-          </button>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-3">
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-3 py-2 text-site-text focus:ring-2 focus:ring-warm-primary outline-none"
+            >
+              <option value="">{t('selectCourse')}</option>
+              {allCourses.map((c) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+            <button
+              onClick={handlePropose}
+              disabled={submitting || !selectedCourseId}
+              className="btn-primary"
+            >
+              {submitting ? '...' : t('proposeBtn')}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-site-text">
+            <span className="text-site-muted">{t('typeLabel')}</span>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="prereqType"
+                value="STUDY"
+                checked={selectedType === 'STUDY'}
+                onChange={() => setSelectedType('STUDY')}
+                className="accent-warm-primary w-4 h-4"
+              />
+              <span className={selectedType === 'STUDY' ? 'text-warm-primary font-medium' : 'text-site-muted group-hover:text-site-text'}>
+                {t('studyType')}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="prereqType"
+                value="TEACH"
+                checked={selectedType === 'TEACH'}
+                onChange={() => setSelectedType('TEACH')}
+                className="accent-warm-primary w-4 h-4"
+              />
+              <span className={selectedType === 'TEACH' ? 'text-warm-primary font-medium' : 'text-site-muted group-hover:text-site-text'}>
+                {t('teachType')}
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -143,7 +179,14 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
             {prerequisites.map((p) => (
               <div key={p.id} className="bg-site-card/40 border border-gray-700 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <div className="text-site-text font-medium">{p.prerequisiteCourse.title}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-site-text font-medium">{p.prerequisiteCourse.title}</div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      p.type === 'TEACH' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    }`}>
+                      {t(`types.${p.type}`)}
+                    </span>
+                  </div>
                   <div className="text-xs text-site-muted mt-1">
                     {t('proposedBy')}: {p.proposer.name || 'Unknown'} • 
                     <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] ${

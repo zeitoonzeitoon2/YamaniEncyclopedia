@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course not available' }, { status: 404 })
     }
 
-    // Check prerequisites
+    // Check prerequisites (only STUDY type)
     const prerequisites = await prisma.coursePrerequisite.findMany({
-      where: { courseId, status: 'APPROVED' },
+      where: { courseId, status: 'APPROVED', type: 'STUDY' },
       select: { prerequisiteCourseId: true, prerequisiteCourse: { select: { title: true } } }
     })
 

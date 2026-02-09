@@ -34,34 +34,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 })
     }
 
-    // Check if user is an expert in this domain
-    const isExpert = await prisma.domainExpert.findFirst({
-      where: {
-        userId: session.user.id,
-        domainId: examSession.course.domainId
-      }
-    })
+    // Check if user is an authorized examiner
+    const { canExamineCourse } = await import('@/lib/course-utils')
+    const isQualifiedExaminer = await canExamineCourse(session.user.id, examSession.courseId)
 
     const isAuthorized = 
       examSession.studentId === session.user.id || 
       examSession.examinerId === session.user.id || 
-      !!isExpert ||
+      isQualifiedExaminer ||
       session.user.role === 'ADMIN'
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
-    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
-      await prisma.examSession.update({
-        where: { id: examSessionId },
-        data: { examinerId: session.user.id }
-      })
-    }
-
-    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
-    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
+    // Auto-assign examiner if they are qualified and sending a message to a session without an examiner
+    if (isQualifiedExaminer && !examSession.examinerId && session.user.id !== examSession.studentId) {
       await prisma.examSession.update({
         where: { id: examSessionId },
         data: { examinerId: session.user.id }
@@ -143,26 +131,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Exam session not found' }, { status: 404 })
     }
 
-    // Check if user is an expert in this domain
-    const isExpert = await prisma.domainExpert.findFirst({
-      where: {
-        userId: session.user.id,
-        domainId: examSession.course.domainId
-      }
-    })
+    // Check if user is an authorized examiner
+    const isQualifiedExaminer = await canExamineCourse(session.user.id, examSession.courseId)
 
     const isAuthorized = 
       examSession.studentId === session.user.id || 
       examSession.examinerId === session.user.id || 
-      !!isExpert ||
+      isQualifiedExaminer ||
       session.user.role === 'ADMIN'
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Auto-assign examiner if they are an expert sending a message to a session without an examiner
-    if (!!isExpert && !examSession.examinerId && session.user.id !== examSession.studentId) {
+    // Auto-assign examiner if they are qualified and sending a message to a session without an examiner
+    if (isQualifiedExaminer && !examSession.examinerId && session.user.id !== examSession.studentId) {
       await prisma.examSession.update({
         where: { id: examSessionId },
         data: { examinerId: session.user.id }

@@ -442,6 +442,7 @@ model CoursePrerequisite {
   course               Course             @relation("CoursePrerequisites", fields: [courseId], references: [id], onDelete: Cascade)
   prerequisiteCourseId String
   prerequisiteCourse   Course             @relation("CourseRequiredBy", fields: [prerequisiteCourseId], references: [id], onDelete: Cascade)
+  type                 String             @default("STUDY")
   status               String             @default("PENDING")
   proposerId           String
   proposer             User               @relation(fields: [proposerId], references: [id])
@@ -449,7 +450,7 @@ model CoursePrerequisite {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
-  @@unique([courseId, prerequisiteCourseId])
+  @@unique([courseId, prerequisiteCourseId, type])
   @@index([courseId])
   @@index([prerequisiteCourseId])
   @@index([status])

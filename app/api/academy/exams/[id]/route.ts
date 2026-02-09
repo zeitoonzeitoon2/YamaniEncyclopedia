@@ -23,11 +23,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     // Check permissions
-    const isExpert = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: exam.course.domainId }
-    })
+    const { canExamineCourse } = await import('@/lib/course-utils')
+    const isAuthorized = await canExamineCourse(session.user.id, exam.course.id)
 
-    if (!isExpert && session.user.role !== 'ADMIN') {
+    if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

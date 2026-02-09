@@ -13,23 +13,49 @@ export async function GET() {
     const userId = session.user.id
     console.log(`[DEBUG] Starting optimized fetch for user: ${userId}`)
 
-    // 0. Check if user is an expert in any domain
+    // 0. Check if user is an expert or qualified examiner
     const myExpertDomains = await prisma.domainExpert.findMany({
       where: { userId },
       select: { domainId: true }
     })
     const myExpertDomainIds = myExpertDomains.map(d => d.domainId)
+
+    // Find courses where the user has passed all TEACH prerequisites
+    const allTeachPrereqs = await prisma.coursePrerequisite.findMany({
+      where: { type: 'TEACH', status: 'APPROVED' },
+      select: { courseId: true, prerequisiteCourseId: true }
+    })
+
+    const passedCourses = await prisma.userCourse.findMany({
+      where: { userId, status: 'PASSED' },
+      select: { courseId: true }
+    })
+    const passedCourseIds = new Set(passedCourses.map(p => p.courseId))
+
+    const coursesWithTeachPrereqs = new Set(allTeachPrereqs.map(p => p.courseId))
+    const qualifiedCourseIds = Array.from(coursesWithTeachPrereqs).filter(courseId => {
+      const prereqsForCourse = allTeachPrereqs.filter(p => p.courseId === courseId)
+      return prereqsForCourse.every(p => passedCourseIds.has(p.prerequisiteCourseId))
+    })
+
     const isExpert = myExpertDomainIds.length > 0
+    const isQualifiedExaminer = qualifiedCourseIds.length > 0
+    const canExamineAny = isExpert || isQualifiedExaminer
 
     // 1. Fetch Exam Sessions (Flat)
     let rawExams: any[] = []
+    const examinerQuery = [
+      ...(isExpert ? [{ course: { domainId: { in: myExpertDomainIds } } }] : []),
+      ...(isQualifiedExaminer ? [{ courseId: { in: qualifiedCourseIds } }] : [])
+    ]
+
     try {
       rawExams = await prisma.examSession.findMany({
         where: {
           OR: [
             { studentId: userId }, 
             { examinerId: userId },
-            ...(isExpert ? [{ course: { domainId: { in: myExpertDomainIds } } }] : [])
+            ...examinerQuery
           ]
         },
         include: {
@@ -52,7 +78,7 @@ export async function GET() {
           OR: [
             { studentId: userId }, 
             { examinerId: userId },
-            ...(isExpert ? [{ course: { domainId: { in: myExpertDomainIds } } }] : [])
+            ...examinerQuery
           ]
         },
         include: {
@@ -66,11 +92,14 @@ export async function GET() {
 
     let rawEnrollments: any[] = []
     
-    if (isExpert) {
-      // Fetch all enrollments in courses belonging to domains I manage
+    if (canExamineAny) {
+      // Fetch all enrollments in courses belonging to domains I manage OR courses I'm qualified to examine
       const allEnrollments = await prisma.userCourse.findMany({
         where: {
-          course: { domainId: { in: myExpertDomainIds } }
+          OR: [
+            { course: { domainId: { in: myExpertDomainIds } } },
+            { courseId: { in: qualifiedCourseIds } }
+          ]
         },
         include: {
           course: { select: { id: true, title: true, domainId: true } },
@@ -158,18 +187,17 @@ export async function GET() {
     const virtualExams = rawEnrollments
       .filter(en => {
         // For students: check if they already have an exam session for this course
-        if (!isExpert) return !rawExams.some(ex => ex.courseId === en.courseId)
+        if (!canExamineAny) return !rawExams.some(ex => ex.courseId === en.courseId)
         
-        // For experts: show the enrollment as a virtual session for THIS student
-        // unless there's already a real session between this expert and this student for this course
-        // (Actually, experts should see ALL sessions, but for virtual ones, we just need to avoid duplicates)
+        // For examiners: show the enrollment as a virtual session for THIS student
+        // unless there's already a real session between this examiner and this student for this course
         return !rawExams.some(ex => ex.courseId === en.courseId && ex.studentId === en.userId)
       })
       .map(en => ({
         id: `course-${en.courseId}-${en.userId}`, // Unique ID for virtual session
         status: 'ENROLLED',
         studentId: en.userId,
-        examinerId: isExpert ? userId : null,
+        examinerId: canExamineAny ? userId : null,
         scheduledAt: null,
         meetLink: null,
         courseId: en.courseId,
@@ -183,7 +211,7 @@ export async function GET() {
           email: session.user.email || null,
           image: (session.user as any)?.image || (session.user as any)?.picture || null
         },
-        examiner: isExpert ? { id: userId, name: session.user.name || null } : null,
+        examiner: canExamineAny ? { id: userId, name: session.user.name || null } : null,
         createdAt: en.createdAt,
         chatMessages: []
       }))

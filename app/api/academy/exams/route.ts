@@ -21,13 +21,36 @@ export async function GET(req: NextRequest) {
 
     const domainIds = expertDomains.map(d => d.domainId)
 
-    if (domainIds.length === 0 && session.user.role !== 'ADMIN') {
+    // Find courses where the user has passed all TEACH prerequisites
+    const allTeachPrereqs = await prisma.coursePrerequisite.findMany({
+      where: { type: 'TEACH', status: 'APPROVED' },
+      select: { courseId: true, prerequisiteCourseId: true }
+    })
+
+    const passedCourses = await prisma.userCourse.findMany({
+      where: { userId: session.user.id, status: 'PASSED' },
+      select: { courseId: true }
+    })
+    const passedCourseIds = new Set(passedCourses.map(p => p.courseId))
+
+    const coursesWithTeachPrereqs = new Set(allTeachPrereqs.map(p => p.courseId))
+    const qualifiedCourseIds = Array.from(coursesWithTeachPrereqs).filter(courseId => {
+      const prereqsForCourse = allTeachPrereqs.filter(p => p.courseId === courseId)
+      return prereqsForCourse.every(p => passedCourseIds.has(p.prerequisiteCourseId))
+    })
+
+    if (domainIds.length === 0 && qualifiedCourseIds.length === 0 && session.user.role !== 'ADMIN') {
       return NextResponse.json({ exams: [] })
     }
 
     const exams = await prisma.examSession.findMany({
       where: {
-        course: session.user.role === 'ADMIN' ? {} : { domainId: { in: domainIds } },
+        course: session.user.role === 'ADMIN' ? {} : {
+          OR: [
+            { domainId: { in: domainIds } },
+            { id: { in: qualifiedCourseIds } }
+          ]
+        },
         status: type === 'pending' ? { in: ['REQUESTED', 'SCHEDULED'] } : { in: ['PASSED', 'FAILED'] }
       },
       include: {

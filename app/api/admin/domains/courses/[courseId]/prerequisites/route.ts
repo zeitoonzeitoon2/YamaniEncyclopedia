@@ -47,23 +47,24 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { prerequisiteCourseId } = await request.json()
+    const { prerequisiteCourseId, type = 'STUDY' } = await request.json()
     if (!prerequisiteCourseId) {
       return NextResponse.json({ error: 'Prerequisite course ID is required' }, { status: 400 })
     }
 
-    // Check if it's already a prerequisite
+    // Check if it's already a prerequisite with the same type
     const existing = await prisma.coursePrerequisite.findUnique({
       where: {
-        courseId_prerequisiteCourseId: {
+        courseId_prerequisiteCourseId_type: {
           courseId: params.courseId,
-          prerequisiteCourseId
+          prerequisiteCourseId,
+          type
         }
       }
     })
 
     if (existing) {
-      return NextResponse.json({ error: 'This prerequisite is already proposed or approved' }, { status: 400 })
+      return NextResponse.json({ error: 'This prerequisite of this type is already proposed or approved' }, { status: 400 })
     }
 
     // Check for circular dependency
@@ -76,6 +77,7 @@ export async function POST(
       data: {
         courseId: params.courseId,
         prerequisiteCourseId,
+        type,
         proposerId: session.user.id,
         status: 'PENDING'
       }
