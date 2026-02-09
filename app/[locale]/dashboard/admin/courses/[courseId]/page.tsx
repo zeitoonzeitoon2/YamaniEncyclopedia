@@ -154,10 +154,6 @@ export default function AdminCourseChaptersPage() {
       }
       setCourse(data.course || null)
       setChapters(Array.isArray(data.chapters) ? data.chapters : [])
-      if (!selectedId && Array.isArray(data.chapters) && data.chapters.length > 0) {
-        setSelectedId(data.chapters[0].id)
-        setMode('edit')
-      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.fetchError')
       toast.error(msg)
@@ -726,7 +722,18 @@ export default function AdminCourseChaptersPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="card space-y-4">
+              {!selectedId && mode !== 'new' ? (
+                <div className="card flex flex-col items-center justify-center py-20 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-site-card/50 flex items-center justify-center text-site-muted">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 7v10"></path><path d="M8 11h8"></path><rect x="3" y="4" width="18" height="16" rx="2"></rect></svg>
+                  </div>
+                  <p className="text-site-muted max-w-[280px]">
+                    {t('selectChapterPlaceholder')}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="card space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-lg font-bold text-site-text heading">
                     {mode === 'new' ? t('modeNew') : mode === 'revision' ? t('modeRevision') : t('modeEdit')}
@@ -840,62 +847,74 @@ export default function AdminCourseChaptersPage() {
                     </div>
                   </div>
                 )}
+              </div>
 
-                {selectedChapter && selectedPreviousChapter && parsedDiagramForPreview.previous && parsedDiagramForPreview.current ? (
-                  <EnhancedDiagramComparison
-                    originalData={parsedDiagramForPreview.previous}
-                    proposedData={parsedDiagramForPreview.current}
-                  />
-                ) : selectedChapter && selectedPreviousChapter ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                      <div className="text-sm text-site-text">
-                        {t('previousVersion')} {selectedPreviousChapter ? formatVersionTag(selectedPreviousChapter.version) : ''}
-                      </div>
-                      <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
-                        <div className="whitespace-pre-wrap break-words text-sm leading-6">
-                          {(previewDiffOps || []).map((op, idx) => {
-                            if (op.type === 'insert') return null
-                            if (op.type === 'delete') {
-                              return (
-                                <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
-                                  {op.value}
-                                </span>
-                              )
-                            }
-                            return <span key={idx}>{op.value}</span>
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                      <div className="text-sm text-site-text">
-                        {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
-                      </div>
-                      <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
-                        <div className="whitespace-pre-wrap break-words text-sm leading-6">
-                          {(previewDiffOps || []).map((op, idx) => {
-                            if (op.type === 'delete') return null
-                            if (op.type === 'insert') {
-                              return (
-                                <span key={idx} className="bg-green-600/20 text-green-200 rounded px-0.5">
-                                  {op.value}
-                                </span>
-                              )
-                            }
-                            return <span key={idx}>{op.value}</span>
-                          })}
-                        </div>
-                      </div>
+              {selectedChapter && (
+                <div className="card space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-site-text heading">
+                      {t('preview')}
+                    </h3>
+                    <div className="text-xs text-site-muted">
+                      {formatVersionTag(selectedChapter.version)}
                     </div>
                   </div>
-                ) : (
-                  <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-                )}
-              </div>
+
+                  {selectedChapter && selectedPreviousChapter && parsedDiagramForPreview.previous && parsedDiagramForPreview.current ? (
+                    <EnhancedDiagramComparison
+                      originalData={parsedDiagramForPreview.previous}
+                      proposedData={parsedDiagramForPreview.current}
+                    />
+                  ) : selectedChapter && selectedPreviousChapter ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                        <div className="text-sm text-site-text">
+                          {t('previousVersion')} {selectedPreviousChapter ? formatVersionTag(selectedPreviousChapter.version) : ''}
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                          <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                            {(previewDiffOps || []).map((op, idx) => {
+                              if (op.type === 'insert') return null
+                              if (op.type === 'delete') {
+                                return (
+                                  <span key={idx} className="bg-red-600/20 text-red-200 line-through rounded px-0.5">
+                                    {op.value}
+                                  </span>
+                                )
+                              }
+                              return <span key={idx}>{op.value}</span>
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                        <div className="text-sm text-site-text">
+                          {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden rounded-md bg-black/10 p-3 text-site-text">
+                          <div className="whitespace-pre-wrap break-words text-sm leading-6">
+                            {(previewDiffOps || []).map((op, idx) => {
+                              if (op.type === 'delete') return null
+                              if (op.type === 'insert') {
+                                return (
+                                  <span key={idx} className="bg-green-600/20 text-green-200 rounded px-0.5">
+                                    {op.value}
+                                  </span>
+                                )
+                              }
+                              return <span key={idx}>{op.value}</span>
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-            ) : (
+          ) : (
               <CoursePrerequisitesManager courseId={courseId} />
             )}
           </>

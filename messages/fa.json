@@ -669,6 +669,7 @@
     "modeNew": "پیش‌نویس فصل جدید",
     "modeRevision": "نسخه جدید فصل",
     "modeEdit": "ویرایش فصل",
+    "selectChapterPlaceholder": "لطفاً یک فصل را از لیست سمت راست انتخاب کنید یا فصل جدیدی بسازید.",
     "chapterTitlePlaceholder": "عنوان فصل",
     "orderLabel": "ترتیب فصل:",
     "contentLabel": "محتوای فصل",
