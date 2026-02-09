@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
 
 const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
 
@@ -15,11 +16,10 @@ async function canVoteOnCandidacy(sessionUser: { id?: string; role?: string } | 
   if (!domain) return { ok: false as const, status: 404 as const, error: 'Domain not found' }
   if (!domain.parentId) return { ok: false as const, status: 403 as const, error: 'Forbidden' }
 
-  const membership = await prisma.domainExpert.findFirst({
-    where: { userId, domainId: domain.parentId, role: { in: ['HEAD', 'EXPERT'] } },
-    select: { id: true },
-  })
-  return membership ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
+  // Check if user has any voting power in the parent domain
+  const weight = await calculateUserVotingWeight(userId, domain.parentId)
+
+  return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
 
 export async function POST(request: NextRequest) {
@@ -63,18 +63,26 @@ export async function POST(request: NextRequest) {
       create: { candidacyId, voterUserId, vote },
     })
 
-    const [approvals, rejections, parentExpertsCount] = await Promise.all([
-      prisma.candidacyVote.count({ where: { candidacyId, vote: 'APPROVE' } }),
-      prisma.candidacyVote.count({ where: { candidacyId, vote: 'REJECT' } }),
-      candidacy.domain.parentId
-        ? prisma.domainExpert.count({ where: { domainId: candidacy.domain.parentId, role: { in: ['HEAD', 'EXPERT'] } } })
-        : Promise.resolve(0),
-    ])
+    if (!candidacy.domain.parentId) {
+      return NextResponse.json({ error: 'Parent domain not found' }, { status: 400 })
+    }
 
-    const shouldFinalize = approvals >= 2 || parentExpertsCount < 3
+    // Get all votes for this candidacy
+    const allVotes = await prisma.candidacyVote.findMany({
+      where: { candidacyId },
+      select: { voterUserId: true, vote: true }
+    })
+
+    // Calculate result using weights in the parent domain
+    const { approvals, rejections } = await calculateVotingResult(
+      allVotes.map(v => ({ voterId: v.voterUserId, vote: v.vote })),
+      candidacy.domain.parentId
+    )
+
+    const threshold = 50
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    if (approvals > rejections && shouldFinalize) nextStatus = 'APPROVED'
-    if (rejections > approvals && shouldFinalize) nextStatus = 'REJECTED'
+    if (approvals > threshold) nextStatus = 'APPROVED'
+    else if (rejections >= threshold) nextStatus = 'REJECTED'
 
     if (nextStatus === 'APPROVED') {
       await prisma.$transaction([
@@ -101,7 +109,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       status: nextStatus,
-      counts: { approvals, rejections, parentExpertsCount },
+      counts: { approvals, rejections, threshold },
     })
   } catch (error) {
     console.error('Error voting candidacy:', error)

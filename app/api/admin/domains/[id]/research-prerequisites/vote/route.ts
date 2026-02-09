@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
 
 export async function POST(
   request: NextRequest,
@@ -13,19 +14,13 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is expert in this domain or admin
-    const isExpert = await prisma.domainExpert.findUnique({
-      where: {
-        userId_domainId: {
-          userId: session.user.id,
-          domainId: params.id
-        }
-      }
-    })
+    const domainId = params.id
 
+    // Check if user has any voting power in this domain
+    const weight = await calculateUserVotingWeight(session.user.id, domainId)
     const isAdmin = session.user.role === 'ADMIN'
 
-    if (!isExpert && !isAdmin) {
+    if (weight === 0 && !isAdmin) {
       return NextResponse.json({ error: 'Only supervisors can vote on research prerequisites' }, { status: 403 })
     }
 
@@ -50,21 +45,28 @@ export async function POST(
       }
     })
 
-    // Check if it should be approved
-    // For now, let's say if it gets 2 votes or if it's from an admin it gets approved
-    // This logic can be refined later based on requirements
-    const votesCount = await prisma.domainPrerequisiteVote.count({
-      where: { prerequisiteId, vote: 'APPROVE' }
+    // Get all votes for this prerequisite
+    const allVotes = await prisma.domainPrerequisiteVote.findMany({
+      where: { prerequisiteId }
     })
 
-    if (votesCount >= 2 || isAdmin) {
+    // Calculate result using weights
+    const { approvals, rejections } = await calculateVotingResult(allVotes, domainId)
+
+    const threshold = 50
+    if (approvals > threshold || isAdmin) {
       await prisma.domainPrerequisite.update({
         where: { id: prerequisiteId },
         data: { status: 'APPROVED' }
       })
+    } else if (rejections >= threshold) {
+      await prisma.domainPrerequisite.update({
+        where: { id: prerequisiteId },
+        data: { status: 'REJECTED' }
+      })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, approvals, rejections, threshold })
   } catch (error) {
     console.error('Error voting on research prerequisite:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

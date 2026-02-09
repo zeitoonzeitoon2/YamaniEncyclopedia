@@ -2,21 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
 
 const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
-
-async function canVoteOnCourse(user: { id?: string; role?: string } | undefined, domainId: string) {
-  const userId = (user?.id || '').trim()
-  const role = (user?.role || '').trim()
-  if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
-  if (role === 'ADMIN') return { ok: true as const, userId }
-
-  const membership = await prisma.domainExpert.findFirst({
-    where: { userId, domainId, role: { in: ['HEAD', 'EXPERT'] } },
-    select: { id: true },
-  })
-  return membership ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
-}
 
 export async function POST(request: NextRequest, { params }: { params: { courseId: string } }) {
   try {
@@ -28,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const chapterId = typeof body.chapterId === 'string' ? body.chapterId.trim() : ''
-    const vote = typeof body.vote === 'string' ? body.vote.trim() : ''
+    const vote = typeof body.vote === 'string' ? body.vote.trim() as 'APPROVE' | 'REJECT' : ''
 
     if (!chapterId || !vote) {
       return NextResponse.json({ error: 'chapterId and vote are required' }, { status: 400 })
@@ -54,28 +42,37 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       return NextResponse.json({ error: 'Chapter draft is closed' }, { status: 409 })
     }
 
-    const perm = await canVoteOnCourse(session.user, chapter.course.domainId)
-    if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
+    // Check if user has any voting power in the course domain
+    const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId)
+    const isAdmin = session.user.role === 'ADMIN'
+
+    if (weight === 0 && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     await prisma.chapterVote.upsert({
-      where: { chapterId_voterId: { chapterId, voterId: perm.userId } },
+      where: { chapterId_voterId: { chapterId, voterId: session.user.id } },
       update: { vote },
-      create: { chapterId, voterId: perm.userId, vote },
+      create: { chapterId, voterId: session.user.id, vote },
     })
 
-    const [approvals, rejections, totalExperts] = await Promise.all([
-      prisma.chapterVote.count({ where: { chapterId, vote: 'APPROVE' } }),
-      prisma.chapterVote.count({ where: { chapterId, vote: 'REJECT' } }),
-      prisma.domainExpert.count({ where: { domainId: chapter.course.domainId, role: { in: ['HEAD', 'EXPERT'] } } }),
-    ])
+    // Get all votes
+    const allVotes = await prisma.chapterVote.findMany({
+      where: { chapterId }
+    })
+
+    // Calculate result using weights
+    const { approvals, rejections } = await calculateVotingResult(
+      allVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+      chapter.course.domainId
+    )
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    const approvalThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
-    const rejectionThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
+    const threshold = 50
 
-    if (approvals >= approvalThreshold && approvals > rejections) {
+    if (approvals > threshold) {
       nextStatus = 'APPROVED'
-    } else if (rejections >= rejectionThreshold && rejections > approvals) {
+    } else if (rejections >= threshold) {
       nextStatus = 'REJECTED'
     }
 
@@ -104,7 +101,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       })
     }
 
-    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, totalExperts } })
+    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, threshold } })
   } catch (error) {
     console.error('Error voting chapter:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

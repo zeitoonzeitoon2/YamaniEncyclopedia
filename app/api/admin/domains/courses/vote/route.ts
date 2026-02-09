@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
 
 const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
 
@@ -11,12 +12,10 @@ async function canVoteOnCourse(user: { id?: string; role?: string } | undefined,
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
   if (role === 'ADMIN') return { ok: true as const, userId }
 
-  const membership = await prisma.domainExpert.findFirst({
-    where: { userId, domainId, role: { in: ['HEAD', 'EXPERT'] } },
-    select: { id: true },
-  })
-
-  return membership ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
+  // Check if user has any voting power in this domain (direct or indirect)
+  const weight = await calculateUserVotingWeight(userId, domainId)
+  
+  return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
 
 export async function POST(request: NextRequest) {
@@ -53,23 +52,24 @@ export async function POST(request: NextRequest) {
       create: { courseId, voterId: perm.userId, vote },
     })
 
-    const [approvals, rejections, totalExperts] = await Promise.all([
-      prisma.courseVote.count({ where: { courseId, vote: 'APPROVE' } }),
-      prisma.courseVote.count({ where: { courseId, vote: 'REJECT' } }),
-      prisma.domainExpert.count({ where: { domainId: course.domainId, role: { in: ['HEAD', 'EXPERT'] } } }),
-    ])
+    // Get all votes for this course
+    const allVotes = await prisma.courseVote.findMany({
+      where: { courseId }
+    })
+
+    // Calculate result using weights
+    const { approvals, rejections } = await calculateVotingResult(allVotes, course.domainId)
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    const approvalThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
-    const rejectionThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
+    const threshold = 50 // Majority threshold is 50%
 
-    if (approvals >= approvalThreshold && approvals > rejections) {
+    if (approvals > threshold) {
       nextStatus = 'APPROVED'
-    } else if (rejections >= rejectionThreshold && rejections > approvals) {
+    } else if (rejections >= threshold) {
       nextStatus = 'REJECTED'
     }
 
-    console.log(`Course ${courseId} vote result:`, { approvals, rejections, totalExperts, nextStatus })
+    console.log(`Course ${courseId} vote result (weighted):`, { approvals, rejections, nextStatus })
 
     if (nextStatus !== 'PENDING') {
       if (nextStatus === 'APPROVED') {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, totalExperts } })
+    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, threshold } })
   } catch (error) {
     console.error('Error voting course:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

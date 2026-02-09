@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { causesCircularDependency } from '@/lib/course-utils'
+import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
 
 export async function POST(
   request: NextRequest,
@@ -14,9 +15,21 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is EXPERT or ADMIN
-    if (session.user.role !== 'ADMIN' && session.user.role !== 'EXPERT') {
-      return NextResponse.json({ error: 'Only admins and experts can vote' }, { status: 403 })
+    const course = await prisma.course.findUnique({
+      where: { id: params.courseId },
+      select: { domainId: true }
+    })
+
+    if (!course) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 })
+    }
+
+    // Check if user has any voting power in the course domain
+    const weight = await calculateUserVotingWeight(session.user.id, course.domainId)
+    const isAdmin = session.user.role === 'ADMIN'
+
+    if (weight === 0 && !isAdmin) {
+      return NextResponse.json({ error: 'Only admins and experts with voting power can vote' }, { status: 403 })
     }
 
     const { prerequisiteId, vote } = await request.json()
@@ -25,8 +38,7 @@ export async function POST(
     }
 
     const prerequisite = await prisma.coursePrerequisite.findUnique({
-      where: { id: prerequisiteId },
-      include: { votes: true }
+      where: { id: prerequisiteId }
     })
 
     if (!prerequisite) {
@@ -53,24 +65,21 @@ export async function POST(
       }
     })
 
-    // Recalculate status
+    // Get all votes
     const allVotes = await prisma.prerequisiteVote.findMany({
       where: { prerequisiteId }
     })
 
-    const totalExperts = await prisma.user.count({
-      where: { role: 'EXPERT' }
-    })
+    // Calculate result using weights
+    const { approvals, rejections } = await calculateVotingResult(
+      allVotes.map(v => ({ voterId: v.voterId, vote: v.vote })),
+      course.domainId
+    )
 
-    const approvals = allVotes.filter(v => v.vote === 'APPROVE').length
-    const rejections = allVotes.filter(v => v.vote === 'REJECT').length
-
-    // Threshold logic: same as courses/chapters
-    // At least 1 approval if total experts <= 2, otherwise floor(experts/2) + 1
-    const approvalThreshold = totalExperts <= 2 ? 1 : Math.floor(totalExperts / 2) + 1
-
+    const threshold = 50
     let nextStatus = 'PENDING'
-    if (approvals >= approvalThreshold && approvals > rejections) {
+
+    if (approvals > threshold) {
       // Re-check for circular dependency before approving
       const isCircular = await causesCircularDependency(prerequisite.courseId, prerequisite.prerequisiteCourseId)
       if (isCircular) {
@@ -78,7 +87,7 @@ export async function POST(
       } else {
         nextStatus = 'APPROVED'
       }
-    } else if (rejections >= approvalThreshold && rejections >= approvals) {
+    } else if (rejections >= threshold) {
       nextStatus = 'REJECTED'
     }
 
@@ -89,7 +98,7 @@ export async function POST(
       })
     }
 
-    return NextResponse.json({ status: nextStatus })
+    return NextResponse.json({ status: nextStatus, approvals, rejections, threshold })
   } catch (error) {
     console.error('Error voting on prerequisite:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

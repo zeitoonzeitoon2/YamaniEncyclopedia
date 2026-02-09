@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
 import { getPostDisplayId } from '@/lib/postDisplay'
+import { calculateUserVotingWeight } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,28 +82,63 @@ export async function POST(request: NextRequest) {
 
     const eligibleSet = new Set<string>([...superUsers.map((u) => u.id), ...experts.map((e) => e.userId)])
     const eligibleIds = Array.from(eligibleSet)
-    const threshold = Math.ceil(eligibleIds.length / 2)
-    const participationThreshold = threshold
 
-    const totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
+    let totalScore = 0
+    let threshold = 0
+    let participationCount = 0
+    let participationThreshold = 0
+    let isWeighted = false
+    let participationWeight = 0
 
-    // شمارش مشارکت رای‌دهندگان (ادمین + ناظر)
-    const participationCount = await prisma.vote.count({
-      where: { postId, adminId: { in: eligibleIds } }
-    })
+    if (post.domainId) {
+      isWeighted = true
+      threshold = 100 // 50% of max weighted score (200)
+      participationThreshold = 50 // 50% of total voting power
+
+      for (const v of post.votes) {
+        if (eligibleSet.has(v.adminId)) {
+          const weight = await calculateUserVotingWeight(v.adminId, post.domainId)
+          totalScore += v.score * weight
+          participationWeight += weight
+          participationCount++
+        }
+      }
+    } else {
+      threshold = Math.ceil(eligibleIds.length / 2)
+      participationThreshold = threshold
+      totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
+      participationCount = await prisma.vote.count({
+        where: { postId, adminId: { in: eligibleIds } }
+      })
+    }
 
     // بررسی رسیدن به حد نصاب مشارکت
-    if (participationCount < participationThreshold) {
-      return NextResponse.json({
-        success: true,
-        published: false,
-        action: 'pending',
-        message: 'مشارکت به حد نصاب نرسیده است',
-        totalScore,
-        threshold,
-        participation: { count: participationCount, required: participationThreshold },
-        needed: Math.max(0, participationThreshold - participationCount)
-      })
+    if (isWeighted) {
+      if (participationWeight < participationThreshold) {
+        return NextResponse.json({
+          success: true,
+          published: false,
+          action: 'pending',
+          message: 'مشارکت (وزنی) به حد نصاب نرسیده است',
+          totalScore,
+          threshold,
+          participation: { weight: participationWeight, required: participationThreshold },
+          needed: Math.max(0, participationThreshold - participationWeight)
+        })
+      }
+    } else {
+      if (participationCount < participationThreshold) {
+        return NextResponse.json({
+          success: true,
+          published: false,
+          action: 'pending',
+          message: 'مشارکت به حد نصاب نرسیده است',
+          totalScore,
+          threshold,
+          participation: { count: participationCount, required: participationThreshold },
+          needed: Math.max(0, participationThreshold - participationCount)
+        })
+      }
     }
 
     // بررسی رسیدن به حد نصاب امتیازها

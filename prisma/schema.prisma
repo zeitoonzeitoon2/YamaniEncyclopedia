@@ -29,6 +29,11 @@ model Domain {
   researchPrerequisites DomainPrerequisite[]
   posts       Post[]
 
+  votingShares      DomainVotingShare[] @relation("DomainShares")
+  ownedShares       DomainVotingShare[] @relation("OwnedShares")
+  proposedExchanges DomainExchangeProposal[] @relation("ProposedExchanges")
+  receivedExchanges DomainExchangeProposal[] @relation("ReceivedExchanges")
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -116,6 +121,7 @@ model User {
   prerequisiteVotes   PrerequisiteVote[]
   domainPrerequisitesProposed DomainPrerequisite[] @relation("domainPrerequisitesProposed")
   domainPrerequisiteVotes      DomainPrerequisiteVote[] @relation("domainPrerequisiteVotes")
+  domainExchangeVotes          DomainExchangeVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -469,6 +475,59 @@ model PrerequisiteVote {
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])
+  @@index([voterId])
+}
+
+model DomainVotingShare {
+  id              String   @id @default(cuid())
+  domainId        String   // The domain whose voting power is being distributed
+  domain          Domain   @relation("DomainShares", fields: [domainId], references: [id])
+  ownerDomainId   String   // The domain that owns this share
+  ownerDomain     Domain   @relation("OwnedShares", fields: [ownerDomainId], references: [id])
+  percentage      Float    // Percentage of total voting power (0-100)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([domainId, ownerDomainId])
+  @@index([domainId])
+  @@index([ownerDomainId])
+}
+
+model DomainExchangeProposal {
+  id                String   @id @default(cuid())
+  proposerDomainId  String
+  proposerDomain    Domain   @relation("ProposedExchanges", fields: [proposerDomainId], references: [id])
+  targetDomainId    String
+  targetDomain      Domain   @relation("ReceivedExchanges", fields: [targetDomainId], references: [id])
+  
+  // Percentage Proposer Domain gives to Target Domain
+  percentageProposerToTarget    Float
+  // Percentage Target Domain gives to Proposer Domain
+  percentageTargetToProposer    Float
+  
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED
+  votes             DomainExchangeVote[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([proposerDomainId])
+  @@index([targetDomainId])
+  @@index([status])
+}
+
+model DomainExchangeVote {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    DomainExchangeProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  voterId     String
+  voter       User     @relation(fields: [voterId], references: [id])
+  vote        String   @default("APPROVE") // APPROVE, REJECT
+  domainId    String   // Which domain the voter is voting for (Proposer or Target)
+  createdAt   DateTime @default(now())
+
+  @@unique([proposalId, voterId, domainId])
+  @@index([proposalId])
   @@index([voterId])
 }
 

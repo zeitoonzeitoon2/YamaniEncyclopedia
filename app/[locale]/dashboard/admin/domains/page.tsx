@@ -6,7 +6,8 @@ import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, ArrowRightLeft } from 'lucide-react'
+import DomainExchanges from '@/components/DomainExchanges'
 
 type DomainUser = {
   id: string
