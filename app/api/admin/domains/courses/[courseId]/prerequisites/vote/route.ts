@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { causesCircularDependency } from '@/lib/course-utils'
 
 export async function POST(
   request: NextRequest,
@@ -70,7 +71,13 @@ export async function POST(
 
     let nextStatus = 'PENDING'
     if (approvals >= approvalThreshold && approvals > rejections) {
-      nextStatus = 'APPROVED'
+      // Re-check for circular dependency before approving
+      const isCircular = await causesCircularDependency(prerequisite.courseId, prerequisite.prerequisiteCourseId)
+      if (isCircular) {
+        nextStatus = 'REJECTED' // Reject if it would create a cycle
+      } else {
+        nextStatus = 'APPROVED'
+      }
     } else if (rejections >= approvalThreshold && rejections >= approvals) {
       nextStatus = 'REJECTED'
     }

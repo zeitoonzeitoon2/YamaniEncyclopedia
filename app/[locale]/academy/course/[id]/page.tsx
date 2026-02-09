@@ -31,6 +31,7 @@ type Enrollment = { status: string } | null
 type CourseViewerResponse = {
   course: CourseInfo
   chapters: Chapter[]
+  prerequisites: { prerequisiteCourse: { id: string; title: string } }[]
   enrollment: Enrollment
   progress: string[]
   lastExam?: {
@@ -51,6 +52,7 @@ export default function CourseViewerPage() {
   const [loading, setLoading] = useState(true)
   const [course, setCourse] = useState<CourseInfo | null>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
+  const [prerequisites, setPrerequisites] = useState<CourseViewerResponse['prerequisites']>([])
   const [enrollment, setEnrollment] = useState<Enrollment>(null)
   const [progress, setProgress] = useState<string[]>([])
   const [lastExam, setLastExam] = useState<CourseViewerResponse['lastExam']>(null)
@@ -83,6 +85,7 @@ export default function CourseViewerPage() {
         setCourse(payload.course || null)
         const nextChapters = Array.isArray(payload.chapters) ? payload.chapters : []
         setChapters(nextChapters)
+        setPrerequisites(Array.isArray(payload.prerequisites) ? payload.prerequisites : [])
         setEnrollment(payload.enrollment ?? null)
         setProgress(Array.isArray(payload.progress) ? payload.progress : [])
         setLastExam(payload.lastExam || null)
@@ -177,6 +180,23 @@ export default function CourseViewerPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
             <div className="space-y-4 lg:order-2">
+              {prerequisites.length > 0 && (
+                <div className="card space-y-3">
+                  <h3 className="text-lg font-bold text-site-text heading">{t('prerequisites')}</h3>
+                  <div className="space-y-2">
+                    {prerequisites.map((p) => (
+                      <Link
+                        key={p.prerequisiteCourse.id}
+                        href={`/academy/course/${p.prerequisiteCourse.id}`}
+                        className="block p-2 rounded-lg border border-gray-700 bg-site-card/40 hover:border-warm-primary/60"
+                      >
+                        <div className="text-site-text text-sm">{p.prerequisiteCourse.title}</div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="card space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-site-text heading">{t('courseContent')}</h3>
@@ -307,7 +327,11 @@ export default function CourseViewerPage() {
                             window.location.reload()
                           } else {
                             const data = await res.json()
-                            toast.error(data.error || t('enrollError'))
+                            if (data.error === 'PREREQUISITES_NOT_MET' && data.missingPrerequisites) {
+                              toast.error(t('prerequisitesNotMet', { courses: data.missingPrerequisites }))
+                            } else {
+                              toast.error(data.error || t('enrollError'))
+                            }
                           }
                         } catch (e) {
                           toast.error(t('enrollError'))

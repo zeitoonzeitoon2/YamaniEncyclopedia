@@ -51,6 +51,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return (b.version ?? 0) - (a.version ?? 0)
     })
 
+    const prerequisites = await prisma.coursePrerequisite.findMany({
+      where: { courseId, status: 'APPROVED' },
+      select: {
+        prerequisiteCourse: {
+          select: { id: true, title: true }
+        }
+      }
+    })
+
     const session = await getServerSession(authOptions)
     const userId = (session?.user?.id || '').trim()
     let enrollment: { status: string } | null = null
@@ -87,17 +96,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         return NextResponse.json({ 
           course, 
           chapters, 
+          prerequisites,
           enrollment: enrolled ? { status: enrolled.status } : null, 
           progress: Array.isArray(completed) ? completed.map((c: any) => c.chapterId) : [], 
           lastExam 
         })
       } catch (globalDbError) {
         console.error('[CourseAPI] Global database error during authenticated fetch:', globalDbError)
-        return NextResponse.json({ course, chapters, enrollment: null, progress: [] })
+        return NextResponse.json({ course, chapters, prerequisites, enrollment: null, progress: [] })
       }
     }
 
-    return NextResponse.json({ course, chapters, enrollment, progress })
+    return NextResponse.json({ course, chapters, prerequisites, enrollment, progress })
   } catch (error) {
     console.error('Error fetching course viewer:', error)
     return NextResponse.json(

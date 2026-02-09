@@ -17,7 +17,7 @@
   },
   "academy": {
     "subtitle": "منصّة التعليم والاختبارات للوصول إلى الامتيازات داخل شجرة البحث.",
-    "dashboard": "لوحة المتعلم",
+    "dashboard": "لوحة الطالب",
     "examinerDashboard": "لوحة الممتحن",
     "enroll": "تسجيل",
     "enrollButton": "سجل الآن",
@@ -29,8 +29,9 @@
     "empty": "لا توجد دورات معتمدة بعد.",
     "dashboardSubtitle": "تتبع الدورات والاختبارات الخاصة بك.",
     "backToAcademy": "العودة للأكاديمية",
+    "prerequisites": "المتطلبات السابقة",
     "myCourses": "دوراتي",
-    "examinerSubtitle": "إدارة الجلسات وتقييم المتعلمين.",
+    "examinerSubtitle": "إدارة الجلسات وتقييم الطلاب.",
     "upcomingSessions": "الجلسات القادمة",
     "noSessions": "لا توجد جلسات مجدولة بعد.",
     "courseFallbackTitle": "الدورة",
@@ -703,9 +704,11 @@
       },
       "approve": "موافقة",
       "reject": "رفض",
-      "voted": "تم تسجيل صوتك بنجاح",
-      "proposed": "تم تقديم الاقتراح بنجاح وهو قيد المراجعة",
-      "error": "حدث خطأ ما"
+      "toast": {
+        "voted": "تم تسجيل صوتك بنجاح",
+        "proposed": "تم تقديم الاقتراح بنجاح",
+        "error": "حدث خطأ ما"
+      }
     }
   },
   "adminDomains": {

@@ -890,9 +890,10 @@ export default function AdminCourseChaptersPage() {
                   <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                 )}
               </div>
-            ) : (
-              <CoursePrerequisitesManager courseId={courseId} />
-            )}
+            </div>
+          ) : (
+            <CoursePrerequisitesManager courseId={courseId} />
+          )}
           </>
         )}
       </main>

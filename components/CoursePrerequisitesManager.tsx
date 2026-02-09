@@ -46,8 +46,9 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     try {
       const res = await fetch('/api/academy/courses')
       const data = await res.json()
-      if (res.ok) {
-        setAllCourses(data.courses.filter((c: Course) => c.id !== courseId))
+      if (res.ok && Array.isArray(data.domains)) {
+        const flatCourses = data.domains.flatMap((d: any) => d.courses || [])
+        setAllCourses(flatCourses.filter((c: Course) => c.id !== courseId))
       }
     } catch (error) {
       console.error('Error fetching courses:', error)

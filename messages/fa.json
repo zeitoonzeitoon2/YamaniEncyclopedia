@@ -29,6 +29,7 @@
     "empty": "هنوز دوره تأییدشده‌ای وجود ندارد.",
     "dashboardSubtitle": "پیگیری دوره‌ها و آزمون‌های شما.",
     "backToAcademy": "بازگشت به آکادمی",
+    "prerequisites": "پیش‌نیازها",
     "myCourses": "دوره‌های من",
     "examinerSubtitle": "مدیریت جلسات و ارزیابی دانشجویان.",
     "upcomingSessions": "جلسات پیش‌رو",
@@ -694,20 +695,22 @@
     "prerequisites": {
       "proposeTitle": "پیشنهاد پیش‌نیاز جدید",
       "selectCourse": "انتخاب دوره...",
-      "proposeBtn": "پیشنهاد",
-      "listTitle": "پیش‌نیازهای دوره",
-      "noPrerequisites": "هنوز هیچ پیش‌نیازی برای این دوره تعیین نشده است.",
-      "proposedBy": "پیشنهاد دهنده",
+      "proposeBtn": "پیشنهاد دادن",
+      "listTitle": "لیست پیش‌نیازها",
+      "noPrerequisites": "هنوز پیش‌نیازی ثبت نشده است.",
+      "proposedBy": "پیشنهاد از",
+      "approve": "تایید",
+      "reject": "رد",
       "status": {
-        "PENDING": "در انتظار بررسی",
-        "APPROVED": "تأیید شده",
+        "PENDING": "در انتظار",
+        "APPROVED": "تایید شده",
         "REJECTED": "رد شده"
       },
-      "approve": "تأیید",
-      "reject": "رد",
-      "voted": "رای شما با موفقیت ثبت شد",
-      "proposed": "پیشنهاد پیش‌نیاز با موفقیت ثبت شد و در انتظار رای‌گیری است",
-      "error": "خطایی رخ داده است"
+      "toast": {
+        "proposed": "پیش‌نیاز با موفقیت پیشنهاد شد",
+        "voted": "رای شما ثبت شد",
+        "error": "خطایی رخ داد"
+      }
     }
   },
   "adminDomains": {

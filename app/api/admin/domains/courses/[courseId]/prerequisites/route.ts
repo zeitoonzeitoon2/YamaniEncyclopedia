@@ -2,38 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-// Helper function to check for circular dependencies
-async function causesCircularDependency(courseId: string, prerequisiteCourseId: string): Promise<boolean> {
-  // If the course is its own prerequisite, that's a cycle
-  if (courseId === prerequisiteCourseId) return true
-
-  const visited = new Set<string>()
-  const queue = [prerequisiteCourseId]
-
-  while (queue.length > 0) {
-    const currentId = queue.shift()!
-    if (currentId === courseId) return true
-    
-    if (visited.has(currentId)) continue
-    visited.add(currentId)
-
-    // Find all approved prerequisites of the current course
-    const prerequisites = await prisma.coursePrerequisite.findMany({
-      where: {
-        courseId: currentId,
-        status: 'APPROVED'
-      },
-      select: { prerequisiteCourseId: true }
-    })
-
-    for (const p of prerequisites) {
-      queue.push(p.prerequisiteCourseId)
-    }
-  }
-
-  return false
-}
+import { causesCircularDependency } from '@/lib/course-utils'
 
 export async function GET(
   request: NextRequest,
