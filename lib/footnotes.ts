@@ -194,24 +194,23 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
     // پردازش تگ تصویر: پشتیبانی از هر دو حالت !image[url|caption] و ![caption](url)
     const trimmedLine = line.trim()
     
-    // ۱. بررسی سینتکس سفارشی !image[url|caption]
-    const customImgMatch = trimmedLine.match(/image.*?\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]/i)
-    // ۲. بررسی سینتکس استاندارد مارک‌داون ![caption](url)
-    const stdImgMatch = trimmedLine.match(/^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/i)
+    // شناسایی خطوطی که حاوی کلمه image و ساختار براکت هستند
+    if (trimmedLine.toLowerCase().includes('image') && trimmedLine.includes('[') && trimmedLine.includes(']')) {
+      // استخراج URL: هر چیزی که شبیه لینک است
+      const urlMatch = trimmedLine.match(/(https?:\/\/[^\s|\]\)]+)/)
+      // استخراج کپشن: محتوای بعد از | تا قبل از ]
+      const captionMatch = trimmedLine.match(/\|([^\]]+)\]/)
+      // استخراج کپشن جایگزین (اگر | نبود): محتوای داخل [] که لینک نیست
+      const altMatch = trimmedLine.match(/\[([^|\]]+)\]/)
 
-    if (customImgMatch || stdImgMatch) {
-      let url = ''
-      let caption = ''
-
-      if (customImgMatch) {
-        url = customImgMatch[1].trim().replace(/!/g, '')
-        caption = (customImgMatch[2] || '').trim()
-      } else if (stdImgMatch) {
-        caption = stdImgMatch[1].trim()
-        url = stdImgMatch[2].trim().replace(/!/g, '')
-      }
+      let url = urlMatch ? urlMatch[1] : ''
+      let caption = captionMatch ? captionMatch[1] : (altMatch && !altMatch[1].startsWith('http') ? altMatch[1] : '')
 
       if (url) {
+        // پاکسازی URL از کاراکترهای مزاحم ناشی از باگ‌های ادیتور
+        url = url.replace(/[!\[\]\(\)]+$/, '').trim()
+        caption = caption.trim()
+
         const imgHtml = `
 <figure class="my-6">
   <img src="${url}" alt="${escapeHtml(caption)}" class="w-full rounded-lg shadow-lg border border-amber-700/20" />
@@ -221,6 +220,21 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
         i += 1
         continue
       }
+    }
+
+    // بررسی سینتکس استاندارد مارک‌داون ![caption](url) به عنوان زاپاس
+    const stdImgMatch = trimmedLine.match(/^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/i)
+    if (stdImgMatch) {
+      const caption = stdImgMatch[1].trim()
+      const url = stdImgMatch[2].trim()
+      const imgHtml = `
+<figure class="my-6">
+  <img src="${url}" alt="${escapeHtml(caption)}" class="w-full rounded-lg shadow-lg border border-amber-700/20" />
+  ${caption ? `<figcaption class="mt-2 text-center text-sm text-amber-300/80 italic">${escapeHtml(caption)}</figcaption>` : ''}
+</figure>`
+      out.push(imgHtml)
+      i += 1
+      continue
     }
 
     out.push(autoLink(line))
