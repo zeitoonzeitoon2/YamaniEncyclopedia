@@ -247,6 +247,7 @@
       "nominateMemberTitle": "Nominate member",
       "searchPlaceholder": "Search...",
       "clear": "Clear",
+      "strategicExchanges": "Strategic Voting Share Exchanges",
       "sendNomination": "Send nomination",
       "approvedCoursesTitle": "Approved courses",
       "noApprovedCourses": "No approved courses yet.",
@@ -788,6 +789,8 @@
     "reject": "Reject",
     "nominateMember": "Nominate Member",
     "searchPlaceholder": "Search...",
+    "clear": "Clear",
+    "strategicExchanges": "Strategic Voting Share Exchanges",
     "sendNomination": "Send Nomination",
     "addModal": {
       "title": "Add Sub-domain",

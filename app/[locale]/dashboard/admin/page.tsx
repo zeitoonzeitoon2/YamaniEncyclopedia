@@ -7,8 +7,9 @@ import { Link, useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, ArrowRightLeft } from 'lucide-react'
 import UserManagement from './UserManagement'
+import DomainExchanges from '@/components/DomainExchanges'
 
 type DomainUser = {
   id: string
@@ -1474,6 +1475,15 @@ export default function AdminDashboard() {
           </div>
         </div>
         
+        {/* بخش مبادلات استراتژیک سهام رای */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-site-text mb-6 flex items-center gap-3 px-2 heading">
+            <ArrowRightLeft className="text-warm-primary" />
+            {t('strategicExchanges')}
+          </h2>
+          <DomainExchanges />
+        </div>
+
         {session?.user?.role === 'ADMIN' && <UserManagement allDomains={flattenedDomains} />}
       </main>
 
