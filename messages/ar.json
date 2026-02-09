@@ -654,7 +654,7 @@
     "newChapter": "فصل جديد",
     "chaptersTab": "الفصول",
     "prerequisitesTab": "المتطلبات السابقة",
-    "noChapters": "لا توجد فصول بعد."
+    "noChapters": "لا توجد فصول بعد.",
     "chapterNumber": "الفصل {number}",
     "versionCount": "{count} نسخة",
     "versionTag": "v{number}",
