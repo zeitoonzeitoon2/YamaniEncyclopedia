@@ -26,6 +26,7 @@ model Domain {
   expertCandidacies ExpertCandidacy[]
   courses     Course[]
   domainRequirements DomainRequirement[]
+  researchPrerequisites DomainPrerequisite[]
   posts       Post[]
 
   createdAt   DateTime @default(now())
@@ -113,6 +114,8 @@ model User {
   commentPollVotes    CommentPollVote[]
   coursePrerequisites CoursePrerequisite[]
   prerequisiteVotes   PrerequisiteVote[]
+  domainPrerequisitesProposed DomainPrerequisite[] @relation("domainPrerequisitesProposed")
+  domainPrerequisiteVotes      DomainPrerequisiteVote[] @relation("domainPrerequisiteVotes")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -134,6 +137,7 @@ model Course {
   requirements DomainRequirement[]
   prerequisites CoursePrerequisite[] @relation("CoursePrerequisites")
   requiredBy    CoursePrerequisite[] @relation("CourseRequiredBy")
+  researchPrerequisiteFor DomainPrerequisite[]
   examSessions ExamSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -461,6 +465,37 @@ model PrerequisiteVote {
   prerequisite   CoursePrerequisite @relation(fields: [prerequisiteId], references: [id], onDelete: Cascade)
   voterId        String
   voter          User               @relation(fields: [voterId], references: [id])
+  vote           String             @default("APPROVE")
+  createdAt      DateTime           @default(now())
+
+  @@id([prerequisiteId, voterId])
+  @@index([voterId])
+}
+
+model DomainPrerequisite {
+  id                   String                 @id @default(cuid())
+  domainId             String
+  domain               Domain                 @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  courseId             String
+  course               Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status               String                 @default("PENDING")
+  proposerId           String
+  proposer             User                   @relation("domainPrerequisitesProposed", fields: [proposerId], references: [id])
+  votes                DomainPrerequisiteVote[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@unique([domainId, courseId])
+  @@index([domainId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model DomainPrerequisiteVote {
+  prerequisiteId String
+  prerequisite   DomainPrerequisite @relation(fields: [prerequisiteId], references: [id], onDelete: Cascade)
+  voterId        String
+  voter          User               @relation("domainPrerequisiteVotes", fields: [voterId], references: [id])
   vote           String             @default("APPROVE")
   createdAt      DateTime           @default(now())
 

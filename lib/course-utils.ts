@@ -96,3 +96,48 @@ export async function canExamineCourse(userId: string, courseId: string): Promis
 
   return passedPrereqs.length === teachPrereqs.length
 }
+
+/**
+ * Checks if a user is authorized to edit the diagram in a specific domain.
+ * Authorization is granted if:
+ * 1. The user is an ADMIN.
+ * 2. The domain has no research prerequisites.
+ * 3. The user has passed all 'APPROVED' research prerequisites for the domain.
+ */
+export async function canEditDomainDiagram(userId: string, domainId: string | null): Promise<boolean> {
+  if (!domainId) return true // Nodes without a domain are editable by anyone (default behavior)
+  
+  // 1. Check if user is an ADMIN
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  })
+  if (user?.role === 'ADMIN') return true
+
+  // 2. Fetch research prerequisites for the domain
+  const researchPrereqs = await prisma.domainPrerequisite.findMany({
+    where: {
+      domainId,
+      status: 'APPROVED'
+    },
+    select: { courseId: true }
+  })
+
+  // If there are no research prerequisites, everyone can edit
+  if (researchPrereqs.length === 0) return true
+
+  // If there are prerequisites but user is not logged in, they can't edit
+  if (!userId) return false
+
+  // 3. Check if user has passed all of them
+  const passedPrereqs = await prisma.userCourse.findMany({
+    where: {
+      userId,
+      status: 'PASSED',
+      courseId: { in: researchPrereqs.map(p => p.courseId) }
+    },
+    select: { courseId: true }
+  })
+
+  return passedPrereqs.length === researchPrereqs.length
+}

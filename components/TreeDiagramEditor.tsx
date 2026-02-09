@@ -151,6 +151,7 @@ export default function TreeDiagramEditor({
 
   // Highlight state for related node interaction
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([])
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({})
 
   const [domains, setDomains] = useState<Array<{ id: string; name: string }>>([])
   const domainNameById = React.useMemo(() => {
@@ -331,6 +332,59 @@ export default function TreeDiagramEditor({
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null
 
   useEffect(() => {
+    const uniqueDomains = Array.from(new Set(nodes.map(n => (n.data as any)?.domainId ?? null)))
+    const fetchPermissions = async () => {
+      const newPermissions: Record<string, boolean> = { ...permissions }
+      let changed = false
+      for (const domainId of uniqueDomains) {
+        const key = domainId || 'null'
+        if (newPermissions[key] === undefined) {
+          try {
+            const res = await fetch(`/api/diagram/can-edit?domainId=${domainId || ''}`)
+            if (res.ok) {
+              const data = await res.json()
+              newPermissions[key] = data.authorized
+              changed = true
+            }
+          } catch (error) {
+            console.error('Error fetching permission for domain:', domainId, error)
+          }
+        }
+      }
+      if (changed) {
+        setPermissions(newPermissions)
+      }
+    }
+    fetchPermissions()
+  }, [nodes])
+
+  const checkPermission = useCallback(async (domainId: string | null) => {
+    if (readOnly) return false
+    
+    const key = domainId || 'null'
+    if (permissions[key] !== undefined) {
+      if (!permissions[key]) {
+        toast.error(t('permissionDenied'))
+      }
+      return permissions[key]
+    }
+
+    try {
+      const res = await fetch(`/api/diagram/can-edit?domainId=${domainId || ''}`)
+      if (!res.ok) return false
+      const data = await res.json()
+      if (!data.authorized) {
+        toast.error(t('permissionDenied'))
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error('Error checking permission:', error)
+      return false
+    }
+  }, [readOnly, permissions, t])
+
+  useEffect(() => {
     const numericIds = nodes.map((n) => parseInt(n.id as string, 10)).filter((v) => !Number.isNaN(v))
     const nextId = (numericIds.length ? Math.max(...numericIds) : 0) + 1
     if (nodeIdRef.current < nextId) {
@@ -339,15 +393,22 @@ export default function TreeDiagramEditor({
   }, [nodes])
 
   const onConnect = useCallback(
-    (params: Connection) => {
+    async (params: Connection) => {
       if (readOnly) return
+
+      const src = nodes.find((n) => n.id === params.source)
+      const tgt = nodes.find((n) => n.id === params.target)
+      const srcDomainId = (src?.data as any)?.domainId ?? null
+      const tgtDomainId = (tgt?.data as any)?.domainId ?? null
+
+      const isSrcAuthorized = await checkPermission(srcDomainId)
+      if (!isSrcAuthorized) return
+      const isTgtAuthorized = await checkPermission(tgtDomainId)
+      if (!isTgtAuthorized) return
+
       const newEdge = addEdge(params, edges)
       let nextNodes = nodes
       if (params.source && params.target) {
-        const src = nodes.find((n) => n.id === params.source)
-        const tgt = nodes.find((n) => n.id === params.target)
-        const srcDomainId = (src?.data as any)?.domainId
-        const tgtDomainId = (tgt?.data as any)?.domainId
         if (srcDomainId && (!tgtDomainId || String(tgtDomainId).trim() === '')) {
           nextNodes = nodes.map((n) => (
             n.id === params.target ? { ...n, data: { ...(n.data as any), domainId: srcDomainId } } : n
@@ -358,12 +419,17 @@ export default function TreeDiagramEditor({
       setEdges(newEdge)
       onDataChange?.({ nodes: nextNodes, edges: newEdge })
     },
-    [edges, nodes, onDataChange, readOnly, setNodes]
+    [edges, nodes, onDataChange, readOnly, setNodes, checkPermission]
   )
 
   const addNode = useCallback(
-    (e?: React.MouseEvent) => {
+    async (e?: React.MouseEvent) => {
       if (readOnly || !nodeLabel.trim()) return
+
+      const parentDomainId = selectedNodeId ? ((nodes.find((n) => n.id === selectedNodeId)?.data as any)?.domainId ?? null) : null
+      const isAuthorized = await checkPermission(parentDomainId)
+      if (!isAuthorized) return
+
       if (e) {
         e.preventDefault()
         e.stopPropagation()
@@ -393,19 +459,38 @@ export default function TreeDiagramEditor({
       setNodeLabel('')
       onDataChange?.({ nodes: newNodes, edges })
     },
-    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId]
+    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId, checkPermission]
   )
 
   const deleteSelectedElements = useCallback(
-    (e?: React.MouseEvent) => {
+    async (e?: React.MouseEvent) => {
       if (readOnly) return
+
+      const selectedNodes = nodes.filter((node) => node.selected)
+      const selectedEdges = edges.filter((edge) => edge.selected)
+
+      // Check permissions for all affected domains
+      const affectedDomains = new Set<string | null>()
+      selectedNodes.forEach(n => affectedDomains.add((n.data as any)?.domainId ?? null))
+      // For edges, check both source and target domains? 
+      // Usually, if you can edit the node, you can edit its edges.
+      // Let's check source and target nodes' domains for selected edges.
+      selectedEdges.forEach(edge => {
+        const srcNode = nodes.find(n => n.id === edge.source)
+        const tgtNode = nodes.find(n => n.id === edge.target)
+        if (srcNode) affectedDomains.add((srcNode.data as any)?.domainId ?? null)
+        if (tgtNode) affectedDomains.add((tgtNode.data as any)?.domainId ?? null)
+      })
+
+      for (const domainId of affectedDomains) {
+        const isAuthorized = await checkPermission(domainId)
+        if (!isAuthorized) return
+      }
+
       if (e) {
         e.preventDefault()
         e.stopPropagation()
       }
-
-      const selectedNodes = nodes.filter((node) => node.selected)
-      const selectedEdges = edges.filter((edge) => edge.selected)
       const selectedNodeIds = selectedNodes.map((node) => node.id)
 
       if (selectedNodes.length === 0 && selectedEdges.length === 0) {
@@ -441,11 +526,20 @@ export default function TreeDiagramEditor({
       }
       onDataChange?.({ nodes: newNodes, edges: newEdges })
     },
-    [nodes, edges, onDataChange, readOnly, selectedNodeId, setNodes, setEdges]
+    [nodes, edges, onDataChange, readOnly, selectedNodeId, setNodes, setEdges, checkPermission]
   )
 
   const handleNodesDelete = useCallback(
-    (deletedNodes: Node[]) => {
+    async (deletedNodes: Node[]) => {
+      // Check permissions for all affected domains
+      const affectedDomains = new Set<string | null>()
+      deletedNodes.forEach(n => affectedDomains.add((n.data as any)?.domainId ?? null))
+
+      for (const domainId of affectedDomains) {
+        const isAuthorized = await checkPermission(domainId)
+        if (!isAuthorized) return
+      }
+
       const deletedIds = deletedNodes.map((n) => n.id)
       let nextNodes = nodes.filter((n) => !deletedIds.includes(n.id))
       const nextEdges = edges.filter(
@@ -472,17 +566,31 @@ export default function TreeDiagramEditor({
       }
       onDataChange?.({ nodes: nextNodes, edges: nextEdges })
     },
-    [nodes, edges, onDataChange, selectedNodeId, setNodes, setEdges]
+    [nodes, edges, onDataChange, selectedNodeId, setNodes, setEdges, checkPermission]
   )
 
   const handleEdgesDelete = useCallback(
-    (deletedEdges: Edge[]) => {
+    async (deletedEdges: Edge[]) => {
+      // Check permissions for all affected domains
+      const affectedDomains = new Set<string | null>()
+      deletedEdges.forEach(edge => {
+        const srcNode = nodes.find(n => n.id === edge.source)
+        const tgtNode = nodes.find(n => n.id === edge.target)
+        if (srcNode) affectedDomains.add((srcNode.data as any)?.domainId ?? null)
+        if (tgtNode) affectedDomains.add((tgtNode.data as any)?.domainId ?? null)
+      })
+
+      for (const domainId of affectedDomains) {
+        const isAuthorized = await checkPermission(domainId)
+        if (!isAuthorized) return
+      }
+
       const deletedIds = deletedEdges.map((e) => e.id)
       const nextEdges = edges.filter((e) => !deletedIds.includes(e.id))
       setEdges(nextEdges)
       onDataChange?.({ nodes, edges: nextEdges })
     },
-    [nodes, edges, onDataChange, setEdges]
+    [nodes, edges, onDataChange, setEdges, checkPermission]
   )
 
   const handleNodesChange = useCallback(
@@ -554,18 +662,26 @@ export default function TreeDiagramEditor({
   }, [])
 
   const updateFlashText = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const next = nodes.map((n) => (n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), flashText: text } } : n))
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, checkPermission]
   )
 
   const updateArticleLink = useCallback(
-    (link: string) => {
+    async (link: string) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const next = nodes.map((n) => {
         if (n.id !== selectedNodeId) return n
         const dataAny = (n.data as any) || {}
@@ -579,31 +695,43 @@ export default function TreeDiagramEditor({
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges, readOnly]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, readOnly, checkPermission]
   )
 
   const updateNodeLabel = useCallback(
-    (label: string) => {
+    async (label: string) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const next = nodes.map((n) => (
         n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), label } } : n
       ))
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, checkPermission]
   )
 
   const updateNodeDomainId = useCallback(
-    (domainId: string | null) => {
+    async (domainId: string | null) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      // Check permission for current domain
+      const isAuthorizedOld = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorizedOld) return
+      // Check permission for new domain
+      const isAuthorizedNew = await checkPermission(domainId)
+      if (!isAuthorizedNew) return
+
       const next = nodes.map((n) => (
         n.id === selectedNodeId ? { ...n, data: { ...(n.data as any), domainId } } : n
       ))
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, checkPermission]
   )
 
   const normalizeSlugFromLink = (link: string): string => {
@@ -622,8 +750,12 @@ export default function TreeDiagramEditor({
   }
 
   const updateFlashcardFields = useCallback(
-    (items: FlashcardField[]) => {
+    async (items: FlashcardField[]) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const next = nodes.map((n) => {
         if (n.id !== selectedNodeId) return n
         const extraTexts = items.filter((i) => i.type === 'text').map((i) => i.content)
@@ -646,8 +778,12 @@ export default function TreeDiagramEditor({
 
   // Helper function to update related nodes
   const updateRelatedNodes = useCallback(
-    (ids: string[]) => {
+    async (ids: string[]) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const next = nodes.map((n) => {
         if (n.id !== selectedNodeId) return n
         const dataAny = (n.data as any) || {}
@@ -656,12 +792,16 @@ export default function TreeDiagramEditor({
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, checkPermission]
   )
 
   const handleArticleCreated = useCallback(
-    (articleSlug: string, target: 'main' | string) => {
+    async (articleSlug: string, target: 'main' | string) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const link = `/articles/${articleSlug}`
 
       if (target === 'main') {
@@ -677,12 +817,16 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields]
+    [selectedNodeId, nodes, updateArticleLink, flashcardFields, updateFlashcardFields, checkPermission, t]
   )
 
   const handleDraftCreated = useCallback(
-    (draft: { title: string; description?: string; content: string; slug: string }, target: 'main' | string) => {
+    async (draft: { title: string; description?: string; content: string; slug: string }, target: 'main' | string) => {
       if (!selectedNodeId) return
+      const node = nodes.find(n => n.id === selectedNodeId)
+      const isAuthorized = await checkPermission((node?.data as any)?.domainId ?? null)
+      if (!isAuthorized) return
+
       const link = `/articles/${draft.slug}`
 
       if (target === 'main') {
@@ -774,8 +918,12 @@ export default function TreeDiagramEditor({
     [t]
   )
 
-  const handleNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
+  const handleNodeDoubleClick = useCallback(async (_: React.MouseEvent, node: Node) => {
     if (readOnly || !isCreatePage) return
+
+    const isAuthorized = await checkPermission((node.data as any)?.domainId ?? null)
+    if (!isAuthorized) return
+
     const current = (node.data as any)?.label || ''
     const newLabel = window.prompt(t('nodePrompt'), current)
     if (newLabel === null) return
@@ -788,7 +936,7 @@ export default function TreeDiagramEditor({
     setSelectedNodeId(node.id)
     setNodeTitle(trimmed)
     toast.success(t('nodeLabelUpdated'))
-  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t])
+  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t, checkPermission])
 
   useEffect(() => {
     if (!isPreviewOpen || typeof window === 'undefined') return

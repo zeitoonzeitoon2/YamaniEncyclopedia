@@ -91,6 +91,18 @@ function getRoleBadge(role: string, labels: { head: string; expert: string }) {
   return { label: role, cls: 'bg-gray-700 text-gray-200 border border-gray-600' }
 }
 
+type DomainPrerequisite = {
+  id: string
+  domainId: string
+  courseId: string
+  status: string
+  createdAt: string
+  course: { id: string; title: string }
+  proposer: { name: string | null }
+  _count: { votes: number }
+  votes?: { voterUserId: string; vote: string }[]
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -128,9 +140,16 @@ export default function AdminDashboard() {
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
   const [votingKey, setVotingKey] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'members' | 'courses'>('members')
+  const [activeTab, setActiveTab] = useState<'members' | 'courses' | 'researchers'>('members')
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
+  const [researchPrerequisites, setResearchPrerequisites] = useState<DomainPrerequisite[]>([])
+  const [loadingResearch, setLoadingResearch] = useState(false)
+  const [proposingResearch, setProposingResearch] = useState(false)
+  const [researchVotingKey, setResearchVotingKey] = useState<string | null>(null)
+  const [allCourses, setAllCourses] = useState<{ id: string; title: string }[]>([])
+  const [loadingAllCourses, setLoadingAllCourses] = useState(false)
+  const [selectedResearchCourseId, setSelectedResearchCourseId] = useState<string>('')
   const [courseVotingKey, setCourseVotingKey] = useState<string | null>(null)
   const [courseForm, setCourseForm] = useState({
     title: '',
@@ -356,11 +375,44 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchResearchPrerequisites = async (domainId: string) => {
+    try {
+      setLoadingResearch(true)
+      const res = await fetch(`/api/admin/domains/${encodeURIComponent(domainId)}/research-prerequisites`, { cache: 'no-store' })
+      const payload = (await res.json().catch(() => ({}))) as { prerequisites?: DomainPrerequisite[]; error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'Failed to load research prerequisites')
+        return
+      }
+      setResearchPrerequisites(Array.isArray(payload.prerequisites) ? payload.prerequisites : [])
+    } catch (e: unknown) {
+      console.error(e)
+      toast.error('Error loading research prerequisites')
+    } finally {
+      setLoadingResearch(false)
+    }
+  }
+
+  const fetchAllCourses = async () => {
+    try {
+      setLoadingAllCourses(true)
+      const res = await fetch('/api/academy/courses', { cache: 'no-store' })
+      const payload = await res.json()
+      setAllCourses(Array.isArray(payload.courses) ? payload.courses : [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingAllCourses(false)
+    }
+  }
+
   useEffect(() => {
     const id = selectedDomainId
     if (!id) return
     fetchCandidacies(id)
     fetchCourses(id)
+    fetchResearchPrerequisites(id)
+    fetchAllCourses()
   }, [selectedDomainId])
 
   useEffect(() => {
@@ -571,6 +623,56 @@ export default function AdminDashboard() {
       toast.error(msg)
     } finally {
       setCourseVotingKey(null)
+    }
+  }
+
+  const proposeResearchPrerequisite = async () => {
+    if (!selectedDomain || !selectedResearchCourseId) return
+    try {
+      setProposingResearch(true)
+      const res = await fetch(`/api/admin/domains/${encodeURIComponent(selectedDomain.id)}/research-prerequisites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: selectedResearchCourseId }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || 'Failed to propose research prerequisite')
+        return
+      }
+      toast.success('Research prerequisite proposed')
+      setSelectedResearchCourseId('')
+      await fetchResearchPrerequisites(selectedDomain.id)
+    } catch (e: unknown) {
+      console.error(e)
+      toast.error('Error proposing research prerequisite')
+    } finally {
+      setProposingResearch(false)
+    }
+  }
+
+  const voteOnResearchPrerequisite = async (prerequisiteId: string, vote: 'APPROVE' | 'REJECT') => {
+    if (!selectedDomain) return
+    const key = `${prerequisiteId}:${vote}`
+    try {
+      setResearchVotingKey(key)
+      const res = await fetch(`/api/admin/domains/${encodeURIComponent(selectedDomain.id)}/research-prerequisites/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prerequisiteId, vote }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast.error(payload.error || t('voteError'))
+        return
+      }
+      toast.success(t('voteRecorded'))
+      await fetchResearchPrerequisites(selectedDomain.id)
+    } catch (e: unknown) {
+      console.error(e)
+      toast.error(t('voteError'))
+    } finally {
+      setResearchVotingKey(null)
     }
   }
 
@@ -848,6 +950,17 @@ export default function AdminDashboard() {
                     >
                       {t('coursesTab')}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('researchers')}
+                      className={`px-3 py-2 rounded-lg text-sm border ${
+                        activeTab === 'researchers'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                      }`}
+                    >
+                      {t('researchersTab')}
+                    </button>
                   </div>
 
                   {activeTab === 'members' ? (
@@ -1040,6 +1153,76 @@ export default function AdminDashboard() {
                               className="btn-primary disabled:opacity-50"
                             >
                               {nominating ? '...' : t('sendNomination')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : activeTab === 'researchers' ? (
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-site-text mb-1 heading">{t('researchersSectionTitle')}</h3>
+                        <p className="text-sm text-site-muted mb-4">{t('researchPrerequisitesDesc')}</p>
+                        
+                        <div className="space-y-2">
+                          {loadingResearch ? (
+                            <div className="text-site-muted text-sm">{t('loading')}</div>
+                          ) : researchPrerequisites.length === 0 ? (
+                            <div className="text-site-muted text-sm">{t('noResearchPrerequisites')}</div>
+                          ) : (
+                            researchPrerequisites.map((p) => {
+                              const approvals = p._count.votes // Note: Simplified as we don't fetch all votes details in GET
+                              const myVote = p.votes?.find(v => v.voterUserId === session?.user?.id)?.vote || null
+                              return (
+                                <div key={p.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <div className="text-site-text font-medium truncate">{p.course.title}</div>
+                                      <div className="text-xs text-site-muted mt-1">
+                                        {t('proposerLabel')}: {p.proposer.name || '—'} • {p.status === 'APPROVED' ? <span className="text-green-400">{t('approvedStatus')}</span> : <span className="text-yellow-400">{t('pendingStatus')}</span>}
+                                      </div>
+                                    </div>
+                                    {canVoteOnSelectedDomainCourses && p.status === 'PENDING' && (
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => voteOnResearchPrerequisite(p.id, 'APPROVE')}
+                                          disabled={researchVotingKey !== null}
+                                          className={`text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50`}
+                                        >
+                                          {researchVotingKey === `${p.id}:APPROVE` ? '...' : t('approve')}
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      {canVoteOnSelectedDomainCourses && (
+                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                          <h3 className="text-site-text font-semibold mb-3">{t('proposeResearchPrerequisite')}</h3>
+                          <div className="flex flex-col gap-3">
+                            <select
+                              value={selectedResearchCourseId}
+                              onChange={(e) => setSelectedResearchCourseId(e.target.value)}
+                              className="w-full p-2 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                            >
+                              <option value="">{t('selectCoursePlaceholder')}</option>
+                              {allCourses.map(c => (
+                                <option key={c.id} value={c.id}>{c.title}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={proposeResearchPrerequisite}
+                              disabled={proposingResearch || !selectedResearchCourseId}
+                              className="btn-primary w-full"
+                            >
+                              {proposingResearch ? '...' : t('propose')}
                             </button>
                           </div>
                         </div>
