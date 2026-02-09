@@ -4,7 +4,14 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const domains = await prisma.domain.findMany({
-      where: { courses: { some: { status: 'APPROVED' } } },
+      where: {
+        courses: {
+          some: {
+            status: 'APPROVED',
+            isActive: true,
+          },
+        },
+      },
       orderBy: [{ name: 'asc' }],
       select: {
         id: true,
@@ -12,8 +19,11 @@ export async function GET() {
         slug: true,
         description: true,
         courses: {
-          where: { status: 'APPROVED' },
-          orderBy: [{ title: 'asc' }],
+          where: {
+            status: 'APPROVED',
+            isActive: true,
+          },
+          orderBy: [{ createdAt: 'desc' }],
           select: { id: true, title: true, description: true },
         },
       },
