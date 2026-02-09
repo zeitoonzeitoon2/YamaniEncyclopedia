@@ -1,17 +1,20 @@
-export function applyFootnotes(input: string, locale: string = 'ar'): string {
+export function applyFootnotes(input: string, locale: string = 'ar', externalDefinitions?: Record<string, string>): string {
   if (!input) return ''
 
   let content = input
 
   // جمع‌آوری تعریف‌های پاورقی به شکل [^id]: متن
-  const definitions: Record<string, string> = {}
-  const defRegex = /^\[\^([^\]]+)\]:\s*(.+)$/gm
-  content = content.replace(defRegex, (_m, id: string, def: string) => {
-    if (!(id in definitions)) {
-      definitions[id] = def
-    }
-    return '' // حذف خط تعریف از بدنه
-  })
+  const definitions: Record<string, string> = externalDefinitions || {}
+  
+  if (!externalDefinitions) {
+    const defRegex = /^\[\^([^\]]+)\]:\s*(.+)$/gm
+    content = content.replace(defRegex, (_m, id: string, def: string) => {
+      if (!(id in definitions)) {
+        definitions[id] = def.trim()
+      }
+      return '' // حذف خط تعریف از بدنه
+    })
+  }
 
   // جایگزینی ارجاع‌ها [^id] با sup لینک‌دار و نگاشت شماره ترتیبی
   const refOrder: Record<string, number> = {}
@@ -98,9 +101,17 @@ function slugifyHeading(text: string): string {
 }
 
 export function applyArticleTransforms(input: string, locale: string = 'ar'): string {
-  const raw = input || ''
-  const lines = raw.split(/\r?\n/)
+  if (!input) return ''
 
+  // ۱. استخراج و حذف تعاریف پاورقی در ابتدای کار
+  const definitions: Record<string, string> = {}
+  const defRegex = /^\[\^([^\]]+)\]:\s*(.+)$/gm
+  const processedInput = input.replace(defRegex, (_m, id: string, def: string) => {
+    definitions[id] = def.trim()
+    return ''
+  })
+
+  const lines = processedInput.split(/\r?\n/)
   const used = new Set<string>()
   const uniq = (base: string) => {
     let id = base
@@ -177,8 +188,9 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
     }
 
     // پردازش تگ تصویر: !image[url|caption]
-    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL
-    const imgMatch = line.match(/^!image\[([^|\]\s]+(?: [^|\]\s]+)*)(?:\|([^\]]*))?\]$/)
+    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL و فضاهای خالی اطراف
+    const trimmedLine = line.trim()
+    const imgMatch = trimmedLine.match(/^!image\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]$/)
     if (imgMatch) {
       const url = imgMatch[1].trim()
       const caption = (imgMatch[2] || '').trim()
@@ -214,5 +226,5 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
 
   const body = `<div id="article-content-body" class="article-content-body" style="font-size: calc(var(--article-scale,1) * 20px)">${out.join('\n')}</div>`
   const combined = toc + body
-  return applyFootnotes(combined, locale)
+  return applyFootnotes(combined, locale, definitions)
 }
