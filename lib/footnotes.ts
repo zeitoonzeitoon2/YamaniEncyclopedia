@@ -104,8 +104,8 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
   if (!input) return ''
 
   // ۰. آن‌اسکیپ کردن کاراکترهای اسکیپ شده توسط Tiptap
-  // Tiptap-markdown کاراکترهایی مثل ! و [ و ( را با \ اسکیپ می‌کند
-  const unescapedInput = input.replace(/\\([!\[\]\(\)^|_#])/g, '$1')
+  // Tiptap-markdown تمام کاراکترهای نشانه‌گذاری را با \ اسکیپ می‌کند
+  const unescapedInput = input.replace(/\\([!"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~])/g, '$1')
 
   // ۱. استخراج و حذف تعاریف پاورقی در ابتدای کار
   const definitions: Record<string, string> = {}
@@ -191,22 +191,36 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
       continue
     }
 
-    // پردازش تگ تصویر: !image[url|caption] یا image![url|caption] یا image[url|caption]!
-    // اصلاح ریجکس برای هندل کردن کاراکترهای خاص در URL و جابجایی احتمالی علامت تعجب توسط ویرایشگر
+    // پردازش تگ تصویر: پشتیبانی از هر دو حالت !image[url|caption] و ![caption](url)
     const trimmedLine = line.trim()
-    const imgMatch = trimmedLine.match(/^[^\[]*image[^\[]*\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\].*$/i)
-    if (imgMatch) {
-      // حذف علامت تعجب‌های ناخواسته از URL که ممکن است به دلیل باگ RTL جابجا شده باشند
-      const url = imgMatch[1].trim().replace(/!/g, '')
-      const caption = (imgMatch[2] || '').trim()
-      const imgHtml = `
+    
+    // ۱. بررسی سینتکس سفارشی !image[url|caption]
+    const customImgMatch = trimmedLine.match(/image.*?\[([^|\]\s][^|\]]*)(?:\|([^\]]*))?\]/i)
+    // ۲. بررسی سینتکس استاندارد مارک‌داون ![caption](url)
+    const stdImgMatch = trimmedLine.match(/^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/i)
+
+    if (customImgMatch || stdImgMatch) {
+      let url = ''
+      let caption = ''
+
+      if (customImgMatch) {
+        url = customImgMatch[1].trim().replace(/!/g, '')
+        caption = (customImgMatch[2] || '').trim()
+      } else if (stdImgMatch) {
+        caption = stdImgMatch[1].trim()
+        url = stdImgMatch[2].trim().replace(/!/g, '')
+      }
+
+      if (url) {
+        const imgHtml = `
 <figure class="my-6">
   <img src="${url}" alt="${escapeHtml(caption)}" class="w-full rounded-lg shadow-lg border border-amber-700/20" />
   ${caption ? `<figcaption class="mt-2 text-center text-sm text-amber-300/80 italic">${escapeHtml(caption)}</figcaption>` : ''}
 </figure>`
-      out.push(imgHtml)
-      i += 1
-      continue
+        out.push(imgHtml)
+        i += 1
+        continue
+      }
     }
 
     out.push(autoLink(line))
