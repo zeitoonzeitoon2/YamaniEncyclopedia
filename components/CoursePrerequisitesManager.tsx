@@ -17,6 +17,16 @@ type Prerequisite = {
   _count?: { votes: number }
 }
 
+type DomainPrerequisite = {
+  id: string
+  domainId: string
+  courseId: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  proposer: { name: string | null }
+  domain: { id: string; name: string; slug: string }
+  _count?: { votes: number }
+}
+
 type Course = {
   id: string
   title: string
@@ -24,8 +34,10 @@ type Course = {
 
 export default function CoursePrerequisitesManager({ courseId }: { courseId: string }) {
   const t = useTranslations('adminCourses.prerequisites')
+  const tAdmin = useTranslations('admin.dashboard')
   const { data: session } = useSession()
   const [prerequisites, setPrerequisites] = useState<Prerequisite[]>([])
+  const [domainPrerequisites, setDomainPrerequisites] = useState<DomainPrerequisite[]>([])
   const [dependents, setDependents] = useState<Prerequisite[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,6 +52,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
       const data = await res.json()
       if (res.ok) {
         setPrerequisites(data.prerequisites || [])
+        setDomainPrerequisites(data.domainPrerequisites || [])
         setDependents(data.dependents || [])
       }
     } catch (error) {
@@ -176,6 +189,31 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     </div>
   )
 
+  const DomainPrerequisiteCard = ({ p }: { p: DomainPrerequisite }) => (
+    <div key={p.id} className="bg-site-card/40 border border-gray-700 rounded-lg p-3 flex flex-col justify-between items-start gap-2">
+      <div className="w-full">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-site-text font-medium text-sm">
+            {p.domain.name}
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            {tAdmin('researchersTab')}
+          </span>
+        </div>
+        <div className="text-[10px] text-site-muted mt-1 flex items-center justify-between">
+          <span>{t('proposedBy')}: {p.proposer.name || 'Unknown'}</span>
+          <span className={`px-2 py-0.5 rounded-full ${
+            p.status === 'APPROVED' ? 'bg-green-500/10 text-green-400' :
+            p.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' :
+            'bg-yellow-500/10 text-yellow-400'
+          }`}>
+            {t(`status.${p.status}`)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
       <div className="bg-site-card/40 border border-gray-700 rounded-lg p-4">
@@ -279,13 +317,35 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
             {t('dependencyNote')}
           </p>
           
-          {dependents.length === 0 ? (
-            <p className="text-site-muted text-sm italic">{t('noDependencies')}</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {dependents.map((p) => <PrerequisiteCard p={p} key={p.id} showCourse={true} />)}
-            </div>
-          )}
+          <div className="space-y-6">
+            {/* Academic Dependencies */}
+            {dependents.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-site-muted uppercase tracking-wider px-1">
+                  {t('studyPrerequisites')}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {dependents.map((p) => <PrerequisiteCard p={p} key={p.id} showCourse={true} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Research Dependencies */}
+            {domainPrerequisites.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-site-muted uppercase tracking-wider px-1">
+                  {tAdmin('researchersSectionTitle')}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {domainPrerequisites.map((p) => <DomainPrerequisiteCard p={p} key={p.id} />)}
+                </div>
+              </div>
+            )}
+
+            {dependents.length === 0 && domainPrerequisites.length === 0 && (
+              <p className="text-site-muted text-sm italic">{t('noDependencies')}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
