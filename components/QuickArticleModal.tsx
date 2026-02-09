@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
+import VisualEditor from './VisualEditor'
 
 interface QuickArticleModalProps {
   isOpen: boolean
@@ -39,10 +40,11 @@ export default function QuickArticleModal({
   })
 
   // --- New: ref and footnote insertion functions ---
-  const contentRef = useRef<HTMLTextAreaElement | null>(null)
+  const visualEditorRef = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ... same code as before but use visualEditorRef.current?.insertText
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -66,7 +68,12 @@ export default function QuickArticleModal({
       }
 
       const { url } = await res.json()
-      insertAtCursor(`\n!image[${url}|${caption}]\n`)
+      const imgMarkdown = `\n!image[${url}|${caption}]\n`
+      if (visualEditorRef.current) {
+        visualEditorRef.current.insertText(imgMarkdown)
+      } else {
+        setFormData(prev => ({ ...prev, content: prev.content + imgMarkdown }))
+      }
       toast.success(t('uploadSuccess'), { id: toastId })
     } catch (error: any) {
       console.error('Image upload error:', error)
@@ -75,34 +82,6 @@ export default function QuickArticleModal({
       setIsUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-  }
-
-  const insertAtCursor = (text: string) => {
-    const ta = contentRef.current
-    const current = formData.content || ''
-    if (!ta) {
-      setFormData(prev => {
-        const next = { ...prev, content: current + text }
-        onDraftChange?.(next)
-        return next
-      })
-      return
-    }
-    const start = ta.selectionStart ?? current.length
-    const end = ta.selectionEnd ?? start
-    const before = current.slice(0, start)
-    const after = current.slice(end)
-    const updated = before + text + after
-    setFormData(prev => {
-      const next = { ...prev, content: updated }
-      onDraftChange?.(next)
-      return next
-    })
-    setTimeout(() => {
-      const pos = before.length + text.length
-      ta.focus()
-      ta.setSelectionRange(pos, pos)
-    }, 0)
   }
 
   const getNextFootnoteNumber = (text: string) => {
@@ -125,45 +104,30 @@ export default function QuickArticleModal({
   }
 
   const insertFootnoteAtCursor = () => {
-    const ta = contentRef.current
-    const current = formData.content || ''
+    const current = visualEditorRef.current?.getMarkdown() || formData.content || ''
     const nextNum = getNextFootnoteNumber(current)
     const refText = `[^${nextNum}]`
     const defText = `\n\n[^${nextNum}]: `
 
-    if (!ta) {
-      // If ref is not yet set, add to the end
+    if (visualEditorRef.current) {
+      visualEditorRef.current.insertText(refText)
+      // For the definition, we append it to the end if not exists
+      if (!current.includes(`[^${nextNum}]:`)) {
+        setFormData(prev => {
+          const updated = prev.content + defText
+          onDraftChange?.({ ...prev, content: updated })
+          return { ...prev, content: updated }
+        })
+      }
+    } else {
+      // Fallback
       const updated = current + refText + (current.includes(`[^${nextNum}]:`) ? '' : defText)
       setFormData(prev => {
         const next = { ...prev, content: updated }
         onDraftChange?.(next)
         return next
       })
-      return
     }
-
-    const start = ta.selectionStart ?? current.length
-    const end = ta.selectionEnd ?? start
-    const before = current.slice(0, start)
-    const after = current.slice(end)
-
-    let updated = before + refText + after
-    if (!updated.includes(`[^${nextNum}]:`)) {
-      updated += defText
-    }
-
-    setFormData(prev => {
-      const next = { ...prev, content: updated }
-      onDraftChange?.(next)
-      return next
-    })
-
-    // Set cursor immediately after reference
-    setTimeout(() => {
-      const pos = before.length + refText.length
-      ta.focus()
-      ta.setSelectionRange(pos, pos)
-    }, 0)
   }
 
   // Load existing article data in edit mode
@@ -376,43 +340,11 @@ export default function QuickArticleModal({
                   <button
                     type="button"
                     onClick={insertFootnoteAtCursor}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
+                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50 flex items-center gap-1"
                     title={t('footnoteTitle')}
                   >
+                    <span>+</span>
                     {t('addFootnote')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n## ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title={t('h2Title')}
-                  >
-                    {t('addH2')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n### ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title={t('h3Title')}
-                  >
-                    {t('addH3')}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n> !ayah ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title={t('ayahTitle')}
-                  >
-                    {t('addAyah')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('\n> !quote: ')}
-                    className="px-2 py-1 text-xs rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/50"
-                    title={t('quoteTitle')}
-                  >
-                    {t('addQuote')}
                   </button>
 
                   <button
@@ -433,20 +365,18 @@ export default function QuickArticleModal({
                   />
                 </div>
               </div>
-              <textarea
-                ref={contentRef}
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData(prev => {
-                    const next = { ...prev, content: e.target.value }
-                    onDraftChange?.(next)
-                    return next
-                  })
-                }
-                className="flex-1 w-full p-4 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary whitespace-pre-wrap break-words resize-none"
-                placeholder={t('contentPlaceholder')}
-                required
-              />
+              
+              <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                <VisualEditor 
+                  ref={visualEditorRef}
+                  content={formData.content}
+                  onChange={(markdown) => {
+                    setFormData(prev => ({ ...prev, content: markdown }))
+                    onDraftChange?.({ ...formData, content: markdown })
+                  }}
+                  placeholder={t('contentPlaceholder')}
+                />
+              </div>
             </div>
 
             {/* Action buttons */}
