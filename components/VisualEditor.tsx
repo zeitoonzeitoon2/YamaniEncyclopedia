@@ -60,6 +60,7 @@ const MenuButton = ({
     {children}
   </button>
 )
+MenuButton.displayName = 'MenuButton'
 
 const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, onChange, placeholder }, ref) => {
   const editor = useEditor({
@@ -92,7 +93,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
     content: content,
     onUpdate: ({ editor }) => {
       // Get markdown output
-      const markdown = editor.storage.markdown.getMarkdown()
+      const markdown = (editor.storage as any).markdown.getMarkdown()
       onChange(markdown)
     },
     editorProps: {
@@ -105,18 +106,16 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
 
   useImperativeHandle(ref, () => ({
     insertText: (text: string) => {
-      if (editor) {
-        editor.commands.insertContent(text)
-      }
+      editor?.chain().focus().insertContent(text).run()
     },
     getMarkdown: () => {
-      return editor?.storage.markdown.getMarkdown() || ''
+      return (editor?.storage as any)?.markdown?.getMarkdown() || ''
     }
   }))
 
   // Update editor content if it changes from outside (e.g. initial load)
   useEffect(() => {
-    if (editor && content !== editor.storage.markdown.getMarkdown()) {
+    if (editor && content !== (editor.storage as any).markdown.getMarkdown()) {
       editor.commands.setContent(content)
     }
   }, [content, editor])
@@ -259,5 +258,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
     </div>
   )
 })
+
+VisualEditor.displayName = 'VisualEditor'
 
 export default VisualEditor
