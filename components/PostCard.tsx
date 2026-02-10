@@ -41,6 +41,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
   const locale = useLocale()
 
   const [mounted, setMounted] = React.useState(false)
+  const [imageError, setImageError] = React.useState(false)
   React.useEffect(() => {
     setMounted(true)
   }, [])
@@ -84,14 +85,20 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
   return (
     <div className={`card hover:shadow-lg transition-shadow ${fullWidth ? 'h-full flex flex-col' : ''}`}>
       <div className="flex items-center gap-3 mb-4">
-        {post.author.image && !hideAuthorAvatar && (
+        {post.author.image && !hideAuthorAvatar && !imageError && (
           <Image
             src={post.author.image}
             alt={post.author.name || t('authorAlt')}
             width={40}
             height={40}
             className="rounded-full"
+            onError={() => setImageError(true)}
           />
+        )}
+        {imageError && !hideAuthorAvatar && (
+          <div className="w-10 h-10 rounded-full bg-site-border flex items-center justify-center text-site-text">
+            <span className="text-xs">{post.author.name?.charAt(0) || '?'}</span>
+          </div>
         )}
         <div>
           {!hideAuthorName && post.author.name && (

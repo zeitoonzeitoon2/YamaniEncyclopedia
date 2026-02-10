@@ -41,6 +41,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
   const tPost = useTranslations('postCard')
   const locale = useLocale()
   const [isVoting, setIsVoting] = useState(false)
+  const [imageError, setImageError] = useState(false)
   
   const votingFinalized = ['APPROVED', 'REJECTED', 'ARCHIVED'].includes(post.status)
 
@@ -109,11 +110,12 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
     <div className="card">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          {post.author.image ? (
+          {post.author.image && !imageError ? (
             <img
               src={post.author.image}
               alt={post.author.name || t('authorAlt')}
               className="w-10 h-10 rounded-full"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="w-10 h-10 bg-site-card rounded-full flex items-center justify-center">

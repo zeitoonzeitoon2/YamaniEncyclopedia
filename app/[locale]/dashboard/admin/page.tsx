@@ -819,7 +819,14 @@ export default function AdminDashboard() {
             <p className="text-site-muted text-sm mb-3">{t('headerImageHint')}</p>
             {headerUrl && (
               <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4">
-                <Image src={headerUrl} alt={t('headerImageAlt')} fill className="object-cover rounded-lg" unoptimized />
+                <Image 
+                  src={headerUrl} 
+                  alt={t('headerImageAlt')} 
+                  fill 
+                  className="object-cover rounded-lg" 
+                  unoptimized 
+                  onError={() => setHeaderUrl(null)}
+                />
               </div>
             )}
             {previewUrl && (
@@ -842,7 +849,14 @@ export default function AdminDashboard() {
             {logoUrl && (
               <div className="flex items-center gap-4 mb-4">
                 <div className="relative w-20 h-20">
-                  <Image src={logoUrl} alt={t('logoAlt')} fill className="object-contain" unoptimized />
+                  <Image 
+                    src={logoUrl} 
+                    alt={t('logoAlt')} 
+                    fill 
+                    className="object-contain" 
+                    unoptimized 
+                    onError={() => setLogoUrl(null)}
+                  />
                 </div>
               </div>
             )}

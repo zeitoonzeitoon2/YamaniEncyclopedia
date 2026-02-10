@@ -18,6 +18,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [langMenuOpen, setLangMenuOpen] = React.useState(false)
   const [logoUrl, setLogoUrl] = React.useState<string | null>(null)
+  const [profileImageError, setProfileImageError] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
   const langMenuRef = React.useRef<HTMLDivElement | null>(null)
   const router = useRouter()
@@ -97,7 +98,15 @@ export function Header() {
           <div className="flex items-center justify-start">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading">
               {logoUrl ? (
-                <Image src={logoUrl} alt={t('logoAlt')} width={32} height={32} className="h-8 w-8 object-contain" unoptimized />
+                <Image 
+                  src={logoUrl} 
+                  alt={t('logoAlt')} 
+                  width={32} 
+                  height={32} 
+                  className="h-8 w-8 object-contain" 
+                  unoptimized 
+                  onError={() => setLogoUrl(null)}
+                />
               ) : null}
               <span className="hidden sm:inline">{t('title')}</span>
             </Link>
@@ -191,13 +200,14 @@ export function Header() {
                     onClick={() => setMenuOpen((prev) => !prev)}
                     className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
                   >
-                    {session.user?.image ? (
+                    {session.user?.image && !profileImageError ? (
                       <Image
                         src={session.user.image}
                         alt={session.user.name || ''}
                         width={28}
                         height={28}
                         className="rounded-full border border-site-border/50"
+                        onError={() => setProfileImageError(true)}
                       />
                     ) : (
                       <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">

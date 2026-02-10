@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { useTranslations, useLocale } from 'next-intl'
@@ -32,6 +33,7 @@ interface SimplePostCardProps {
 export function SimplePostCard({ post, isSelected = false, onClick }: SimplePostCardProps) {
   const t = useTranslations('postCard')
   const locale = useLocale()
+  const [imageError, setImageError] = useState(false)
   const createdDate = typeof post.createdAt === 'string'
     ? new Date(post.createdAt)
     : post.createdAt
@@ -68,13 +70,14 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
     >
       {/* Header with author information */}
       <div className="flex items-center gap-3 mb-3">
-        {post.author.image ? (
+        {post.author.image && !imageError ? (
           <Image
             src={post.author.image}
             alt={post.author.name || t('authorAlt')}
             width={32}
             height={32}
             className="rounded-full"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
