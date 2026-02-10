@@ -12,6 +12,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
 import CoursePrerequisitesManager from '@/components/CoursePrerequisitesManager'
+import ChapterQuestionnaireModal from '@/components/ChapterQuestionnaireModal'
 
 type ChapterVote = {
   voterId: string
@@ -43,6 +44,25 @@ type CourseChapter = {
   updatedAt: string
   author: ChapterAuthor
   votes: ChapterVote[]
+  progress: any[]
+  questions: ChapterQuestion[]
+}
+
+type ChapterQuestion = {
+  id: string
+  question: string
+  status: string
+  authorId: string
+  author: { id: string; name: string | null; email: string | null }
+  options: QuestionOption[]
+  votes: { voterId: string; vote: string }[]
+  createdAt: string
+}
+
+type QuestionOption = {
+  id: string
+  text: string
+  isCorrect: boolean
 }
 
 type CourseInfo = {
@@ -84,6 +104,9 @@ export default function AdminCourseChaptersPage() {
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [previewHtml, setPreviewHtml] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
+  const [questionnaireOpen, setQuestionnaireOpen] = useState(false)
+  const [chapterQuestions, setChapterQuestions] = useState<ChapterQuestion[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'chapters' | 'prerequisites'>('chapters')
   const [expandedRoots, setExpandedRoots] = useState<Record<string, boolean>>({})
@@ -182,6 +205,22 @@ export default function AdminCourseChaptersPage() {
     chaptersRef.current = chapters
   }, [chapters])
 
+  const fetchQuestions = async (chapterId: string) => {
+    if (!courseId || !chapterId) return
+    try {
+      setLoadingQuestions(true)
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}/questions`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setChapterQuestions(data.questions || [])
+    } catch (error) {
+      console.error('Error fetching questions:', error)
+      toast.error(t('toast.fetchError'))
+    } finally {
+      setLoadingQuestions(false)
+    }
+  }
+
   useEffect(() => {
     const current = selectedId ? chaptersRef.current.find((c) => c.id === selectedId) || null : null
     if (!current) return
@@ -194,6 +233,7 @@ export default function AdminCourseChaptersPage() {
       originalChapterId: current.originalChapterId || '',
     })
     setMode('edit')
+    fetchQuestions(current.id)
   }, [selectedId])
 
   useEffect(() => {
@@ -764,19 +804,38 @@ export default function AdminCourseChaptersPage() {
                       className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
                     />
                   </div>
-                  <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm text-site-text">{t('contentLabel')}</div>
-                      <button
-                        type="button"
-                        onClick={() => setEditorOpen(true)}
-                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
-                      >
-                        {t('editContent')}
-                      </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm text-site-text">{t('contentLabel')}</div>
+                        <button
+                          type="button"
+                          onClick={() => setEditorOpen(true)}
+                          className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                        >
+                          {t('editContent')}
+                        </button>
+                      </div>
+                      <div className="text-xs text-site-muted">
+                        {form.content ? t('charCount', { count: form.content.length }) : t('noContent')}
+                      </div>
                     </div>
-                    <div className="text-xs text-site-muted">
-                      {form.content ? t('charCount', { count: form.content.length }) : t('noContent')}
+                    
+                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm text-site-text">پرسشنامه فصل</div>
+                        <button
+                          type="button"
+                          onClick={() => setQuestionnaireOpen(true)}
+                          disabled={!selectedId}
+                          className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                        >
+                          مشاهده و مدیریت
+                        </button>
+                      </div>
+                      <div className="text-xs text-site-muted">
+                        {loadingQuestions ? 'در حال بارگذاری...' : `تعداد سوالات: ${chapterQuestions.length}`}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -949,10 +1008,10 @@ export default function AdminCourseChaptersPage() {
                       key={type}
                       type="button"
                       onClick={() => setArgumentation(prev => ({ ...prev, type: prev.type === type ? '' : type }))}
-                      className={`px-3 py-2 text-sm rounded-lg border transition-all ${
-                        argumentation.type === type 
-                          ? 'border-warm-primary bg-warm-primary/10 text-warm-accent' 
-                          : 'border-gray-700 bg-site-card/40 text-site-muted hover:border-gray-600'
+                      className={`px-3 py-2 text-xs rounded-lg border transition-all ${
+                        argumentation.type === type
+                          ? 'border-warm-primary bg-warm-primary/10 text-warm-accent shadow-sm'
+                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:border-gray-600 hover:text-site-text'
                       }`}
                     >
                       {tArg(`types.${type}`)}
@@ -963,23 +1022,25 @@ export default function AdminCourseChaptersPage() {
 
               {/* Summary */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-site-text">{tArg('summaryLabel')}</label>
+                <label className="text-sm font-medium text-site-text">{tArg('summaryLabel')} *</label>
                 <textarea
                   value={argumentation.summary}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, summary: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
                   placeholder={tArg('summaryPlaceholder')}
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  rows={2}
                 />
               </div>
 
               {/* Evidence */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-site-text">{tArg('evidenceLabel')}</label>
+                <label className="text-sm font-medium text-site-text">{tArg('evidenceLabel')} *</label>
                 <textarea
                   value={argumentation.evidence}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, evidence: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[80px]"
                   placeholder={tArg('evidencePlaceholder')}
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  rows={3}
                 />
               </div>
 
@@ -989,32 +1050,44 @@ export default function AdminCourseChaptersPage() {
                 <textarea
                   value={argumentation.rebuttal}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, rebuttal: e.target.value }))}
-                  className="w-full bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:ring-2 focus:ring-warm-primary outline-none min-h-[60px]"
                   placeholder={tArg('rebuttalPlaceholder')}
+                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  rows={2}
                 />
               </div>
             </div>
 
             <div className="px-6 py-4 border-t border-gray-700/50 flex justify-end gap-3">
-              <button 
-                type="button" 
-                onClick={() => setShowArgModal(false)} 
-                className="btn-secondary"
+              <button
+                type="button"
+                onClick={() => setShowArgModal(false)}
+                className="btn-secondary text-sm"
                 disabled={saving}
               >
                 {tArg('cancel')}
               </button>
-              <button 
-                type="button" 
-                onClick={doSave} 
-                className="btn-primary"
+              <button
+                type="button"
+                onClick={doSave}
                 disabled={saving || !argumentation.summary.trim() || !argumentation.evidence.trim()}
+                className="btn-primary text-sm disabled:opacity-50"
               >
                 {saving ? '...' : tArg('submit')}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {selectedId && (
+        <ChapterQuestionnaireModal
+          isOpen={questionnaireOpen}
+          onClose={() => setQuestionnaireOpen(false)}
+          courseId={courseId}
+          chapterId={selectedId}
+          questions={chapterQuestions}
+          onRefresh={() => fetchQuestions(selectedId)}
+        />
       )}
       <QuickArticleModal
         isOpen={editorOpen}

@@ -112,6 +112,8 @@ model User {
   courseChapters  CourseChapter[]
   chapterVotes    ChapterVote[] @relation("ChapterVoteVoter")
   chapterProgress CourseChapterProgress[]
+  chapterQuestions ChapterQuestion[]
+  questionVotes    QuestionVote[]
   articles     Article[]
   comments     Comment[]
   commentReads CommentRead[]
@@ -183,6 +185,7 @@ model CourseChapter {
   revisions         CourseChapter[] @relation("CourseChapterRevisions")
   votes       ChapterVote[]
   progress    CourseChapterProgress[]
+  questions   ChapterQuestion[]
   comments    Comment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -475,6 +478,45 @@ model PrerequisiteVote {
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])
+  @@index([voterId])
+}
+
+model ChapterQuestion {
+  id          String   @id @default(cuid())
+  chapterId   String
+  chapter     CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  question    String
+  options     QuestionOption[]
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  votes       QuestionVote[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([chapterId])
+  @@index([status])
+}
+
+model QuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  question    ChapterQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text        String
+  isCorrect   Boolean  @default(false)
+
+  @@index([questionId])
+}
+
+model QuestionVote {
+  questionId  String
+  question    ChapterQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  voterId     String
+  voter       User     @relation(fields: [voterId], references: [id])
+  vote        String   @default("APPROVE") // APPROVE, REJECT
+  createdAt   DateTime @default(now())
+
+  @@id([questionId, voterId])
   @@index([voterId])
 }
 

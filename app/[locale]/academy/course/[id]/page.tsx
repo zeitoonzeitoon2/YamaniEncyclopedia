@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { Header } from '@/components/Header'
 import { applyArticleTransforms } from '@/lib/footnotes'
 import { useTranslations } from 'next-intl'
+import StudentChapterQuiz from '@/components/StudentChapterQuiz'
 
 type Chapter = {
   id: string
@@ -345,8 +346,14 @@ export default function CourseViewerPage() {
                     </button>
                   </div>
                 )}
-                <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-                <div className="flex items-center justify-between gap-2">
+                <div
+                  className="prose prose-invert max-w-none article-content"
+                  dangerouslySetInnerHTML={{ __html: previewHtml }}
+                />
+
+                {selectedId && <StudentChapterQuiz courseId={courseId} chapterId={selectedId} />}
+
+                <div className="flex items-center justify-between pt-8 border-t border-site-border">
                   <button
                     type="button"
                     onClick={() => previousChapter && setSelectedId(previousChapter.id)}
