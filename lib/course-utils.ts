@@ -123,7 +123,7 @@ export async function canEditDomainDiagram(userId: string, domainId: string | nu
   // 2. Fetch research prerequisites for the domain
   const researchPrereqs = await prisma.domainPrerequisite.findMany({
     where: {
-      domainId,
+      domainId: normalizedId,
       status: 'APPROVED'
     },
     select: { courseId: true }

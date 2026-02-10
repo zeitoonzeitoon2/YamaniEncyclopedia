@@ -455,7 +455,7 @@ export default function TreeDiagramEditor({
       setNodeLabel('')
       onDataChange?.({ nodes: newNodes, edges })
     },
-    [nodeLabel, nodes, edges, onDataChange, readOnly, selectedNodeId, checkPermission]
+    [nodeLabel, nodes, edges, onDataChange, readOnly, setNodes, setNodeLabel]
   )
 
   const deleteSelectedElements = useCallback(
@@ -932,7 +932,7 @@ export default function TreeDiagramEditor({
     setSelectedNodeId(node.id)
     setNodeTitle(trimmed)
     toast.success(t('nodeLabelUpdated'))
-  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t, checkPermission])
+  }, [readOnly, isCreatePage, nodes, edges, onDataChange, t, checkPermission, setNodes, setSelectedNodeId, setNodeTitle])
 
   useEffect(() => {
     if (!isPreviewOpen || typeof window === 'undefined') return
@@ -960,7 +960,7 @@ export default function TreeDiagramEditor({
       setPanelOpen(false)
     }
     hasHydratedInitialData.current = true
-  }, [initialData, readOnly])
+  }, [initialData, readOnly, selectedNodeId, setNodes, setEdges, setSelectedNodeId, setPanelOpen])
 
   return (
     <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col" style={{ height }}>
