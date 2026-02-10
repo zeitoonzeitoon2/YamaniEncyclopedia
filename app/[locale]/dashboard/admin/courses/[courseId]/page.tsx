@@ -106,6 +106,7 @@ export default function AdminCourseChaptersPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false)
   const [chapterQuestions, setChapterQuestions] = useState<ChapterQuestion[]>([])
+  const [previousChapterQuestions, setPreviousChapterQuestions] = useState<ChapterQuestion[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'chapters' | 'prerequisites'>('chapters')
@@ -234,6 +235,33 @@ export default function AdminCourseChaptersPage() {
     })
     setMode('edit')
     fetchQuestions(current.id)
+
+    // Also fetch questions for the previous version if it exists
+    const rootId = getRootId(current)
+    const versions = chaptersRef.current
+      .filter((c) => getRootId(c) === rootId)
+      .sort((a, b) => {
+        const va = a.version ?? 0
+        const vb = b.version ?? 0
+        if (va !== vb) return va - vb
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      })
+    const idx = versions.findIndex((c) => c.id === current.id)
+    if (idx > 0) {
+      const prev = versions[idx - 1]
+      const fetchPrevQuestions = async () => {
+        try {
+          const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${prev.id}/questions`)
+          const data = await res.json()
+          if (res.ok) setPreviousChapterQuestions(data.questions || [])
+        } catch (error) {
+          console.error('Error fetching previous questions:', error)
+        }
+      }
+      fetchPrevQuestions()
+    } else {
+      setPreviousChapterQuestions([])
+    }
   }, [selectedId])
 
   useEffect(() => {
@@ -973,6 +1001,104 @@ export default function AdminCourseChaptersPage() {
                     </div>
                   ) : (
                     <div className="prose prose-invert max-w-none text-site-text" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                  )}
+                </div>
+              )}
+
+              {selectedChapter && (
+                <div className="card space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-site-text heading">
+                      {t('previewQuestionnaire')}
+                    </h3>
+                  </div>
+
+                  {selectedChapter && selectedPreviousChapter ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Previous Version Questions */}
+                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                        <div className="text-sm text-site-text">
+                          {t('previousVersion')} {formatVersionTag(selectedPreviousChapter.version)}
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto space-y-3 rounded-md bg-black/10 p-3">
+                          {previousChapterQuestions.filter(q => q.status === 'APPROVED').length > 0 ? (
+                            previousChapterQuestions
+                              .filter(q => q.status === 'APPROVED')
+                              .map((q, idx) => (
+                                <div key={q.id} className="p-2 rounded border border-gray-700/50 bg-site-bg/30">
+                                  <div className="text-xs font-bold text-site-text mb-1 flex items-center gap-2">
+                                    <span className="bg-gray-700 text-gray-300 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
+                                    {q.question}
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1 pl-7">
+                                    {q.options.map((opt) => (
+                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                        {opt.text}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                          ) : (
+                            <div className="text-xs text-site-muted italic">{t('noContent')}</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selected Version Questions */}
+                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                        <div className="text-sm text-site-text">
+                          {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto space-y-3 rounded-md bg-black/10 p-3">
+                          {chapterQuestions.filter(q => q.status === 'APPROVED').length > 0 ? (
+                            chapterQuestions
+                              .filter(q => q.status === 'APPROVED')
+                              .map((q, idx) => (
+                                <div key={q.id} className="p-2 rounded border border-gray-700/50 bg-site-bg/30">
+                                  <div className="text-xs font-bold text-site-text mb-1 flex items-center gap-2">
+                                    <span className="bg-warm-primary/20 text-warm-accent w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
+                                    {q.question}
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1 pl-7">
+                                    {q.options.map((opt) => (
+                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                        {opt.text}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                          ) : (
+                            <div className="text-xs text-site-muted italic">{t('noContent')}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-h-[60vh] overflow-y-auto space-y-3 rounded-md bg-black/10 p-3">
+                      {chapterQuestions.filter(q => q.status === 'APPROVED').length > 0 ? (
+                        chapterQuestions
+                          .filter(q => q.status === 'APPROVED')
+                          .map((q, idx) => (
+                            <div key={q.id} className="p-3 rounded-lg border border-gray-700/50 bg-site-bg/30">
+                              <div className="text-sm font-bold text-site-text mb-2 flex items-center gap-2">
+                                <span className="bg-warm-primary/20 text-warm-accent w-6 h-6 rounded-full flex items-center justify-center text-xs">{idx + 1}</span>
+                                {q.question}
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-8">
+                                {q.options.map((opt) => (
+                                  <div key={opt.id} className={`text-xs p-2 rounded-md ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                    {opt.text}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                      ) : (
+                        <div className="text-sm text-site-muted italic p-4 text-center">{t('noContent')}</div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
