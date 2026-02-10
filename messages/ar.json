@@ -130,7 +130,9 @@
     "proposeSuccess": "تم إرسال مقترح التبادل بنجاح",
     "voteSuccess": "تم تسجيل تصويتك بنجاح",
     "selectProposerDomain": "اختر مجالك",
-    "selectTargetDomain": "اختر المجال المستهدف"
+    "selectTargetDomain": "اختر المجال المستهدف",
+    "consensusRequired": "التصويت قيد التنفيذ",
+    "loading": "جارٍ التحميل..."
   },
   "language": {
     "label": "اللغة",

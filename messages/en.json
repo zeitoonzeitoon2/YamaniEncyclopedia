@@ -130,7 +130,9 @@
     "proposeSuccess": "Exchange proposal sent successfully",
     "voteSuccess": "Your vote has been recorded",
     "selectProposerDomain": "Select your domain",
-    "selectTargetDomain": "Select target domain"
+    "selectTargetDomain": "Select target domain",
+    "consensusRequired": "Voting in progress",
+    "loading": "Loading..."
   },
   "language": {
     "label": "Language",

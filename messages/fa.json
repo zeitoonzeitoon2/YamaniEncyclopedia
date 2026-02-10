@@ -131,7 +131,9 @@
     "proposeSuccess": "پیشنهاد تبادل با موفقیت ارسال شد",
     "voteSuccess": "رای شما با موفقیت ثبت شد",
     "selectProposerDomain": "حوزه خود را انتخاب کنید",
-    "selectTargetDomain": "حوزه هدف را انتخاب کنید"
+    "selectTargetDomain": "حوزه هدف را انتخاب کنید",
+    "consensusRequired": "رأی‌گیری در جریان است",
+    "loading": "در حال بارگذاری..."
   },
   "language": {
     "label": "زبان",
