@@ -14,7 +14,7 @@ export async function GET(
     const { id: courseId, chapterId } = params
 
     // Check if student is enrolled in the course
-    const enrollment = await prisma.courseEnrollment.findFirst({
+    const enrollment = await prisma.userCourse.findFirst({
       where: {
         userId: session.user.id,
         courseId: courseId,
