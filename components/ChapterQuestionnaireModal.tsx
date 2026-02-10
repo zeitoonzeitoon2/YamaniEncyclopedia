@@ -148,8 +148,8 @@ export default function ChapterQuestionnaireModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="پرسشنامه فصل" size="xl">
-      <div className="space-y-6">
+    <Modal isOpen={isOpen} onClose={onClose} title="پرسشنامه فصل">
+      <div className="space-y-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-bold text-site-text heading">لیست سوالات</h3>
           {!isAdding && (
