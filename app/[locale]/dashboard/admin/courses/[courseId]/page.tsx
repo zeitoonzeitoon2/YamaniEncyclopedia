@@ -349,14 +349,15 @@ export default function AdminCourseChaptersPage() {
       
       // Determine if we need to create a new draft or update an existing one
       let targetId = activeDraftId
-      let isNewDraftForApproved = false
+      let isNewDraftNeeded = false
       
-      if (!targetId && mode === 'edit' && selectedChapter) {
-        if (selectedChapter.status === 'APPROVED') {
-          // Proposing a change to an approved chapter -> Create a new draft
-          isNewDraftForApproved = true
-        } else {
-          // Editing an existing non-approved chapter (PENDING/REJECTED)
+      if (mode === 'edit' && selectedChapter) {
+        if (selectedChapter.status === 'APPROVED' || selectedChapter.status === 'REJECTED') {
+          // If the selected version is already APPROVED or REJECTED, we MUST create a new draft.
+          // We should not overwrite an existing REJECTED draft if the user wants to propose something new.
+          isNewDraftNeeded = true
+        } else if (!targetId) {
+          // Editing an existing PENDING chapter
           targetId = selectedId
         }
       }
@@ -368,7 +369,7 @@ export default function AdminCourseChaptersPage() {
         changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
       }
 
-      if (targetId && !isNewDraftForApproved) {
+      if (targetId && !isNewDraftNeeded) {
         const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -385,7 +386,7 @@ export default function AdminCourseChaptersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...body,
-            originalChapterId: isNewDraftForApproved ? getRootId(selectedChapter!) : (form.originalChapterId || undefined),
+            originalChapterId: isNewDraftNeeded ? getRootId(selectedChapter!) : (form.originalChapterId || undefined),
           }),
         })
         const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
@@ -399,6 +400,10 @@ export default function AdminCourseChaptersPage() {
         }
       }
       await fetchChapters()
+      // After fetching, we should ensure the newly created or updated draft is selected
+      if (isNewDraftNeeded) {
+        // If it was a new draft, we already updated selectedId in the POST success block
+      }
       toast.success(t('toast.saveSuccess'))
       setShowArgModal(false)
     } catch (e: unknown) {
@@ -437,11 +442,19 @@ export default function AdminCourseChaptersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chapterId, vote }),
       })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
         toast.error(payload.error || t('toast.voteError'))
         return
       }
+      
+      // If the chapter reached a final status (APPROVED or REJECTED), clear the activeDraftId
+      if (payload.status === 'APPROVED' || payload.status === 'REJECTED') {
+        if (activeDraftId === chapterId) {
+          setActiveDraftId(null)
+        }
+      }
+
       await fetchChapters()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.voteError')
@@ -454,38 +467,43 @@ export default function AdminCourseChaptersPage() {
   const ensureDraftId = async () => {
     if (activeDraftId) return activeDraftId
     if (!selectedChapter) return null
-    if (selectedChapter.status !== 'APPROVED') return selectedId
-
-    // Create draft automatically
-    if (autoDraftingRef.current) return null
-    autoDraftingRef.current = true
-    try {
-      const rootId = getRootId(selectedChapter)
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title || selectedChapter.title,
-          content: form.content || selectedChapter.content,
-          orderIndex: form.orderIndex ?? selectedChapter.orderIndex,
-          originalChapterId: rootId,
-        }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
-      if (!res.ok) {
-        toast.error(payload.error || t('toast.draftCreateError'))
-        return null
+    
+    // If current selected is already APPROVED or REJECTED, we MUST create a new draft
+    if (selectedChapter.status !== 'PENDING') {
+      // Create draft automatically
+      if (autoDraftingRef.current) return null
+      autoDraftingRef.current = true
+      try {
+        const rootId = getRootId(selectedChapter)
+        const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title || selectedChapter.title,
+            content: form.content || selectedChapter.content,
+            orderIndex: form.orderIndex ?? selectedChapter.orderIndex,
+            originalChapterId: rootId,
+          }),
+        })
+        const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
+        if (!res.ok) {
+          toast.error(payload.error || t('toast.draftCreateError'))
+          return null
+        }
+        if (payload.chapter?.id) {
+          setActiveDraftId(payload.chapter.id)
+          setSelectedId(payload.chapter.id)
+          await fetchChapters()
+          return payload.chapter.id
+        }
+      } catch (e: unknown) {
+        toast.error(t('toast.draftCreateError'))
+      } finally {
+        autoDraftingRef.current = false
       }
-      if (payload.chapter?.id) {
-        setActiveDraftId(payload.chapter.id)
-        setSelectedId(payload.chapter.id)
-        await fetchChapters()
-        return payload.chapter.id
-      }
-    } catch (e: unknown) {
-      toast.error(t('toast.draftCreateError'))
-    } finally {
-      autoDraftingRef.current = false
+    } else {
+      // It's already PENDING, so it's a draft
+      return selectedId
     }
     return null
   }
