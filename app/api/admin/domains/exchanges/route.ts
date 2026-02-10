@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if proposer domain owns enough percentage to give
-    const proposerOwnShare = await prisma.domainVotingShare.findUnique({
+    let proposerOwnShare = await prisma.domainVotingShare.findUnique({
       where: {
         domainId_ownerDomainId: {
           domainId: proposerDomainId,
@@ -43,12 +43,15 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    if (!proposerOwnShare || proposerOwnShare.percentage < percentageProposerToTarget) {
+    // If no share record exists, it means the domain still owns 100% of itself
+    const proposerPercentage = proposerOwnShare ? proposerOwnShare.percentage : 100
+
+    if (proposerPercentage < percentageProposerToTarget) {
       return NextResponse.json({ error: 'Proposer domain does not own enough voting shares to give' }, { status: 400 })
     }
 
     // Check if target domain owns enough percentage to give
-    const targetOwnShare = await prisma.domainVotingShare.findUnique({
+    let targetOwnShare = await prisma.domainVotingShare.findUnique({
       where: {
         domainId_ownerDomainId: {
           domainId: targetDomainId,
@@ -57,7 +60,10 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    if (!targetOwnShare || targetOwnShare.percentage < percentageTargetToProposer) {
+    // If no share record exists, it means the domain still owns 100% of itself
+    const targetPercentage = targetOwnShare ? targetOwnShare.percentage : 100
+
+    if (targetPercentage < percentageTargetToProposer) {
       return NextResponse.json({ error: 'Target domain does not own enough voting shares to give' }, { status: 400 })
     }
 

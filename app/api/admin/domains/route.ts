@@ -163,9 +163,22 @@ export async function POST(request: NextRequest) {
 
     const slug = slugRaw ? slugify(slugRaw) : slugify(name)
 
-    const created = await prisma.domain.create({
-      data: { name, slug, parentId, description },
-      select: { id: true, name: true, slug: true, parentId: true },
+    const created = await prisma.$transaction(async (tx) => {
+      const domain = await tx.domain.create({
+        data: { name, slug, parentId, description },
+        select: { id: true, name: true, slug: true, parentId: true },
+      })
+
+      // Initialize voting shares: the domain owns 100% of itself
+      await tx.domainVotingShare.create({
+        data: {
+          domainId: domain.id,
+          ownerDomainId: domain.id,
+          percentage: 100,
+        },
+      })
+
+      return domain
     })
 
     return NextResponse.json({ success: true, domain: created })
