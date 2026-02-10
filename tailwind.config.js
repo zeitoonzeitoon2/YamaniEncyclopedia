@@ -11,6 +11,7 @@ module.exports = {
       fontFamily: {
         'sans': ['Vazir', 'Noto Sans Arabic', 'Tahoma', 'ui-sans-serif', 'system-ui'],
         'farhang': ['Vazir', 'Noto Sans Arabic', 'serif'],
+        'ibm-plex-arabic': ['IBM Plex Sans Arabic', 'sans-serif'],
         'iran-sans': ['Vazir', 'Noto Sans Arabic', 'sans-serif'],
         'latin': ['Inter', 'ui-sans-serif', 'system-ui']
       },

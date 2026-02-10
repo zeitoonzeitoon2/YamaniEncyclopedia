@@ -66,6 +66,7 @@
 /* --- End Tiptap Styles --- */
 
 /* Persian Fonts */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&family=Markazi+Text:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css');
@@ -252,7 +253,7 @@ mark {
   }
   
   .heading {
-    @apply font-farhang text-warm-accent;
+    @apply font-ibm-plex-arabic text-warm-accent;
   }
   
   .text-persian {
