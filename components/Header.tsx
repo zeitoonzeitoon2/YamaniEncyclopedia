@@ -125,19 +125,23 @@ export function Header() {
           </div>
 
           <nav className="flex items-center justify-end">
-            {status === 'loading' ? (
+            {!mounted || status === 'loading' ? (
               <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
             ) : session ? (
               <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
-                {mounted && (
-                  <button
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
-                    aria-label={t('themeToggle')}
-                  >
-                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                  </button>
-                )}
+                <div className="flex items-center">
+                  {mounted ? (
+                    <button
+                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                      className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
+                      aria-label={t('themeToggle')}
+                    >
+                      {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                    </button>
+                  ) : (
+                    <div className="w-8 h-8" /> // Stable placeholder
+                  )}
+                </div>
 
                 <div className="relative" ref={langMenuRef}>
                   <button

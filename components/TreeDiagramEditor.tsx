@@ -233,6 +233,9 @@ export default function TreeDiagramEditor({
   }, [readOnly, setNodes])
 
   useEffect(() => {
+    // Only fetch domains if user is authenticated and not in read-only mode
+    if (!session || readOnly) return
+
     const controller = new AbortController()
     const run = async () => {
       try {
@@ -264,7 +267,7 @@ export default function TreeDiagramEditor({
     }
     run()
     return () => controller.abort()
-  }, [])
+  }, [session, readOnly])
 
   // Fetch article titles for extra link fields and the main article link to display as link text
   useEffect(() => {

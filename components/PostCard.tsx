@@ -39,6 +39,11 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
   const t = useTranslations('postCard')
   const locale = useLocale()
 
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const renderContent = () => {
     if (post.type === 'TREE') {
       try {
@@ -92,7 +97,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
             <p className="text-site-text font-medium">{post.author.name}</p>
           )}
           <p className="text-site-muted text-sm">
-            {new Date(post.createdAt).toLocaleDateString(locale)}
+            {mounted ? new Date(post.createdAt).toLocaleDateString(locale) : ''}
           </p>
         </div>
       </div>
