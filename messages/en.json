@@ -324,6 +324,7 @@
     "loadingShort": "Loading..."
   },
   "supervisor": {
+    "loading": "Loading...",
     "title": {
       "editor": "Editor Dashboard",
       "supervisor": "Supervisor Dashboard"
