@@ -1,6 +1,7 @@
 'use client'
 
 // Remove dependency on date-fns and rely on built-in JavaScript
+import React from 'react'
 import Image from 'next/image'
 import TreeDiagramEditor from './TreeDiagramEditor'
 import { getPostDisplayId } from '@/lib/postDisplay'
