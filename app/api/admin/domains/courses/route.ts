@@ -7,13 +7,34 @@ async function canManageDomainCourses(user: { id?: string; role?: string } | und
   const userId = (user?.id || '').trim()
   const role = (user?.role || '').trim()
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
-  if (role === 'ADMIN') return { ok: true as const }
+  if (role === 'ADMIN' || role === 'SUPERVISOR') return { ok: true as const }
 
+  // Check if user is an expert in this domain OR any of its ancestors
+  // For now, check this domain first
   const membership = await prisma.domainExpert.findFirst({
     where: { userId, domainId, role: { in: ['HEAD', 'EXPERT'] } },
     select: { id: true },
   })
-  return membership ? { ok: true as const } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
+  if (membership) return { ok: true as const }
+
+  // Check recursively for parent domains
+  let currentDomainId = domainId
+  while (currentDomainId) {
+    const domain = await prisma.domain.findUnique({
+      where: { id: currentDomainId },
+      select: { parentId: true }
+    })
+    if (!domain || !domain.parentId) break
+    
+    const parentMembership = await prisma.domainExpert.findFirst({
+      where: { userId, domainId: domain.parentId, role: { in: ['HEAD', 'EXPERT'] } },
+      select: { id: true },
+    })
+    if (parentMembership) return { ok: true as const }
+    currentDomainId = domain.parentId
+  }
+
+  return { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
 
 export async function GET(request: NextRequest) {
@@ -25,8 +46,22 @@ export async function GET(request: NextRequest) {
     const domainId = (searchParams.get('domainId') || '').trim()
     if (!domainId) return NextResponse.json({ error: 'domainId is required' }, { status: 400 })
 
-    const perm = await canManageDomainCourses(session.user, domainId)
-    if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
+    const userId = session.user.id
+    const role = session.user.role
+
+    // For GET (viewing), be more lenient: allow if ADMIN, SUPERVISOR, or expert in ANY domain
+    let canView = role === 'ADMIN' || role === 'SUPERVISOR'
+    if (!canView) {
+      const anyMembership = await prisma.domainExpert.findFirst({
+        where: { userId },
+        select: { id: true }
+      })
+      if (anyMembership) canView = true
+    }
+
+    if (!canView) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const courses = await prisma.course.findMany({
       where: { domainId },

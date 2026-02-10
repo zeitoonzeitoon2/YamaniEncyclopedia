@@ -10,7 +10,7 @@ async function canManageDomainExperts(requester: { id?: string; role?: string } 
   const requesterRole = (requester?.role || '').trim()
   if (!requesterId) return { allowed: false as const, status: 401 as const, error: 'Unauthorized' }
 
-  if (requesterRole === 'ADMIN') return { allowed: true as const }
+  if (requesterRole === 'ADMIN' || requesterRole === 'SUPERVISOR') return { allowed: true as const }
 
   const domain = await prisma.domain.findUnique({
     where: { id: domainId },
@@ -19,20 +19,28 @@ async function canManageDomainExperts(requester: { id?: string; role?: string } 
 
   if (!domain) return { allowed: false as const, status: 404 as const, error: 'Domain not found' }
 
-  if (!domain.parentId) {
-    return { allowed: false as const, status: 403 as const, error: 'Forbidden' }
+  // Check if user is an expert in any ancestor domain
+  let currentParentId = domain.parentId
+  while (currentParentId) {
+    const parentMembership = await prisma.domainExpert.findFirst({
+      where: {
+        domainId: currentParentId,
+        userId: requesterId,
+        role: { in: ['HEAD', 'EXPERT'] },
+      },
+      select: { id: true },
+    })
+
+    if (parentMembership) return { allowed: true as const }
+
+    const parentDomain = await prisma.domain.findUnique({
+      where: { id: currentParentId },
+      select: { parentId: true },
+    })
+    currentParentId = parentDomain?.parentId || null
   }
 
-  const parentMembership = await prisma.domainExpert.findFirst({
-    where: {
-      domainId: domain.parentId,
-      userId: requesterId,
-      role: { in: ['HEAD', 'EXPERT'] },
-    },
-    select: { id: true },
-  })
-
-  return parentMembership ? { allowed: true as const } : { allowed: false as const, status: 403 as const, error: 'Forbidden' }
+  return { allowed: false as const, status: 403 as const, error: 'Forbidden' }
 }
 
 export async function POST(request: NextRequest) {

@@ -13,6 +13,23 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const userId = session.user.id
+    const role = session.user.role
+
+    // For GET (viewing), allow if ADMIN, SUPERVISOR, or expert in ANY domain
+    let canView = role === 'ADMIN' || role === 'SUPERVISOR'
+    if (!canView) {
+      const anyMembership = await prisma.domainExpert.findFirst({
+        where: { userId },
+        select: { id: true }
+      })
+      if (anyMembership) canView = true
+    }
+
+    if (!canView) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const prerequisites = await prisma.domainPrerequisite.findMany({
       where: { domainId: params.id },
       include: {
@@ -46,20 +63,46 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is expert in this domain or admin
-    const isExpert = await prisma.domainExpert.findUnique({
-      where: {
-        userId_domainId: {
-          userId: session.user.id,
-          domainId: params.id
+    // Check if user is expert in this domain (or ancestors) or admin/supervisor
+    const userId = session.user.id
+    const role = session.user.role
+    const isAdmin = role === 'ADMIN'
+    const isSupervisor = role === 'SUPERVISOR'
+
+    let isAuthorized = isAdmin || isSupervisor
+
+    if (!isAuthorized) {
+      // Check if user is expert in this domain
+      const isExpert = await prisma.domainExpert.findUnique({
+        where: { userId_domainId: { userId, domainId: params.id } }
+      })
+      if (isExpert) isAuthorized = true
+    }
+
+    if (!isAuthorized) {
+      // Check ancestors recursively
+      let currentDomainId = params.id
+      while (currentDomainId) {
+        const domain = await prisma.domain.findUnique({
+          where: { id: currentDomainId },
+          select: { parentId: true }
+        })
+        if (!domain || !domain.parentId) break
+        
+        const parentMembership = await prisma.domainExpert.findFirst({
+          where: { userId, domainId: domain.parentId, role: { in: ['HEAD', 'EXPERT'] } },
+          select: { id: true },
+        })
+        if (parentMembership) {
+          isAuthorized = true
+          break
         }
+        currentDomainId = domain.parentId
       }
-    })
+    }
 
-    const isAdmin = session.user.role === 'ADMIN'
-
-    if (!isExpert && !isAdmin) {
-      return NextResponse.json({ error: 'Only supervisors can propose research prerequisites' }, { status: 403 })
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Only domain experts or supervisors can propose research prerequisites' }, { status: 403 })
     }
 
     const { courseId } = await request.json()
