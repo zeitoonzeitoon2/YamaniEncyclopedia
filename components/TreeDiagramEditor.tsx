@@ -335,6 +335,9 @@ export default function TreeDiagramEditor({
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null
 
   useEffect(() => {
+    // No need to check edit permissions if user is not logged in or in read-only mode
+    if (!session || readOnly) return
+
     const uniqueDomains = Array.from(new Set(nodes.map(n => (n.data as any)?.domainId ?? null)))
     const fetchPermissions = async () => {
       const newPermissions: Record<string, boolean> = { ...permissions }
@@ -359,10 +362,10 @@ export default function TreeDiagramEditor({
       }
     }
     fetchPermissions()
-  }, [nodes])
+  }, [nodes, session, readOnly])
 
   const checkPermission = useCallback(async (domainId: string | null) => {
-    if (readOnly) return false
+    if (!session || readOnly) return false
     
     const key = domainId || 'null'
     if (permissions[key] !== undefined) {
@@ -385,7 +388,7 @@ export default function TreeDiagramEditor({
       console.error('Error checking permission:', error)
       return false
     }
-  }, [readOnly, permissions, t])
+  }, [readOnly, session, permissions, t])
 
   useEffect(() => {
     const numericIds = nodes.map((n) => parseInt(n.id as string, 10)).filter((v) => !Number.isNaN(v))
