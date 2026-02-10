@@ -6,6 +6,18 @@ import { generateNextRevisionNumber } from '@/lib/postUtils'
 import { Prisma } from '@prisma/client'
 import { canEditDomainDiagram } from '@/lib/course-utils'
 
+function normalizeDomainId(did: any): string | null {
+  if (did === null || did === undefined) return null
+  const s = String(did).trim()
+  if (s === '' || s === 'null' || s === 'undefined') return null
+  return s
+}
+
+function normalizeString(s: any): string {
+  if (s === null || s === undefined) return ''
+  return String(s).trim()
+}
+
 function isSeriousChange(oldContent: string, newContent: string): boolean {
   try {
     const oldTree = JSON.parse(oldContent)
@@ -27,10 +39,10 @@ function isSeriousChange(oldContent: string, newContent: string): boolean {
       
       if (!oldNode) return true // Node added or ID changed
       
-      if (newNode.data?.label !== oldNode.data?.label) return true
-      if (newNode.data?.domainId !== oldNode.data?.domainId) return true
-      if (newNode.data?.flashText !== oldNode.data?.flashText) return true
-      if (newNode.data?.articleLink !== oldNode.data?.articleLink) return true
+      if (normalizeString(newNode.data?.label) !== normalizeString(oldNode.data?.label)) return true
+      if (normalizeDomainId(newNode.data?.domainId) !== normalizeDomainId(oldNode.data?.domainId)) return true
+      if (normalizeString(newNode.data?.flashText) !== normalizeString(oldNode.data?.flashText)) return true
+      if (normalizeString(newNode.data?.articleLink) !== normalizeString(oldNode.data?.articleLink)) return true
       // Position changes are NOT serious
     }
 
@@ -65,7 +77,7 @@ export async function POST(request: NextRequest) {
     const changeReason = body.changeReason
     const changeSummary = typeof body.changeSummary === 'string' ? body.changeSummary : undefined
     const articlesData = typeof body.articlesData === 'string' ? body.articlesData : undefined
-    const requestedDomainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
+    const requestedDomainId = normalizeDomainId(body.domainId)
 
     // داده‌های مقالات همان ورودی articlesData از کلاینت است؛ استخراج draftId دیگر انجام نمی‌شود
     const finalArticlesData = articlesData && articlesData.trim() ? articlesData : undefined
@@ -84,41 +96,119 @@ export async function POST(request: NextRequest) {
 
     // --- PERMISSION CHECK START ---
     let seriousChange = true
+    let affectedDomainIds = new Set<string>()
+    let oldContent: string | null = null
+
     if (originalPostId) {
       const originalPost = await prisma.post.findUnique({
         where: { id: originalPostId },
         select: { content: true }
       })
       if (originalPost) {
-        seriousChange = isSeriousChange(originalPost.content, content)
+        oldContent = originalPost.content
+        seriousChange = isSeriousChange(oldContent, content)
       }
     }
 
     if (seriousChange) {
-      // Extract all domainIds from the new content
-      let affectedDomainIds = new Set<string>()
       try {
-        const tree = JSON.parse(content)
-        if (Array.isArray(tree?.nodes)) {
-          tree.nodes.forEach((n: any) => {
-            const did = n?.data?.domainId
-            if (did && typeof did === 'string') affectedDomainIds.add(did.trim())
-          })
-        }
-      } catch {}
+        const newTree = JSON.parse(content)
+        const newNodes = Array.isArray(newTree?.nodes) ? newTree.nodes : []
+        const newEdges = Array.isArray(newTree?.edges) ? newTree.edges : []
 
-      // If requestedDomainId is provided, add it too
-      if (requestedDomainId && typeof requestedDomainId === 'string') {
-        affectedDomainIds.add(requestedDomainId.trim())
+        if (!oldContent) {
+          // New post: check all domains present in nodes
+          newNodes.forEach((n: any) => {
+            const did = normalizeDomainId(n?.data?.domainId)
+            if (did) {
+              affectedDomainIds.add(did)
+              console.log(`[DEBUG] New Post: Added domain ${did} from node ${n.id}`)
+            }
+          })
+        } else {
+          // Edit: only check domains of nodes that were added, modified, or deleted
+          const oldTree = JSON.parse(oldContent)
+          const oldNodes = Array.isArray(oldTree?.nodes) ? oldTree.nodes : []
+          
+          // 1. Added or Modified Nodes
+          newNodes.forEach((newNode: any) => {
+            const oldNode = oldNodes.find((n: any) => n.id === newNode.id)
+            if (!oldNode) {
+              // Added node
+              const did = normalizeDomainId(newNode.data?.domainId)
+              if (did) {
+                affectedDomainIds.add(did)
+                console.log(`[DEBUG] Edit: Added domain ${did} from NEW node ${newNode.id}`)
+              }
+            } else {
+              // Modified node?
+              const oldDid = normalizeDomainId(oldNode.data?.domainId)
+              const newDid = normalizeDomainId(newNode.data?.domainId)
+              
+              const contentChanged = 
+                normalizeString(newNode.data?.label) !== normalizeString(oldNode.data?.label) ||
+                oldDid !== newDid ||
+                normalizeString(newNode.data?.flashText) !== normalizeString(oldNode.data?.flashText) ||
+                normalizeString(newNode.data?.articleLink) !== normalizeString(oldNode.data?.articleLink)
+              
+              if (contentChanged) {
+                if (oldDid) {
+                  affectedDomainIds.add(oldDid)
+                  console.log(`[DEBUG] Edit: Added OLD domain ${oldDid} from modified node ${newNode.id}`)
+                }
+                if (newDid && newDid !== oldDid) {
+                  affectedDomainIds.add(newDid)
+                  console.log(`[DEBUG] Edit: Added NEW domain ${newDid} from modified node ${newNode.id}`)
+                }
+              }
+            }
+          })
+
+          // 2. Deleted Nodes
+          oldNodes.forEach((oldNode: any) => {
+            const newNode = newNodes.find((n: any) => n.id === oldNode.id)
+            if (!newNode) {
+              const did = normalizeDomainId(oldNode.data?.domainId)
+              if (did) {
+                affectedDomainIds.add(did)
+                console.log(`[DEBUG] Edit: Added domain ${did} from DELETED node ${oldNode.id}`)
+              }
+            }
+          })
+
+          // Note: We removed edge-based domain checks to allow connecting domain-less nodes 
+          // to domain-specific nodes without needing prerequisites for those domains, 
+          // as long as the domain-specific nodes themselves aren't being changed.
+        }
+      } catch (e) {
+        // Fallback: check all domains in content
+        console.error('[DEBUG] Permission check fallback triggered due to error:', e)
+        try {
+          const tree = JSON.parse(content)
+          if (Array.isArray(tree?.nodes)) {
+            tree.nodes.forEach((n: any) => {
+              const did = normalizeDomainId(n?.data?.domainId)
+              if (did) affectedDomainIds.add(did)
+            })
+          }
+        } catch {}
       }
 
-      // Check permission for each unique domain
-      const domainIdsArray = Array.from(affectedDomainIds).filter(Boolean)
-      for (const dId of domainIdsArray) {
-        if (!dId || dId === 'undefined' || dId === 'null') continue
+      // If requestedDomainId is provided, add it too
+      if (requestedDomainId) {
+        affectedDomainIds.add(requestedDomainId)
+        console.log(`[DEBUG] Added requestedDomainId: ${requestedDomainId}`)
+      }
 
+      // Check permission for each unique affected domain
+      const domainIdsArray = Array.from(affectedDomainIds)
+      
+      console.log('Final list of affected domains to check:', domainIdsArray)
+      
+      for (const dId of domainIdsArray) {
         const hasPermission = await canEditDomainDiagram(user.id, dId)
         if (!hasPermission) {
+          console.log(`Permission DENIED for domain: ${dId} for user: ${user.id}`)
           return NextResponse.json({ 
             error: `You do not have the required research prerequisites for domain: ${dId}`,
             code: 'INSUFFICIENT_PREREQUISITES',

@@ -426,10 +426,6 @@ export default function TreeDiagramEditor({
     async (e?: React.MouseEvent) => {
       if (readOnly || !nodeLabel.trim()) return
 
-      const parentDomainId = selectedNodeId ? ((nodes.find((n) => n.id === selectedNodeId)?.data as any)?.domainId ?? null) : null
-      const isAuthorized = await checkPermission(parentDomainId)
-      if (!isAuthorized) return
-
       if (e) {
         e.preventDefault()
         e.stopPropagation()
@@ -448,7 +444,7 @@ export default function TreeDiagramEditor({
           extraLinks: [],
           extraItems: [],
           relatedNodeIds: [],
-          domainId: selectedNodeId ? ((nodes.find((n) => n.id === selectedNodeId)?.data as any)?.domainId ?? null) : null,
+          domainId: null,
           _readOnly: readOnly,
         },
       }

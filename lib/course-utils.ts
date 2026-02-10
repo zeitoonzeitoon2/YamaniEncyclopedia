@@ -109,7 +109,8 @@ export async function canExamineCourse(userId: string, courseId: string): Promis
  * 3. The user has passed all 'APPROVED' research prerequisites for the domain.
  */
 export async function canEditDomainDiagram(userId: string, domainId: string | null): Promise<boolean> {
-  if (!domainId) return true // Nodes without a domain are editable by anyone (default behavior)
+  const normalizedId = domainId === null || domainId === undefined || String(domainId).trim() === '' || String(domainId).trim() === 'null' || String(domainId).trim() === 'undefined' ? null : String(domainId).trim()
+  if (!normalizedId) return true // Nodes without a domain are editable by anyone (default behavior)
   
   // 1. Check if user is an ADMIN
   const user = await prisma.user.findUnique({
@@ -117,9 +118,7 @@ export async function canEditDomainDiagram(userId: string, domainId: string | nu
     select: { role: true }
   })
   
-  // According to user request, even admins/experts must pass prerequisites to edit.
-  // If you want to allow ADMINs to bypass this, uncomment the next line:
-  // if (user?.role === 'ADMIN') return true
+  if (user?.role === 'ADMIN') return true
 
   // 2. Fetch research prerequisites for the domain
   const researchPrereqs = await prisma.domainPrerequisite.findMany({
