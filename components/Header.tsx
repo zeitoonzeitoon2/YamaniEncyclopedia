@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import React from 'react'
 import { Link, usePathname, useRouter } from '@/lib/navigation'
 import Image from 'next/image'
-import { User, LogOut, Edit, Settings, Sun, Moon, Languages } from 'lucide-react'
+import { User, LogOut, Edit, Settings, Sun, Moon, Languages, LogIn } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
 import { locales } from '@/i18n'
@@ -247,11 +247,18 @@ export function Header() {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-4">
-                <Link href="/auth/signin" className="text-site-text hover:text-warm-primary transition-colors">
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/auth/signin"
+                  className="px-4 py-1.5 text-sm font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all border border-transparent hover:border-site-border/50 flex items-center gap-2"
+                >
+                  <LogIn size={16} />
                   {t('signIn')}
                 </Link>
-                <Link href="/auth/signup" className="btn-primary">
+                <Link
+                  href="/auth/signup"
+                  className="px-5 py-1.5 text-sm font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm hover:shadow-md active:scale-95"
+                >
                   {t('signUp')}
                 </Link>
               </div>
