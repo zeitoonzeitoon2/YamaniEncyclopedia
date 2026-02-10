@@ -115,6 +115,8 @@ export async function POST(request: NextRequest) {
       // Check permission for each unique domain
       const domainIdsArray = Array.from(affectedDomainIds).filter(Boolean)
       for (const dId of domainIdsArray) {
+        if (!dId || dId === 'undefined' || dId === 'null') continue
+
         const hasPermission = await canEditDomainDiagram(user.id, dId)
         if (!hasPermission) {
           return NextResponse.json({ 
