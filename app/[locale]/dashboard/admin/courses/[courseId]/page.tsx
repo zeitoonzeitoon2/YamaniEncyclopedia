@@ -346,7 +346,21 @@ export default function AdminCourseChaptersPage() {
     
     try {
       setSaving(true)
-      const targetId = activeDraftId || (mode === 'edit' ? selectedId : null)
+      
+      // Determine if we need to create a new draft or update an existing one
+      let targetId = activeDraftId
+      let isNewDraftForApproved = false
+      
+      if (!targetId && mode === 'edit' && selectedChapter) {
+        if (selectedChapter.status === 'APPROVED') {
+          // Proposing a change to an approved chapter -> Create a new draft
+          isNewDraftForApproved = true
+        } else {
+          // Editing an existing non-approved chapter (PENDING/REJECTED)
+          targetId = selectedId
+        }
+      }
+
       const body: any = { 
         title, 
         content, 
@@ -354,7 +368,7 @@ export default function AdminCourseChaptersPage() {
         changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
       }
 
-      if (targetId) {
+      if (targetId && !isNewDraftForApproved) {
         const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -371,13 +385,17 @@ export default function AdminCourseChaptersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...body,
-            ...(form.originalChapterId ? { originalChapterId: form.originalChapterId } : {}),
+            originalChapterId: isNewDraftForApproved ? getRootId(selectedChapter!) : (form.originalChapterId || undefined),
           }),
         })
-        const payload = (await res.json().catch(() => ({}))) as { error?: string }
+        const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
         if (!res.ok) {
           toast.error(payload.error || t('toast.draftCreateError'))
           return
+        }
+        if (payload.chapter?.id) {
+          setActiveDraftId(payload.chapter.id)
+          setSelectedId(payload.chapter.id)
         }
       }
       await fetchChapters()

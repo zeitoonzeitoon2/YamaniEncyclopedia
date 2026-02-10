@@ -56,6 +56,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
         ...(content !== undefined ? { content } : {}),
         ...(orderIndex !== undefined ? { orderIndex } : {}),
         ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
+        status: 'PENDING', // Always reset to PENDING on edit
       },
       select: { id: true },
     })
