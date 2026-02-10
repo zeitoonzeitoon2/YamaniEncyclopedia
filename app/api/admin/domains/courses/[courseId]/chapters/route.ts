@@ -114,6 +114,33 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       select: { id: true },
     })
 
+    // If this is a revision, copy questions from the original chapter
+    if (originalId) {
+      const originalQuestions = await prisma.chapterQuestion.findMany({
+        where: { chapterId: originalId },
+        include: { options: true }
+      })
+
+      if (originalQuestions.length > 0) {
+        await prisma.$transaction(
+          originalQuestions.map(q => prisma.chapterQuestion.create({
+            data: {
+              chapterId: chapter.id,
+              question: q.question,
+              authorId: perm.userId, // The person creating the draft is now the author of these draft questions
+              status: 'PENDING',
+              options: {
+                create: q.options.map(opt => ({
+                  text: opt.text,
+                  isCorrect: opt.isCorrect
+                }))
+              }
+            }
+          }))
+        )
+      }
+    }
+
     return NextResponse.json({ chapter }, { status: 201 })
   } catch (error) {
     console.error('Error creating chapter draft:', error)

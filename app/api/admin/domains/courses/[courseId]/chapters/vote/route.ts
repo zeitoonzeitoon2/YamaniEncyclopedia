@@ -93,11 +93,23 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         data: { status: 'APPROVED', version: nextVersion },
         select: { id: true },
       })
+
+      // Also approve all questions associated with this chapter
+      await prisma.chapterQuestion.updateMany({
+        where: { chapterId },
+        data: { status: 'APPROVED' }
+      })
     } else if (nextStatus === 'REJECTED') {
       await prisma.courseChapter.update({
         where: { id: chapterId },
         data: { status: 'REJECTED' },
         select: { id: true },
+      })
+
+      // Also reject all questions associated with this chapter
+      await prisma.chapterQuestion.updateMany({
+        where: { chapterId },
+        data: { status: 'REJECTED' }
       })
     }
 

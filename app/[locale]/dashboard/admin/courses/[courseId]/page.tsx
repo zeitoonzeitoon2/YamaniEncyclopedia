@@ -433,6 +433,45 @@ export default function AdminCourseChaptersPage() {
     }
   }
 
+  const ensureDraftId = async () => {
+    if (activeDraftId) return activeDraftId
+    if (!selectedChapter) return null
+    if (selectedChapter.status !== 'APPROVED') return selectedId
+
+    // Create draft automatically
+    if (autoDraftingRef.current) return null
+    autoDraftingRef.current = true
+    try {
+      const rootId = getRootId(selectedChapter)
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title || selectedChapter.title,
+          content: form.content || selectedChapter.content,
+          orderIndex: form.orderIndex ?? selectedChapter.orderIndex,
+          originalChapterId: rootId,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
+      if (!res.ok) {
+        toast.error(payload.error || t('toast.draftCreateError'))
+        return null
+      }
+      if (payload.chapter?.id) {
+        setActiveDraftId(payload.chapter.id)
+        setSelectedId(payload.chapter.id)
+        await fetchChapters()
+        return payload.chapter.id
+      }
+    } catch (e: unknown) {
+      toast.error(t('toast.draftCreateError'))
+    } finally {
+      autoDraftingRef.current = false
+    }
+    return null
+  }
+
   const chapterLabel = (chapter: CourseChapter) => {
     if (chapter.status === 'APPROVED') return t('statusApproved')
     if (chapter.status === 'REJECTED') return t('statusRejected')
@@ -1051,14 +1090,18 @@ export default function AdminCourseChaptersPage() {
                           {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
                         </div>
                         <div className="max-h-[60vh] overflow-y-auto space-y-3 rounded-md bg-black/10 p-3">
-                          {chapterQuestions.filter(q => q.status === 'APPROVED').length > 0 ? (
+                          {chapterQuestions.length > 0 ? (
                             chapterQuestions
-                              .filter(q => q.status === 'APPROVED')
                               .map((q, idx) => (
                                 <div key={q.id} className="p-2 rounded border border-gray-700/50 bg-site-bg/30">
                                   <div className="text-xs font-bold text-site-text mb-1 flex items-center gap-2">
                                     <span className="bg-warm-primary/20 text-warm-accent w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
                                     {q.question}
+                                    {q.status !== 'APPROVED' && (
+                                      <span className="text-[8px] px-1 py-0.5 rounded bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">
+                                        {t('statusDraft')}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="grid grid-cols-2 gap-1 pl-7">
                                     {q.options.map((opt) => (
@@ -1077,14 +1120,18 @@ export default function AdminCourseChaptersPage() {
                     </div>
                   ) : (
                     <div className="max-h-[60vh] overflow-y-auto space-y-3 rounded-md bg-black/10 p-3">
-                      {chapterQuestions.filter(q => q.status === 'APPROVED').length > 0 ? (
+                      {chapterQuestions.length > 0 ? (
                         chapterQuestions
-                          .filter(q => q.status === 'APPROVED')
                           .map((q, idx) => (
                             <div key={q.id} className="p-3 rounded-lg border border-gray-700/50 bg-site-bg/30">
                               <div className="text-sm font-bold text-site-text mb-2 flex items-center gap-2">
                                 <span className="bg-warm-primary/20 text-warm-accent w-6 h-6 rounded-full flex items-center justify-center text-xs">{idx + 1}</span>
                                 {q.question}
+                                {q.status !== 'APPROVED' && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">
+                                    {t('statusDraft')}
+                                  </span>
+                                )}
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-8">
                                 {q.options.map((opt) => (
@@ -1213,6 +1260,7 @@ export default function AdminCourseChaptersPage() {
           chapterId={selectedId}
           questions={chapterQuestions}
           onRefresh={() => fetchQuestions(selectedId)}
+          onDraftNeeded={ensureDraftId}
         />
       )}
       <QuickArticleModal

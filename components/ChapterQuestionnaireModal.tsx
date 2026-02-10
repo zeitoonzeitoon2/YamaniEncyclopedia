@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/Modal'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
-import { FaPlus, FaTrash, FaCheck, FaTimes, FaThumbsUp, FaThumbsDown } from 'react-icons/fa'
+import { FaPlus, FaTrash } from 'react-icons/fa'
 
 type QuestionOption = {
   id?: string
@@ -28,6 +28,7 @@ interface ChapterQuestionnaireModalProps {
   chapterId: string
   questions: Question[]
   onRefresh: () => void
+  onDraftNeeded?: () => Promise<string | null>
 }
 
 export default function ChapterQuestionnaireModal({
@@ -36,7 +37,8 @@ export default function ChapterQuestionnaireModal({
   courseId,
   chapterId,
   questions,
-  onRefresh
+  onRefresh,
+  onDraftNeeded
 }: ChapterQuestionnaireModalProps) {
   const t = useTranslations('admin')
   const [isAdding, setIsAdding] = useState(false)
@@ -57,7 +59,14 @@ export default function ChapterQuestionnaireModal({
 
     try {
       setSubmitting(true)
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}/questions`, {
+      
+      let targetChapterId = chapterId
+      if (onDraftNeeded) {
+        const draftId = await onDraftNeeded()
+        if (draftId) targetChapterId = draftId
+      }
+
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetChapterId}/questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -88,50 +97,17 @@ export default function ChapterQuestionnaireModal({
     }
   }
 
-  const handleVote = async (questionId: string, vote: 'APPROVE' | 'REJECT') => {
-    try {
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}/questions/${questionId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vote })
-      })
-
-      if (res.ok) {
-        onRefresh()
-      } else {
-        const data = await res.json()
-        toast.error(data.error || 'خطا در ثبت رای')
-      }
-    } catch (error) {
-      toast.error('خطا در برقراری ارتباط با سرور')
-    }
-  }
-
-  const handleStatusChange = async (questionId: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      })
-
-      if (res.ok) {
-        onRefresh()
-        toast.success(status === 'APPROVED' ? 'سوال تایید شد' : 'سوال رد شد')
-      } else {
-        const data = await res.json()
-        toast.error(data.error || 'خطا در تغییر وضعیت')
-      }
-    } catch (error) {
-      toast.error('خطا در برقراری ارتباط با سرور')
-    }
-  }
-
   const handleDelete = async (questionId: string) => {
     if (!confirm('آیا از حذف این سوال مطمئن هستید؟')) return
 
     try {
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${chapterId}/questions/${questionId}`, {
+      let targetChapterId = chapterId
+      if (onDraftNeeded) {
+        const draftId = await onDraftNeeded()
+        if (draftId) targetChapterId = draftId
+      }
+
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetChapterId}/questions/${questionId}`, {
         method: 'DELETE'
       })
 
@@ -254,49 +230,13 @@ export default function ChapterQuestionnaireModal({
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-1 bg-site-bg rounded-lg border border-gray-800 p-1">
-                      <button
-                        onClick={() => handleVote(q.id, 'APPROVE')}
-                        className="p-1.5 hover:bg-green-600/20 rounded transition-colors text-green-500"
-                        title="موافقم"
-                      >
-                        <FaThumbsUp size={14} />
-                      </button>
-                      <span className="text-xs font-bold text-site-text px-1">
-                        {q.votes.filter(v => v.vote === 'APPROVE').length - q.votes.filter(v => v.vote === 'REJECT').length}
-                      </span>
-                      <button
-                        onClick={() => handleVote(q.id, 'REJECT')}
-                        className="p-1.5 hover:bg-red-600/20 rounded transition-colors text-red-500"
-                        title="مخالفم"
-                      >
-                        <FaThumbsDown size={14} />
-                      </button>
-                    </div>
-
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleStatusChange(q.id, 'APPROVED')}
-                        className="p-2 bg-green-600/20 text-green-500 hover:bg-green-600/30 rounded transition-colors"
-                        title="تایید نهایی"
-                      >
-                        <FaCheck size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(q.id, 'REJECTED')}
-                        className="p-2 bg-red-600/20 text-red-500 hover:bg-red-600/30 rounded transition-colors"
-                        title="رد نهایی"
-                      >
-                        <FaTimes size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(q.id)}
-                        className="p-2 bg-gray-800 text-gray-400 hover:bg-red-600/20 hover:text-red-500 rounded transition-colors"
-                        title="حذف"
-                      >
-                        <FaTrash size={12} />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleDelete(q.id)}
+                      className="p-2 bg-gray-800 text-gray-400 hover:bg-red-600/20 hover:text-red-500 rounded transition-colors"
+                      title="حذف"
+                    >
+                      <FaTrash size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
