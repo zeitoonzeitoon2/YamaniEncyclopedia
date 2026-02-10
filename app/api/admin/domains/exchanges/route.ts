@@ -84,9 +84,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')
 
-    const where = domainId 
-      ? { OR: [{ proposerDomainId: domainId }, { targetDomainId: domainId }] }
-      : {}
+    const where: any = { status: 'PENDING' }
+    if (domainId) {
+      where.OR = [{ proposerDomainId: domainId }, { targetDomainId: domainId }]
+    }
 
     const proposals = await prisma.domainExchangeProposal.findMany({
       where,

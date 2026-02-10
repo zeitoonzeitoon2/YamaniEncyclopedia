@@ -29,6 +29,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (proposal.status !== 'PENDING') {
+      // If it's already executed/approved/rejected, check if the user had already voted.
+      // If they did, just return success instead of an error to avoid confusion on slow UI updates.
+      const existingVote = await prisma.domainExchangeVote.findFirst({
+        where: { proposalId, voterId: session.user.id }
+      })
+      
+      if (existingVote) {
+        return NextResponse.json({ status: proposal.status, message: 'Vote already recorded' })
+      }
+      
       return NextResponse.json({ error: 'Proposal is no longer pending' }, { status: 400 })
     }
 

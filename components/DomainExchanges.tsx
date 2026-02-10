@@ -419,10 +419,10 @@ export default function DomainExchanges() {
                   {proposal.stats && (
                     <div className="bg-site-bg/50 px-6 py-2 border-t border-site-border/30 flex items-center justify-between text-[10px] uppercase tracking-widest font-bold text-site-muted">
                       <div className="flex items-center gap-4">
-                        <span className={proposal.stats.proposerVotes / proposal.stats.proposerExperts >= 0.5 ? 'text-green-500' : ''}>
+                        <span className={(proposal.stats.proposerVotes / Math.max(1, proposal.stats.proposerExperts)) >= 0.5 ? 'text-green-500 font-bold' : ''}>
                           {proposal.proposerDomain.name}: {proposal.stats.proposerVotes}/{proposal.stats.proposerExperts}
                         </span>
-                        <span className={proposal.stats.targetVotes / proposal.stats.targetExperts >= 0.5 ? 'text-green-500' : ''}>
+                        <span className={(proposal.stats.targetVotes / Math.max(1, proposal.stats.targetExperts)) >= 0.5 ? 'text-green-500 font-bold' : ''}>
                           {proposal.targetDomain.name}: {proposal.stats.targetVotes}/{proposal.stats.targetExperts}
                         </span>
                       </div>
