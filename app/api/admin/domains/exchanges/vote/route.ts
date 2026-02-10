@@ -51,7 +51,9 @@ export async function POST(req: NextRequest) {
       where: { userId: session.user.id, domainId: proposal.targetDomainId, role: { in: ['HEAD', 'EXPERT'] } }
     })
 
-    if (!proposerMembership && !targetMembership && session.user.role !== 'ADMIN') {
+    const isGlobalAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERVISOR'
+
+    if (!proposerMembership && !targetMembership && !isGlobalAdmin) {
       return NextResponse.json({ error: 'You are not an expert in either affected domain' }, { status: 403 })
     }
 
@@ -59,8 +61,8 @@ export async function POST(req: NextRequest) {
     // For simplicity, if they are in both, they vote for both or we require them to specify.
     // Let's assume they vote for all domains they are part of.
     const affectedDomains = []
-    if (proposerMembership || session.user.role === 'ADMIN') affectedDomains.push(proposal.proposerDomainId)
-    if (targetMembership || session.user.role === 'ADMIN') affectedDomains.push(proposal.targetDomainId)
+    if (proposerMembership || isGlobalAdmin) affectedDomains.push(proposal.proposerDomainId)
+    if (targetMembership || isGlobalAdmin) affectedDomains.push(proposal.targetDomainId)
 
     // Record votes
     for (const dId of affectedDomains) {
