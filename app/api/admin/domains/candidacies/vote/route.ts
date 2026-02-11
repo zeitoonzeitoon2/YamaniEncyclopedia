@@ -12,12 +12,8 @@ async function canVoteOnCandidacy(sessionUser: { id?: string; role?: string } | 
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
   if (role === 'ADMIN') return { ok: true as const, userId }
 
-  const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
-  if (!domain) return { ok: false as const, status: 404 as const, error: 'Domain not found' }
-  if (!domain.parentId) return { ok: false as const, status: 403 as const, error: 'Forbidden' }
-
-  // Check if user has any voting power in the parent domain
-  const weight = await calculateUserVotingWeight(userId, domain.parentId)
+  // Check if user has any voting power in the candidacy domain (Strategic mode for team selection)
+  const weight = await calculateUserVotingWeight(userId, domainId, 'STRATEGIC')
 
   return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
@@ -73,10 +69,11 @@ export async function POST(request: NextRequest) {
       select: { voterUserId: true, vote: true }
     })
 
-    // Calculate result using weights in the parent domain
+    // Calculate result using weights in the candidacy domain (Strategic mode)
     const { approvals, rejections } = await calculateVotingResult(
       allVotes.map(v => ({ voterId: v.voterUserId, vote: v.vote })),
-      candidacy.domain.parentId
+      candidacy.domainId,
+      'STRATEGIC'
     )
 
     const threshold = 50

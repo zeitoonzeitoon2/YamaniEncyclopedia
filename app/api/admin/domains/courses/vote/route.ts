@@ -12,8 +12,8 @@ async function canVoteOnCourse(user: { id?: string; role?: string } | undefined,
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
   if (role === 'ADMIN') return { ok: true as const, userId }
 
-  // Check if user has any voting power in this domain (direct or indirect)
-  const weight = await calculateUserVotingWeight(userId, domainId)
+  // Check if user has any voting power in this domain (direct only)
+  const weight = await calculateUserVotingWeight(userId, domainId, 'DIRECT')
   
   return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
       where: { courseId }
     })
 
-    // Calculate result using weights
-    const { approvals, rejections } = await calculateVotingResult(allVotes, course.domainId)
+    // Calculate result using weights (direct only)
+    const { approvals, rejections } = await calculateVotingResult(allVotes, course.domainId, 'DIRECT')
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
     const threshold = 50 // Majority threshold is 50%

@@ -16,8 +16,8 @@ export async function POST(
 
     const domainId = params.id
 
-    // Check if user has any voting power in this domain
-    const weight = await calculateUserVotingWeight(session.user.id, domainId)
+    // Check if user has any voting power in this domain (direct only)
+    const weight = await calculateUserVotingWeight(session.user.id, domainId, 'DIRECT')
     const isAdmin = session.user.role === 'ADMIN'
 
     if (weight === 0 && !isAdmin) {
@@ -50,8 +50,8 @@ export async function POST(
       where: { prerequisiteId }
     })
 
-    // Calculate result using weights
-    const { approvals, rejections } = await calculateVotingResult(allVotes, domainId)
+    // Calculate result using weights (direct only)
+    const { approvals, rejections } = await calculateVotingResult(allVotes, domainId, 'DIRECT')
 
     const threshold = 50
     if (approvals > threshold || isAdmin) {

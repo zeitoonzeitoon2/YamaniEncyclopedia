@@ -42,8 +42,8 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       return NextResponse.json({ error: 'Chapter draft is closed' }, { status: 409 })
     }
 
-    // Check if user has any voting power in the course domain
-    const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId)
+    // Check if user has any voting power in the course domain (direct only)
+    const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId, 'DIRECT')
     const isAdmin = session.user.role === 'ADMIN'
 
     if (weight === 0 && !isAdmin) {
@@ -61,10 +61,11 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       where: { chapterId }
     })
 
-    // Calculate result using weights
+    // Calculate result using weights (direct only)
     const { approvals, rejections } = await calculateVotingResult(
       allVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
-      chapter.course.domainId
+      chapter.course.domainId,
+      'DIRECT'
     )
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'

@@ -24,8 +24,8 @@ export async function POST(
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
-    // Check if user has any voting power in the course domain
-    const weight = await calculateUserVotingWeight(session.user.id, course.domainId)
+    // Check if user has any voting power in the course domain (direct only)
+    const weight = await calculateUserVotingWeight(session.user.id, course.domainId, 'DIRECT')
     const isAdmin = session.user.role === 'ADMIN'
 
     if (weight === 0 && !isAdmin) {
@@ -70,10 +70,11 @@ export async function POST(
       where: { prerequisiteId }
     })
 
-    // Calculate result using weights
+    // Calculate result using weights (direct only)
     const { approvals, rejections } = await calculateVotingResult(
       allVotes.map(v => ({ voterId: v.voterId, vote: v.vote })),
-      course.domainId
+      course.domainId,
+      'DIRECT'
     )
 
     const threshold = 50
