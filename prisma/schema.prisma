@@ -47,6 +47,7 @@ model DomainExpert {
   domainId  String
   domain    Domain   @relation(fields: [domainId], references: [id])
   role      String   @default("EXPERT")
+  wing      String   @default("RIGHT") // RIGHT or LEFT
   createdAt DateTime @default(now())
 
   @@unique([userId, domainId])
@@ -63,6 +64,7 @@ model ExpertCandidacy {
   proposerUserId   String
   proposerUser     User           @relation("ExpertCandidacyProposer", fields: [proposerUserId], references: [id])
   role             String         @default("EXPERT")
+  wing             String         @default("RIGHT") // RIGHT or LEFT
   status           String         @default("PENDING")
   votes            CandidacyVote[]
   createdAt        DateTime       @default(now())

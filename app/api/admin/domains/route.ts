@@ -169,11 +169,13 @@ export async function POST(request: NextRequest) {
         select: { id: true, name: true, slug: true, parentId: true },
       })
 
-      // Initialize voting shares: the domain owns 100% of itself
+      // Initialize voting shares: 
+      // If has parent, parent owns 100% of child. 
+      // Otherwise (root), the domain owns 100% of itself.
       await tx.domainVotingShare.create({
         data: {
           domainId: domain.id,
-          ownerDomainId: domain.id,
+          ownerDomainId: parentId || domain.id,
           percentage: 100,
         },
       })

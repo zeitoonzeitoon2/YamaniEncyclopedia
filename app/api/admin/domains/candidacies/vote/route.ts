@@ -6,14 +6,14 @@ import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-u
 
 const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
 
-async function canVoteOnCandidacy(sessionUser: { id?: string; role?: string } | undefined, domainId: string) {
+async function canVoteOnCandidacy(sessionUser: { id?: string; role?: string } | undefined, domainId: string, targetWing: string) {
   const userId = (sessionUser?.id || '').trim()
   const role = (sessionUser?.role || '').trim()
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
   if (role === 'ADMIN') return { ok: true as const, userId }
 
-  // Check if user has any voting power in the candidacy domain (Strategic mode for team selection)
-  const weight = await calculateUserVotingWeight(userId, domainId, 'STRATEGIC')
+  // Check if user has any voting power in the candidacy domain using the new CANDIDACY mode
+  const weight = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing })
 
   return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
 }
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
         domainId: true,
         candidateUserId: true,
         role: true,
+        wing: true,
         status: true,
         domain: { select: { parentId: true } },
       },
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Candidacy is closed' }, { status: 409 })
     }
 
-    const perm = await canVoteOnCandidacy(session?.user, candidacy.domainId)
+    const perm = await canVoteOnCandidacy(session?.user, candidacy.domainId, candidacy.wing)
     if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
 
     const voterUserId = perm.userId
@@ -59,21 +60,18 @@ export async function POST(request: NextRequest) {
       create: { candidacyId, voterUserId, vote },
     })
 
-    if (!candidacy.domain.parentId) {
-      return NextResponse.json({ error: 'Parent domain not found' }, { status: 400 })
-    }
-
     // Get all votes for this candidacy
     const allVotes = await prisma.candidacyVote.findMany({
       where: { candidacyId },
       select: { voterUserId: true, vote: true }
     })
 
-    // Calculate result using weights in the candidacy domain (Strategic mode)
+    // Calculate result using weights in the candidacy domain (CANDIDACY mode)
     const { approvals, rejections } = await calculateVotingResult(
       allVotes.map(v => ({ voterId: v.voterUserId, vote: v.vote })),
       candidacy.domainId,
-      'STRATEGIC'
+      'CANDIDACY',
+      { targetWing: candidacy.wing }
     )
 
     const threshold = 50
@@ -85,8 +83,8 @@ export async function POST(request: NextRequest) {
       await prisma.$transaction([
         prisma.domainExpert.upsert({
           where: { userId_domainId: { userId: candidacy.candidateUserId, domainId: candidacy.domainId } },
-          update: { role: candidacy.role },
-          create: { userId: candidacy.candidateUserId, domainId: candidacy.domainId, role: candidacy.role },
+          update: { role: candidacy.role, wing: candidacy.wing },
+          create: { userId: candidacy.candidateUserId, domainId: candidacy.domainId, role: candidacy.role, wing: candidacy.wing },
           select: { id: true },
         }),
         prisma.expertCandidacy.update({

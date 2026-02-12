@@ -10,27 +10,32 @@ async function hasAnyDomainExpertMembership(userId: string) {
   return !!m
 }
 
-async function canManageChildDomainByParentExpert(userId: string, domainId: string) {
-  const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { id: true, parentId: true } })
-  if (!domain) return { ok: false as const, status: 404 as const, error: 'Domain not found' }
+async function canProposeCandidacy(userId: string, domainId: string, targetWing: string) {
+  if (targetWing === 'RIGHT') {
+    // Proposer must be an expert in the parent domain (either wing)
+    const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
+    if (!domain?.parentId) return { ok: false as const, status: 403 as const, error: 'No parent domain to appoint right wing' }
 
-  // Check if user is an expert in any ancestor domain
-  let currentParentId = domain.parentId
-  while (currentParentId) {
     const membership = await prisma.domainExpert.findFirst({
-      where: { userId, domainId: currentParentId, role: { in: ['HEAD', 'EXPERT'] } },
-      select: { id: true },
+      where: { userId, domainId: domain.parentId },
+      select: { id: true }
     })
-    if (membership) return { ok: true as const, domain }
-
-    const parentDomain = await prisma.domain.findUnique({
-      where: { id: currentParentId },
-      select: { parentId: true },
+    if (membership) return { ok: true as const }
+  } else {
+    // targetWing === 'LEFT'
+    // Proposer must be a RIGHT wing expert in any child domain
+    const membership = await prisma.domainExpert.findFirst({
+      where: { 
+        userId, 
+        wing: 'RIGHT',
+        domain: { parentId: domainId }
+      },
+      select: { id: true }
     })
-    currentParentId = parentDomain?.parentId || null
+    if (membership) return { ok: true as const }
   }
 
-  return { ok: false as const, status: 403 as const, error: 'Forbidden' }
+  return { ok: false as const, status: 403 as const, error: 'You are not authorized to propose for this wing' }
 }
 
 export async function GET(request: NextRequest) {
@@ -58,10 +63,12 @@ export async function GET(request: NextRequest) {
         candidateUserId: true,
         proposerUserId: true,
         role: true,
+        wing: true,
         status: true,
         createdAt: true,
-        candidateUser: { select: { id: true, name: true, email: true, role: true } },
-        proposerUser: { select: { id: true, name: true, email: true, role: true } },
+        domain: { select: { name: true } },
+        candidateUser: { select: { name: true, email: true } },
+        proposerUser: { select: { name: true, email: true } },
         votes: { select: { voterUserId: true, vote: true } },
       },
     })
@@ -85,6 +92,8 @@ export async function POST(request: NextRequest) {
     const candidateUserId = typeof body.candidateUserId === 'string' ? body.candidateUserId.trim() : ''
     const requestedRole = typeof body.role === 'string' ? body.role.trim() : ''
     const roleValue = requestedRole || 'EXPERT'
+    const requestedWing = typeof body.wing === 'string' ? body.wing.trim() : ''
+    const wingValue = requestedWing || 'RIGHT'
 
     if (!domainId || !candidateUserId) {
       return NextResponse.json({ error: 'domainId and candidateUserId are required' }, { status: 400 })
@@ -92,9 +101,12 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_ROLES.has(roleValue)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
+    if (!['RIGHT', 'LEFT'].includes(wingValue)) {
+      return NextResponse.json({ error: 'Invalid wing' }, { status: 400 })
+    }
 
     if (role !== 'ADMIN') {
-      const perm = await canManageChildDomainByParentExpert(userId, domainId)
+      const perm = await canProposeCandidacy(userId, domainId, wingValue)
       if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
     } else {
       const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
@@ -119,14 +131,15 @@ export async function POST(request: NextRequest) {
 
     const candidacy = await prisma.expertCandidacy.upsert({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },
-      update: { proposerUserId: userId, status: 'PENDING', role: roleValue },
-      create: { domainId, candidateUserId, proposerUserId: userId, status: 'PENDING', role: roleValue },
+      update: { proposerUserId: userId, status: 'PENDING', role: roleValue, wing: wingValue },
+      create: { domainId, candidateUserId, proposerUserId: userId, status: 'PENDING', role: roleValue, wing: wingValue },
       select: {
         id: true,
         domainId: true,
         candidateUserId: true,
         proposerUserId: true,
         role: true,
+        wing: true,
         status: true,
         createdAt: true,
         candidateUser: { select: { id: true, name: true, email: true, role: true } },
