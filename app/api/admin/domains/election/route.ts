@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({ activeRound })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching active round:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -68,9 +68,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true, round: newRound })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error starting election round:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -142,8 +142,8 @@ export async function PATCH(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finalizing election round:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
