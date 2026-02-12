@@ -1078,7 +1078,7 @@ export default function TreeDiagramEditor({
                 value={String(((selectedNode?.data as any)?.domainId || '') as any)}
                 disabled={
                   readOnly ||
-                  !(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERVISOR' || isCreatePage)
+                  !(session?.user?.role === 'ADMIN' || session?.user?.role === 'EXPERT' || isCreatePage)
                 }
                 onChange={(e) => {
                   const v = e.target.value

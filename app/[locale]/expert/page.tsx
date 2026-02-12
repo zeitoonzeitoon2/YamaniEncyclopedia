@@ -71,10 +71,10 @@ interface RecentComment {
   }
 }
 
-export default function SupervisorDashboard() {
+export default function ExpertDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const t = useTranslations('supervisor')
+  const t = useTranslations('expert')
   const tArg = useTranslations('argumentation')
   const tPost = useTranslations('postCard')
   const locale = useLocale()
@@ -87,15 +87,15 @@ export default function SupervisorDashboard() {
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isDomainExpert, setIsDomainExpert] = useState(false)
-  const isSupervisorRole = session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN'
-  const isVoter = isSupervisorRole || isDomainExpert
+  const isExpertRole = session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN'
+  const isVoter = isExpertRole || isDomainExpert
   const isEditor = !isVoter && (session?.user?.role === 'EDITOR' || session?.user?.role === 'USER')
   
-  console.log('SupervisorDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
+  console.log('ExpertDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
   
   // Debug: Add visual indicator
   useEffect(() => {
-    console.log('SupervisorDashboard mounted, posts:', posts.length)
+    console.log('ExpertDashboard mounted, posts:', posts.length)
   }, [posts])
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function SupervisorDashboard() {
     })()
   }, [status])
   const [isPostsListCollapsed, setIsPostsListCollapsed] = useState(false)
-  const [adminStats, setAdminStats] = useState<{supervisorCount: number; adminCount: number; combinedCount: number; threshold: number; participationThreshold: number} | null>(null)
+  const [adminStats, setAdminStats] = useState<{expertCount: number; adminCount: number; combinedCount: number; threshold: number; participationThreshold: number} | null>(null)
   const [currentUserVote, setCurrentUserVote] = useState<number | undefined>(undefined)
   const [comparisonStats, setComparisonStats] = useState<{
     nodes: { added: number; removed: number; unchanged: number; total: number }
@@ -158,16 +158,16 @@ export default function SupervisorDashboard() {
     fetchResearcherDetail(id)
   }, [fetchResearcherDetail])
   
-  const supervisorParticipation = useMemo(() => {
+  const expertParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
     return selectedPost.votes.filter(v => {
       const role = (v as any)?.admin?.role
-      return role === 'SUPERVISOR' || role === 'ADMIN'
+      return role === 'EXPERT' || role === 'ADMIN'
     }).length
   }, [selectedPost])
 
   const getRoleLabel = (role: string) => {
-    if (role === 'SUPERVISOR') return t('roles.supervisor')
+    if (role === 'EXPERT') return t('roles.expert')
     if (role === 'EDITOR') return t('roles.editor')
     if (role === 'ADMIN') return t('roles.admin')
     if (role === 'USER') return t('roles.user')
@@ -240,7 +240,7 @@ export default function SupervisorDashboard() {
 
   const fetchRelatedComments = useCallback(async () => {
     try {
-      const res = await fetch('/api/supervisor/comments/related', { credentials: 'include' })
+      const res = await fetch('/api/expert/comments/related', { credentials: 'include' })
       if (res.ok) {
         const data: RecentComment[] = await res.json()
         setRelatedComments(data)
@@ -339,7 +339,7 @@ export default function SupervisorDashboard() {
 
   const fetchPostDetails = useCallback(async (postId: string) => {
     try {
-      const res = await fetch(`/api/supervisor/posts/${postId}`, { credentials: 'include' })
+      const res = await fetch(`/api/expert/posts/${postId}`, { credentials: 'include' })
       if (!res.ok) {
         console.error('Failed to fetch post details:', res.status, await res.text())
         toast.error(t('toast.loadError'))
@@ -462,7 +462,7 @@ export default function SupervisorDashboard() {
           toast.error(t('toast.loadError'))
         }
       } else {
-        const url = new URL('/api/supervisor/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+        const url = new URL('/api/expert/posts', typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
         url.searchParams.set('page', String(page))
         url.searchParams.set('pageSize', String(pageSize))
         if (filter === 'user-search' && userQuery.trim()) {
@@ -479,9 +479,9 @@ export default function SupervisorDashboard() {
         }
       }
 
-      // Get supervisor stats for the supervisor only
-      if (isSupervisorRole) {
-        const statsResponse = await fetch('/api/supervisor/stats', { credentials: 'include' })
+      // Get expert stats for the expert only
+      if (isExpertRole) {
+        const statsResponse = await fetch('/api/expert/stats', { credentials: 'include' })
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
           setAdminStats(statsData)
@@ -549,7 +549,7 @@ export default function SupervisorDashboard() {
   }, [status, pageSize, filter])
 
   useEffect(() => {
-    if (status === 'authenticated' && filter === 'researchers' && selectedResearcherId) {
+    if (status === 'authenticated' && (filter === 'researchers' || filter === 'user-search') && (selectedResearcherId || userQuery.trim())) {
       const ac = new AbortController()
       setPage(1)
       setPosts([])
@@ -594,7 +594,7 @@ export default function SupervisorDashboard() {
 
   const handleVote = async (postId: string, score: number) => {
     try {
-      const response = await fetch('/api/supervisor/vote', {
+      const response = await fetch('/api/expert/vote', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -607,7 +607,7 @@ export default function SupervisorDashboard() {
         setCurrentUserVote(score)
         
         // Check for automatic publishing
-        const autoPublishResponse = await fetch('/api/supervisor/auto-publish', {
+        const autoPublishResponse = await fetch('/api/expert/auto-publish', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -655,7 +655,7 @@ export default function SupervisorDashboard() {
       
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">
-          {isEditor ? t('title.editor') : t('title.supervisor')}
+          {isEditor ? t('title.editor') : t('title.expert')}
         </h1>
 
         {reviewableNoticePost && (
@@ -1075,7 +1075,7 @@ export default function SupervisorDashboard() {
                   )}
                   
                   <div className="flex justify-between items-center text-sm text-site-muted">
-                    {isSupervisorRole && adminStats ? (
+                    {isExpertRole && adminStats ? (
                       <div className="flex items-center gap-4">
                         <span>{t('details.scoreThreshold', { value: adminStats.threshold })}</span>
                         <span>{t('details.participationThreshold', { value: adminStats.participationThreshold })}</span>
@@ -1092,7 +1092,7 @@ export default function SupervisorDashboard() {
                           {selectedPost.totalScore || 0}
                         </span>
                       </span>
-                      <span>{t('details.participantsLabel', { value: supervisorParticipation })}</span>
+                      <span>{t('details.participantsLabel', { value: expertParticipation })}</span>
                     </div>
                   </div>
                 </div>

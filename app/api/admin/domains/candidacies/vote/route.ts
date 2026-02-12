@@ -23,13 +23,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const candidacyId = typeof body.candidacyId === 'string' ? body.candidacyId.trim() : ''
-    const vote = typeof body.vote === 'string' ? body.vote.trim() : ''
+    const score = typeof body.score === 'number' ? body.score : 0
 
-    if (!candidacyId || !vote) {
-      return NextResponse.json({ error: 'candidacyId and vote are required' }, { status: 400 })
-    }
-    if (!ALLOWED_VOTES.has(vote)) {
-      return NextResponse.json({ error: 'Invalid vote' }, { status: 400 })
+    if (!candidacyId || score < 1 || score > 3) {
+      return NextResponse.json({ error: 'candidacyId and score (1-3) are required' }, { status: 400 })
     }
 
     const candidacy = await prisma.expertCandidacy.findUnique({
@@ -41,12 +38,13 @@ export async function POST(request: NextRequest) {
         role: true,
         wing: true,
         status: true,
-        domain: { select: { parentId: true } },
+        roundId: true,
+        round: { select: { status: true, endDate: true } }
       },
     })
     if (!candidacy) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    if (candidacy.status !== 'PENDING') {
-      return NextResponse.json({ error: 'Candidacy is closed' }, { status: 409 })
+    if (candidacy.status !== 'PENDING' || candidacy.round?.status !== 'ACTIVE') {
+      return NextResponse.json({ error: 'Election round is closed' }, { status: 409 })
     }
 
     const perm = await canVoteOnCandidacy(session?.user, candidacy.domainId, candidacy.wing)
@@ -54,57 +52,34 @@ export async function POST(request: NextRequest) {
 
     const voterUserId = perm.userId
 
-    await prisma.candidacyVote.upsert({
-      where: { candidacyId_voterUserId: { candidacyId, voterUserId } },
-      update: { vote },
-      create: { candidacyId, voterUserId, vote },
-    })
-
-    // Get all votes for this candidacy
-    const allVotes = await prisma.candidacyVote.findMany({
-      where: { candidacyId },
-      select: { voterUserId: true, vote: true }
-    })
-
-    // Calculate result using weights in the candidacy domain (CANDIDACY mode)
-    const { approvals, rejections } = await calculateVotingResult(
-      allVotes.map(v => ({ voterId: v.voterUserId, vote: v.vote })),
-      candidacy.domainId,
-      'CANDIDACY',
-      { targetWing: candidacy.wing }
-    )
-
-    const threshold = 50
-    let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    if (approvals > threshold) nextStatus = 'APPROVED'
-    else if (rejections >= threshold) nextStatus = 'REJECTED'
-
-    if (nextStatus === 'APPROVED') {
-      await prisma.$transaction([
-        prisma.domainExpert.upsert({
-          where: { userId_domainId: { userId: candidacy.candidateUserId, domainId: candidacy.domainId } },
-          update: { role: candidacy.role, wing: candidacy.wing },
-          create: { userId: candidacy.candidateUserId, domainId: candidacy.domainId, role: candidacy.role, wing: candidacy.wing },
-          select: { id: true },
-        }),
-        prisma.expertCandidacy.update({
-          where: { id: candidacyId },
-          data: { status: 'APPROVED' },
-          select: { id: true },
-        }),
-      ])
-    } else if (nextStatus === 'REJECTED') {
-      await prisma.expertCandidacy.update({
-        where: { id: candidacyId },
-        data: { status: 'REJECTED' },
-        select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      // 1. Get old score if any
+      const existingVote = await tx.candidacyVote.findUnique({
+        where: { candidacyId_voterUserId: { candidacyId, voterUserId } }
       })
-    }
+      const oldScore = existingVote?.score || 0
+
+      // 2. Upsert vote
+      await tx.candidacyVote.upsert({
+        where: { candidacyId_voterUserId: { candidacyId, voterUserId } },
+        update: { score },
+        create: { candidacyId, voterUserId, score, vote: 'APPROVE' },
+      })
+
+      // 3. Update totalScore in candidacy
+      await tx.expertCandidacy.update({
+        where: { id: candidacyId },
+        data: {
+          totalScore: {
+            increment: score - oldScore
+          }
+        }
+      })
+    })
 
     return NextResponse.json({
       success: true,
-      status: nextStatus,
-      counts: { approvals, rejections, threshold },
+      newScore: score
     })
   } catch (error) {
     console.error('Error voting candidacy:', error)

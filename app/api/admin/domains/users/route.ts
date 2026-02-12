@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPERVISOR') {
+    if (session.user?.role !== 'ADMIN' && session.user?.role !== 'EXPERT') {
       const userId = (session.user?.id || '').trim()
       if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       const membership = await prisma.domainExpert.findFirst({

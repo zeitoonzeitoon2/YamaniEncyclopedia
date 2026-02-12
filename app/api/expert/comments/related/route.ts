@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(relatedComments)
   } catch (error) {
-    console.error('Error fetching related comments for supervisor:', error)
+    console.error('Error fetching related comments for expert:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

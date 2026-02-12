@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const isSupervisor = me.role === 'SUPERVISOR' || me.role === 'ADMIN'
-    if (!isSupervisor) {
+    const isExpert = me.role === 'EXPERT' || me.role === 'ADMIN'
+    if (!isExpert) {
       if (!post.domainId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     const [superUsers, experts] = await Promise.all([
       prisma.user.findMany({
-        where: { role: { in: ['ADMIN', 'SUPERVISOR'] } },
+        where: { role: { in: ['ADMIN', 'EXPERT'] } },
         select: { id: true },
       }),
       post.domainId

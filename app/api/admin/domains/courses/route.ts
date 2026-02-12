@@ -7,7 +7,7 @@ async function canManageDomainCourses(user: { id?: string; role?: string } | und
   const userId = (user?.id || '').trim()
   const role = (user?.role || '').trim()
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
-  if (role === 'ADMIN' || role === 'SUPERVISOR') return { ok: true as const }
+  if (role === 'ADMIN' || role === 'EXPERT') return { ok: true as const }
 
   // Check if user is an expert in this domain OR any of its ancestors
   // For now, check this domain first
@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id
     const role = session.user.role
 
-    // For GET (viewing), be more lenient: allow if ADMIN, SUPERVISOR, or expert in ANY domain
-    let canView = role === 'ADMIN' || role === 'SUPERVISOR'
+    // For GET (viewing), be more lenient: allow if ADMIN, EXPERT, or expert in ANY domain
+    let canView = role === 'ADMIN' || role === 'EXPERT'
     if (!canView) {
       const anyMembership = await prisma.domainExpert.findFirst({
         where: { userId },

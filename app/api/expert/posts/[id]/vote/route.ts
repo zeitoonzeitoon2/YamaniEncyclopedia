@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { id: session.user.id }
     })
 
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
@@ -80,7 +80,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: session.user.id }
     })
 
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 

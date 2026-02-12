@@ -50,7 +50,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
     
     setIsVoting(true)
     try {
-      const response = await fetch(`/api/supervisor/posts/${post.id}/vote`, {
+      const response = await fetch(`/api/expert/posts/${post.id}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
       {/* Voting system */}
       {currentAdminId && !votingFinalized && (
         <div className="mb-6 p-4 bg-site-card rounded-lg">
-          <h4 className="text-site-text font-medium mb-3">{t('supervisorVote')}</h4>
+          <h4 className="text-site-text font-medium mb-3">{t('expertVote')}</h4>
           <div className="flex items-center gap-2 mb-3">
             {[-2, -1, 0, 1, 2].map((score) => (
               <button

@@ -5,7 +5,7 @@ files = [
     r"app\dashboard\admin\UserManagement.tsx",
     r"app\dashboard\admin\page.tsx",
     r"app\dashboard\admin\domains\page.tsx",
-    r"app\supervisor\page.tsx",
+    r"app\expert\page.tsx",
     r"app\articles\new\page.tsx",
     r"components\QuickArticleModal.tsx",
     r"app\articles\[slug]\page.tsx",

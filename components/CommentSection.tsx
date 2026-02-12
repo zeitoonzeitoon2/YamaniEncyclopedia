@@ -36,8 +36,8 @@ const getRoleBadge = (role: string, t: any) => {
   switch (role) {
     case 'ADMIN':
       return <span className="px-2 py-1 text-xs bg-red-600 text-white rounded">{t('roles.ADMIN')}</span>
-    case 'SUPERVISOR':
-      return <span className="px-2 py-1 text-xs bg-amber-600 text-white rounded">{t('roles.SUPERVISOR')}</span>
+    case 'EXPERT':
+      return <span className="px-2 py-1 text-xs bg-amber-600 text-white rounded">{t('roles.EXPERT')}</span>
     case 'EDITOR':
       return <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{t('roles.EDITOR')}</span>
     case 'USER':
@@ -77,8 +77,8 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
 
   // All logged-in users are allowed to post comments
   const canComment = !!session?.user
-  const canCreatePoll = (session?.user?.role === 'USER' || session?.user?.role === 'EDITOR' || session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
-  const canVotePoll = (session?.user?.role === 'SUPERVISOR' || session?.user?.role === 'ADMIN')
+  const canCreatePoll = (session?.user?.role === 'USER' || session?.user?.role === 'EDITOR' || session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN')
+  const canVotePoll = (session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN')
 
   // Load comments
   const loadComments = useCallback(async () => {

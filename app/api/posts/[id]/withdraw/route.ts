@@ -36,16 +36,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Only pending posts can be withdrawn' }, { status: 400 })
     }
 
-    const [adminCount, supervisorCount] = await Promise.all([
+    const [adminCount, expertCount] = await Promise.all([
       prisma.user.count({ where: { role: 'ADMIN' } }),
-      prisma.user.count({ where: { role: 'SUPERVISOR' } }),
+      prisma.user.count({ where: { role: 'EXPERT' } }),
     ])
-    const threshold = Math.ceil((supervisorCount + adminCount) / 2)
-    const participationThreshold = Math.ceil((supervisorCount + adminCount) / 2)
+    const threshold = Math.ceil((expertCount + adminCount) / 2)
+    const participationThreshold = Math.ceil((expertCount + adminCount) / 2)
 
     const totalScore = post.votes.reduce((sum, v) => sum + v.score, 0)
     const participationCount = await prisma.vote.count({
-      where: { postId: post.id, admin: { role: { in: ['SUPERVISOR', 'ADMIN'] } } },
+      where: { postId: post.id, admin: { role: { in: ['EXPERT', 'ADMIN'] } } },
     })
 
     if (participationCount >= participationThreshold || Math.abs(totalScore) >= threshold) {

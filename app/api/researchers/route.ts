@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const users = await prisma.user.findMany({
       where: {
-        role: { in: ['EDITOR', 'SUPERVISOR', 'ADMIN'] },
+        role: { in: ['EDITOR', 'EXPERT', 'ADMIN'] },
         ...(q
           ? {
               OR: [

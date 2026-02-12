@@ -16,8 +16,8 @@ export async function GET(
     const userId = session.user.id
     const role = session.user.role
 
-    // For GET (viewing), allow if ADMIN, SUPERVISOR, or expert in ANY domain
-    let canView = role === 'ADMIN' || role === 'SUPERVISOR'
+    // For GET (viewing), allow if ADMIN, EXPERT, or expert in ANY domain
+    let canView = role === 'ADMIN' || role === 'EXPERT'
     if (!canView) {
       const anyMembership = await prisma.domainExpert.findFirst({
         where: { userId },
@@ -63,13 +63,13 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is expert in this domain (or ancestors) or admin/supervisor
+    // Check if user is expert in this domain (or ancestors) or admin/expert
     const userId = session.user.id
     const role = session.user.role
     const isAdmin = role === 'ADMIN'
-    const isSupervisor = role === 'SUPERVISOR'
+    const isExpertUser = role === 'EXPERT'
 
-    let isAuthorized = isAdmin || isSupervisor
+    let isAuthorized = isAdmin || isExpertUser
 
     if (!isAuthorized) {
       // Check if user is expert in this domain
@@ -102,7 +102,7 @@ export async function POST(
     }
 
     if (!isAuthorized) {
-      return NextResponse.json({ error: 'Only domain experts or supervisors can propose research prerequisites' }, { status: 403 })
+      return NextResponse.json({ error: 'Only domain experts or global experts can propose research prerequisites' }, { status: 403 })
     }
 
     const { courseId } = await request.json()

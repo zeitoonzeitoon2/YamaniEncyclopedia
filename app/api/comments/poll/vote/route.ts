@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const me = await prisma.user.findUnique({ where: { id: session.user.id } })
-    if (!me || !['SUPERVISOR','ADMIN'].includes(me.role)) {
-      return NextResponse.json({ error: 'Only supervisors can vote' }, { status: 403 })
+    if (!me || !['EXPERT','ADMIN'].includes(me.role)) {
+      return NextResponse.json({ error: 'Only experts can vote' }, { status: 403 })
     }
 
     const body = await request.json()

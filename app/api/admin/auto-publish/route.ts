@@ -20,12 +20,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 })
     }
 
-    // دریافت تعداد ادمین‌ها و ناظرها برای حد نصاب ترکیبی
-    const [adminCount, supervisorCount, superUsers] = await Promise.all([
+    // دریافت تعداد ادمین‌ها و کارشناسان برای حد نصاب ترکیبی
+    const [adminCount, expertCount, superUsers] = await Promise.all([
       prisma.user.count({ where: { role: 'ADMIN' } }),
-      prisma.user.count({ where: { role: 'SUPERVISOR' } }),
+      prisma.user.count({ where: { role: 'EXPERT' } }),
       prisma.user.findMany({
-        where: { role: { in: ['ADMIN', 'SUPERVISOR'] } },
+        where: { role: { in: ['ADMIN', 'EXPERT'] } },
         select: { id: true },
       })
     ])
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
       participationThreshold = 50
 
       for (const v of post.votes) {
-        // Only count votes from admins/supervisors OR experts in that domain
-        // For simplicity and alignment with supervisor route, let's fetch experts too
+        // Only count votes from admins/experts OR experts in that domain
+        // For simplicity and alignment with expert route, let's fetch experts too
         const experts = await prisma.domainExpert.findMany({
           where: { domainId: post.domainId },
           select: { userId: true }
@@ -72,10 +72,10 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      threshold = Math.ceil((adminCount + supervisorCount) / 2)
+      threshold = Math.ceil((adminCount + expertCount) / 2)
       participationThreshold = threshold
       totalScore = post.votes.reduce((sum, vote) => sum + vote.score, 0)
-      participationCount = await prisma.vote.count({ where: { postId, admin: { role: { in: ['SUPERVISOR', 'ADMIN'] } } } })
+      participationCount = await prisma.vote.count({ where: { postId, admin: { role: { in: ['EXPERT', 'ADMIN'] } } } })
     }
 
     // بررسی رسیدن به حد نصاب مشارکت

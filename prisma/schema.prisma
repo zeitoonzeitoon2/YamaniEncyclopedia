@@ -24,6 +24,7 @@ model Domain {
 
   experts     DomainExpert[]
   expertCandidacies ExpertCandidacy[]
+  electionRounds    ElectionRound[]
   courses     Course[]
   domainRequirements DomainRequirement[]
   researchPrerequisites DomainPrerequisite[]
@@ -67,6 +68,9 @@ model ExpertCandidacy {
   wing             String         @default("RIGHT") // RIGHT or LEFT
   status           String         @default("PENDING")
   votes            CandidacyVote[]
+  roundId          String?
+  round            ElectionRound? @relation(fields: [roundId], references: [id])
+  totalScore       Int            @default(0)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -74,6 +78,21 @@ model ExpertCandidacy {
   @@index([domainId])
   @@index([candidateUserId])
   @@index([proposerUserId])
+  @@index([roundId])
+}
+
+model ElectionRound {
+  id          String   @id @default(cuid())
+  domainId    String
+  domain      Domain   @relation(fields: [domainId], references: [id])
+  wing        String   // RIGHT or LEFT
+  startDate   DateTime @default(now())
+  endDate     DateTime // End of the 1-week period
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED
+  candidacies ExpertCandidacy[]
+  createdAt   DateTime @default(now())
+
+  @@index([domainId])
 }
 
 model CandidacyVote {
@@ -82,6 +101,7 @@ model CandidacyVote {
   voterUserId  String
   voterUser    User            @relation("CandidacyVoteVoter", fields: [voterUserId], references: [id])
   vote         String          @default("APPROVE")
+  score        Int             @default(0) // 1, 2, or 3
   createdAt    DateTime        @default(now())
 
   @@id([candidacyId, voterUserId])

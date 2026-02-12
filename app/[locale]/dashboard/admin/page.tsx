@@ -28,6 +28,16 @@ type DomainExpert = {
 type CandidacyVote = {
   voterUserId: string
   vote: string
+  score: number
+}
+
+type ElectionRound = {
+  id: string
+  domainId: string
+  wing: string
+  startDate: string
+  endDate: string
+  status: string
 }
 
 type ExpertCandidacy = {
@@ -38,6 +48,8 @@ type ExpertCandidacy = {
   role: string
   wing: string
   status: string
+  totalScore: number
+  roundId: string | null
   createdAt: string
   candidateUser: DomainUser
   proposerUser: DomainUser
@@ -161,6 +173,11 @@ export default function AdminDashboard() {
     syllabus: [{ title: '', description: '' }],
   })
   const [proposingCourse, setProposingCourse] = useState(false)
+
+  const [activeRounds, setActiveRounds] = useState<Record<string, ElectionRound | null>>({})
+  const [loadingRounds, setLoadingRounds] = useState(false)
+  const [finalizingRoundKey, setFinalizingRoundKey] = useState<string | null>(null)
+  const [startingRoundKey, setStartingRoundKey] = useState<string | null>(null)
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -419,6 +436,7 @@ export default function AdminDashboard() {
     fetchCourses(id)
     fetchResearchPrerequisites(id)
     fetchAllCourses()
+    fetchActiveRounds(id)
   }, [selectedDomainId])
 
   useEffect(() => {
@@ -538,30 +556,89 @@ export default function AdminDashboard() {
     }
   }
 
-  const voteOnCandidacy = async (candidacyId: string, vote: 'APPROVE' | 'REJECT') => {
+  const voteOnCandidacy = async (candidacyId: string, score: number) => {
     if (!selectedDomain) return
-    const key = `${candidacyId}:${vote}`
+    const key = `${candidacyId}:${score}`
     try {
       setVotingKey(key)
       const res = await fetch('/api/admin/domains/candidacies/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidacyId, vote }),
+        body: JSON.stringify({ candidacyId, score }),
       })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
         toast.error(payload.error || t('voteError'))
         return
       }
-      if (payload.status === 'APPROVED') toast.success(t('voteApproved'))
-      else if (payload.status === 'REJECTED') toast.success(t('voteRejected'))
-      else toast.success(t('voteRecorded'))
-      await Promise.all([fetchCandidacies(selectedDomain.id), fetchDomains(selectedDomain.id)])
+      toast.success(t('voteRecorded'))
+      await fetchCandidacies(selectedDomain.id)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('voteError')
       toast.error(msg)
     } finally {
       setVotingKey(null)
+    }
+  }
+
+  async function fetchActiveRounds(domainId: string) {
+    setLoadingRounds(true)
+    try {
+      const wings = ['RIGHT', 'LEFT']
+      const results: Record<string, ElectionRound | null> = {}
+      for (const wing of wings) {
+        const res = await fetch(`/api/admin/domains/election?domainId=${domainId}&wing=${wing}`)
+        const data = await res.json()
+        results[wing] = data.activeRound || null
+      }
+      setActiveRounds(results)
+    } catch (error) {
+      console.error('Error fetching active rounds:', error)
+    } finally {
+      setLoadingRounds(false)
+    }
+  }
+
+  async function startElectionRound(wing: string) {
+    if (!selectedDomainId) return
+    setStartingRoundKey(wing)
+    try {
+      const res = await fetch('/api/admin/domains/election', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domainId: selectedDomainId, wing })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(t('electionRoundStarted'))
+      fetchActiveRounds(selectedDomainId)
+    } catch (error: any) {
+      toast.error(error.message || 'Error starting round')
+    } finally {
+      setStartingRoundKey(null)
+    }
+  }
+
+  async function finalizeElectionRound(roundId: string, wing: string) {
+    setFinalizingRoundKey(roundId)
+    try {
+      const res = await fetch('/api/admin/domains/election', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(t('electionFinalized'))
+      if (selectedDomainId) {
+        fetchActiveRounds(selectedDomainId)
+        fetchDomains() // Refresh experts list
+        fetchCandidacies(selectedDomainId)
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error finalizing round')
+    } finally {
+      setFinalizingRoundKey(null)
     }
   }
 
@@ -994,9 +1071,44 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Right Wing */}
                         <div className="space-y-3">
-                          <h3 className="text-lg font-bold text-site-text heading border-r-4 border-warm-primary pr-3">
-                            {t('rightWing')}
-                          </h3>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="text-lg font-bold text-site-text heading border-r-4 border-warm-primary pr-3">
+                              {t('rightWing')}
+                            </h3>
+                            {activeRounds['RIGHT'] ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20">
+                                  {t('electionRound')}
+                                </span>
+                                {canManageSelectedDomainMembers && (
+                                  <button
+                                    type="button"
+                                    onClick={() => finalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                    disabled={finalizingRoundKey !== null}
+                                    className="text-[10px] px-2 py-1 rounded border border-red-600/50 text-red-400 hover:bg-red-600/10 disabled:opacity-50"
+                                  >
+                                    {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('finalizeElection')}
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              canManageSelectedDomainMembers && (
+                                <button
+                                  type="button"
+                                  onClick={() => startElectionRound('RIGHT')}
+                                  disabled={startingRoundKey !== null}
+                                  className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
+                                >
+                                  {startingRoundKey === 'RIGHT' ? '...' : t('startElectionRound')}
+                                </button>
+                              )
+                            )}
+                          </div>
+                          {activeRounds['RIGHT'] && (
+                            <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
+                              <span>{t('remainingTime', { time: new Date(activeRounds['RIGHT'].endDate).toLocaleDateString('fa-IR') })}</span>
+                            </div>
+                          )}
                           <div className="space-y-2">
                             {selectedDomain.experts.filter(ex => ex.wing === 'RIGHT').length === 0 ? (
                               <div className="text-site-muted text-sm italic py-2">{t('noMembersRight')}</div>
@@ -1033,9 +1145,44 @@ export default function AdminDashboard() {
 
                         {/* Left Wing */}
                         <div className="space-y-3">
-                          <h3 className="text-lg font-bold text-site-text heading border-r-4 border-gray-500 pr-3">
-                            {t('leftWing')}
-                          </h3>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="text-lg font-bold text-site-text heading border-r-4 border-gray-500 pr-3">
+                              {t('leftWing')}
+                            </h3>
+                            {activeRounds['LEFT'] ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20">
+                                  {t('electionRound')}
+                                </span>
+                                {canManageSelectedDomainMembers && (
+                                  <button
+                                    type="button"
+                                    onClick={() => finalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                    disabled={finalizingRoundKey !== null}
+                                    className="text-[10px] px-2 py-1 rounded border border-red-600/50 text-red-400 hover:bg-red-600/10 disabled:opacity-50"
+                                  >
+                                    {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('finalizeElection')}
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              canManageSelectedDomainMembers && (
+                                <button
+                                  type="button"
+                                  onClick={() => startElectionRound('LEFT')}
+                                  disabled={startingRoundKey !== null}
+                                  className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
+                                >
+                                  {startingRoundKey === 'LEFT' ? '...' : t('startElectionRound')}
+                                </button>
+                              )
+                            )}
+                          </div>
+                          {activeRounds['LEFT'] && (
+                            <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
+                              <span>{t('remainingTime', { time: new Date(activeRounds['LEFT'].endDate).toLocaleDateString('fa-IR') })}</span>
+                            </div>
+                          )}
                           <div className="space-y-2">
                             {selectedDomain.experts.filter(ex => ex.wing === 'LEFT').length === 0 ? (
                               <div className="text-site-muted text-sm italic py-2">{t('noMembersLeft')}</div>
@@ -1080,12 +1227,14 @@ export default function AdminDashboard() {
                         ) : (
                           <div className="space-y-2">
                             {pendingCandidacies.map((c) => {
-                              const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
-                              const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
-                              const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
+                              const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)
+                              const myScore = myVote?.score || 0
                               const roleBadge = getRoleBadge(c.role, { head: t('roleHead'), expert: t('roleExpert') })
                               const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
                               const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                              
+                              const isActiveRound = activeRounds[c.wing]?.id === c.roundId
+
                               return (
                                 <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
                                   <div className="flex items-start justify-between gap-3">
@@ -1102,45 +1251,37 @@ export default function AdminDashboard() {
                                         {c.proposerUser.email || c.proposerUser.name || '—'}
                                       </div>
                                       <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">
-                                          {t('approvals', { count: approvals })}
+                                        <span className="border border-warm-primary/30 text-warm-primary rounded-full px-2 py-0.5 font-bold">
+                                          {t('totalScore', { score: c.totalScore })}
                                         </span>
-                                        <span className="border border-gray-700 rounded-full px-2 py-0.5">
-                                          {t('rejections', { count: rejections })}
-                                        </span>
-                                        {myVote && (
+                                        {myScore > 0 && (
                                           <span className="border border-gray-700 rounded-full px-2 py-0.5">
-                                            {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
+                                            {t('yourVote', { vote: myScore })}
                                           </span>
+                                        )}
+                                        {!isActiveRound && c.roundId && (
+                                          <span className="text-red-400 text-[10px]">{t('nominationPeriodEnded')}</span>
                                         )}
                                       </div>
                                     </div>
-                                    {canManageSelectedDomainMembers && (
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <button
-                                          type="button"
-                                          onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
-                                          disabled={votingKey !== null}
-                                          className={`text-xs px-3 py-2 rounded-lg border ${
-                                            myVote === 'APPROVE'
-                                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                                          } disabled:opacity-50`}
-                                        >
-                                          {votingKey === `${c.id}:APPROVE` ? '...' : t('approve')}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => voteOnCandidacy(c.id, 'REJECT')}
-                                          disabled={votingKey !== null}
-                                          className={`text-xs px-3 py-2 rounded-lg border ${
-                                            myVote === 'REJECT'
-                                              ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
-                                          } disabled:opacity-50`}
-                                        >
-                                          {votingKey === `${c.id}:REJECT` ? '...' : t('reject')}
-                                        </button>
+                                    {canVoteOnSelectedDomainCourses && isActiveRound && (
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        {[1, 2, 3].map((score) => (
+                                          <button
+                                            key={score}
+                                            type="button"
+                                            onClick={() => voteOnCandidacy(c.id, score)}
+                                            disabled={votingKey !== null}
+                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border ${
+                                              myScore === score
+                                                ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                                                : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                            } disabled:opacity-50`}
+                                            title={t(`score${score}`)}
+                                          >
+                                            {votingKey === `${c.id}:${score}` ? '...' : score}
+                                          </button>
+                                        ))}
                                       </div>
                                     )}
                                   </div>
@@ -1228,11 +1369,16 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          <div className="mt-3 flex justify-end">
+                          <div className="mt-3 flex items-center justify-between gap-4">
+                            {!activeRounds[nominateWing] && (
+                              <div className="text-xs text-red-400 font-medium">
+                                {t('noActiveElection')}
+                              </div>
+                            )}
                             <button
                               type="button"
                               onClick={nominateMember}
-                              disabled={nominating || !selectedUser}
+                              disabled={nominating || !selectedUser || !activeRounds[nominateWing]}
                               className="btn-primary disabled:opacity-50"
                             >
                               {nominating ? '...' : t('sendNomination')}

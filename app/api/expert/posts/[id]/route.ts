@@ -11,7 +11,7 @@ interface RouteParams {
   params: { id: string }
 }
 
-// NEW: GET post details for supervisor
+// NEW: GET post details for expert
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const totalScore = post.votes ? post.votes.reduce((sum, v) => sum + v.score, 0) : 0
     return NextResponse.json({ ...post, totalScore })
   } catch (error) {
-    console.error('Error fetching supervisor post details:', error)
+    console.error('Error fetching expert post details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       where: { email: session.user.email }
     })
 
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -248,7 +248,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(post)
   } catch (error) {
-    console.error('Error updating post status (supervisor):', error)
+    console.error('Error updating post status (expert):', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       where: { userId: session.user.id, domainId: proposal.targetDomainId, role: { in: ['HEAD', 'EXPERT'] } }
     })
 
-    const isGlobalAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERVISOR'
+    const isGlobalAdmin = session.user.role === 'ADMIN' || session.user.role === 'EXPERT'
 
     if (!proposerMembership && !targetMembership && !isGlobalAdmin) {
       return NextResponse.json({ error: 'You are not an expert in either affected domain' }, { status: 403 })

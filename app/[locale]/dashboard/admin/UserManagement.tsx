@@ -64,10 +64,10 @@ export default function UserManagement({ allDomains }: Props) {
   }
 
   const getGlobalRole = (user: UserWithDomains) => {
-    const isGlobalSupervisor = user.domainExperts.some(de => de.domain.slug === 'philosophy')
-    if (isGlobalSupervisor) return { label: t('roles.globalSupervisor'), color: 'text-red-400 bg-red-400/10 border-red-400/20' }
+    const isGlobalExpert = user.domainExperts.some(de => de.domain.slug === 'philosophy')
+    if (isGlobalExpert) return { label: t('roles.globalExpert'), color: 'text-red-400 bg-red-400/10 border-red-400/20' }
     
-    if (user.domainExperts.length > 0) return { label: t('roles.domainSupervisor'), color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
+    if (user.domainExperts.length > 0) return { label: t('roles.domainExpert'), color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
     
     return { label: t('roles.editor'), color: 'text-gray-400 bg-gray-400/10 border-gray-400/20' }
   }

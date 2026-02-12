@@ -10,7 +10,7 @@ async function canManageDomainExperts(requester: { id?: string; role?: string } 
   const requesterRole = (requester?.role || '').trim()
   if (!requesterId) return { allowed: false as const, status: 401 as const, error: 'Unauthorized' }
 
-  if (requesterRole === 'ADMIN' || requesterRole === 'SUPERVISOR') return { allowed: true as const }
+  if (requesterRole === 'ADMIN' || requesterRole === 'EXPERT') return { allowed: true as const }
 
   const domain = await prisma.domain.findUnique({
     where: { id: domainId },

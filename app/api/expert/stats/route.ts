@@ -11,25 +11,25 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || (session.user?.role !== 'SUPERVISOR' && session.user?.role !== 'ADMIN')) {
+    if (!session || (session.user?.role !== 'EXPERT' && session.user?.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // شمارش تعداد ادمین‌ها و ناظرها
-    const [adminCount, supervisorCount] = await Promise.all([
+    // شمارش تعداد ادمین‌ها و کارشناسان
+    const [adminCount, expertCount] = await Promise.all([
       prisma.user.count({ where: { role: 'ADMIN' } }),
-      prisma.user.count({ where: { role: 'SUPERVISOR' } }),
+      prisma.user.count({ where: { role: 'EXPERT' } }),
     ])
 
-    // حد نصاب امتیاز: نصف مجموع ناظرها و ادمین‌ها
-    const combinedCount = supervisorCount + adminCount
+    // حد نصاب امتیاز: نصف مجموع کارشناسان و ادمین‌ها
+    const combinedCount = expertCount + adminCount
     const threshold = Math.ceil(combinedCount / 2)
 
-    // حد نصاب مشارکت: نصف مجموع ناظرها و ادمین‌ها (همسان با حد نصاب امتیاز)
+    // حد نصاب مشارکت: نصف مجموع کارشناسان و ادمین‌ها (همسان با حد نصاب امتیاز)
     const participationThreshold = Math.ceil(combinedCount / 2)
 
     return NextResponse.json({ 
-      supervisorCount,
+      expertCount,
       adminCount,
       combinedCount,
       threshold,
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       success: true 
     })
   } catch (error) {
-    console.error('Error getting supervisor stats:', error)
+    console.error('Error getting expert stats:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

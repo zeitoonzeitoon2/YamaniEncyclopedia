@@ -60,7 +60,7 @@ export default async function ProfilePage({
     )
   }
   const nameText = user.name || t('unknownUser')
-  const roleKey = ['ADMIN', 'SUPERVISOR', 'EDITOR', 'USER'].includes(user.role) ? user.role : 'UNKNOWN'
+  const roleKey = ['ADMIN', 'EXPERT', 'EDITOR', 'USER'].includes(user.role) ? user.role : 'UNKNOWN'
   const roleLabel = t(`roles.${roleKey}` as never)
   const statusKeyFor = (status: string) =>
     ['PENDING', 'APPROVED', 'REJECTED', 'REVIEWABLE', 'ARCHIVED', 'NEW', 'UNKNOWN'].includes(status)

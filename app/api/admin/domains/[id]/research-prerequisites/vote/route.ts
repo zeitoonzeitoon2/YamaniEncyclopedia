@@ -21,7 +21,7 @@ export async function POST(
     const isAdmin = session.user.role === 'ADMIN'
 
     if (weight === 0 && !isAdmin) {
-      return NextResponse.json({ error: 'Only supervisors can vote on research prerequisites' }, { status: 403 })
+      return NextResponse.json({ error: 'Only experts can vote on research prerequisites' }, { status: 403 })
     }
 
     const { prerequisiteId, vote = 'APPROVE' } = await request.json()

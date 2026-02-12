@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       select: { domainId: true },
     })
     const expertDomainIds = expertDomains.map((d) => d.domainId)
-    const isSupervisor = user.role === 'SUPERVISOR' || user.role === 'ADMIN'
+    const isExpert = user.role === 'EXPERT' || user.role === 'ADMIN'
     const isDomainExpert = expertDomainIds.length > 0
 
     const url = new URL(request.url)
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const authorQueryRaw = url.searchParams.get('authorQuery')
     const authorQuery = authorQueryRaw ? authorQueryRaw.trim() : ''
 
-    const baseWhere: Prisma.PostWhereInput = isSupervisor || !isDomainExpert
+    const baseWhere: Prisma.PostWhereInput = isExpert || !isDomainExpert
       ? { NOT: { status: { in: ['DRAFT'] } } }
       : {
           AND: [
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
       hasNext: page * pageSize < totalCount,
     })
   } catch (error) {
-    console.error('Error fetching supervisor posts:', error)
+    console.error('Error fetching expert posts:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

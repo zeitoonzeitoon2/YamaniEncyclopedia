@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'نظرسنجی این طرح متوقف شده است' }, { status: 400 })
     }
 
-    const isSupervisor = user.role === 'SUPERVISOR' || user.role === 'ADMIN'
-    if (!isSupervisor) {
+    const isExpert = user.role === 'EXPERT' || user.role === 'ADMIN'
+    if (!isExpert) {
       if (!post.domainId) {
         return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
       }

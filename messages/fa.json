@@ -9,7 +9,7 @@
     "account": "حساب من",
     "profile": "پروفایل",
     "editorDashboard": "داشبورد ویراستار",
-    "supervisorDashboard": "داشبورد کارشناس",
+    "expertDashboard": "داشبورد کارشناس",
     "adminDashboard": "داشبورد مدیریت",
     "signOut": "خروج",
     "signIn": "ورود",
@@ -257,6 +257,22 @@
       "clear": "پاک کردن",
     "strategicExchanges": "تبادلات استراتژیک سهام رای",
     "sendNomination": "ارسال نامزدی",
+      "electionRound": "دوره انتخاباتی",
+      "startElectionRound": "شروع دوره انتخاباتی",
+      "finalizeElection": "نهایی‌سازی انتخابات",
+      "nominationPeriodEnds": "پایان مهلت پیشنهاد کاندیدا",
+      "electionEnds": "پایان دوره انتخاباتی",
+      "remainingTime": "زمان باقی‌مانده: {time}",
+      "days": "روز",
+      "hours": "ساعت",
+      "score": "امتیاز",
+      "score1": "۱ (ضعیف)",
+      "score2": "۲ (متوسط)",
+      "score3": "۳ (قوی)",
+      "totalScore": "مجموع امتیازات: {score}",
+      "top10Candidates": "۱۰ کاندیدای برتر",
+      "noActiveElection": "در حال حاضر دوره انتخاباتی فعالی وجود ندارد.",
+      "nominationPeriodEnded": "مهلت پیشنهاد کاندیدا به پایان رسیده است.",
       "approvedCoursesTitle": "دوره‌های تأییدشده",
       "noApprovedCourses": "هنوز دوره تأییدشده‌ای وجود ندارد.",
       "manageChapters": "مدیریت فصل‌ها",
@@ -297,8 +313,8 @@
       "removeFail": "حذف حوزه ناموفق بود"
     },
     "roles": {
-      "globalSupervisor": "کارشناس کل",
-      "domainSupervisor": "کارشناس حوزه",
+      "globalExpert": "کارشناس کل",
+      "domainExpert": "کارشناس حوزه",
       "editor": "ویراستار"
     },
     "confirmRemove": "آیا مطمئن هستید که این حوزه را حذف می‌کنید؟",
@@ -331,11 +347,11 @@
     },
     "loadingShort": "در حال بارگذاری..."
   },
-  "supervisor": {
+  "expert": {
     "loading": "در حال بارگذاری...",
     "title": {
       "editor": "داشبورد ویراستار",
-      "supervisor": "داشبورد کارشناس"
+      "expert": "داشبورد کارشناس"
     },
     "alert": {
       "title": "طرح قابل ویرایش",
@@ -428,7 +444,7 @@
       "delete": "حذف"
     },
     "roles": {
-      "supervisor": "کارشناس",
+      "expert": "کارشناس",
       "editor": "ویراستار",
       "admin": "مدیر",
       "user": "کاربر"
@@ -476,7 +492,7 @@
     },
     "roles": {
       "ADMIN": "مدیر",
-      "SUPERVISOR": "کارشناس",
+      "EXPERT": "کارشناس",
       "EDITOR": "ویراستار",
       "USER": "کاربر"
     },
@@ -512,7 +528,7 @@
     "unknownUser": "کاربر ناشناس",
     "points": "امتیازها:",
     "idPrefix": "شناسه:",
-    "supervisorVote": "رای کارشناس",
+    "expertVote": "رای کارشناس",
     "currentVote": "رای فعلی شما: {score}",
     "votingClosed": "این پیشنهاد به حد نصاب امتیاز و مشارکت رسیده و منتشر شده است، بنابراین رای‌گیری متوقف شده است. اگر نظری دارید، در قسمت نظرات بیان کنید و ایده‌های خود را در یک پیشنهاد جدید ارسال کنید."
   },
@@ -645,7 +661,7 @@
     "roleLabel": "نقش:",
     "roles": {
       "ADMIN": "مدیر",
-      "SUPERVISOR": "کارشناس",
+      "EXPERT": "کارشناس",
       "EDITOR": "ویرایشگر",
       "USER": "کاربر",
       "UNKNOWN": "نامشخص"

@@ -117,7 +117,7 @@ export async function GET(
 
     // التحقق من الصلاحيات: يمكن للمشرفين/المديرين رؤية كل شيء، ويمكن للمؤلفين رؤية مسودّاتهم الخاصة
     const canView =
-      session.user.role === 'SUPERVISOR' ||
+      session.user.role === 'EXPERT' ||
       session.user.role === 'ADMIN' ||
       found.authorId === session.user.id
 

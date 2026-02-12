@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // بررسی دسترسی ناظر/ادمین
     const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-    if (!user || (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN')) {
+    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

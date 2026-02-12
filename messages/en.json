@@ -9,7 +9,7 @@
     "account": "My Account",
     "profile": "Profile",
     "editorDashboard": "Editor Dashboard",
-    "supervisorDashboard": "Supervisor Dashboard",
+    "expertDashboard": "Expert Dashboard",
     "adminDashboard": "Admin Dashboard",
     "signOut": "Sign out",
     "signIn": "Sign in",
@@ -219,19 +219,24 @@
       "deleteDomain": "Delete domain",
       "delete": "Delete",
       "childrenCount": "{count} subdomains",
-      "membersTab": "Supervisors",
+      "membersTab": "Experts",
       "coursesTab": "Courses",
       "researchersTab": "Researchers",
       "researchersSectionTitle": "Research Prerequisites",
-      "researchPrerequisitesDesc": "Supervisors specify which courses researchers must pass to edit nodes, flashcards, and articles in this domain.",
+      "researchPrerequisitesDesc": "Experts specify which courses researchers must pass to edit nodes, flashcards, and articles in this domain.",
       "noResearchPrerequisites": "No research prerequisites defined for this domain yet.",
       "proposeResearchPrerequisite": "Propose Research Prerequisite",
       "selectCoursePlaceholder": "Select a course...",
       "propose": "Propose",
       "approvedStatus": "Approved",
       "pendingStatus": "Pending",
-      "membersSectionTitle": "Supervisors",
-      "noMembers": "No supervisors for this domain.",
+      "membersSectionTitle": "Experts",
+      "rightWing": "Right Team",
+      "leftWing": "Left Team",
+      "wingLabel": "Wing",
+      "noMembersRight": "No members in the right team yet.",
+      "noMembersLeft": "No members in the left team yet.",
+      "noMembers": "No experts for this domain.",
       "roleHead": "Head",
       "roleExpert": "Expert",
       "noName": "No name",
@@ -251,6 +256,22 @@
       "clear": "Clear",
       "strategicExchanges": "Strategic Voting Share Exchanges",
       "sendNomination": "Send nomination",
+      "electionRound": "Election Round",
+      "startElectionRound": "Start Election Round",
+      "finalizeElection": "Finalize Election",
+      "nominationPeriodEnds": "Nomination Period Ends",
+      "electionEnds": "Election Ends",
+      "remainingTime": "Remaining Time: {time}",
+      "days": "Days",
+      "hours": "Hours",
+      "score": "Score",
+      "score1": "1 (Weak)",
+      "score2": "2 (Medium)",
+      "score3": "3 (Strong)",
+      "totalScore": "Total Score: {score}",
+      "top10Candidates": "Top 10 Candidates",
+      "noActiveElection": "No active election round at the moment.",
+      "nominationPeriodEnded": "Nomination period has ended.",
       "approvedCoursesTitle": "Approved courses",
       "noApprovedCourses": "No approved courses yet.",
       "manageChapters": "Manage chapters",
@@ -291,8 +312,8 @@
       "removeFail": "Failed to remove domain"
     },
     "roles": {
-      "globalSupervisor": "Global Supervisor",
-      "domainSupervisor": "Domain Supervisor",
+      "globalExpert": "Global Expert",
+      "domainExpert": "Domain Expert",
       "editor": "Editor"
     },
     "confirmRemove": "Are you sure you want to remove this domain?",
@@ -325,11 +346,11 @@
     },
     "loadingShort": "Loading..."
   },
-  "supervisor": {
+  "expert": {
     "loading": "Loading...",
     "title": {
       "editor": "Editor Dashboard",
-      "supervisor": "Supervisor Dashboard"
+      "expert": "Expert Dashboard"
     },
     "alert": {
       "title": "Reviewable Post",
@@ -422,7 +443,7 @@
       "delete": "Delete"
     },
     "roles": {
-      "supervisor": "Supervisor",
+      "expert": "Expert",
       "editor": "Editor",
       "admin": "Admin",
       "user": "User"
@@ -470,7 +491,7 @@
     },
     "roles": {
       "ADMIN": "Admin",
-      "SUPERVISOR": "Supervisor",
+      "EXPERT": "Expert",
       "EDITOR": "Editor",
       "USER": "User"
     },
@@ -506,7 +527,7 @@
     "unknownUser": "Anonymous User",
     "points": "Points:",
     "idPrefix": "ID:",
-    "supervisorVote": "Supervisor Vote",
+    "expertVote": "Expert Vote",
     "currentVote": "Your current vote: {score}",
     "votingClosed": "This proposal has reached the threshold and been published, so voting is closed. If you have comments, share them below and submit your ideas in a new proposal."
   },
@@ -639,7 +660,7 @@
     "roleLabel": "Role:",
     "roles": {
       "ADMIN": "Admin",
-      "SUPERVISOR": "Supervisor",
+      "EXPERT": "Expert",
       "EDITOR": "Editor",
       "USER": "User",
       "UNKNOWN": "Unknown"
@@ -678,9 +699,9 @@
     "structureItem1": "Everyone can participate in this project by registering as an editor.",
     "structureItem2": "On the new edit page, you can delete or add nodes, or delete/add/edit cards. You can also link articles to cards or edit existing articles.",
     "structureItem3": "If you feel there is a conceptual relationship between nodes, you can add related nodes in the \"Related to\" section at the end of the card.",
-    "structureItem4": "Proposals receive a decimal identifier and are sent to the supervisors' panel.",
-    "structureItem5": "Finally, the supervisors review the proposals in their panel, and after visual comparison and discussion in the comments, they give them a rating.",
-    "structureItem6": "If the ratings reach a quorum, i.e., half the number of supervisors, and at least half of them participate in the vote, the plan is published and receives a new identifier.",
+    "structureItem4": "Proposals receive a decimal identifier and are sent to the experts' panel.",
+    "structureItem5": "Finally, the experts review the proposals in their panel, and after visual comparison and discussion in the comments, they give them a rating.",
+    "structureItem6": "If the ratings reach a quorum, i.e., half the number of experts, and at least half of them participate in the vote, the plan is published and receives a new identifier.",
     "structureItem7": "If several edits are made to one version and the publishing conditions are met for two or more, the first proposal that gained the votes is published and the rest are marked with a \"Reviewable\" tag. Then editors are asked to re-apply their ideas to the new published version and resubmit.",
     "structureItem8": "This platform is in constant development, and with God's help, more features will be added to it.",
     "footerQuote": "So give good tidings to My servants who listen to speech and follow the best of it. Those are the ones Allah has guided, and those are people of understanding. (Az-Zumar: 17, 18)"

@@ -88,8 +88,8 @@ export function Header() {
   }, [menuOpen, langMenuOpen])
 
   const effectiveRole = (displayRole || session?.user?.role) || ''
-  const isSupervisorLike = isDomainExpert || ['SUPERVISOR', 'ADMIN'].includes(effectiveRole)
-  const isEditorLike = !isSupervisorLike && ['EDITOR', 'USER'].includes(effectiveRole)
+  const isExpertLike = isDomainExpert || ['EXPERT', 'ADMIN'].includes(effectiveRole)
+  const isEditorLike = !isExpertLike && ['EDITOR', 'USER'].includes(effectiveRole)
 
   return (
     <header className="bg-site-card border-b border-site-border relative z-50">
@@ -229,13 +229,13 @@ export function Header() {
                           <User size={16} />
                           {t('profile')}
                         </Link>
-                        {session && (
+                        {(isExpertLike || effectiveRole === 'EDITOR') && (
                           <Link
-                            href="/supervisor"
+                            href="/expert"
                             className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           >
                             {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
-                            {isEditorLike ? t('editorDashboard') : t('supervisorDashboard')}
+                            {isEditorLike ? t('editorDashboard') : t('expertDashboard')}
                           </Link>
                         )}
                         {(isDomainExpert || session.user?.role === 'ADMIN') && (

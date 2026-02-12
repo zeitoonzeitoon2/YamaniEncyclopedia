@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const role = (session?.user?.role || '').trim()
 
-    if (role !== 'ADMIN' && role !== 'SUPERVISOR') {
+    if (role !== 'ADMIN' && role !== 'EXPERT') {
       const ok = await hasAnyDomainExpertMembership(userId)
       if (!ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -105,6 +105,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid wing' }, { status: 400 })
     }
 
+    // Find active election round for this domain and wing
+    const activeRound = await prisma.electionRound.findFirst({
+      where: {
+        domainId,
+        wing: wingValue as 'RIGHT' | 'LEFT',
+        status: 'ACTIVE'
+      }
+    })
+
+    if (!activeRound) {
+      return NextResponse.json({ error: 'No active election round for this wing' }, { status: 400 })
+    }
+
+    if (new Date() > activeRound.endDate) {
+      return NextResponse.json({ error: 'Nomination period for this round has ended' }, { status: 400 })
+    }
+
     if (role !== 'ADMIN') {
       const perm = await canProposeCandidacy(userId, domainId, wingValue)
       if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
@@ -131,8 +148,24 @@ export async function POST(request: NextRequest) {
 
     const candidacy = await prisma.expertCandidacy.upsert({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },
-      update: { proposerUserId: userId, status: 'PENDING', role: roleValue, wing: wingValue },
-      create: { domainId, candidateUserId, proposerUserId: userId, status: 'PENDING', role: roleValue, wing: wingValue },
+      update: {
+        proposerUserId: userId,
+        status: 'PENDING',
+        role: roleValue,
+        wing: wingValue,
+        roundId: activeRound.id,
+        totalScore: 0
+      },
+      create: {
+        domainId,
+        candidateUserId,
+        proposerUserId: userId,
+        status: 'PENDING',
+        role: roleValue,
+        wing: wingValue,
+        roundId: activeRound.id,
+        totalScore: 0
+      },
       select: {
         id: true,
         domainId: true,
