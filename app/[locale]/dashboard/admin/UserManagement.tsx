@@ -199,7 +199,7 @@ export default function UserManagement({ allDomains }: Props) {
                     <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
-                        {roleInfo.label === t('roles.globalSupervisor') ? <ShieldCheck size={12} /> : roleInfo.label === t('roles.domainSupervisor') ? <Shield size={12} /> : null}
+                        {roleInfo.label === t('roles.globalExpert') ? <ShieldCheck size={12} /> : roleInfo.label === t('roles.domainExpert') ? <Shield size={12} /> : null}
                         {roleInfo.label}
                       </span>
                     </td>
