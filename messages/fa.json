@@ -288,6 +288,8 @@
       "chapterDescriptionPlaceholder": "توضیح کوتاه برای فصل",
       "addChapter": "افزودن فصل",
       "sendProposal": "ارسال پیشنهاد",
+      "electionRoundStarted": "دوره انتخاباتی با موفقیت شروع شد",
+      "electionFinalized": "انتخابات با موفقیت نهایی شد و کارشناسان جدید تعیین شدند",
       "addChildDomainTitle": "افزودن زیرحوزه",
       "close": "بستن",
       "parentLabel": "والد",

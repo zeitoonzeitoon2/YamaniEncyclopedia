@@ -287,6 +287,8 @@
       "chapterDescriptionPlaceholder": "Short chapter description",
       "addChapter": "Add chapter",
       "sendProposal": "Send proposal",
+      "electionRoundStarted": "Election round started successfully",
+      "electionFinalized": "Election finalized successfully and new experts assigned",
       "addChildDomainTitle": "Add subdomain",
       "close": "Close",
       "parentLabel": "Parent",
