@@ -21,6 +21,7 @@ type DomainUser = {
 type DomainExpert = {
   id: string
   role: string
+  wing: string
   user: DomainUser
 }
 
@@ -35,6 +36,7 @@ type ExpertCandidacy = {
   candidateUserId: string
   proposerUserId: string
   role: string
+  wing: string
   status: string
   createdAt: string
   candidateUser: DomainUser
@@ -137,6 +139,7 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<DomainUser | null>(null)
   const [nominating, setNominating] = useState(false)
   const [nominateRole, setNominateRole] = useState('EXPERT')
+  const [nominateWing, setNominateWing] = useState('RIGHT')
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
@@ -508,7 +511,12 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/domains/candidacies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domainId: selectedDomain.id, candidateUserId: selectedUser.id, role: nominateRole }),
+        body: JSON.stringify({ 
+          domainId: selectedDomain.id, 
+          candidateUserId: selectedUser.id, 
+          role: nominateRole,
+          wing: nominateWing
+        }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
@@ -518,6 +526,7 @@ export default function AdminDashboard() {
       toast.success(t('createNominationSuccess'))
       setSelectedUser(null)
       setNominateRole('EXPERT')
+      setNominateWing('RIGHT')
       setUserQuery('')
       setUserResults([])
       await fetchCandidacies(selectedDomain.id)
@@ -982,39 +991,83 @@ export default function AdminDashboard() {
 
                   {activeTab === 'members' ? (
                     <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('membersSectionTitle')}</h3>
-                        <div className="space-y-2">
-                          {selectedDomain.experts.length === 0 ? (
-                            <div className="text-site-muted text-sm">{t('noMembers')}</div>
-                          ) : (
-                            selectedDomain.experts.map((ex) => {
-                              const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
-                              const key = `${selectedDomain.id}:${ex.user.id}`
-                              return (
-                                <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                                      <span className="text-site-text font-medium truncate">{ex.user.name || t('noName')}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Right Wing */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-bold text-site-text heading border-r-4 border-warm-primary pr-3">
+                            {t('rightWing')}
+                          </h3>
+                          <div className="space-y-2">
+                            {selectedDomain.experts.filter(ex => ex.wing === 'RIGHT').length === 0 ? (
+                              <div className="text-site-muted text-sm italic py-2">{t('noMembersRight')}</div>
+                            ) : (
+                              selectedDomain.experts.filter(ex => ex.wing === 'RIGHT').map((ex) => {
+                                const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
+                                const key = `${selectedDomain.id}:${ex.user.id}`
+                                return (
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                                        <span className="text-site-text font-medium truncate">{ex.user.name || t('noName')}</span>
+                                      </div>
+                                      <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                                     </div>
-                                    <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
+                                    {canManageSelectedDomainMembers && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeExpert(ex.user.id)}
+                                        disabled={removingExpertKey === key}
+                                        className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                        title={t('remove')}
+                                      >
+                                        {removingExpertKey === key ? '...' : t('delete')}
+                                      </button>
+                                    )}
                                   </div>
-                                  {canManageSelectedDomainMembers && (
-                                    <button
-                                      type="button"
-                                      onClick={() => removeExpert(ex.user.id)}
-                                      disabled={removingExpertKey === key}
-                                      className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
-                                      title={t('remove')}
-                                    >
-                                      {removingExpertKey === key ? '...' : t('delete')}
-                                    </button>
-                                  )}
-                                </div>
-                              )
-                            })
-                          )}
+                                )
+                              })
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Left Wing */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-bold text-site-text heading border-r-4 border-gray-500 pr-3">
+                            {t('leftWing')}
+                          </h3>
+                          <div className="space-y-2">
+                            {selectedDomain.experts.filter(ex => ex.wing === 'LEFT').length === 0 ? (
+                              <div className="text-site-muted text-sm italic py-2">{t('noMembersLeft')}</div>
+                            ) : (
+                              selectedDomain.experts.filter(ex => ex.wing === 'LEFT').map((ex) => {
+                                const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
+                                const key = `${selectedDomain.id}:${ex.user.id}`
+                                return (
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                                        <span className="text-site-text font-medium truncate">{ex.user.name || t('noName')}</span>
+                                      </div>
+                                      <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
+                                    </div>
+                                    {canManageSelectedDomainMembers && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeExpert(ex.user.id)}
+                                        disabled={removingExpertKey === key}
+                                        className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                        title={t('remove')}
+                                      >
+                                        {removingExpertKey === key ? '...' : t('delete')}
+                                      </button>
+                                    )}
+                                  </div>
+                                )
+                              })
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -1031,12 +1084,15 @@ export default function AdminDashboard() {
                               const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
                               const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
                               const roleBadge = getRoleBadge(c.role, { head: t('roleHead'), expert: t('roleExpert') })
+                              const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
+                              const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
                               return (
                                 <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${roleBadge.cls}`}>{roleBadge.label}</span>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${wingCls}`}>{wingLabel}</span>
                                         <span className="text-site-text font-medium truncate">
                                           {c.candidateUser.name || c.candidateUser.email || t('memberFallback')}
                                         </span>
@@ -1158,6 +1214,16 @@ export default function AdminDashboard() {
                               >
                                 <option value="EXPERT">{t('roleExpert')}</option>
                                 <option value="HEAD">{t('roleHead')}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                value={nominateWing}
+                                onChange={(e) => setNominateWing(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                              >
+                                <option value="RIGHT">{t('rightWing')}</option>
+                                <option value="LEFT">{t('leftWing')}</option>
                               </select>
                             </div>
                           </div>
