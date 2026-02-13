@@ -218,6 +218,22 @@ export default function AdminDomainsPage() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  const expandAll = () => {
+    const allIds: Record<string, boolean> = {}
+    const traverse = (nodes: DomainNode[]) => {
+      nodes.forEach((node) => {
+        allIds[node.id] = true
+        if (node.children) traverse(node.children)
+      })
+    }
+    traverse(roots)
+    setExpanded(allIds)
+  }
+
+  const collapseAll = () => {
+    setExpanded({})
+  }
+
   const createDomain = async () => {
     const name = addForm.name.trim()
     const slug = addForm.slug.trim()
@@ -462,16 +478,22 @@ export default function AdminDomainsPage() {
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-site-text heading">{t('treeTitle')}</h2>
-              <button
-                type="button"
-                onClick={() => {
-                  const root = roots.find((r) => r.slug === 'philosophy') || roots[0]
-                  if (root) setExpanded((prev) => ({ ...prev, [root.id]: true }))
-                }}
-                className="btn-secondary text-sm"
-              >
-                {t('expandRoot')}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={expandAll}
+                  className="px-2 py-1 text-[10px] rounded border border-warm-primary/30 text-warm-primary hover:bg-warm-primary/10 transition-colors"
+                >
+                  {t('expandAll')}
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAll}
+                  className="px-2 py-1 text-[10px] rounded border border-gray-500/30 text-site-muted hover:bg-gray-500/10 transition-colors"
+                >
+                  {t('collapseAll')}
+                </button>
+              </div>
             </div>
 
             {roots.length === 0 ? (
