@@ -34,7 +34,8 @@ model Domain {
   ownedShares       DomainVotingShare[] @relation("OwnedShares")
   proposedExchanges DomainExchangeProposal[] @relation("ProposedExchanges")
   receivedExchanges DomainExchangeProposal[] @relation("ReceivedExchanges")
-
+  deleteProposals   DomainProposal[] @relation("DeleteProposals")
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -146,6 +147,8 @@ model User {
   domainPrerequisitesProposed DomainPrerequisite[] @relation("domainPrerequisitesProposed")
   domainPrerequisiteVotes      DomainPrerequisiteVote[] @relation("domainPrerequisiteVotes")
   domainExchangeVotes          DomainExchangeVote[]
+  domainProposals              DomainProposal[] @relation("ProposedDomainProposals")
+  domainProposalVotes          DomainProposalVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -500,6 +503,37 @@ model PrerequisiteVote {
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])
+  @@index([voterId])
+}
+
+model DomainProposal {
+  id             String               @id @default(cuid())
+  type           String               // CREATE or DELETE
+  name           String?
+  slug           String?
+  description    String?
+  parentId       String?
+  targetDomainId String?
+  targetDomain   Domain?              @relation("DeleteProposals", fields: [targetDomainId], references: [id])
+  status         String               @default("PENDING") // PENDING, APPROVED, REJECTED
+  proposerId     String
+  proposer       User                 @relation("ProposedDomainProposals", fields: [proposerId], references: [id])
+  votes          DomainProposalVote[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([status])
+}
+
+model DomainProposalVote {
+  proposalId String
+  proposal   DomainProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  voterId    String
+  voter      User           @relation(fields: [voterId], references: [id])
+  vote       String         @default("APPROVE") // APPROVE, REJECT
+  createdAt  DateTime       @default(now())
+
+  @@id([proposalId, voterId])
   @@index([voterId])
 }
 

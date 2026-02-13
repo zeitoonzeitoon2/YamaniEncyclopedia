@@ -244,10 +244,11 @@ export default function AdminDomainsPage() {
     }
     try {
       setCreating(true)
-      const res = await fetch('/api/admin/domains', {
+      const res = await fetch('/api/admin/domains/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          type: 'CREATE',
           name,
           slug: slug || undefined,
           description: description || undefined,
@@ -255,17 +256,14 @@ export default function AdminDomainsPage() {
         }),
       })
 
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; domain?: { id: string } }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
         toast.error(payload.error || t('toast.createError'))
         return
       }
 
-      toast.success(t('toast.createSuccess'))
+      toast.success(t('createProposalSuccess'))
       setAddModalOpen(false)
-      if (addParentId) setExpanded((prev) => ({ ...prev, [addParentId]: true }))
-      const newId = payload.domain?.id
-      await fetchDomains(newId)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.createError')
       toast.error(msg)
@@ -370,20 +368,21 @@ export default function AdminDomainsPage() {
     if (!selectedDomain) return
     try {
       setDeleting(true)
-      const res = await fetch(`/api/admin/domains/${encodeURIComponent(selectedDomain.id)}`, { method: 'DELETE' })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; counts?: { children: number; posts: number } }
+      const res = await fetch('/api/admin/domains/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'DELETE',
+          targetDomainId: selectedDomain.id,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        if (res.status === 409 && payload.counts) {
-          toast.error(t('toast.deleteConflict', { children: payload.counts.children, posts: payload.counts.posts }))
-          return
-        }
         toast.error(payload.error || t('toast.deleteDomainError'))
         return
       }
-      toast.success(t('toast.deleteDomainSuccess'))
+      toast.success(t('createProposalSuccess'))
       setDeleteModalOpen(false)
-      setSelectedDomainId(philosophyRoot?.id || null)
-      await fetchDomains(philosophyRoot?.id || undefined)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.deleteDomainError')
       toast.error(msg)
@@ -435,7 +434,7 @@ export default function AdminDomainsPage() {
             <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
               {t('postCount', { count: node.counts.posts })}
             </span>
-            {session?.user?.role === 'ADMIN' && (
+            {(session?.user?.role === 'ADMIN' || node.experts.some(ex => ex.user.id === session?.user?.id)) && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
@@ -523,7 +522,7 @@ export default function AdminDomainsPage() {
                         </div>
                       )}
                     </div>
-                    {session?.user?.role === 'ADMIN' && (
+                    {canManageSelectedDomainMembers && (
                       <button
                         type="button"
                         onClick={() => setDeleteModalOpen(true)}

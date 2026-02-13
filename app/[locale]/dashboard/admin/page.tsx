@@ -77,6 +77,26 @@ type DomainCourse = {
   votes: CourseVote[]
 }
 
+type DomainProposalVote = {
+  voterId: string
+  vote: string
+}
+
+type DomainProposal = {
+  id: string
+  type: 'CREATE' | 'DELETE'
+  name: string | null
+  slug: string | null
+  description: string | null
+  parentId: string | null
+  targetDomainId: string | null
+  targetDomain: { name: string; parentId: string | null } | null
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  proposer: { name: string | null; email: string | null }
+  votes: DomainProposalVote[]
+  createdAt: string
+}
+
 type DomainNode = {
   id: string
   name: string
@@ -156,7 +176,24 @@ export default function AdminDashboard() {
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
   const [votingKey, setVotingKey] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'members' | 'courses' | 'researchers'>('members')
+  const [activeTab, setActiveTab] = useState<'members' | 'courses' | 'researchers' | 'proposals'>('members')
+  const [loadingProposals, setLoadingProposals] = useState(false)
+  const [domainProposals, setDomainProposals] = useState<DomainProposal[]>([])
+  const [votingOnProposalKey, setVotingOnProposalKey] = useState<string | null>(null)
+
+  const canVoteOnProposal = (p: any) => {
+    if (!session?.user) return false
+    if (session.user.role === 'ADMIN') return true
+    
+    const votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
+    if (!votingDomainId) return false // Root domain proposals handled by admin only
+    
+    const votingDomain = findDomainById(roots, votingDomainId)
+    if (!votingDomain) return false
+    
+    return votingDomain.experts.some((ex: any) => ex.user.id === session.user.id)
+  }
+
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
   const [researchPrerequisites, setResearchPrerequisites] = useState<DomainPrerequisite[]>([])
@@ -437,6 +474,7 @@ export default function AdminDashboard() {
     fetchResearchPrerequisites(id)
     fetchAllCourses()
     fetchActiveRounds(id)
+    fetchProposals(id)
   }, [selectedDomainId])
 
   useEffect(() => {
@@ -501,30 +539,28 @@ export default function AdminDashboard() {
     }
     try {
       setCreating(true)
-      const res = await fetch('/api/admin/domains', {
+      const res = await fetch('/api/admin/domains/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          type: 'CREATE',
           name,
-          slug: slug || undefined,
           description: description || undefined,
           parentId: addParentId || undefined,
         }),
       })
 
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; domain?: { id: string } }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || t('createDomainError'))
+        toast.error(payload.error || t('createProposalError'))
         return
       }
 
-      toast.success(t('createDomainSuccess'))
+      toast.success(t('createProposalSuccess'))
       setAddModalOpen(false)
-      if (addParentId) setExpanded((prev) => ({ ...prev, [addParentId]: true }))
-      const newId = payload.domain?.id
-      await fetchDomains(newId)
+      if (selectedDomainId) fetchProposals(selectedDomainId)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('createDomainError')
+      const msg = e instanceof Error ? e.message : t('createProposalError')
       toast.error(msg)
     } finally {
       setCreating(false)
@@ -702,6 +738,39 @@ export default function AdminDashboard() {
     }
   }
 
+  async function fetchProposals(domainId?: string) {
+    setLoadingProposals(true)
+    try {
+      const res = await fetch(`/api/admin/domains/proposals${domainId ? `?domainId=${domainId}` : ''}`)
+      const data = await res.json()
+      setDomainProposals(data.proposals || [])
+    } catch (error) {
+      console.error('Error fetching proposals:', error)
+    } finally {
+      setLoadingProposals(false)
+    }
+  }
+
+  const voteOnProposal = async (proposalId: string, vote: 'APPROVE' | 'REJECT') => {
+    setVotingOnProposalKey(`${proposalId}:${vote}`)
+    try {
+      const res = await fetch(`/api/admin/domains/proposals/${proposalId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vote })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(t('voteRecorded'))
+      if (selectedDomainId) fetchProposals(selectedDomainId)
+      fetchDomains() // Refresh tree as domain might have been created/deleted
+    } catch (error: any) {
+      toast.error(error.message || 'Error voting')
+    } finally {
+      setVotingOnProposalKey(null)
+    }
+  }
+
   const voteOnCourse = async (courseId: string, vote: 'APPROVE' | 'REJECT') => {
     if (!selectedDomain) return
     const key = `${courseId}:${vote}`
@@ -808,22 +877,24 @@ export default function AdminDashboard() {
     if (!selectedDomain) return
     try {
       setDeleting(true)
-      const res = await fetch(`/api/admin/domains/${encodeURIComponent(selectedDomain.id)}`, { method: 'DELETE' })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; counts?: { children: number; posts: number } }
+      const res = await fetch('/api/admin/domains/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'DELETE',
+          targetDomainId: selectedDomain.id,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        if (res.status === 409 && payload.counts) {
-          toast.error(t('deleteBlocked', { children: payload.counts.children, posts: payload.counts.posts }))
-          return
-        }
-        toast.error(payload.error || t('deleteDomainError'))
+        toast.error(payload.error || t('createProposalError'))
         return
       }
-      toast.success(t('deleteDomainSuccess'))
+      toast.success(t('createProposalSuccess'))
       setDeleteModalOpen(false)
-      setSelectedDomainId(philosophyRoot?.id || null)
-      await fetchDomains(philosophyRoot?.id || undefined)
+      if (selectedDomainId) fetchProposals(selectedDomainId)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('deleteDomainError')
+      const msg = e instanceof Error ? e.message : t('createProposalError')
       toast.error(msg)
     } finally {
       setDeleting(false)
@@ -873,7 +944,7 @@ export default function AdminDashboard() {
             <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
               {t('postsCount', { count: node.counts.posts })}
             </span>
-            {session?.user?.role === 'ADMIN' && (
+            {(session?.user?.role === 'ADMIN' || node.experts.some(ex => ex.user.id === session?.user?.id)) && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
@@ -1025,7 +1096,7 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                    {session?.user?.role === 'ADMIN' && (
+                    {canManageSelectedDomainMembers && (
                       <button
                         type="button"
                         onClick={() => setDeleteModalOpen(true)}
@@ -1083,6 +1154,17 @@ export default function AdminDashboard() {
                       }`}
                     >
                       {t('researchersTab')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('proposals')}
+                      className={`px-3 py-2 rounded-lg text-sm border ${
+                        activeTab === 'proposals'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                      }`}
+                    >
+                      {t('proposalsTab')}
                     </button>
                   </div>
 
@@ -1404,6 +1486,93 @@ export default function AdminDashboard() {
                               {nominating ? '...' : t('sendNomination')}
                             </button>
                           </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : activeTab === 'proposals' ? (
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('domainProposalsTitle')}</h3>
+                      {loadingProposals ? (
+                        <div className="text-site-muted text-sm">{t('loading')}</div>
+                      ) : domainProposals.length === 0 ? (
+                        <div className="text-site-muted text-sm">{t('noDomainProposals')}</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {domainProposals.map((p) => {
+                            const myVote = p.votes.find(v => v.voterId === session?.user?.id)?.vote
+                            const canVote = canVoteOnProposal(p)
+                            return (
+                              <div key={p.id} className="p-4 rounded-lg border border-gray-700 bg-site-card/40 space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                                        p.type === 'CREATE' 
+                                          ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                      }`}>
+                                        {t(`proposalType_${p.type}`)}
+                                      </span>
+                                      <span className="text-site-text font-medium">
+                                        {p.type === 'CREATE' ? p.name : p.targetDomain?.name}
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-site-muted mt-1">
+                                      {t('proposerLabel')}: {p.proposer.name || p.proposer.email}
+                                    </div>
+                                    {p.description && (
+                                      <div className="text-sm text-site-text mt-2 italic">
+                                        {p.description}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col items-end gap-2">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                                      p.status === 'APPROVED' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                      p.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                      'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                    }`}>
+                                      {t(`proposalStatus_${p.status}`)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {p.status === 'PENDING' && canVote && (
+                                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-700/50">
+                                    <button
+                                      type="button"
+                                      onClick={() => voteOnProposal(p.id, 'APPROVE')}
+                                      disabled={votingOnProposalKey !== null}
+                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                        myVote === 'APPROVE'
+                                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                      } disabled:opacity-50`}
+                                    >
+                                      {votingOnProposalKey === `${p.id}:APPROVE` ? '...' : t('approve')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => voteOnProposal(p.id, 'REJECT')}
+                                      disabled={votingOnProposalKey !== null}
+                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                        myVote === 'REJECT'
+                                          ? 'border-red-600/60 bg-red-600/20 text-site-text'
+                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                      } disabled:opacity-50`}
+                                    >
+                                      {votingOnProposalKey === `${p.id}:REJECT` ? '...' : t('reject')}
+                                    </button>
+                                  </div>
+                                )}
+                                {p.status === 'PENDING' && !canVote && (
+                                  <div className="text-[10px] text-site-muted italic text-right pt-2 border-t border-gray-700/50">
+                                    {t('onlyParentExpertsCanVote')}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
