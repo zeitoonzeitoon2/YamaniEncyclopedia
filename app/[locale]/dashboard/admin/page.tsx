@@ -7,9 +7,9 @@ import { Link, useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, ArrowRightLeft } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp } from 'lucide-react'
 import UserManagement from './UserManagement'
-import DomainExchanges from '@/components/DomainExchanges'
+import DomainInvestments from '@/components/DomainInvestments'
 
 type DomainUser = {
   id: string
@@ -1900,7 +1900,7 @@ export default function AdminDashboard() {
             <ArrowRightLeft className="text-warm-primary" />
             {t('strategicExchanges')}
           </h2>
-          <DomainExchanges />
+          <DomainInvestments />
         </div>
 
         {session?.user?.role === 'ADMIN' && <UserManagement allDomains={flattenedDomains} />}

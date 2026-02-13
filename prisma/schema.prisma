@@ -32,8 +32,8 @@ model Domain {
 
   votingShares      DomainVotingShare[] @relation("DomainShares")
   ownedShares       DomainVotingShare[] @relation("OwnedShares")
-  proposedExchanges DomainExchangeProposal[] @relation("ProposedExchanges")
-  receivedExchanges DomainExchangeProposal[] @relation("ReceivedExchanges")
+  proposedInvestments DomainInvestment[] @relation("ProposedInvestments")
+  receivedInvestments DomainInvestment[] @relation("ReceivedInvestments")
   deleteProposals   DomainProposal[] @relation("DeleteProposals")
   
   createdAt   DateTime @default(now())
@@ -146,7 +146,7 @@ model User {
   prerequisiteVotes   PrerequisiteVote[]
   domainPrerequisitesProposed DomainPrerequisite[] @relation("domainPrerequisitesProposed")
   domainPrerequisiteVotes      DomainPrerequisiteVote[] @relation("domainPrerequisiteVotes")
-  domainExchangeVotes          DomainExchangeVote[]
+  domainInvestmentVotes        DomainInvestmentVote[]
   domainProposals              DomainProposal[] @relation("ProposedDomainProposals")
   domainProposalVotes          DomainProposalVote[]
   createdAt    DateTime      @default(now())
@@ -591,20 +591,25 @@ model DomainVotingShare {
   @@index([ownerDomainId])
 }
 
-model DomainExchangeProposal {
+model DomainInvestment {
   id                String   @id @default(cuid())
   proposerDomainId  String
-  proposerDomain    Domain   @relation("ProposedExchanges", fields: [proposerDomainId], references: [id])
+  proposerDomain    Domain   @relation("ProposedInvestments", fields: [proposerDomainId], references: [id])
   targetDomainId    String
-  targetDomain      Domain   @relation("ReceivedExchanges", fields: [targetDomainId], references: [id])
+  targetDomain      Domain   @relation("ReceivedInvestments", fields: [targetDomainId], references: [id])
   
-  // Percentage Proposer Domain gives to Target Domain
-  percentageProposerToTarget    Float
-  // Percentage Target Domain gives to Proposer Domain
-  percentageTargetToProposer    Float
+  // Percentage of Proposer's power given to Target (Investment amount)
+  percentageInvested    Float
+  // Percentage of Target's power given to Proposer after duration (Interest/Return)
+  percentageReturn      Float
   
-  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXECUTED
-  votes             DomainExchangeVote[]
+  durationYears     Int      @default(1)
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, COMPLETED, RETURNED
+  
+  startDate         DateTime?
+  endDate           DateTime?
+
+  votes             DomainInvestmentVote[]
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -614,18 +619,18 @@ model DomainExchangeProposal {
   @@index([status])
 }
 
-model DomainExchangeVote {
-  id          String   @id @default(cuid())
-  proposalId  String
-  proposal    DomainExchangeProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
-  voterId     String
-  voter       User     @relation(fields: [voterId], references: [id])
-  vote        String   @default("APPROVE") // APPROVE, REJECT
-  domainId    String   // Which domain the voter is voting for (Proposer or Target)
-  createdAt   DateTime @default(now())
+model DomainInvestmentVote {
+  id            String           @id @default(cuid())
+  investmentId  String
+  investment    DomainInvestment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  voterId       String
+  voter         User             @relation(fields: [voterId], references: [id])
+  vote          String           @default("APPROVE") // APPROVE, REJECT
+  domainId      String           // Which domain the voter is voting for (Proposer or Target)
+  createdAt     DateTime         @default(now())
 
-  @@unique([proposalId, voterId, domainId])
-  @@index([proposalId])
+  @@unique([investmentId, voterId, domainId])
+  @@index([investmentId])
   @@index([voterId])
 }
 

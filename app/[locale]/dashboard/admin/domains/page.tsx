@@ -6,8 +6,8 @@ import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, ArrowRightLeft } from 'lucide-react'
-import DomainExchanges from '@/components/DomainExchanges'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp } from 'lucide-react'
+import DomainInvestments from '@/components/DomainInvestments'
 
 type DomainUser = {
   id: string
@@ -781,13 +781,13 @@ export default function AdminDomainsPage() {
           </div>
         </div>
 
-        {/* بخش مبادلات استراتژیک سهام رای */}
+        {/* بخش سرمایه‌گذاری استراتژیک قدرت رای */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-site-text mb-6 flex items-center gap-3 px-2 heading">
-            <ArrowRightLeft className="text-warm-primary" />
-            {t('strategicExchanges')}
+            <TrendingUp className="text-warm-primary" />
+            {t('strategicInvestments')}
           </h2>
-          <DomainExchanges />
+          <DomainInvestments />
         </div>
       </main>
 

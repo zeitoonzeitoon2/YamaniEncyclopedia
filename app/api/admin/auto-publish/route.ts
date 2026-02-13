@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
         const eligibleSet = new Set([...superUsers.map(u => u.id), ...experts.map(e => e.userId)])
 
         if (eligibleSet.has(v.adminId)) {
-          // Use DIRECT mode for auto-publishing posts (Scenario 1)
-          const weight = await calculateUserVotingWeight(v.adminId, post.domainId, 'DIRECT')
+          // Use STRATEGIC mode for auto-publishing posts to account for investments
+          const weight = await calculateUserVotingWeight(v.adminId, post.domainId, 'STRATEGIC')
           totalScore += v.score * weight
           participationWeight += weight
           participationCount++

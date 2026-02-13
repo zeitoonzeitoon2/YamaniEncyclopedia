@@ -5,9 +5,9 @@ import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Check, X, Calendar, Video, Award, History, Clock, MessageCircle, ArrowRightLeft } from 'lucide-react'
+import { Check, X, Calendar, Video, Award, History, Clock, MessageCircle, TrendingUp } from 'lucide-react'
 import { AcademyChat } from '@/components/AcademyChat'
-import DomainExchanges from '@/components/DomainExchanges'
+import DomainInvestments from '@/components/DomainInvestments'
 
 type ExamSession = {
   id: string
@@ -28,7 +28,7 @@ export default function AcademyTeachingPage() {
   const t = useTranslations('academy')
   const [exams, setExams] = useState<ExamSession[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'pending' | 'history' | 'communication' | 'exchanges'>('pending')
+  const [tab, setTab] = useState<'pending' | 'history' | 'communication' | 'investments'>('pending')
   const [editingExam, setEditingExam] = useState<ExamSession | null>(null)
   const [updating, setUpdating] = useState(false)
 
@@ -39,7 +39,7 @@ export default function AcademyTeachingPage() {
   const [feedback, setFeedback] = useState('')
 
   const fetchExams = async () => {
-    if (tab === 'communication' || tab === 'exchanges') return // Communication handled by AcademyChat, Exchanges by DomainExchanges
+    if (tab === 'communication' || tab === 'investments') return // Communication handled by AcademyChat, Investments by DomainInvestments
     try {
       setLoading(true)
       const res = await fetch(`/api/academy/exams?type=${tab}`)
@@ -173,24 +173,24 @@ export default function AcademyTeachingPage() {
             </div>
           </button>
           <button
-            onClick={() => setTab('exchanges')}
+            onClick={() => setTab('investments')}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === 'exchanges'
+              tab === 'investments'
                 ? 'border-warm-primary text-site-text'
                 : 'border-transparent text-site-muted hover:text-site-text'
             }`}
           >
             <div className="flex items-center gap-2">
-              <ArrowRightLeft size={16} />
-              {useTranslations('voting')('strategicExchanges')}
+              <TrendingUp size={16} />
+              {useTranslations('voting')('investment.title')}
             </div>
           </button>
         </div>
 
         {tab === 'communication' ? (
           <AcademyChat role="examiner" />
-        ) : tab === 'exchanges' ? (
-          <DomainExchanges />
+        ) : tab === 'investments' ? (
+          <DomainInvestments />
         ) : loading ? (
           <div className="py-12 text-center text-site-muted">{t('loading')}</div>
         ) : exams.length === 0 ? (

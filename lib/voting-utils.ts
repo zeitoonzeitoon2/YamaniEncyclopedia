@@ -65,14 +65,32 @@ export async function calculateUserVotingWeight(
         where: { domainId: targetDomainId, ownerDomainId: targetDomain.parentId },
         select: { percentage: true }
       })
-      if (!share) return 0
+      
+      let effectivePercentage = share?.percentage || 0
 
-      // Weight = (Parent's share of Child) / (Count of experts in voter's wing in Parent)
+      // Adjust for active investments between parent and child
+      // If Parent (proposer) invested in Child (target), Child gets more power in Parent. 
+      // But CANDIDACY mode is about Parent voting for Child.
+      // If Parent gave power to Child, Parent's voting power in Child decreases.
+      const outbound = await prisma.domainInvestment.findMany({
+        where: { proposerDomainId: targetDomain.parentId, targetDomainId: targetDomainId, status: 'ACTIVE' }
+      })
+      for (const inv of outbound) effectivePercentage -= inv.percentageInvested
+
+      // If Child gave power to Parent, Parent's voting power in Child increases.
+      const inbound = await prisma.domainInvestment.findMany({
+        where: { proposerDomainId: targetDomainId, targetDomainId: targetDomain.parentId, status: 'ACTIVE' }
+      })
+      for (const inv of inbound) effectivePercentage += inv.percentageInvested
+
+      if (effectivePercentage <= 0) return 0
+
+      // Weight = (Effective share) / (Count of experts in voter's wing in Parent)
       const sameWingExpertCount = await prisma.domainExpert.count({
         where: { domainId: targetDomain.parentId, wing: voterMembership.wing }
       })
 
-      return sameWingExpertCount > 0 ? share.percentage / sameWingExpertCount : 0
+      return sameWingExpertCount > 0 ? effectivePercentage / sameWingExpertCount : 0
     } else {
       // Bottom-Up Selection: Children's Right teams vote for Parent's Left team.
       // 1. Get all child domains of targetDomainId
@@ -101,15 +119,33 @@ export async function calculateUserVotingWeight(
           where: { domainId: targetDomainId, ownerDomainId: membership.domainId },
           select: { percentage: true }
         })
-        if (!share) continue
+        
+        let effectivePercentage = share?.percentage || 0
 
-        // Weight = (Child's share of Parent) / (Count of RIGHT wing experts in Child)
+        // Adjust for active investments between child and parent
+        // If Child (proposer) invested in Parent (target), Parent gets more power in Child.
+        // CANDIDACY mode (LEFT wing) is about Child voting for Parent.
+        // If Child gave power to Parent, Child's voting power in Parent decreases.
+        const outbound = await prisma.domainInvestment.findMany({
+          where: { proposerDomainId: membership.domainId, targetDomainId: targetDomainId, status: 'ACTIVE' }
+        })
+        for (const inv of outbound) effectivePercentage -= inv.percentageInvested
+
+        // If Parent gave power to Child, Child's voting power in Parent increases.
+        const inbound = await prisma.domainInvestment.findMany({
+          where: { proposerDomainId: targetDomainId, targetDomainId: membership.domainId, status: 'ACTIVE' }
+        })
+        for (const inv of inbound) effectivePercentage += inv.percentageInvested
+
+        if (effectivePercentage <= 0) continue
+
+        // Weight = (Effective share) / (Count of RIGHT wing experts in Child)
         const rightWingExpertCount = await prisma.domainExpert.count({
           where: { domainId: membership.domainId, wing: 'RIGHT' }
         })
 
         if (rightWingExpertCount > 0) {
-          totalWeight += share.percentage / rightWingExpertCount
+          totalWeight += effectivePercentage / rightWingExpertCount
         }
       }
       return totalWeight
@@ -126,6 +162,7 @@ export async function calculateUserVotingWeight(
 
   const userDomainIds = userMemberships.map(m => m.domainId)
 
+  // 1. Base ownership from permanent shares
   const shares = await prisma.domainVotingShare.findMany({
     where: {
       domainId: targetDomainId,
@@ -133,21 +170,118 @@ export async function calculateUserVotingWeight(
     }
   })
 
-  if (shares.length === 0) return 0
-
+  // 2. Adjust for active investments
+  // When domain A invests in domain B, A gives power to B.
+  // When domain B receives investment from domain A, B gets power from A.
+  
   let totalWeight = 0
 
-  for (const share of shares) {
-    const expertCount = await prisma.domainExpert.count({
-      where: { domainId: share.ownerDomainId }
-    })
+  for (const domainId of userDomainIds) {
+    let effectiveShare = 0
+    
+    // Check if this domain (domainId) owns a permanent share in targetDomainId
+    const permanentShare = shares.find(s => s.ownerDomainId === domainId)
+    if (permanentShare) {
+      effectiveShare = permanentShare.percentage
+    }
 
-    if (expertCount > 0) {
-      totalWeight += share.percentage / expertCount
+    // Active Investments: 
+    // If domainId has INVESTED in targetDomainId, its effective power in targetDomainId decreases.
+    const outboundInvestments = await prisma.domainInvestment.findMany({
+      where: {
+        proposerDomainId: domainId,
+        targetDomainId: targetDomainId,
+        status: 'ACTIVE'
+      }
+    })
+    for (const inv of outboundInvestments) {
+      effectiveShare -= inv.percentageInvested
+    }
+
+    // If domainId has RECEIVED investment from targetDomainId, its effective power in targetDomainId increases.
+    const inboundInvestments = await prisma.domainInvestment.findMany({
+      where: {
+        proposerDomainId: targetDomainId,
+        targetDomainId: domainId,
+        status: 'ACTIVE'
+      }
+    })
+    for (const inv of inboundInvestments) {
+      effectiveShare += inv.percentageInvested
+    }
+
+    if (effectiveShare > 0) {
+      const expertCount = await prisma.domainExpert.count({
+        where: { domainId: domainId }
+      })
+      if (expertCount > 0) {
+        totalWeight += effectiveShare / expertCount
+      }
     }
   }
 
   return totalWeight
+}
+
+/**
+ * Settles all expired investments by returning the invested percentage 
+ * and transferring the return percentage as a permanent share.
+ */
+export async function settleExpiredInvestments() {
+  const now = new Date()
+  
+  const expiredInvestments = await prisma.domainInvestment.findMany({
+    where: {
+      status: 'ACTIVE',
+      endDate: { lte: now }
+    }
+  })
+
+  const results = []
+
+  for (const inv of expiredInvestments) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        // 1. Mark as RETURNED
+        await tx.domainInvestment.update({
+          where: { id: inv.id },
+          data: { status: 'RETURNED' }
+        })
+
+        // 2. Transfer return percentage as permanent share
+        // Proposer (investor) gets permanent share in Target domain
+        const existingShare = await tx.domainVotingShare.findUnique({
+          where: {
+            domainId_ownerDomainId: {
+              domainId: inv.targetDomainId,
+              ownerDomainId: inv.proposerDomainId
+            }
+          }
+        })
+
+        if (existingShare) {
+          await tx.domainVotingShare.update({
+            where: { id: existingShare.id },
+            data: { percentage: existingShare.percentage + inv.percentageReturn }
+          })
+        } else {
+          await tx.domainVotingShare.create({
+            data: {
+              domainId: inv.targetDomainId,
+              ownerDomainId: inv.proposerDomainId,
+              percentage: inv.percentageReturn
+            }
+          })
+        }
+      })
+      results.push({ id: inv.id, status: 'success' })
+    } catch (error) {
+      console.error(`Failed to settle investment ${inv.id}:`, error)
+      results.push({ id: inv.id, status: 'error', error })
+    }
+  }
+
+  return results
 }
 
 /**
