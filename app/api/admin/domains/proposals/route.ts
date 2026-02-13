@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
       if (domain.slug === 'philosophy') return NextResponse.json({ error: 'Cannot delete root' }, { status: 400 })
 
-      finalParentId = domain.parentId
+      finalParentId = domain.parentId ?? undefined
 
       // Check if user is expert of parent
       if (session.user.role !== 'ADMIN') {
