@@ -69,7 +69,7 @@ export default function UserManagement({ allDomains }: Props) {
     
     if (user.domainExperts.length > 0) return { label: t('roles.domainExpert'), color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
     
-    return { label: t('roles.editor'), color: 'text-gray-400 bg-gray-400/10 border-gray-400/20' }
+    return { label: t('roles.editor'), color: 'text-site-muted bg-site-secondary/30 border-site-border' }
   }
 
   const handleAssignDomain = async () => {
@@ -206,12 +206,12 @@ export default function UserManagement({ allDomains }: Props) {
                     <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {user.domainExperts.slice(0, 3).map(de => (
-                          <span key={de.id} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
+                          <span key={de.id} className="text-[10px] px-2 py-0.5 rounded-full bg-site-secondary/50 text-site-text border border-site-border">
                             {de.domain.name}
                           </span>
                         ))}
                         {user.domainExperts.length > 3 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-site-secondary/50 text-site-muted">
                             +{user.domainExperts.length - 3}
                           </span>
                         )}

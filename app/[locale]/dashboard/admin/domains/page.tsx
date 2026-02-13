@@ -68,7 +68,7 @@ function findDomainById(roots: DomainNode[], id: string): DomainNode | null {
 function getRoleBadge(role: string, t: any) {
   if (role === 'HEAD') return { label: t('roleHead'), cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
   if (role === 'EXPERT') return { label: t('roleExpert'), cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
-  return { label: role, cls: 'bg-gray-700 text-gray-200 border border-gray-600' }
+  return { label: role, cls: 'bg-site-secondary/30 text-site-text border border-site-border' }
 }
 
 export default function AdminDomainsPage() {
@@ -433,14 +433,14 @@ export default function AdminDomainsPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
+            <span className="text-[11px] text-site-muted border border-site-border rounded-full px-2 py-0.5">
               {t('postCount', { count: node.counts.posts })}
             </span>
             {(session?.user?.role === 'ADMIN' || node.experts.some(ex => ex.user.id === session?.user?.id)) && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-site-text text-xs"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text text-xs transition-colors"
                 title={t('addSubtitle')}
               >
                 <Plus size={14} />
@@ -490,7 +490,7 @@ export default function AdminDomainsPage() {
                 <button
                   type="button"
                   onClick={collapseAll}
-                  className="px-2 py-1 text-[10px] rounded border border-gray-500/30 text-site-muted hover:bg-gray-500/10 transition-colors"
+                  className="px-2 py-1 text-[10px] rounded border border-site-border text-site-muted hover:bg-site-secondary/30 transition-colors"
                 >
                   {t('collapseAll')}
                 </button>
@@ -539,8 +539,8 @@ export default function AdminDomainsPage() {
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
-                    <span className="border border-gray-700 rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
-                    <span className="border border-gray-700 rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
+                    <span className="border border-site-border rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
+                    <span className="border border-site-border rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
                   </div>
                 </div>
 
@@ -561,7 +561,7 @@ export default function AdminDomainsPage() {
                             const badge = getRoleBadge(ex.role, t)
                             const key = `${selectedDomain.id}:${ex.user.id}`
                             return (
-                              <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                              <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -574,7 +574,7 @@ export default function AdminDomainsPage() {
                                     type="button"
                                     onClick={() => removeExpert(ex.user.id)}
                                     disabled={removingExpertKey === key}
-                                    className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                    className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
                                     title={t('remove')}
                                   >
                                     {removingExpertKey === key ? '...' : t('remove')}
@@ -589,7 +589,7 @@ export default function AdminDomainsPage() {
 
                     {/* Left Wing */}
                     <div className="space-y-3">
-                      <h3 className="text-sm font-bold text-site-text border-r-4 border-gray-500 pr-2">
+                      <h3 className="text-sm font-bold text-site-text border-r-4 border-site-border pr-2">
                         {t('leftWing')}
                       </h3>
                       <div className="space-y-2">
@@ -600,7 +600,7 @@ export default function AdminDomainsPage() {
                             const badge = getRoleBadge(ex.role, t)
                             const key = `${selectedDomain.id}:${ex.user.id}`
                             return (
-                              <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                              <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -613,7 +613,7 @@ export default function AdminDomainsPage() {
                                     type="button"
                                     onClick={() => removeExpert(ex.user.id)}
                                     disabled={removingExpertKey === key}
-                                    className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                    className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
                                     title={t('remove')}
                                   >
                                     {removingExpertKey === key ? '...' : t('remove')}
@@ -640,9 +640,9 @@ export default function AdminDomainsPage() {
                           const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
                           const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
                           const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
-                          const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                          const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                           return (
-                            <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                            <div key={c.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
@@ -655,9 +655,9 @@ export default function AdminDomainsPage() {
                                     {t('candidate')}: {c.candidateUser.email || '—'} • {t('proposer')}: {c.proposerUser.email || c.proposerUser.name || '—'}
                                   </div>
                                   <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('approvals')}: {approvals}</span>
-                                    <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('rejections')}: {rejections}</span>
-                                    {myVote && <span className="border border-gray-700 rounded-full px-2 py-0.5">{t('myVote')}: {myVote === 'APPROVE' ? t('approve') : t('reject')}</span>}
+                                    <span className="border border-site-border rounded-full px-2 py-0.5">{t('approvals')}: {approvals}</span>
+                                    <span className="border border-site-border rounded-full px-2 py-0.5">{t('rejections')}: {rejections}</span>
+                                    {myVote && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myVote === 'APPROVE' ? t('approve') : t('reject')}</span>}
                                   </div>
                                 </div>
                                 {canManageSelectedDomainMembers && (
@@ -666,10 +666,10 @@ export default function AdminDomainsPage() {
                                       type="button"
                                       onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
                                       disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                         myVote === 'APPROVE'
                                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                       } disabled:opacity-50`}
                                     >
                                       {votingKey === `${c.id}:APPROVE` ? '...' : t('approve')}
@@ -678,10 +678,10 @@ export default function AdminDomainsPage() {
                                       type="button"
                                       onClick={() => voteOnCandidacy(c.id, 'REJECT')}
                                       disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                         myVote === 'REJECT'
                                           ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                       } disabled:opacity-50`}
                                     >
                                       {votingKey === `${c.id}:REJECT` ? '...' : t('reject')}
@@ -697,7 +697,7 @@ export default function AdminDomainsPage() {
                   </div>
 
                   {canManageSelectedDomainMembers && (
-                    <div className="mt-4 p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                  <div className="mt-4 p-4 rounded-lg border border-site-border bg-site-secondary/30">
                       <div className="flex items-center gap-2 mb-2">
                         <UserPlus size={16} className="text-warm-accent" />
                         <div className="text-site-text font-semibold">{t('nominateMember')}</div>
@@ -712,7 +712,7 @@ export default function AdminDomainsPage() {
                               setUserQuery(e.target.value)
                             }}
                             placeholder={t('searchPlaceholder')}
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                            className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                           />
                           {selectedUser && (
                             <button
@@ -722,7 +722,7 @@ export default function AdminDomainsPage() {
                                 setUserQuery('')
                                 setUserResults([])
                               }}
-                              className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 text-site-muted hover:text-site-text transition-colors"
                               aria-label={t('clear')}
                             >
                               <X size={16} />
@@ -730,7 +730,7 @@ export default function AdminDomainsPage() {
                           )}
 
                           {!selectedUser && userResults.length > 0 && (
-                            <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
+                            <div className="absolute z-20 mt-2 w-full rounded-lg border border-site-border bg-site-secondary shadow-xl overflow-hidden">
                               {userResults.map((u) => (
                                 <button
                                   key={u.id}
@@ -755,7 +755,7 @@ export default function AdminDomainsPage() {
                           <select
                             value={nominateWing}
                             onChange={(e) => setNominateWing(e.target.value)}
-                            className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                            className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                           >
                             <option value="RIGHT">{t('rightWing')}</option>
                             <option value="LEFT">{t('leftWing')}</option>
@@ -794,7 +794,7 @@ export default function AdminDomainsPage() {
       {addModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
               <h2 className="text-xl font-bold text-site-text">{t('addModal.title')}</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
@@ -812,7 +812,7 @@ export default function AdminDomainsPage() {
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 />
               </div>
               <div>
@@ -820,7 +820,7 @@ export default function AdminDomainsPage() {
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   placeholder={t('addModal.slugPlaceholder')}
                 />
               </div>
@@ -829,7 +829,7 @@ export default function AdminDomainsPage() {
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={3}
                 />
               </div>
@@ -849,7 +849,7 @@ export default function AdminDomainsPage() {
       {deleteModalOpen && selectedDomain && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
               <h2 className="text-xl font-bold text-site-text">{t('deleteModal.title')}</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
@@ -868,8 +868,8 @@ export default function AdminDomainsPage() {
                 {t('deleteModal.condition')}
               </div>
               <div className="flex items-center gap-3 text-sm text-site-muted">
-                <span className="border border-gray-700 rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
-                <span className="border border-gray-700 rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
+                <span className="border border-site-border rounded-full px-3 py-1">{t('posts')}: {selectedDomain.counts.posts}</span>
+                <span className="border border-site-border rounded-full px-3 py-1">{t('subdomains')}: {selectedDomain.counts.children}</span>
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">

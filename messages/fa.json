@@ -295,7 +295,7 @@
       "electionFinalized": "انتخابات با موفقیت نهایی شد و کارشناسان جدید تعیین شدند",
       "addChildDomainTitle": "پیشنهاد افزودن زیرحوزه",
       "deleteDomainTitle": "پیشنهاد حذف حوزه",
-      "proposalsTab": "پیشنهادات مدیریت",
+      "proposalsTab": "زیرحوزه‌ها",
       "domainProposalsTitle": "پیشنهادات مدیریت حوزه",
       "noDomainProposals": "پیشنهاد در انتظاری وجود ندارد.",
       "proposalType_CREATE": "ایجاد حوزه",

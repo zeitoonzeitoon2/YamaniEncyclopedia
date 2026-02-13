@@ -123,7 +123,7 @@ function findDomainById(roots: DomainNode[], id: string): DomainNode | null {
 function getRoleBadge(role: string, labels: { head: string; expert: string }) {
   if (role === 'HEAD') return { label: labels.head, cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
   if (role === 'EXPERT') return { label: labels.expert, cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
-  return { label: role, cls: 'bg-gray-700 text-gray-200 border border-gray-600' }
+  return { label: role, cls: 'bg-site-secondary/30 text-site-text border border-site-border' }
 }
 
 type DomainPrerequisite = {
@@ -945,14 +945,14 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-site-muted border border-gray-700 rounded-full px-2 py-0.5">
+            <span className="text-[11px] text-site-muted border border-site-border rounded-full px-2 py-0.5">
               {t('postsCount', { count: node.counts.posts })}
             </span>
             {(session?.user?.role === 'ADMIN' || node.experts.some(ex => ex.user.id === session?.user?.id)) && (
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-site-text text-xs dark:border-gray-700 dark:hover:bg-gray-800"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text text-xs transition-colors"
                 title={t('addChildDomain')}
               >
                 <Plus size={14} />
@@ -1115,10 +1115,10 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
-                    <span className="border border-gray-700 rounded-full px-3 py-1">
+                    <span className="border border-site-border rounded-full px-3 py-1">
                       {t('postsCount', { count: selectedDomain.counts.posts })}
                     </span>
-                    <span className="border border-gray-700 rounded-full px-3 py-1">
+                    <span className="border border-site-border rounded-full px-3 py-1">
                       {t('childrenCount', { count: selectedDomain.counts.children })}
                     </span>
                   </div>
@@ -1129,10 +1129,10 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('members')}
-                      className={`px-3 py-2 rounded-lg text-sm border ${
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'members'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                          : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('membersTab')}
@@ -1140,10 +1140,10 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('courses')}
-                      className={`px-3 py-2 rounded-lg text-sm border ${
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'courses'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                          : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('coursesTab')}
@@ -1151,10 +1151,10 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('researchers')}
-                      className={`px-3 py-2 rounded-lg text-sm border ${
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'researchers'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                          : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('researchersTab')}
@@ -1162,10 +1162,10 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('proposals')}
-                      className={`px-3 py-2 rounded-lg text-sm border ${
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'proposals'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:text-site-text'
+                          : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('proposalsTab')}
@@ -1223,7 +1223,7 @@ export default function AdminDashboard() {
                                 const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
                                 const key = `${selectedDomain.id}:${ex.user.id}`
                                 return (
-                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -1236,7 +1236,7 @@ export default function AdminDashboard() {
                                         type="button"
                                         onClick={() => removeExpert(ex.user.id)}
                                         disabled={removingExpertKey === key}
-                                        className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                        className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
                                         title={t('remove')}
                                       >
                                         {removingExpertKey === key ? '...' : t('delete')}
@@ -1252,7 +1252,7 @@ export default function AdminDashboard() {
                         {/* Left Wing */}
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-site-text heading border-r-4 border-gray-500 pr-3">
+                            <h3 className="text-lg font-bold text-site-text heading border-r-4 border-site-border pr-3">
                               {t('leftWing')}
                             </h3>
                             {activeRounds['LEFT'] ? (
@@ -1297,7 +1297,7 @@ export default function AdminDashboard() {
                                 const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
                                 const key = `${selectedDomain.id}:${ex.user.id}`
                                 return (
-                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -1310,7 +1310,7 @@ export default function AdminDashboard() {
                                         type="button"
                                         onClick={() => removeExpert(ex.user.id)}
                                         disabled={removingExpertKey === key}
-                                        className="text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                                        className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
                                         title={t('remove')}
                                       >
                                         {removingExpertKey === key ? '...' : t('delete')}
@@ -1337,12 +1337,12 @@ export default function AdminDashboard() {
                               const myScore = myVote?.score || 0
                               const roleBadge = getRoleBadge(c.role, { head: t('roleHead'), expert: t('roleExpert') })
                               const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
-                              const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                              const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                               
                               const isActiveRound = activeRounds[c.wing]?.id === c.roundId
 
                               return (
-                                <div key={c.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                <div key={c.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
@@ -1361,7 +1361,7 @@ export default function AdminDashboard() {
                                           {t('totalScore', { score: c.totalScore })}
                                         </span>
                                         {myScore > 0 && (
-                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                          <span className="border border-site-border rounded-full px-2 py-0.5">
                                             {t('yourVote', { vote: myScore })}
                                           </span>
                                         )}
@@ -1378,10 +1378,10 @@ export default function AdminDashboard() {
                                             type="button"
                                             onClick={() => voteOnCandidacy(c.id, score)}
                                             disabled={votingKey !== null}
-                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border ${
+                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
                                               myScore === score
                                                 ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                                : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                                : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                             } disabled:opacity-50`}
                                             title={t(`score${score}`)}
                                           >
@@ -1399,7 +1399,7 @@ export default function AdminDashboard() {
                       </div>
 
                       {canManageSelectedDomainMembers && (
-                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                        <div className="p-4 rounded-lg border border-site-border bg-site-secondary/30">
                           <div className="flex items-center gap-2 mb-2">
                             <UserPlus size={16} className="text-warm-accent" />
                             <div className="text-site-text font-semibold">{t('nominateMemberTitle')}</div>
@@ -1414,7 +1414,7 @@ export default function AdminDashboard() {
                                   setUserQuery(e.target.value)
                                 }}
                                 placeholder={t('searchPlaceholder')}
-                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                                className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                               />
                               {selectedUser && (
                                 <button
@@ -1424,7 +1424,7 @@ export default function AdminDashboard() {
                                     setUserQuery('')
                                     setUserResults([])
                                   }}
-                                  className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                                className="absolute left-2 top-1/2 -translate-y-1/2 text-site-muted hover:text-site-text transition-colors"
                                   aria-label={t('clear')}
                                 >
                                   <X size={16} />
@@ -1432,7 +1432,7 @@ export default function AdminDashboard() {
                               )}
 
                               {!selectedUser && userResults.length > 0 && (
-                                <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden">
+                                <div className="absolute z-20 mt-2 w-full rounded-lg border border-site-border bg-site-secondary shadow-xl overflow-hidden">
                                   {userResults.map((u) => (
                                     <button
                                       key={u.id}
@@ -1457,7 +1457,7 @@ export default function AdminDashboard() {
                               <select
                                 value={nominateRole}
                                 onChange={(e) => setNominateRole(e.target.value)}
-                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                                className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                               >
                                 <option value="EXPERT">{t('roleExpert')}</option>
                                 <option value="HEAD">{t('roleHead')}</option>
@@ -1467,7 +1467,7 @@ export default function AdminDashboard() {
                               <select
                                 value={nominateWing}
                                 onChange={(e) => setNominateWing(e.target.value)}
-                                className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                                className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                               >
                                 <option value="RIGHT">{t('rightWing')}</option>
                                 <option value="LEFT">{t('leftWing')}</option>
@@ -1506,7 +1506,7 @@ export default function AdminDashboard() {
                             const myVote = p.votes.find(v => v.voterId === session?.user?.id)?.vote
                             const canVote = canVoteOnProposal(p)
                             return (
-                              <div key={p.id} className="p-4 rounded-lg border border-gray-700 bg-site-card/40 space-y-3">
+                              <div key={p.id} className="p-4 rounded-lg border border-site-border bg-site-secondary/30 space-y-3">
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
                                     <div className="flex items-center gap-2">
@@ -1542,15 +1542,15 @@ export default function AdminDashboard() {
                                 </div>
 
                                 {p.status === 'PENDING' && canVote && (
-                                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-700/50">
+                                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-site-border">
                                     <button
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'APPROVE')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                         myVote === 'APPROVE'
                                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                       } disabled:opacity-50`}
                                     >
                                       {votingOnProposalKey === `${p.id}:APPROVE` ? '...' : t('approve')}
@@ -1559,10 +1559,10 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'REJECT')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                         myVote === 'REJECT'
                                           ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                          : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                       } disabled:opacity-50`}
                                     >
                                       {votingOnProposalKey === `${p.id}:REJECT` ? '...' : t('reject')}
@@ -1570,7 +1570,7 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
                                 {p.status === 'PENDING' && !canVote && (
-                                  <div className="text-[10px] text-site-muted italic text-right pt-2 border-t border-gray-700/50">
+                                  <div className="text-[10px] text-site-muted italic text-right pt-2 border-t border-site-border">
                                     {t('onlyParentExpertsCanVote')}
                                   </div>
                                 )}
@@ -1596,7 +1596,7 @@ export default function AdminDashboard() {
                               const approvals = p._count.votes // Note: Simplified as we don't fetch all votes details in GET
                               const myVote = p.votes?.find(v => v.voterUserId === session?.user?.id)?.vote || null
                               return (
-                                <div key={p.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                <div key={p.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="text-site-text font-medium truncate">{p.course.title}</div>
@@ -1610,7 +1610,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => voteOnResearchPrerequisite(p.id, 'APPROVE')}
                                           disabled={researchVotingKey !== null}
-                                          className={`text-xs px-3 py-2 rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50`}
+                                          className={`text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50`}
                                         >
                                           {researchVotingKey === `${p.id}:APPROVE` ? '...' : t('approve')}
                                         </button>
@@ -1625,13 +1625,13 @@ export default function AdminDashboard() {
                       </div>
 
                       {canVoteOnSelectedDomainCourses && (
-                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                        <div className="p-4 rounded-lg border border-site-border bg-site-secondary/30">
                           <h3 className="text-site-text font-semibold mb-3">{t('proposeResearchPrerequisite')}</h3>
                           <div className="flex flex-col gap-3">
                             <select
                               value={selectedResearchCourseId}
                               onChange={(e) => setSelectedResearchCourseId(e.target.value)}
-                              className="w-full p-2 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                              className="w-full p-2 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                             >
                               <option value="">{t('selectCoursePlaceholder')}</option>
                               {allCourses.map(c => (
@@ -1663,7 +1663,7 @@ export default function AdminDashboard() {
                             {domainCourses
                               .filter((c) => c.status === 'APPROVED')
                               .map((course) => (
-                                <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                <div key={course.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="text-site-text font-medium">{course.title}</div>
@@ -1672,13 +1672,13 @@ export default function AdminDashboard() {
                                     <div className="flex items-center gap-2 shrink-0">
                                       <Link
                                         href={`/dashboard/admin/courses/${course.id}`}
-                                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                                       >
                                         {t('manageChapters')}
                                       </Link>
                                       <Link
                                         href={selectedDomain ? `/academy#domain-${selectedDomain.slug}` : '/academy'}
-                                        className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                                       >
                                         {t('viewInAcademy')}
                                       </Link>
@@ -1705,7 +1705,7 @@ export default function AdminDashboard() {
                                 const rejections = course.votes.filter((v) => v.vote === 'REJECT').length
                                 const myVote = course.votes.find((v) => v.voterId === session?.user?.id)?.vote || null
                                 return (
-                                  <div key={course.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                                  <div key={course.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">
                                         <div className="text-site-text font-medium">{course.title}</div>
@@ -1729,14 +1729,14 @@ export default function AdminDashboard() {
                                           {t('proposerLabel')}: {course.proposerUser?.email || course.proposerUser?.name || '—'}
                                         </div>
                                         <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                          <span className="border border-site-border rounded-full px-2 py-0.5">
                                             {t('approvals', { count: approvals })}
                                           </span>
-                                          <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                          <span className="border border-site-border rounded-full px-2 py-0.5">
                                             {t('rejections', { count: rejections })}
                                           </span>
                                           {myVote && (
-                                            <span className="border border-gray-700 rounded-full px-2 py-0.5">
+                                            <span className="border border-site-border rounded-full px-2 py-0.5">
                                               {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
                                             </span>
                                           )}
@@ -1745,7 +1745,7 @@ export default function AdminDashboard() {
                                       <div className="flex items-center gap-2 shrink-0">
                                         <Link
                                           href={`/dashboard/admin/courses/${course.id}`}
-                                          className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                                         >
                                           {t('manageChapters')}
                                         </Link>
@@ -1755,10 +1755,10 @@ export default function AdminDashboard() {
                                               type="button"
                                               onClick={() => voteOnCourse(course.id, 'APPROVE')}
                                               disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border ${
+                                              className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                                 myVote === 'APPROVE'
                                                   ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                                  : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                                  : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                               } disabled:opacity-50`}
                                             >
                                               {courseVotingKey === `${course.id}:APPROVE` ? '...' : t('approve')}
@@ -1767,10 +1767,10 @@ export default function AdminDashboard() {
                                               type="button"
                                               onClick={() => voteOnCourse(course.id, 'REJECT')}
                                               disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border ${
+                                              className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                                                 myVote === 'REJECT'
                                                   ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                                  : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                                                  : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                                               } disabled:opacity-50`}
                                             >
                                               {courseVotingKey === `${course.id}:REJECT` ? '...' : t('reject')}
@@ -1787,7 +1787,7 @@ export default function AdminDashboard() {
                       </div>
 
                       {canVoteOnSelectedDomainCourses && (
-                        <div className="p-4 rounded-lg border border-gray-700 bg-site-secondary/40">
+                        <div className="p-4 rounded-lg border border-site-border bg-site-secondary/30">
                           <div className="flex items-center gap-2 mb-2">
                             <UserPlus size={16} className="text-warm-accent" />
                             <div className="text-site-text font-semibold">{t('proposeCourseTitle')}</div>
@@ -1797,19 +1797,19 @@ export default function AdminDashboard() {
                               value={courseForm.title}
                               onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
                               placeholder={t('courseTitlePlaceholder')}
-                              className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                              className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                             />
                             <textarea
                               value={courseForm.description}
                               onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
                               placeholder={t('courseDescriptionPlaceholder')}
-                              className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[90px]"
+                              className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[90px]"
                             />
                             <div className="space-y-3">
                               <div className="text-sm text-site-text font-medium">{t('syllabusTitle')}</div>
                               <div className="space-y-2">
                                 {courseForm.syllabus.map((item, index) => (
-                                  <div key={`syllabus-${index}`} className="p-3 rounded-lg border border-gray-700 bg-gray-900/30 space-y-2">
+                                  <div key={`syllabus-${index}`} className="p-3 rounded-lg border border-site-border bg-site-secondary/30 space-y-2">
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="text-xs text-site-muted">{t('chapterLabel', { index: index + 1 })}</div>
                                       <button
@@ -1840,7 +1840,7 @@ export default function AdminDashboard() {
                                         }))
                                       }
                                       placeholder={t('chapterTitlePlaceholder')}
-                                      className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                                      className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                                     />
                                     <textarea
                                       value={item.description || ''}
@@ -1853,7 +1853,7 @@ export default function AdminDashboard() {
                                         }))
                                       }
                                       placeholder={t('chapterDescriptionPlaceholder')}
-                                      className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[70px]"
+                                      className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary min-h-[70px]"
                                     />
                                   </div>
                                 ))}
@@ -1867,7 +1867,7 @@ export default function AdminDashboard() {
                                       syllabus: [...prev.syllabus, { title: '', description: '' }],
                                     }))
                                   }
-                                  className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                                  className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                                 >
                                   {t('addChapter')}
                                 </button>
@@ -1909,7 +1909,7 @@ export default function AdminDashboard() {
       {addModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
               <h2 className="text-xl font-bold text-site-text">{t('addChildDomainTitle')}</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
@@ -1929,7 +1929,7 @@ export default function AdminDashboard() {
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                 />
               </div>
               <div>
@@ -1937,7 +1937,7 @@ export default function AdminDashboard() {
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   placeholder="auto"
                 />
               </div>
@@ -1946,7 +1946,7 @@ export default function AdminDashboard() {
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   rows={3}
                 />
               </div>
@@ -1966,7 +1966,7 @@ export default function AdminDashboard() {
       {deleteModalOpen && selectedDomain && (
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
               <h2 className="text-xl font-bold text-site-text">{t('deleteDomainTitle')}</h2>
               <button
                 onClick={() => setDeleteModalOpen(false)}
@@ -1986,10 +1986,10 @@ export default function AdminDashboard() {
                 {t('deleteRequirement')}
               </div>
               <div className="flex items-center gap-3 text-sm text-site-muted">
-                <span className="border border-gray-700 rounded-full px-3 py-1">
+                <span className="border border-site-border rounded-full px-3 py-1">
                   {t('postsCount', { count: selectedDomain.counts.posts })}
                 </span>
-                <span className="border border-gray-700 rounded-full px-3 py-1">
+                <span className="border border-site-border rounded-full px-3 py-1">
                   {t('childrenCount', { count: selectedDomain.counts.children })}
                 </span>
               </div>

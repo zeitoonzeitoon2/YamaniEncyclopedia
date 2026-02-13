@@ -292,7 +292,7 @@
       "electionFinalized": "Election finalized successfully and new experts assigned",
       "addChildDomainTitle": "Propose subdomain",
       "deleteDomainTitle": "Propose delete domain",
-      "proposalsTab": "Management Proposals",
+      "proposalsTab": "Sub-domains",
       "domainProposalsTitle": "Domain Management Proposals",
       "noDomainProposals": "No pending proposals.",
       "proposalType_CREATE": "Create Domain",

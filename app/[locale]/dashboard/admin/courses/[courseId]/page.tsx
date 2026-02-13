@@ -708,7 +708,7 @@ export default function AdminCourseChaptersPage() {
           <div className="text-site-muted">{t('loading')}</div>
         ) : (
           <>
-            <div className="flex border-b border-gray-700/50 mb-6">
+            <div className="flex border-b border-site-border mb-6">
               <button
                 onClick={() => setActiveTab('chapters')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
@@ -740,7 +740,7 @@ export default function AdminCourseChaptersPage() {
                   <button
                     type="button"
                     onClick={() => resetFormForNew(chapterGroups.length)}
-                    className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                    className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                   >
                     {t('newChapter')}
                   </button>
@@ -752,7 +752,7 @@ export default function AdminCourseChaptersPage() {
                     {chapterGroups.map((group, groupIndex) => {
                       const isExpanded = !!expandedRoots[group.rootId]
                       return (
-                        <div key={group.rootId} className="p-2 rounded-lg border border-gray-700 bg-site-card/40">
+                        <div key={group.rootId} className="p-2 rounded-lg border border-site-border bg-site-secondary/30">
                           <button
                             type="button"
                             onClick={() => {
@@ -782,7 +782,7 @@ export default function AdminCourseChaptersPage() {
                                   <div
                                     key={chapter.id}
                                     className={`p-2 rounded-lg border bg-black/10 ${
-                                      isSelected ? 'border-warm-primary/70' : 'border-gray-700'
+                                      isSelected ? 'border-warm-primary/70' : 'border-site-border'
                                     }`}
                                   >
                                     <button
@@ -827,7 +827,7 @@ export default function AdminCourseChaptersPage() {
                 <div className="card space-y-2">
                   <h3 className="text-lg font-bold text-site-text heading">{t('requiredVotes')}</h3>
                   {pendingChapters.map((chapter) => (
-                    <div key={chapter.id} className="p-3 rounded-lg border border-gray-700 bg-site-card/40">
+                    <div key={chapter.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                       <button
                         type="button"
                         onClick={() => selectChapterById(chapter.id)}
@@ -841,10 +841,10 @@ export default function AdminCourseChaptersPage() {
                           type="button"
                           onClick={() => handleVote(chapter.id, 'APPROVE')}
                           disabled={!!votingKey}
-                          className={`text-xs px-3 py-2 rounded-lg border ${
+                          className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                             chapter.votes.some((v) => v.voterId === session?.user?.id && v.vote === 'APPROVE')
                               ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                              : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                           } disabled:opacity-50`}
                         >
                           {votingKey === `${chapter.id}:APPROVE` ? '...' : t('approve')}
@@ -853,10 +853,10 @@ export default function AdminCourseChaptersPage() {
                           type="button"
                           onClick={() => handleVote(chapter.id, 'REJECT')}
                           disabled={!!votingKey}
-                          className={`text-xs px-3 py-2 rounded-lg border ${
+                          className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
                             chapter.votes.some((v) => v.voterId === session?.user?.id && v.vote === 'REJECT')
                               ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                              : 'border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text'
+                              : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
                           } disabled:opacity-50`}
                         >
                           {votingKey === `${chapter.id}:REJECT` ? '...' : t('reject')}
@@ -896,7 +896,7 @@ export default function AdminCourseChaptersPage() {
                     value={form.title}
                     onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder={t('chapterTitlePlaceholder')}
-                    className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                    className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-site-muted">{t('orderLabel')}</span>
@@ -904,17 +904,17 @@ export default function AdminCourseChaptersPage() {
                       type="number"
                       value={form.orderIndex}
                       onChange={(e) => setForm((prev) => ({ ...prev, orderIndex: Number(e.target.value) }))}
-                      className="w-24 p-2 rounded border border-gray-600 bg-site-bg text-site-text"
+                      className="w-24 p-2 rounded border border-site-border bg-site-bg text-site-text"
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                    <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm text-site-text">{t('contentLabel')}</div>
                         <button
                           type="button"
                           onClick={() => setEditorOpen(true)}
-                          className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text"
+                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
                         >
                           {t('editContent')}
                         </button>
@@ -924,14 +924,14 @@ export default function AdminCourseChaptersPage() {
                       </div>
                     </div>
                     
-                    <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                    <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm text-site-text">پرسشنامه فصل</div>
                         <button
                           type="button"
                           onClick={() => setQuestionnaireOpen(true)}
                           disabled={!selectedId}
-                          className="px-3 py-1 text-xs rounded-lg border border-gray-700 bg-gray-900/40 hover:bg-gray-800/60 text-site-text disabled:opacity-50"
+                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
                         >
                           مشاهده و مدیریت
                         </button>
@@ -1033,7 +1033,7 @@ export default function AdminCourseChaptersPage() {
                     />
                   ) : selectedChapter && selectedPreviousChapter ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                         <div className="text-sm text-site-text">
                           {t('previousVersion')} {selectedPreviousChapter ? formatVersionTag(selectedPreviousChapter.version) : ''}
                         </div>
@@ -1053,7 +1053,7 @@ export default function AdminCourseChaptersPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                         <div className="text-sm text-site-text">
                           {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
                         </div>
@@ -1091,7 +1091,7 @@ export default function AdminCourseChaptersPage() {
                   {selectedChapter && selectedPreviousChapter ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {/* Previous Version Questions */}
-                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                         <div className="text-sm text-site-text">
                           {t('previousVersion')} {formatVersionTag(selectedPreviousChapter.version)}
                         </div>
@@ -1100,14 +1100,14 @@ export default function AdminCourseChaptersPage() {
                             previousChapterQuestions
                               .filter(q => q.status === 'APPROVED')
                               .map((q, idx) => (
-                                <div key={q.id} className="p-2 rounded border border-gray-700/50 bg-site-bg/30">
+                                <div key={q.id} className="p-2 rounded border border-site-border bg-site-bg/30">
                                   <div className="text-xs font-bold text-site-text mb-1 flex items-center gap-2">
-                                    <span className="bg-gray-700 text-gray-300 w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
+                                    <span className="bg-site-secondary text-site-muted w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
                                     {q.question}
                                   </div>
                                   <div className="grid grid-cols-2 gap-1 pl-7">
                                     {q.options.map((opt) => (
-                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-site-secondary/50 text-site-muted'}`}>
                                         {opt.text}
                                       </div>
                                     ))}
@@ -1121,7 +1121,7 @@ export default function AdminCourseChaptersPage() {
                       </div>
 
                       {/* Selected Version Questions */}
-                      <div className="rounded-lg border border-gray-700 bg-site-card/40 p-3 space-y-2">
+                      <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                         <div className="text-sm text-site-text">
                           {t('selectedVersion')} {formatVersionTag(selectedChapter.version)}
                         </div>
@@ -1129,7 +1129,7 @@ export default function AdminCourseChaptersPage() {
                           {chapterQuestions.length > 0 ? (
                             chapterQuestions
                               .map((q, idx) => (
-                                <div key={q.id} className="p-2 rounded border border-gray-700/50 bg-site-bg/30">
+                                <div key={q.id} className="p-2 rounded border border-site-border bg-site-bg/30">
                                   <div className="text-xs font-bold text-site-text mb-1 flex items-center gap-2">
                                     <span className="bg-warm-primary/20 text-warm-accent w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{idx + 1}</span>
                                     {q.question}
@@ -1141,7 +1141,7 @@ export default function AdminCourseChaptersPage() {
                                   </div>
                                   <div className="grid grid-cols-2 gap-1 pl-7">
                                     {q.options.map((opt) => (
-                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                      <div key={opt.id} className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-site-secondary/50 text-site-muted'}`}>
                                         {opt.text}
                                       </div>
                                     ))}
@@ -1159,7 +1159,7 @@ export default function AdminCourseChaptersPage() {
                       {chapterQuestions.length > 0 ? (
                         chapterQuestions
                           .map((q, idx) => (
-                            <div key={q.id} className="p-3 rounded-lg border border-gray-700/50 bg-site-bg/30">
+                            <div key={q.id} className="p-3 rounded-lg border border-site-border bg-site-bg/30">
                               <div className="text-sm font-bold text-site-text mb-2 flex items-center gap-2">
                                 <span className="bg-warm-primary/20 text-warm-accent w-6 h-6 rounded-full flex items-center justify-center text-xs">{idx + 1}</span>
                                 {q.question}
@@ -1171,7 +1171,7 @@ export default function AdminCourseChaptersPage() {
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-8">
                                 {q.options.map((opt) => (
-                                  <div key={opt.id} className={`text-xs p-2 rounded-md ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-gray-800/50 text-site-muted'}`}>
+                                  <div key={opt.id} className={`text-xs p-2 rounded-md ${opt.isCorrect ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-site-secondary/50 text-site-muted'}`}>
                                     {opt.text}
                                   </div>
                                 ))}
@@ -1200,7 +1200,7 @@ export default function AdminCourseChaptersPage() {
       {showArgModal && (
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-gray-700/50 flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-site-border flex justify-between items-center">
               <h2 className="text-xl font-bold text-site-text heading">{tArg('title')}</h2>
               <button onClick={() => setShowArgModal(false)} className="text-site-muted hover:text-site-text">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1220,7 +1220,7 @@ export default function AdminCourseChaptersPage() {
                       className={`px-3 py-2 text-xs rounded-lg border transition-all ${
                         argumentation.type === type
                           ? 'border-warm-primary bg-warm-primary/10 text-warm-accent shadow-sm'
-                          : 'border-gray-700 bg-gray-900/40 text-site-muted hover:border-gray-600 hover:text-site-text'
+                          : 'border-site-border bg-site-secondary/30 text-site-muted hover:border-warm-primary/50 hover:text-site-text'
                       }`}
                     >
                       {tArg(`types.${type}`)}
@@ -1236,7 +1236,7 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.summary}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, summary: e.target.value }))}
                   placeholder={tArg('summaryPlaceholder')}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
                   rows={2}
                 />
               </div>
@@ -1248,7 +1248,7 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.evidence}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, evidence: e.target.value }))}
                   placeholder={tArg('evidencePlaceholder')}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
                   rows={3}
                 />
               </div>
@@ -1260,13 +1260,13 @@ export default function AdminCourseChaptersPage() {
                   value={argumentation.rebuttal}
                   onChange={(e) => setArgumentation(prev => ({ ...prev, rebuttal: e.target.value }))}
                   placeholder={tArg('rebuttalPlaceholder')}
-                  className="w-full p-3 rounded-lg border border-gray-600 bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary text-sm"
                   rows={2}
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-700/50 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-site-border flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowArgModal(false)}
