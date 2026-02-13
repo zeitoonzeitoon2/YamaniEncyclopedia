@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Send, User, Calendar, ExternalLink, MessageCircle, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -62,60 +63,56 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
   const [loadingMessages, setLoadingMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        setLoadingExams(true)
-        const res = await fetch('/api/academy/exams/my')
-        const data = await res.json()
-        if (res.ok) {
-          setExams(data.exams || [])
-          if (data.exams && data.exams.length > 0 && !selectedExam) {
-            setSelectedExam(data.exams[0])
-          }
-        } else {
-          console.error('API Error:', data)
-          toast.error(data.message || data.error || t('loadError'))
+  const fetchExams = useCallback(async () => {
+    try {
+      setLoadingExams(true)
+      const res = await fetch('/api/academy/exams/my')
+      const data = await res.json()
+      if (res.ok) {
+        setExams(data.exams || [])
+        if (data.exams && data.exams.length > 0 && !selectedExam) {
+          setSelectedExam(data.exams[0])
         }
-      } catch (error) {
-        toast.error(t('loadError'))
-      } finally {
-        setLoadingExams(false)
+      } else {
+        console.error('API Error:', data)
+        toast.error(data.message || data.error || t('loadError'))
       }
+    } catch (error) {
+      toast.error(t('loadError'))
+    } finally {
+      setLoadingExams(false)
     }
+  }, [selectedExam, t])
+
+  const fetchMessages = useCallback(async (isFirstLoad = false) => {
+    if (!selectedExam) return
+    try {
+      if (isFirstLoad) setLoadingMessages(true)
+      const res = await fetch(`/api/academy/chat?examSessionId=${selectedExam.id}`)
+      const data = await res.json()
+      if (res.ok) {
+        if (data.messages && (data.messages.length > 0 || isFirstLoad)) {
+          setMessages(data.messages)
+        }
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      if (isFirstLoad) setLoadingMessages(false)
+    }
+  }, [selectedExam])
+
+  useEffect(() => {
     fetchExams()
-  }, [t])
+  }, [fetchExams])
 
   useEffect(() => {
     if (selectedExam) {
-      let isFirstLoad = true
-      const fetchMessages = async () => {
-        try {
-          if (isFirstLoad) setLoadingMessages(true)
-          const res = await fetch(`/api/academy/chat?examSessionId=${selectedExam.id}`)
-          const data = await res.json()
-          if (res.ok) {
-            // Only update messages if we actually got something or if it's the first load
-            // This prevents the "Hotfix" empty responses from wiping out locally sent messages
-            if (data.messages && (data.messages.length > 0 || isFirstLoad)) {
-              setMessages(data.messages)
-            }
-          }
-        } catch (error) {
-          console.error(error)
-        } finally {
-          if (isFirstLoad) {
-            setLoadingMessages(false)
-            isFirstLoad = false
-          }
-        }
-      }
-      fetchMessages()
-      // Optional: Set up polling or WebSocket here
-      const interval = setInterval(fetchMessages, 5000)
+      fetchMessages(true)
+      const interval = setInterval(() => fetchMessages(false), 5000)
       return () => clearInterval(interval)
     }
-  }, [selectedExam])
+  }, [selectedExam, fetchMessages])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -282,7 +279,7 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                     instructors.map((expert) => (
                       <div key={expert.user.id} className="flex items-center gap-2 bg-site-bg/50 rounded-full pr-1 pl-3 py-1 border border-gray-700">
                         {expert.user.image ? (
-                          <img src={expert.user.image} alt={expert.user.name || ''} className="w-5 h-5 rounded-full object-cover" />
+                          <Image src={expert.user.image} alt={expert.user.name || ''} width={20} height={20} className="rounded-full object-cover" />
                         ) : (
                           <div className="w-5 h-5 rounded-full bg-warm-primary/20 flex items-center justify-center text-[10px] text-warm-primary">
                             <User size={10} />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 
 type QuestionOption = {
@@ -26,25 +26,26 @@ export default function StudentChapterQuiz({ courseId, chapterId }: StudentChapt
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
   const [showResults, setShowResults] = useState(false)
 
-  useEffect(() => {
-    const fetchQuiz = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch(`/api/academy/course/${courseId}/chapters/${chapterId}/quiz`)
-        const data = await res.json()
-        if (res.ok) {
-          setQuestions(data.questions || [])
-        }
-      } catch (error) {
-        console.error('Error fetching quiz:', error)
-      } finally {
-        setLoading(false)
+  const fetchQuiz = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/academy/course/${courseId}/chapters/${chapterId}/quiz`)
+      const data = await res.json()
+      if (res.ok) {
+        setQuestions(data.questions || [])
       }
+    } catch (error) {
+      console.error('Error fetching quiz:', error)
+    } finally {
+      setLoading(false)
     }
+  }, [courseId, chapterId])
+
+  useEffect(() => {
     fetchQuiz()
     setUserAnswers({})
     setShowResults(false)
-  }, [courseId, chapterId])
+  }, [fetchQuiz])
 
   if (loading) return <div className="text-site-muted text-sm p-4 text-center">در حال بارگذاری پرسشنامه...</div>
   if (questions.length === 0) return null

@@ -63,7 +63,7 @@ export default function ArticlePage() {
     }
 
     fetchArticle()
-  }, [params.slug])
+  }, [params.slug, params.locale])
 
   return (
     <div className="min-h-screen bg-site-bg">

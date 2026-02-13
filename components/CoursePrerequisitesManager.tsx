@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
@@ -46,7 +46,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
   const [selectedType, setSelectedType] = useState<'STUDY' | 'TEACH'>('STUDY')
   const [votingKey, setVotingKey] = useState<string | null>(null)
 
-  const fetchPrerequisites = async () => {
+  const fetchPrerequisites = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/domains/courses/${courseId}/prerequisites`)
       const data = await res.json()
@@ -58,9 +58,9 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     } catch (error) {
       console.error('Error fetching prerequisites:', error)
     }
-  }
+  }, [courseId])
 
-  const fetchAllCourses = async () => {
+  const fetchAllCourses = useCallback(async () => {
     try {
       const res = await fetch('/api/academy/courses')
       const data = await res.json()
@@ -71,15 +71,15 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     } catch (error) {
       console.error('Error fetching courses:', error)
     }
-  }
+  }, [courseId])
 
   useEffect(() => {
     if (courseId) {
       Promise.all([fetchPrerequisites(), fetchAllCourses()]).finally(() => setLoading(false))
     }
-  }, [courseId])
+  }, [courseId, fetchPrerequisites, fetchAllCourses])
 
-  const handlePropose = async () => {
+  const handlePropose = useCallback(async () => {
     if (!selectedCourseId) return
     try {
       setSubmitting(true)
@@ -104,9 +104,9 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [selectedCourseId, courseId, selectedType, t, fetchPrerequisites])
 
-  const handleVote = async (prerequisiteId: string, vote: 'APPROVE' | 'REJECT') => {
+  const handleVote = useCallback(async (prerequisiteId: string, vote: 'APPROVE' | 'REJECT') => {
     try {
       setVotingKey(`${prerequisiteId}:${vote}`)
       const res = await fetch(`/api/admin/domains/courses/${courseId}/prerequisites/vote`, {
@@ -126,7 +126,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     } finally {
       setVotingKey(null)
     }
-  }
+  }, [courseId, t, fetchPrerequisites])
 
   if (loading) return <div className="p-4 text-site-muted">Loading...</div>
 

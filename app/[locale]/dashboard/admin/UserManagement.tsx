@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 import { Plus, Trash2, X, Search, Shield, ShieldCheck, User, Edit } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -44,11 +44,7 @@ export default function UserManagement({ allDomains }: Props) {
   const [assignDomainId, setAssignDomainId] = useState('')
   const [assigning, setAssigning] = useState(false)
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
       const res = await fetch('/api/admin/users', { cache: 'no-store' })
@@ -61,7 +57,11 @@ export default function UserManagement({ allDomains }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const getGlobalRole = (user: UserWithDomains) => {
     const isGlobalExpert = user.domainExperts.some(de => de.domain.slug === 'philosophy')
@@ -72,7 +72,7 @@ export default function UserManagement({ allDomains }: Props) {
     return { label: t('roles.editor'), color: 'text-site-muted bg-site-secondary/30 border-site-border' }
   }
 
-  const handleAssignDomain = async () => {
+  const handleAssignDomain = useCallback(async () => {
     if (!selectedUser || !assignDomainId) return
 
     // Check if already assigned
@@ -116,9 +116,9 @@ export default function UserManagement({ allDomains }: Props) {
     } finally {
       setAssigning(false)
     }
-  }
+  }, [selectedUser, assignDomainId, t, fetchUsers])
 
-  const handleRemoveDomain = async (domainId: string) => {
+  const handleRemoveDomain = useCallback(async (domainId: string) => {
     if (!selectedUser) return
     if (!confirm(t('confirmRemove'))) return
 
@@ -146,12 +146,12 @@ export default function UserManagement({ allDomains }: Props) {
     } catch (error) {
       toast.error(t('toast.removeFail'))
     }
-  }
+  }, [selectedUser, t])
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = useMemo(() => users.filter(u => 
     (u.name?.toLowerCase().includes(search.toLowerCase()) || '') ||
     (u.email?.toLowerCase().includes(search.toLowerCase()) || '')
-  )
+  ), [users, search])
 
   return (
     <div className="card mt-8">

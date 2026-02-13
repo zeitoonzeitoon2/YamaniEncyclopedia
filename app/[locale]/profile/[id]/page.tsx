@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import ProfileEditor from '@/components/ProfileEditor'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import Image from 'next/image'
 
 export default async function ProfilePage({
   params,
@@ -76,7 +77,15 @@ export default async function ProfilePage({
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-start gap-6 mb-8">
           {user.image ? (
-            <img src={user.image} alt={nameText} className="w-24 h-24 rounded-full object-cover" />
+            <div className="relative w-24 h-24">
+              <Image
+                src={user.image}
+                alt={nameText}
+                fill
+                className="rounded-full object-cover"
+                unoptimized
+              />
+            </div>
           ) : (
             <span className="w-24 h-24 rounded-full bg-amber-700/30 text-amber-200 inline-flex items-center justify-center text-3xl">
               {(user.name || t('unknownInitial')).charAt(0)}

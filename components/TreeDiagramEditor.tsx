@@ -141,7 +141,7 @@ export default function TreeDiagramEditor({
   const [articleLink, setArticleLink] = useState('')
 
   const [flashcardFields, setFlashcardFields] = useState<FlashcardField[]>([])
-  const createFieldId = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
+  const createFieldId = useCallback(() => Math.random().toString(36).slice(2) + Date.now().toString(36), [])
 
   // Temporary storage for extra link titles to display article titles for those links
   const [extraLinkTitles, setExtraLinkTitles] = useState<Record<string, string>>({})
@@ -869,7 +869,7 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes, t, checkPermission, onDataChange, edges, setNodes]
+    [selectedNodeId, flashcardFields, updateFlashcardFields, nodes, t, checkPermission, onDataChange, edges, setNodes]
   )
 
   const openCreateArticleModal = useCallback((nodeId: string) => {

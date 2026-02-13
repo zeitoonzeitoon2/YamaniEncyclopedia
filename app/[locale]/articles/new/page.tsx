@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
@@ -21,7 +21,27 @@ export default function NewArticlePage() {
   const contentRef = useRef<HTMLTextAreaElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const insertAtCursor = useCallback((text: string) => {
+    const ta = contentRef.current
+    const current = formData.content || ''
+    if (!ta) {
+      setFormData(prev => ({ ...prev, content: current + text }))
+      return
+    }
+    const start = ta.selectionStart ?? current.length
+    const end = ta.selectionEnd ?? start
+    const before = current.slice(0, start)
+    const after = current.slice(end)
+    const updated = before + text + after
+    setFormData(prev => ({ ...prev, content: updated }))
+    setTimeout(() => {
+      const pos = before.length + text.length
+      ta?.focus()
+      ta?.setSelectionRange(pos, pos)
+    }, 0)
+  }, [formData.content])
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -54,7 +74,7 @@ export default function NewArticlePage() {
       setIsUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-  }
+  }, [insertAtCursor])
 
   const getNextFootnoteNumber = (text: string) => {
     let maxNum = 0
@@ -72,7 +92,7 @@ export default function NewArticlePage() {
     return maxNum + 1
   }
 
-  const insertFootnoteAtCursor = () => {
+  const insertFootnoteAtCursor = useCallback(() => {
     const ta = contentRef.current
     const current = formData.content || ''
     const nextNum = getNextFootnoteNumber(current)
@@ -97,30 +117,10 @@ export default function NewArticlePage() {
       ta?.focus()
       ta?.setSelectionRange(pos, pos)
     }, 0)
-  }
-
-  const insertAtCursor = (text: string) => {
-    const ta = contentRef.current
-    const current = formData.content || ''
-    if (!ta) {
-      setFormData(prev => ({ ...prev, content: current + text }))
-      return
-    }
-    const start = ta.selectionStart ?? current.length
-    const end = ta.selectionEnd ?? start
-    const before = current.slice(0, start)
-    const after = current.slice(end)
-    const updated = before + text + after
-    setFormData(prev => ({ ...prev, content: updated }))
-    setTimeout(() => {
-      const pos = before.length + text.length
-      ta?.focus()
-      ta?.setSelectionRange(pos, pos)
-    }, 0)
-  }
+  }, [formData.content])
 
   // تولید خودکار slug از عنوان
-  const generateSlug = (title: string) => {
+  const generateSlug = useCallback((title: string) => {
     return title
       .toLowerCase()
       .trim()
@@ -128,9 +128,9 @@ export default function NewArticlePage() {
       .replace(/[^\w\-آ-ی]/g, '')  // حذف کاراکترهای غیرمجاز
       .replace(/\-\-+/g, '-')  // حذف خط تیره‌های متوالی
       .replace(/^-+|-+$/g, '')  // حذف خط تیره از ابتدا و انتها
-  }
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!session) {
@@ -168,9 +168,9 @@ export default function NewArticlePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [formData, session, router])
 
-  const handleTitleChange = (title: string) => {
+  const handleTitleChange = useCallback((title: string) => {
     setFormData(prev => ({
       ...prev,
       title,
@@ -179,7 +179,7 @@ export default function NewArticlePage() {
         ? generateSlug(title) 
         : prev.slug
     }))
-  }
+  }, [generateSlug])
 
   if (status === 'loading') {
     return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { Modal } from '@/components/Modal'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
@@ -51,7 +51,7 @@ export default function ChapterQuestionnaireModal({
   ])
   const [submitting, setSubmitting] = useState(false)
 
-  const handleAddQuestion = async () => {
+  const handleAddQuestion = useCallback(async () => {
     if (!newQuestion.trim() || newOptions.some(opt => !opt.text.trim())) {
       toast.error('لطفاً صورت سوال و تمام گزینه‌ها را وارد کنید')
       return
@@ -95,9 +95,9 @@ export default function ChapterQuestionnaireModal({
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [newQuestion, newOptions, chapterId, onDraftNeeded, courseId, onRefresh])
 
-  const handleDelete = async (questionId: string) => {
+  const handleDelete = useCallback(async (questionId: string) => {
     if (!confirm('آیا از حذف این سوال مطمئن هستید؟')) return
 
     try {
@@ -121,7 +121,7 @@ export default function ChapterQuestionnaireModal({
     } catch (error) {
       toast.error('خطا در برقراری ارتباط با سرور')
     }
-  }
+  }, [chapterId, onDraftNeeded, courseId, onRefresh])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="پرسشنامه فصل">

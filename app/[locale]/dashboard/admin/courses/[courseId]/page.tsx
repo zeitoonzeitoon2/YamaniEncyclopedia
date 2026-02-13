@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
@@ -156,7 +156,7 @@ export default function AdminCourseChaptersPage() {
       .filter((c) => getRootId(c) === rootId && c.status === 'APPROVED')
       .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
     return approved.length ? approved[approved.length - 1] : null
-  }, [chapters, selectedChapter?.id])
+  }, [chapters, selectedChapter])
 
   const resetFormForNew = (nextOrderIndex: number) => {
     setMode('new')
@@ -166,7 +166,7 @@ export default function AdminCourseChaptersPage() {
     autoDraftingRef.current = false
   }
 
-  const fetchChapters = async (isInitial = false) => {
+  const fetchChapters = useCallback(async (isInitial = false) => {
     if (!courseId) return
     try {
       if (isInitial) setLoading(true)
@@ -188,7 +188,7 @@ export default function AdminCourseChaptersPage() {
     } finally {
       if (isInitial) setLoading(false)
     }
-  }
+  }, [courseId, t])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -200,13 +200,13 @@ export default function AdminCourseChaptersPage() {
     if (chapters.length === 0) {
       fetchChapters(true)
     }
-  }, [session, status, courseId])
+  }, [session, status, courseId, chapters.length, router, fetchChapters])
 
   useEffect(() => {
     chaptersRef.current = chapters
   }, [chapters])
 
-  const fetchQuestions = async (chapterId: string) => {
+  const fetchQuestions = useCallback(async (chapterId: string) => {
     if (!courseId || !chapterId) return
     try {
       setLoadingQuestions(true)
@@ -220,7 +220,7 @@ export default function AdminCourseChaptersPage() {
     } finally {
       setLoadingQuestions(false)
     }
-  }
+  }, [courseId, t])
 
   useEffect(() => {
     const current = selectedId ? chaptersRef.current.find((c) => c.id === selectedId) || null : null
@@ -237,9 +237,9 @@ export default function AdminCourseChaptersPage() {
     fetchQuestions(current.id)
 
     // Also fetch questions for the previous version if it exists
-    const rootId = getRootId(current)
+    const rootId = current.originalChapterId || current.id
     const versions = chaptersRef.current
-      .filter((c) => getRootId(c) === rootId)
+      .filter((c) => (c.originalChapterId || c.id) === rootId)
       .sort((a, b) => {
         const va = a.version ?? 0
         const vb = b.version ?? 0
@@ -262,7 +262,7 @@ export default function AdminCourseChaptersPage() {
     } else {
       setPreviousChapterQuestions([])
     }
-  }, [selectedId])
+  }, [selectedId, courseId, fetchQuestions])
 
   useEffect(() => {
     setPreviewHtml(applyArticleTransforms(form.content || ''))
@@ -553,7 +553,7 @@ export default function AdminCourseChaptersPage() {
     const idx = versions.findIndex((c) => c.id === selectedChapter.id)
     if (idx <= 0) return null
     return versions[idx - 1]
-  }, [chapters, selectedChapter?.id])
+  }, [chapters, selectedChapter])
 
   const previewDiffOps = useMemo(() => {
     if (!selectedChapter) return null
@@ -657,7 +657,7 @@ export default function AdminCourseChaptersPage() {
     const base = selectedPreviousChapter?.content || ''
     const current = form.content || ''
     return diffTokens(tokenize(base), tokenize(current))
-  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.content])
+  }, [form.content, selectedChapter, selectedPreviousChapter])
 
   const parsedDiagramForPreview = useMemo(() => {
     const unwrapFence = (text: string) => {
@@ -686,7 +686,7 @@ export default function AdminCourseChaptersPage() {
     const previous = selectedPreviousChapter ? tryParseDiagram(selectedPreviousChapter.content || '') : null
     const current = selectedChapter ? tryParseDiagram(form.content || '') : null
     return { previous, current }
-  }, [form.content, selectedChapter?.id, selectedPreviousChapter?.id])
+  }, [form.content, selectedChapter, selectedPreviousChapter])
 
   return (
     <div className="min-h-screen bg-site-bg">

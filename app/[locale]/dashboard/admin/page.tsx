@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 
@@ -268,9 +268,9 @@ export default function AdminDashboard() {
       fetchLogo()
     }
     fetchDomains()
-  }, [session, status, router])
+  }, [session, status, router, fetchHeader, fetchLogo, fetchDomains])
 
-  const fetchHeader = async () => {
+  const fetchHeader = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings', { cache: 'no-store' })
       const data = await res.json()
@@ -278,9 +278,9 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error(e)
     }
-  }
+  }, [])
 
-  const fetchLogo = async () => {
+  const fetchLogo = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings?type=logo', { cache: 'no-store' })
       const data = await res.json()
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error(e)
     }
-  }
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -367,7 +367,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const fetchDomains = async (selectDomainId?: string) => {
+  const fetchDomains = useCallback(async (selectDomainId?: string) => {
     try {
       setLoadingDomains(true)
       const res = await fetch('/api/admin/domains', { cache: 'no-store' })
@@ -395,9 +395,9 @@ export default function AdminDashboard() {
     } finally {
       setLoadingDomains(false)
     }
-  }
+  }, [selectedDomainId, t])
 
-  const fetchCandidacies = async (domainId: string) => {
+  const fetchCandidacies = useCallback(async (domainId: string) => {
     try {
       setLoadingCandidacies(true)
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
@@ -413,9 +413,9 @@ export default function AdminDashboard() {
     } finally {
       setLoadingCandidacies(false)
     }
-  }
+  }, [t])
 
-  const fetchCourses = async (domainId: string) => {
+  const fetchCourses = useCallback(async (domainId: string) => {
     try {
       setLoadingCourses(true)
       const res = await fetch(`/api/admin/domains/courses?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
@@ -431,9 +431,9 @@ export default function AdminDashboard() {
     } finally {
       setLoadingCourses(false)
     }
-  }
+  }, [t])
 
-  const fetchResearchPrerequisites = async (domainId: string) => {
+  const fetchResearchPrerequisites = useCallback(async (domainId: string) => {
     try {
       setLoadingResearch(true)
       const res = await fetch(`/api/admin/domains/${encodeURIComponent(domainId)}/research-prerequisites`, { cache: 'no-store' })
@@ -449,9 +449,9 @@ export default function AdminDashboard() {
     } finally {
       setLoadingResearch(false)
     }
-  }
+  }, [])
 
-  const fetchAllCourses = async () => {
+  const fetchAllCourses = useCallback(async () => {
     try {
       setLoadingAllCourses(true)
       const res = await fetch('/api/academy/courses', { cache: 'no-store' })
@@ -464,7 +464,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingAllCourses(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const id = selectedDomainId
@@ -475,7 +475,7 @@ export default function AdminDashboard() {
     fetchAllCourses()
     fetchActiveRounds(id)
     fetchProposals(id)
-  }, [selectedDomainId])
+  }, [selectedDomainId, fetchCandidacies, fetchCourses, fetchResearchPrerequisites, fetchAllCourses, fetchActiveRounds, fetchProposals])
 
   useEffect(() => {
     let active = true
@@ -633,7 +633,7 @@ export default function AdminDashboard() {
     }
   }
 
-  async function fetchActiveRounds(domainId: string) {
+  const fetchActiveRounds = useCallback(async (domainId: string) => {
     setLoadingRounds(true)
     try {
       const wings = ['RIGHT', 'LEFT']
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingRounds(false)
     }
-  }
+  }, [])
 
   async function startElectionRound(wing: string) {
     if (!selectedDomainId) return
@@ -738,7 +738,7 @@ export default function AdminDashboard() {
     }
   }
 
-  async function fetchProposals(domainId?: string) {
+  const fetchProposals = useCallback(async (domainId?: string) => {
     setLoadingProposals(true)
     try {
       const res = await fetch(`/api/admin/domains/proposals${domainId ? `?domainId=${domainId}` : ''}`)
@@ -752,7 +752,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingProposals(false)
     }
-  }
+  }, [])
 
   const voteOnProposal = async (proposalId: string, vote: 'APPROVE' | 'REJECT') => {
     setVotingOnProposalKey(`${proposalId}:${vote}`)
@@ -1006,7 +1006,13 @@ export default function AdminDashboard() {
             )}
             {previewUrl && (
               <div className="relative w-full h-40 md:h-56 lg:h-64 mb-4 ring-2 ring-warm-accent rounded-lg overflow-hidden">
-                <img src={previewUrl} alt={t('previewAlt')} className="w-full h-full object-cover" />
+                <Image 
+                  src={previewUrl} 
+                  alt={t('previewAlt')} 
+                  fill 
+                  className="object-cover" 
+                  unoptimized 
+                />
               </div>
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
@@ -1037,7 +1043,15 @@ export default function AdminDashboard() {
             )}
             {logoPreviewUrl && (
               <div className="flex items-center gap-4 mb-4 ring-2 ring-warm-accent rounded-lg p-3">
-                <img src={logoPreviewUrl} alt={t('previewAlt')} className="w-20 h-20 object-contain" />
+                <div className="relative w-20 h-20">
+                  <Image 
+                    src={logoPreviewUrl} 
+                    alt={t('previewAlt')} 
+                    fill 
+                    className="object-contain" 
+                    unoptimized 
+                  />
+                </div>
               </div>
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">

@@ -3,7 +3,7 @@
 import { Link } from '@/lib/navigation'
 import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Check, X, Calendar, Video, Award, History, Clock, MessageCircle, TrendingUp } from 'lucide-react'
 import { AcademyChat } from '@/components/AcademyChat'
@@ -38,7 +38,7 @@ export default function AcademyTeachingPage() {
   const [score, setScore] = useState('')
   const [feedback, setFeedback] = useState('')
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     if (tab === 'communication' || tab === 'investments') return // Communication handled by AcademyChat, Investments by DomainInvestments
     try {
       setLoading(true)
@@ -54,11 +54,11 @@ export default function AcademyTeachingPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [tab, t])
 
   useEffect(() => {
     fetchExams()
-  }, [tab])
+  }, [fetchExams])
 
   const openEdit = (exam: ExamSession) => {
     setEditingExam(exam)

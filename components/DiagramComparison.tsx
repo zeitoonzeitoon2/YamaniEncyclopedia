@@ -316,7 +316,7 @@ export default function DiagramComparison({
     }
 
     return { originalWithDiff, proposedWithDiff, stats }
-  }, [originalData, proposedData, hasFlash, buildFlashSignature, getNormalizedLink])
+  }, [originalData, proposedData, hasFlash, buildFlashSignature])
 
   // Calculate aggregated stats for flashcards/articles and notify parent component
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
 import { Header } from '@/components/Header'
@@ -119,7 +119,7 @@ export default function AdminDomainsPage() {
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
-  const fetchDomains = async (selectDomainId?: string) => {
+  const fetchDomains = useCallback(async (selectDomainId?: string) => {
     try {
       setLoading(true)
       const res = await fetch('/api/admin/domains', { cache: 'no-store' })
@@ -147,9 +147,9 @@ export default function AdminDomainsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDomainId, t])
 
-  const fetchCandidacies = async (domainId: string) => {
+  const fetchCandidacies = useCallback(async (domainId: string) => {
     try {
       setLoadingCandidacies(true)
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
@@ -165,13 +165,13 @@ export default function AdminDomainsPage() {
     } finally {
       setLoadingCandidacies(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     const id = selectedDomainId
     if (!id) return
     fetchCandidacies(id)
-  }, [selectedDomainId])
+  }, [selectedDomainId, fetchCandidacies])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -180,7 +180,7 @@ export default function AdminDomainsPage() {
       return
     }
     fetchDomains()
-  }, [session, status, router])
+  }, [session, status, router, fetchDomains])
 
   useEffect(() => {
     let active = true

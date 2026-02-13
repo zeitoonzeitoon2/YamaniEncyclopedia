@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Link } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
 import { useTranslations, useLocale } from 'next-intl'
@@ -320,7 +321,7 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
               title={t('researcherSearch.viewResearcher')}
             >
               {node.author.image ? (
-                <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+                <Image src={node.author.image} alt={node.author.name || ''} width={28} height={28} className="w-7 h-7 rounded-full object-cover" unoptimized />
               ) : (
                 <span className="w-7 h-7 rounded-full bg-warm-primary/20 text-warm-accent inline-flex items-center justify-center text-xs">
                   {(node.author.name || '?').charAt(0)}
@@ -330,7 +331,7 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
           ) : (
             <Link href={`/profile/${node.author.id}`} title={t('researcherSearch.viewResearcher')}>
               {node.author.image ? (
-                <img src={node.author.image} alt={node.author.name || ''} className="w-7 h-7 rounded-full object-cover" />
+                <Image src={node.author.image} alt={node.author.name || ''} width={28} height={28} className="w-7 h-7 rounded-full object-cover" unoptimized />
               ) : (
                 <span className="w-7 h-7 rounded-full bg-warm-primary/20 text-warm-accent inline-flex items-center justify-center text-xs">
                   {(node.author.name || '?').charAt(0)}
