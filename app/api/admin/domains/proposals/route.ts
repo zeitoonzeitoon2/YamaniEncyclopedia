@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
     const domainId = url.searchParams.get('domainId')
 
     const where: any = { status: 'PENDING' }
-    if (domainId) {
+    
+    // اگر domainId معتبر نبود (مثلاً رشته "undefined" یا خالی)، آن را نادیده می‌گیریم
+    if (domainId && domainId !== 'undefined' && domainId !== 'null' && domainId.length > 5) {
       where.OR = [
         { parentId: domainId },
         { targetDomainId: domainId },
@@ -35,18 +37,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ proposals })
   } catch (error) {
     console.error('Error fetching domain proposals:', error)
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
+    if (!session || !session.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    let body;
+    try {
+      body = await request.json()
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+
     const { type, name, description, parentId, targetDomainId } = body
 
     if (!type || !['CREATE', 'DELETE'].includes(type)) {
@@ -103,6 +114,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, proposal })
   } catch (error) {
     console.error('Error creating domain proposal:', error)
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 })
   }
 }
