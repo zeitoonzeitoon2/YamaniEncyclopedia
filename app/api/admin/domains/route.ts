@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { slugify } from '@/lib/utils'
 
 type DomainTreeExpert = {
   id: string
@@ -24,20 +25,6 @@ type DomainTreeNode = {
   experts: DomainTreeExpert[]
   counts: { posts: number; children: number }
   children: DomainTreeNode[]
-}
-
-function slugify(input: string): string {
-  const s = input
-    .trim()
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-  if (s) return s
-  return `domain-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
 }
 
 function buildTree(rows: Array<Omit<DomainTreeNode, 'children'>>): DomainTreeNode[] {

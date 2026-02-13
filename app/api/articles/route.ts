@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { slugify } from '@/lib/utils'
 
 // GET - دریافت تمام مقاله‌های منتشر شده
 export async function GET() {
@@ -50,25 +51,6 @@ export async function POST(request: NextRequest) {
         { error: 'عنوان و محتوا الزامی هستند' },
         { status: 400 }
       )
-    }
-
-    // تولید slug یکتا از روی عنوان در سمت سرور
-    const slugify = (text: string) => {
-      const normalized = (text || '')
-        .toLowerCase()
-        .trim()
-        // نرمال‌سازی کاراکترهای عربی به فارسی (ی/ک)
-        .replace(/[ي]/g, 'ی')
-        .replace(/[ك]/g, 'ک')
-        // حذف نیم‌فاصله و فاصله‌های خاص
-        .replace(/[\u200c\u200f\u202a-\u202e]/g, ' ')
-      const slug = normalized
-        .replace(/\s+/g, '-')
-        // مجاز: حروف لاتین، اعداد، آندرلاین، خط تیره، و محدوده کامل فارسی/عربی
-        .replace(/[^\w\-\u0600-\u06FF]/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+|-+$/g, '')
-      return slug || 'article'
     }
 
     const base = slugify(title)
