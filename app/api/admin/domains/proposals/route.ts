@@ -24,15 +24,25 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const proposals = await prisma.domainProposal.findMany({
-      where,
-      include: {
-        proposer: { select: { id: true, name: true, email: true } },
-        targetDomain: { select: { id: true, name: true, parentId: true } },
-        votes: true
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    // Ensure we don't crash if Prisma models are missing or connection fails
+    let proposals = []
+    try {
+      proposals = await prisma.domainProposal.findMany({
+        where,
+        include: {
+          proposer: { select: { id: true, name: true, email: true } },
+          targetDomain: { select: { id: true, name: true, parentId: true } },
+          votes: true
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (prismaError) {
+      console.error('Prisma query error:', prismaError)
+      throw new Error(`Prisma query failed: ${prismaError instanceof Error ? prismaError.message : String(prismaError)}`)
+    }
+
+    // Debugging: Log the count of proposals found
+    console.log(`Fetched ${proposals.length} proposals for domainId: ${domainId}`)
 
     return NextResponse.json({ proposals })
   } catch (error) {
@@ -51,14 +61,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let body;
-    try {
-      body = await request.json()
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const { type, name, description, parentId, targetDomainId } = body as {
+      type: 'CREATE' | 'DELETE'
+      name?: string
+      description?: string
+      parentId?: string
+      targetDomainId?: string
     }
-
-    const { type, name, description, parentId, targetDomainId } = body
 
     if (!type || !['CREATE', 'DELETE'].includes(type)) {
       return NextResponse.json({ error: 'Invalid proposal type' }, { status: 400 })
@@ -70,12 +80,13 @@ export async function POST(request: NextRequest) {
       if (!name || !parentId) {
         return NextResponse.json({ error: 'Name and parentId are required for creation' }, { status: 400 })
       }
+      
       // Check if user is expert of parent
       if (session.user.role !== 'ADMIN') {
         const isExpert = await prisma.domainExpert.findFirst({
           where: { domainId: parentId, userId: session.user.id }
         })
-        if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose subdomains' }, { status: 403 })
+        if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose creation' }, { status: 403 })
       }
     } else if (type === 'DELETE') {
       if (!targetDomainId) {
@@ -83,7 +94,7 @@ export async function POST(request: NextRequest) {
       }
       const domain = await prisma.domain.findUnique({
         where: { id: targetDomainId },
-        select: { parentId: true, slug: true }
+        select: { id: true, parentId: true, slug: true }
       })
       if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
       if (domain.slug === 'philosophy') return NextResponse.json({ error: 'Cannot delete root' }, { status: 400 })
@@ -99,6 +110,8 @@ export async function POST(request: NextRequest) {
         if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose deletion' }, { status: 403 })
       }
     }
+
+    console.log('Creating proposal:', { type, name, finalParentId, targetDomainId, proposerId: session.user.id })
 
     const proposal = await prisma.domainProposal.create({
       data: {

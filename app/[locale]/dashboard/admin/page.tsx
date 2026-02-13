@@ -743,6 +743,9 @@ export default function AdminDashboard() {
     try {
       const res = await fetch(`/api/admin/domains/proposals${domainId ? `?domainId=${domainId}` : ''}`)
       const data = await res.json()
+      if (!res.ok) {
+        console.error('Fetch Proposals Error:', data.error, data.details)
+      }
       setDomainProposals(data.proposals || [])
     } catch (error) {
       console.error('Error fetching proposals:', error)
@@ -885,9 +888,10 @@ export default function AdminDashboard() {
           targetDomainId: selectedDomain.id,
         }),
       })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; details?: string }
       if (!res.ok) {
         toast.error(payload.error || t('createProposalError'))
+        if (payload.details) console.error('Delete Proposal Error Details:', payload.details)
         return
       }
       toast.success(t('createProposalSuccess'))
