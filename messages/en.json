@@ -762,6 +762,33 @@
     "statusRejected": "Rejected",
     "statusDraft": "Draft",
     "loading": "Loading...",
+    "strategicInvestments": "Strategic Voting Power Investment",
+    "investment": {
+      "title": "Investment",
+      "propose": "Propose Investment",
+      "give": "Voting Power Transfer Amount (%):",
+      "receive": "Profit Percentage from Counterparty:",
+      "duration": "Contract Duration (Years):",
+      "durationValue": "{years} years",
+      "myInvestments": "My Investments (Power Transfer)",
+      "receivedInvestments": "Received Investments (Power Gain)",
+      "statusActive": "Active",
+      "statusPending": "Pending Approval",
+      "statusCompleted": "Completed",
+      "statusReturned": "Returned",
+      "startDate": "Start Date:",
+      "endDate": "End Date:",
+      "returnBtn": "Return Investment",
+      "proposer": "Investor (Power Giver)",
+      "target": "Investee (Power Receiver)",
+      "toast": {
+        "fetchError": "Error fetching investments list",
+        "createSuccess": "Investment proposal sent successfully",
+        "createError": "Error registering investment proposal",
+        "voteSuccess": "Your vote has been recorded successfully",
+        "returnSuccess": "Investment returned successfully"
+      }
+    },
     "toast": {
       "fetchError": "Error fetching chapters",
       "saveSuccess": "Changes saved successfully",

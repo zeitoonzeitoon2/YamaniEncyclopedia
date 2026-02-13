@@ -757,6 +757,33 @@
     "statusRejected": "مرفوض",
     "statusDraft": "مسودة",
     "loading": "جارٍ التحميل...",
+    "strategicInvestments": "الاستثمار الاستراتيجي لقوة التصويت",
+    "investment": {
+      "title": "الاستثمار",
+      "propose": "اقتراح استثمار",
+      "give": "نسبة التنازل عن قوة التصويت (%):",
+      "receive": "نسبة الربح المستلمة من الطرف الآخر:",
+      "duration": "مدة العقد (سنوات):",
+      "durationValue": "{years} سنوات",
+      "myInvestments": "استثماراتي (التنازل عن القوة)",
+      "receivedInvestments": "الاستثمارات المستلمة (كسب القوة)",
+      "statusActive": "نشط",
+      "statusPending": "في انتظار الموافقة",
+      "statusCompleted": "مكتمل",
+      "statusReturned": "تم الاسترداد",
+      "startDate": "تاريخ البدء:",
+      "endDate": "تاريخ الانتهاء:",
+      "returnBtn": "استرداد الاستثمار",
+      "proposer": "المستثمر (مانح القوة)",
+      "target": "المستثمر فيه (متلقي القوة)",
+      "toast": {
+        "fetchError": "خطأ في جلب قائمة الاستثمارات",
+        "createSuccess": "تم إرسال اقتراح الاستثمار بنجاح",
+        "createError": "خطأ في تسجيل اقتراح الاستثمار",
+        "voteSuccess": "تم تسجيل تصويتك بنجاح",
+        "returnSuccess": "تم استرداد الاستثمار بنجاح"
+      }
+    },
     "toast": {
       "fetchError": "خطأ في جلب الفصول",
       "saveSuccess": "تم حفظ التغييرات بنجاح",
