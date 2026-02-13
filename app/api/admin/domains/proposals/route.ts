@@ -13,18 +13,20 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url)
     const domainId = url.searchParams.get('domainId')
 
+    const where: any = { status: 'PENDING' }
+    if (domainId) {
+      where.OR = [
+        { parentId: domainId },
+        { targetDomainId: domainId },
+        { targetDomain: { parentId: domainId } }
+      ]
+    }
+
     const proposals = await prisma.domainProposal.findMany({
-      where: {
-        OR: [
-          { parentId: domainId || undefined },
-          { targetDomainId: domainId || undefined },
-          { targetDomain: { parentId: domainId || undefined } }
-        ],
-        status: 'PENDING'
-      },
+      where,
       include: {
-        proposer: { select: { name: true, email: true } },
-        targetDomain: { select: { name: true, parentId: true } },
+        proposer: { select: { id: true, name: true, email: true } },
+        targetDomain: { select: { id: true, name: true, parentId: true } },
         votes: true
       },
       orderBy: { createdAt: 'desc' }
@@ -33,14 +35,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ proposals })
   } catch (error) {
     console.error('Error fetching domain proposals:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -50,6 +52,8 @@ export async function POST(request: NextRequest) {
     if (!type || !['CREATE', 'DELETE'].includes(type)) {
       return NextResponse.json({ error: 'Invalid proposal type' }, { status: 400 })
     }
+
+    let finalParentId = parentId
 
     if (type === 'CREATE') {
       if (!name || !parentId) {
@@ -73,6 +77,8 @@ export async function POST(request: NextRequest) {
       if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
       if (domain.slug === 'philosophy') return NextResponse.json({ error: 'Cannot delete root' }, { status: 400 })
 
+      finalParentId = domain.parentId
+
       // Check if user is expert of parent
       if (session.user.role !== 'ADMIN') {
         if (!domain.parentId) return NextResponse.json({ error: 'Only admins can propose deleting root domains' }, { status: 403 })
@@ -86,10 +92,10 @@ export async function POST(request: NextRequest) {
     const proposal = await prisma.domainProposal.create({
       data: {
         type,
-        name,
-        description,
-        parentId,
-        targetDomainId,
+        name: name || null,
+        description: description || null,
+        parentId: finalParentId || null,
+        targetDomainId: targetDomainId || null,
         proposerId: session.user.id
       }
     })
@@ -97,6 +103,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, proposal })
   } catch (error) {
     console.error('Error creating domain proposal:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
 }

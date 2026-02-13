@@ -256,9 +256,10 @@ export default function AdminDomainsPage() {
         }),
       })
 
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; details?: string }
       if (!res.ok) {
         toast.error(payload.error || t('toast.createError'))
+        if (payload.details) console.error('Create Proposal Error Details:', payload.details)
         return
       }
 
@@ -376,9 +377,10 @@ export default function AdminDomainsPage() {
           targetDomainId: selectedDomain.id,
         }),
       })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; details?: string }
       if (!res.ok) {
         toast.error(payload.error || t('toast.deleteDomainError'))
+        if (payload.details) console.error('Delete Proposal Error Details:', payload.details)
         return
       }
       toast.success(t('createProposalSuccess'))
