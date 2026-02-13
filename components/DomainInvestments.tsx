@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
-import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield } from 'lucide-react'
+import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar } from 'lucide-react'
 
 type Domain = {
   id: string
@@ -216,6 +216,19 @@ export default function DomainInvestments() {
               <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted" />
             </div>
           </div>
+          <div className="space-y-1">
+            <label className="text-xs text-site-muted px-1">{t('investment.duration')}</label>
+            <div className="relative">
+              <input 
+                type="number" 
+                value={duration} 
+                onChange={e => setDuration(Number(e.target.value))}
+                min={1}
+                className="w-full p-2.5 pr-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none"
+              />
+              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted" />
+            </div>
+          </div>
           <div className="flex items-end">
             <button 
               onClick={handlePropose}
@@ -227,8 +240,7 @@ export default function DomainInvestments() {
           </div>
         </div>
         <p className="mt-4 text-[11px] text-site-muted bg-site-bg/50 p-2 rounded border border-site-border/50">
-          💡 {t('investment.duration')}: {duration} {t('investment.durationValue', { years: duration })}. 
-          فقط بین والد و فرزند مستقیم امکان‌پذیر است.
+          💡 فقط بین والد و فرزند مستقیم امکان‌پذیر است.
         </p>
       </div>
 
