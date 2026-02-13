@@ -22,11 +22,64 @@ export async function GET(request: NextRequest) {
       orderBy: { startDate: 'desc' }
     })
 
+    if (activeRound && new Date(activeRound.endDate) < new Date()) {
+      // Lazy Finalize
+      await finalizeRound(activeRound.id)
+      return NextResponse.json({ activeRound: null })
+    }
+
     return NextResponse.json({ activeRound })
   } catch (error: any) {
     console.error('Error fetching active round:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
+}
+
+async function finalizeRound(roundId: string) {
+  const round = await prisma.electionRound.findUnique({
+    where: { id: roundId },
+    include: {
+      candidacies: {
+        where: { status: 'PENDING' },
+        orderBy: { totalScore: 'desc' },
+        take: 10
+      }
+    }
+  })
+
+  if (!round || round.status !== 'ACTIVE') return
+
+  await prisma.$transaction(async (tx) => {
+    await tx.electionRound.update({
+      where: { id: roundId },
+      data: { status: 'COMPLETED' }
+    })
+
+    await tx.domainExpert.deleteMany({
+      where: { domainId: round.domainId, wing: round.wing }
+    })
+
+    for (const candidacy of round.candidacies) {
+      await tx.domainExpert.create({
+        data: {
+          userId: candidacy.candidateUserId,
+          domainId: round.domainId,
+          role: candidacy.role,
+          wing: round.wing
+        }
+      })
+
+      await tx.expertCandidacy.update({
+        where: { id: candidacy.id },
+        data: { status: 'APPROVED' }
+      })
+    }
+
+    await tx.expertCandidacy.updateMany({
+      where: { roundId, status: 'PENDING' },
+      data: { status: 'REJECTED' }
+    })
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -82,68 +135,51 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { roundId } = body
+    const { roundId, action } = body
 
     if (!roundId) {
       return NextResponse.json({ error: 'roundId is required' }, { status: 400 })
     }
 
-    const round = await prisma.electionRound.findUnique({
-      where: { id: roundId },
-      include: {
-        candidacies: {
-          where: { status: 'PENDING' },
-          orderBy: { totalScore: 'desc' },
-          take: 10
+    if (action === 'EXTEND') {
+      const round = await prisma.electionRound.findUnique({ where: { id: roundId } })
+      if (!round) return NextResponse.json({ error: 'Round not found' }, { status: 404 })
+
+      // Check if Admin or Parent Domain Expert
+      let canExtend = session.user.role === 'ADMIN'
+      if (!canExtend) {
+        const domain = await prisma.domain.findUnique({
+          where: { id: round.domainId },
+          select: { parentId: true }
+        })
+        if (domain?.parentId) {
+          const parentExpert = await prisma.domainExpert.findFirst({
+            where: { domainId: domain.parentId, userId: session.user.id }
+          })
+          if (parentExpert) canExtend = true
         }
       }
-    })
 
-    if (!round) return NextResponse.json({ error: 'Round not found' }, { status: 404 })
-    if (round.status !== 'ACTIVE') return NextResponse.json({ error: 'Round is already completed' }, { status: 400 })
-
-    // Finalize the round
-    await prisma.$transaction(async (tx) => {
-      // 1. Mark round as completed
-      await tx.electionRound.update({
-        where: { id: roundId },
-        data: { status: 'COMPLETED' }
-      })
-
-      // 2. Clear existing experts for this wing in this domain
-      // User said "ده نفری که بیشترین امتیاز رو کسب کردن به عنوان اعضای اون تیم تعیین میشن"
-      // This implies replacing or refreshing the team.
-      await tx.domainExpert.deleteMany({
-        where: { domainId: round.domainId, wing: round.wing }
-      })
-
-      // 3. Approve top 10 candidates and add them as experts
-      for (const candidacy of round.candidacies) {
-        await tx.domainExpert.create({
-          data: {
-            userId: candidacy.candidateUserId,
-            domainId: round.domainId,
-            role: candidacy.role,
-            wing: round.wing
-          }
-        })
-
-        await tx.expertCandidacy.update({
-          where: { id: candidacy.id },
-          data: { status: 'APPROVED' }
-        })
+      if (!canExtend) {
+        return NextResponse.json({ error: 'Only global admins or domain heads can extend' }, { status: 403 })
       }
 
-      // 4. Reject other pending candidacies in this round
-      await tx.expertCandidacy.updateMany({
-        where: { roundId, status: 'PENDING' },
-        data: { status: 'REJECTED' }
-      })
-    })
+      const newEndDate = new Date(round.endDate)
+      newEndDate.setDate(newEndDate.getDate() + 1)
 
+      await prisma.electionRound.update({
+        where: { id: roundId },
+        data: { endDate: newEndDate }
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
+    // Manual Finalize (kept for potential use, but UI will remove button)
+    await finalizeRound(roundId)
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error finalizing election round:', error)
+    console.error('Error updating election round:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

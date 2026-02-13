@@ -260,6 +260,8 @@
       "electionRound": "دوره انتخاباتی",
       "startElectionRound": "شروع دوره انتخاباتی",
       "finalizeElection": "نهایی‌سازی انتخابات",
+      "extendElection": "تمدید انتخابات (۱ روز)",
+      "electionExtended": "انتخابات به مدت ۱ روز تمدید شد",
       "nominationPeriodEnds": "پایان مهلت پیشنهاد کاندیدا",
       "electionEnds": "پایان دوره انتخاباتی",
       "remainingTime": "زمان باقی‌مانده: {time}",

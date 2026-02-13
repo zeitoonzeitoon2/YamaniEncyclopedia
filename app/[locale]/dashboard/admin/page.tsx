@@ -176,7 +176,7 @@ export default function AdminDashboard() {
 
   const [activeRounds, setActiveRounds] = useState<Record<string, ElectionRound | null>>({})
   const [loadingRounds, setLoadingRounds] = useState(false)
-  const [finalizingRoundKey, setFinalizingRoundKey] = useState<string | null>(null)
+  const [extendingRoundKey, setExtendingRoundKey] = useState<string | null>(null)
   const [startingRoundKey, setStartingRoundKey] = useState<string | null>(null)
 
   const selectedDomain = useMemo(() => {
@@ -619,26 +619,24 @@ export default function AdminDashboard() {
     }
   }
 
-  async function finalizeElectionRound(roundId: string, wing: string) {
-    setFinalizingRoundKey(roundId)
+  async function extendElectionRound(roundId: string, wing: string) {
+    setExtendingRoundKey(roundId)
     try {
       const res = await fetch('/api/admin/domains/election', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId })
+        body: JSON.stringify({ roundId, action: 'EXTEND' })
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      toast.success(t('electionFinalized'))
+      toast.success(t('electionExtended'))
       if (selectedDomainId) {
         fetchActiveRounds(selectedDomainId)
-        fetchDomains() // Refresh experts list
-        fetchCandidacies(selectedDomainId)
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error finalizing round')
+      toast.error(error.message || 'Error extending round')
     } finally {
-      setFinalizingRoundKey(null)
+      setExtendingRoundKey(null)
     }
   }
 
@@ -1083,11 +1081,11 @@ export default function AdminDashboard() {
                                 {canManageSelectedDomainMembers && (
                                   <button
                                     type="button"
-                                    onClick={() => finalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
-                                    disabled={finalizingRoundKey !== null}
-                                    className="text-[10px] px-2 py-1 rounded border border-red-600/50 text-red-400 hover:bg-red-600/10 disabled:opacity-50"
+                                    onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                    disabled={extendingRoundKey !== null}
+                                    className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
                                   >
-                                    {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('finalizeElection')}
+                                    {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
                                   </button>
                                 )}
                               </div>
@@ -1157,11 +1155,11 @@ export default function AdminDashboard() {
                                 {canManageSelectedDomainMembers && (
                                   <button
                                     type="button"
-                                    onClick={() => finalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
-                                    disabled={finalizingRoundKey !== null}
-                                    className="text-[10px] px-2 py-1 rounded border border-red-600/50 text-red-400 hover:bg-red-600/10 disabled:opacity-50"
+                                    onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                    disabled={extendingRoundKey !== null}
+                                    className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
                                   >
-                                    {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('finalizeElection')}
+                                    {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
                                   </button>
                                 )}
                               </div>

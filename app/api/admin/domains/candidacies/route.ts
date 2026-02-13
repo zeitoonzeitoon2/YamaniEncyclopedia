@@ -65,11 +65,13 @@ export async function GET(request: NextRequest) {
         role: true,
         wing: true,
         status: true,
+        roundId: true,
+        totalScore: true,
         createdAt: true,
         domain: { select: { name: true } },
         candidateUser: { select: { name: true, email: true } },
         proposerUser: { select: { name: true, email: true } },
-        votes: { select: { voterUserId: true, vote: true } },
+        votes: { select: { voterUserId: true, vote: true, score: true } },
       },
     })
 
