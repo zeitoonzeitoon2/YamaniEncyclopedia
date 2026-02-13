@@ -316,7 +316,7 @@ export default function DiagramComparison({
     }
 
     return { originalWithDiff, proposedWithDiff, stats }
-  }, [originalData, proposedData, hasFlash, buildFlashSignature])
+  }, [originalData, proposedData, hasFlash, buildFlashSignature, getNormalizedLink])
 
   // Calculate aggregated stats for flashcards/articles and notify parent component
   useEffect(() => {
@@ -513,6 +513,18 @@ export default function DiagramComparison({
     setSelectedProposedNodeId(id)
   }, [activeNodeId, focusNodesAndHighlight])
 
+  const handleOriginalNodeClick = useCallback((_: any, node: any) => {
+    setSelectedOriginalNodeId(node.id)
+    setSelectedProposedNodeId(node.id)
+    setHighlightedNodeIds((node.data as any)?.relatedNodeIds || [])
+  }, [])
+
+  const handleProposedNodeClick = useCallback((_: any, node: any) => {
+    setSelectedProposedNodeId(node.id)
+    setSelectedOriginalNodeId(node.id)
+    setHighlightedNodeIds((node.data as any)?.relatedNodeIds || [])
+  }, [])
+
   const buildPrimaryLink = useCallback((d: any) => {
     try { return getNormalizedLink(d || {}) } catch { return '' }
   }, [getNormalizedLink])
@@ -596,7 +608,7 @@ export default function DiagramComparison({
           nodeTypes={memoizedNodeTypes}
           fitView
           onInit={(instance) => { (originalFlowRef as any).current = instance }}
-          onNodeClick={(_evt: any, node: any) => { setSelectedOriginalNodeId(node.id); setSelectedProposedNodeId(node.id) }}
+          onNodeClick={handleOriginalNodeClick}
           onPaneClick={() => { setSelectedOriginalNodeId(null); setSelectedProposedNodeId(null) }}
         >
           <Background />
@@ -610,7 +622,7 @@ export default function DiagramComparison({
           nodeTypes={memoizedNodeTypes}
           fitView
           onInit={(instance) => { (proposedFlowRef as any).current = instance }}
-          onNodeClick={(_evt: any, node: any) => { setSelectedProposedNodeId(node.id); setSelectedOriginalNodeId(node.id) }}
+          onNodeClick={handleProposedNodeClick}
           onPaneClick={() => { setSelectedOriginalNodeId(null); setSelectedProposedNodeId(null) }}
         >
           <Background />

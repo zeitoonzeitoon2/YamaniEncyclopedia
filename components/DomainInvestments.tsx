@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
@@ -33,6 +33,17 @@ type Investment = {
   }[]
 }
 
+const flattenTree = (nodes: any[]): Domain[] => {
+  let result: Domain[] = []
+  for (const node of nodes) {
+    result.push({ id: node.id, name: node.name, slug: node.slug })
+    if (node.children && node.children.length > 0) {
+      result = [...result, ...flattenTree(node.children)]
+    }
+  }
+  return result
+}
+
 export default function DomainInvestments() {
   const t = useTranslations('adminCourses')
   const { data: session } = useSession()
@@ -48,18 +59,7 @@ export default function DomainInvestments() {
   const [submitting, setSubmitting] = useState(false)
   const [votingId, setVotingId] = useState<string | null>(null)
 
-  const flattenTree = (nodes: any[]): Domain[] => {
-    let result: Domain[] = []
-    for (const node of nodes) {
-      result.push({ id: node.id, name: node.name, slug: node.slug })
-      if (node.children && node.children.length > 0) {
-        result = [...result, ...flattenTree(node.children)]
-      }
-    }
-    return result
-  }
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       const domainsRes = await fetch('/api/admin/domains')
@@ -79,13 +79,13 @@ export default function DomainInvestments() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
-  const handlePropose = async () => {
+  const handlePropose = useCallback(async () => {
     if (!selectedMyDomainId || !selectedTargetDomainId) {
       toast.error('لطفاً حوزه‌ها را انتخاب کنید')
       return
@@ -115,9 +115,9 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, duration, t, fetchData])
 
-  const handleVote = async (id: string, vote: 'APPROVE' | 'REJECT') => {
+  const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
     try {
       setVotingId(`${id}:${vote}`)
       const res = await fetch('/api/admin/domains/investments/vote', {
@@ -137,9 +137,9 @@ export default function DomainInvestments() {
     } finally {
       setVotingId(null)
     }
-  }
+  }, [t, fetchData])
 
-  const handleSettle = async () => {
+  const handleSettle = useCallback(async () => {
     try {
       setSubmitting(true)
       const res = await fetch('/api/admin/domains/investments/settle', {
@@ -157,7 +157,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [fetchData])
 
   if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
 

@@ -325,7 +325,7 @@ export default function TreeDiagramEditor({
     }
     run()
     return () => controller.abort()
-  }, [flashcardFields, articleLink])
+  }, [flashcardFields, articleLink, extraLinkContentCache])
 
   const [quickArticleModalEditMode, setQuickArticleModalEditMode] = useState(false)
   const [quickArticleExistingDraft, setQuickArticleExistingDraft] = useState<
@@ -362,7 +362,7 @@ export default function TreeDiagramEditor({
       }
     }
     fetchPermissions()
-  }, [nodes, session, readOnly])
+  }, [nodes, session, readOnly, permissions])
 
   const checkPermission = useCallback(async (domainId: string | null) => {
     if (!session || readOnly) return false
@@ -425,7 +425,7 @@ export default function TreeDiagramEditor({
       setEdges(newEdge)
       onDataChange?.({ nodes: nextNodes, edges: newEdge })
     },
-    [edges, nodes, onDataChange, readOnly, setNodes, checkPermission]
+    [edges, nodes, onDataChange, readOnly, setNodes, checkPermission, setEdges]
   )
 
   const addNode = useCallback(
@@ -656,7 +656,7 @@ export default function TreeDiagramEditor({
     setFlashcardFields(items)
     setRelatedNodeIds(Array.isArray(dataAny.relatedNodeIds) ? dataAny.relatedNodeIds : [])
     setRelationToAddId('')
-  }, [onDataChange, edges, createFieldId])
+  }, [onDataChange, edges, createFieldId, setNodes])
 
   const handlePaneClick = useCallback(() => {
     setSelectedNodeId(null)
@@ -775,7 +775,7 @@ export default function TreeDiagramEditor({
       setNodes(next)
       onDataChange?.({ nodes: next, edges })
     },
-    [selectedNodeId, nodes, setNodes, onDataChange, edges]
+    [selectedNodeId, nodes, setNodes, onDataChange, edges, checkPermission]
   )
 
   // Helper function to update related nodes
@@ -869,7 +869,7 @@ export default function TreeDiagramEditor({
 
       setModalTarget(null)
     },
-    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes, t]
+    [selectedNodeId, updateArticleLink, flashcardFields, updateFlashcardFields, nodes, t, checkPermission, onDataChange, edges, setNodes]
   )
 
   const openCreateArticleModal = useCallback((nodeId: string) => {

@@ -90,7 +90,7 @@ export default function EnhancedDiagramComparison({
     } finally {
       setLoadingOriginal(false)
     }
-  }, [])
+  }, [t])
 
   const handleDraftSelect = React.useCallback((draft: ArticleDraft) => {
     setSelectedDraft(draft)
@@ -209,7 +209,7 @@ export default function EnhancedDiagramComparison({
     } else {
       setShowArticleComparison(true)
     }
-  }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect])
+  }, [extractSlug, parsedArticlesData?.drafts, fetchOriginalArticle, handleDraftSelect, t])
 
   // Upgrade article statistics based on drafts to calculate edits
   const handleStatsFromDiagram = React.useCallback((incomingStats: {
