@@ -35,6 +35,8 @@ model Domain {
   proposedInvestments DomainInvestment[] @relation("ProposedInvestments")
   receivedInvestments DomainInvestment[] @relation("ReceivedInvestments")
   deleteProposals   DomainProposal[] @relation("DeleteProposals")
+  exchangeProposalsProposed DomainExchangeProposal[] @relation("ProposedExchanges")
+  exchangeProposalsReceived DomainExchangeProposal[] @relation("ReceivedExchanges")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -149,6 +151,7 @@ model User {
   domainInvestmentVotes        DomainInvestmentVote[]
   domainProposals              DomainProposal[] @relation("ProposedDomainProposals")
   domainProposalVotes          DomainProposalVote[]
+  domainExchangeVotes          DomainExchangeVote[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -503,6 +506,39 @@ model PrerequisiteVote {
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])
+  @@index([voterId])
+}
+
+model DomainExchangeProposal {
+  id                         String   @id @default(cuid())
+  proposerDomainId           String
+  proposerDomain             Domain   @relation("ProposedExchanges", fields: [proposerDomainId], references: [id])
+  targetDomainId             String
+  targetDomain               Domain   @relation("ReceivedExchanges", fields: [targetDomainId], references: [id])
+  percentageProposerToTarget Float
+  percentageTargetToProposer Float
+  status                     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  votes                      DomainExchangeVote[]
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@index([proposerDomainId])
+  @@index([targetDomainId])
+  @@index([status])
+}
+
+model DomainExchangeVote {
+  id         String                 @id @default(cuid())
+  proposalId String
+  proposal   DomainExchangeProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  voterId    String
+  voter      User                   @relation(fields: [voterId], references: [id])
+  domainId   String                 // Which domain the voter is voting for
+  vote       String                 @default("APPROVE") // APPROVE, REJECT
+  createdAt  DateTime               @default(now())
+
+  @@unique([proposalId, voterId, domainId])
+  @@index([proposalId])
   @@index([voterId])
 }
 

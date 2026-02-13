@@ -256,19 +256,7 @@ export default function AdminDashboard() {
     return list
   }, [roots])
 
-  useEffect(() => {
-    if (status === 'loading') return
-    
-    if (!session) {
-      router.push('/')
-      return
-    }
-    if (session.user?.role === 'ADMIN') {
-      fetchHeader()
-      fetchLogo()
-    }
-    fetchDomains()
-  }, [session, status, router, fetchHeader, fetchLogo, fetchDomains])
+
 
   const fetchHeader = useCallback(async () => {
     try {
@@ -279,6 +267,8 @@ export default function AdminDashboard() {
       console.error(e)
     }
   }, [])
+
+
 
   const fetchLogo = useCallback(async () => {
     try {
@@ -397,6 +387,20 @@ export default function AdminDashboard() {
     }
   }, [selectedDomainId, t])
 
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session) {
+      router.push('/')
+      return
+    }
+    if (session.user?.role === 'ADMIN') {
+      fetchHeader()
+      fetchLogo()
+    }
+    fetchDomains()
+  }, [session, status, router, fetchHeader, fetchLogo, fetchDomains])
+
   const fetchCandidacies = useCallback(async (domainId: string) => {
     try {
       setLoadingCandidacies(true)
@@ -466,16 +470,7 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  useEffect(() => {
-    const id = selectedDomainId
-    if (!id) return
-    fetchCandidacies(id)
-    fetchCourses(id)
-    fetchResearchPrerequisites(id)
-    fetchAllCourses()
-    fetchActiveRounds(id)
-    fetchProposals(id)
-  }, [selectedDomainId, fetchCandidacies, fetchCourses, fetchResearchPrerequisites, fetchAllCourses, fetchActiveRounds, fetchProposals])
+
 
   useEffect(() => {
     let active = true
@@ -753,6 +748,17 @@ export default function AdminDashboard() {
       setLoadingProposals(false)
     }
   }, [])
+
+  useEffect(() => {
+    const id = selectedDomainId
+    if (!id) return
+    fetchCandidacies(id)
+    fetchCourses(id)
+    fetchResearchPrerequisites(id)
+    fetchAllCourses()
+    fetchActiveRounds(id)
+    fetchProposals(id)
+  }, [selectedDomainId, fetchCandidacies, fetchCourses, fetchResearchPrerequisites, fetchAllCourses, fetchActiveRounds, fetchProposals])
 
   const voteOnProposal = async (proposalId: string, vote: 'APPROVE' | 'REJECT') => {
     setVotingOnProposalKey(`${proposalId}:${vote}`)
