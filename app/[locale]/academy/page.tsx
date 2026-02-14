@@ -3,7 +3,6 @@
 import { Link, useRouter } from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 
 type AcademyCourse = {
@@ -76,8 +75,7 @@ export default function AcademyLandingPage() {
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 container mx-auto px-4 py-8 space-y-8 relative z-0">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-site-text heading">{th('academy')}</h1>

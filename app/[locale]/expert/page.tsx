@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
-import { Header } from '@/components/Header'
 import CommentSection from '@/components/CommentSection'
 import DiagramComparison from '@/components/DiagramComparison'
 import EnhancedDiagramComparison from '@/components/EnhancedDiagramComparison'
@@ -651,10 +650,7 @@ export default function ExpertDashboard() {
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col">
-      <Header />
-      {/* removed debug banner */}
-      
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">
           {isEditor ? t('title.editor') : t('title.expert')}
         </h1>

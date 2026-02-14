@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
-import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp } from 'lucide-react'
@@ -470,9 +469,8 @@ export default function AdminDomainsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

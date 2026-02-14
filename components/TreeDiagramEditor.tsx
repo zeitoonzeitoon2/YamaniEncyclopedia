@@ -996,7 +996,7 @@ export default function TreeDiagramEditor({
               <button
                 type="button"
                 onClick={() => setShowDomainNames((prev) => !prev)}
-                className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
+                className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary relative z-[100]"
               >
                 {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
               </button>,

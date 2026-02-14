@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
-import { Header } from '@/components/Header'
+import dynamic from 'next/dynamic'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import toast from 'react-hot-toast'
 import { Node, Edge } from 'reactflow'
@@ -379,9 +379,8 @@ function CreatePost() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      <main className="px-4 py-8">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 px-4 py-8">
         <div className="max-w-none">
           <h1 className="text-3xl font-bold text-site-text mb-8 text-center">
             {originalPostId ? t('editTitle') : t('title')}

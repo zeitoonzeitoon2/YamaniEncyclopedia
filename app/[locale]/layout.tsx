@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { locales } from '@/i18n'
-import { Providers } from '../providers'
 import { prisma } from '@/lib/prisma'
+import { Providers } from '../providers'
+import { Header } from '@/components/Header'
 
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale, namespace: 'metadata' })
@@ -47,7 +48,12 @@ export default async function RootLayout({
 
   return (
     <NextIntlClientProvider locale={params.locale} messages={messages}>
-      <Providers>{children}</Providers>
+      <Providers>
+        <Header />
+        <div className="pt-16">
+          {children}
+        </div>
+      </Providers>
     </NextIntlClientProvider>
   )
 }

@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 // import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
-import { Header } from '@/components/Header'
 // حذف رندر ری‌اکتی دکمه‌ها؛ از هندلرهای سراسری استفاده می‌کنیم
 import { applyArticleTransforms } from '@/lib/footnotes'
 
@@ -66,9 +65,8 @@ export default function ArticlePage() {
   }, [params.slug, params.locale])
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         {loading ? (
           <div className="text-site-text">جاري التحميل...</div>
         ) : error ? (

@@ -1,7 +1,6 @@
 'use client'
 
 import { Link } from '@/lib/navigation'
-import { Header } from '@/components/Header'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -118,9 +117,8 @@ export default function AcademyTeachingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      <main className="container mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 container mx-auto px-4 py-8 space-y-6 relative z-0">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-site-text heading">{t('examinerDashboard')}</h1>

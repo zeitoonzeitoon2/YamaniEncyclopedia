@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from '@/lib/navigation'
 import { useSession } from 'next-auth/react'
-import { Header } from '@/components/Header'
 import { Modal } from '@/components/Modal'
 import toast from 'react-hot-toast'
 
@@ -109,9 +108,8 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-site-text">ویرایش مقاله</h1>

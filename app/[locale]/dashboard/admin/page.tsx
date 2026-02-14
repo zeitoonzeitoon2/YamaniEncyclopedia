@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
-import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft } from 'lucide-react'
@@ -989,9 +988,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col">
-      <Header />
-      
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
         {session?.user?.role === 'ADMIN' && (

@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
-import { Header } from '@/components/Header'
 import toast from 'react-hot-toast'
 
 export default function NewArticlePage() {
@@ -195,10 +194,8 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-site-bg flex flex-col">
+      <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-site-text">ایجاد مقاله جدید</h1>
