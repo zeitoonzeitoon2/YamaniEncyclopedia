@@ -95,28 +95,38 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
     )
   }
 
+  const getLocalizedHref = (path: string) => {
+    return `/${locale}${path === '/' ? '' : path}`
+  }
+
   return (
     <>
       <div className="flex items-center justify-center relative z-[1001]">
         <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
-          <Link
-            href="/"
+          <a
+            href={getLocalizedHref('/')}
             className={`px-3 py-1 rounded-full text-xs transition-colors ${
               isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/20 text-site-text font-medium'
             }`}
-            onClick={() => setMenuOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(false)
+            }}
           >
             {t('encyclopedia')}
-          </Link>
-          <Link
-            href="/academy"
+          </a>
+          <a
+            href={getLocalizedHref('/academy')}
             className={`px-3 py-1 rounded-full text-xs transition-colors ${
               isAcademy ? 'bg-warm-primary/20 text-site-text font-medium' : 'text-site-muted hover:text-site-text'
             }`}
-            onClick={() => setMenuOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(false)
+            }}
           >
             {t('academy')}
-          </Link>
+          </a>
         </div>
       </div>
 
@@ -149,7 +159,8 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                   {['ar', 'fa', 'en'].map((l) => (
                     <button
                       key={l}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         router.replace(safePathname, { locale: l })
                         setLangMenuOpen(false)
                       }}
@@ -169,14 +180,17 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
             <>
               <div className="w-px h-5 bg-site-border/50 mx-1" />
               {!isAcademy && (
-                <Link 
-                  href="/create" 
+                <a 
+                  href={getLocalizedHref('/create')} 
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                  }}
                 >
                   <Edit size={14} />
                   <span className="hidden sm:inline">{t('newEdit')}</span>
-                </Link>
+                </a>
               )}
 
               <div className="relative" ref={menuRef}>
@@ -210,37 +224,47 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                       <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
                     </div>
                     <div className="py-1">
-                      <Link
-                        href={`/profile/${session.user?.id}`}
+                      <a
+                        href={getLocalizedHref(`/profile/${session.user?.id}`)}
                         className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setMenuOpen(false)
+                        }}
                       >
                         <User size={16} />
                         {t('profile')}
-                      </Link>
+                      </a>
                       {(isExpertLike || effectiveRole === 'EDITOR') && (
-                        <Link
-                          href="/expert"
+                        <a
+                          href={getLocalizedHref('/expert')}
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
-                          onClick={() => setMenuOpen(false)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpen(false)
+                          }}
                         >
                           {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
                           {isEditorLike ? t('editorDashboard') : t('expertDashboard')}
-                        </Link>
+                        </a>
                       )}
                       {(isDomainExpert || session.user?.role === 'ADMIN') && (
-                        <Link
-                          href="/dashboard/admin"
+                        <a
+                          href={getLocalizedHref('/dashboard/admin')}
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
-                          onClick={() => setMenuOpen(false)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpen(false)
+                          }}
                         >
                           <Settings size={16} />
                           {t('adminDashboard')}
-                        </Link>
+                        </a>
                       )}
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation()
                           signOut()
                           setMenuOpen(false)
                         }}
@@ -260,21 +284,27 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
             <>
               <div className="w-px h-5 bg-site-border/50 mx-1" />
               <div className="flex items-center gap-1 p-0.5">
-                <Link
-                  href="/auth/signin"
+                <a
+                  href={getLocalizedHref('/auth/signin')}
                   className="px-3 py-1.5 text-xs font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all flex items-center gap-1.5"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                  }}
                 >
                   <LogIn size={14} />
                   {t('signIn')}
-                </Link>
-                <Link
-                  href="/auth/signup"
+                </a>
+                <a
+                  href={getLocalizedHref('/auth/signup')}
                   className="px-3 py-1.5 text-xs font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm active:scale-95"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                  }}
                 >
                   {t('signUp')}
-                </Link>
+                </a>
               </div>
             </>
           )}
