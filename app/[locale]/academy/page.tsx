@@ -75,9 +75,9 @@ export default function AcademyLandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg">
+    <div className="min-h-screen bg-site-bg flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-site-text heading">{th('academy')}</h1>

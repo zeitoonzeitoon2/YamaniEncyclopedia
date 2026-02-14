@@ -51,9 +51,9 @@ export default async function HomePage({ params: { locale } }: { params: { local
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-site-bg flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 py-8 overflow-x-hidden">
+      <div className="flex-1 container mx-auto px-4 py-8 overflow-x-hidden">
         {headerUrl && (
           <ScrollReveal direction="none" distance={0} duration={1} className="relative h-48 md:h-64 lg:h-80 mb-8 overflow-hidden rounded-xl shadow-2xl">
             <Image 
@@ -167,6 +167,6 @@ export default async function HomePage({ params: { locale } }: { params: { local
           </p>
         </ScrollReveal>
       </div>
-    </>
+    </div>
   )
 }

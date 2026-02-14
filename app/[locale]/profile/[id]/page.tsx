@@ -72,9 +72,9 @@ export default async function ProfilePage({
   const isOwner = session?.user?.id === id
 
   return (
-    <div className="min-h-screen bg-site-bg">
+    <div className="min-h-screen bg-site-bg flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-start gap-6 mb-8">
           {user.image ? (
             <div className="relative w-24 h-24">
