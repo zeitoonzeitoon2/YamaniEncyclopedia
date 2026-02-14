@@ -50,10 +50,10 @@ export default async function RootLayout({
     <NextIntlClientProvider locale={params.locale} messages={messages}>
       <body className="min-h-screen bg-site-bg font-sans antialiased overflow-x-hidden">
         <Providers>
-          <main className="pt-16 relative z-0">
+          <Header />
+          <main className="relative z-0">
             {children}
           </main>
-          <Header />
         </Providers>
       </body>
     </NextIntlClientProvider>
