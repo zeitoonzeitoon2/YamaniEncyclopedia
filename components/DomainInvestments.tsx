@@ -52,7 +52,7 @@ export default function DomainInvestments() {
   const [selectedTargetDomainId, setSelectedTargetDomainId] = useState('')
   const [investPercent, setInvestPercent] = useState(10)
   const [returnPercent, setReturnPercent] = useState(1)
-  const [duration, setDuration] = useState(1)
+  const [endDate, setEndDate] = useState('')
   
   const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,8 +86,8 @@ export default function DomainInvestments() {
   }, [fetchData])
 
   const handlePropose = useCallback(async () => {
-    if (!selectedMyDomainId || !selectedTargetDomainId) {
-      toast.error('لطفاً حوزه‌ها را انتخاب کنید')
+    if (!selectedMyDomainId || !selectedTargetDomainId || !endDate) {
+      toast.error('لطفاً حوزه‌ها و تاریخ پایان را انتخاب کنید')
       return
     }
     try {
@@ -100,7 +100,7 @@ export default function DomainInvestments() {
           targetDomainId: selectedTargetDomainId,
           percentageInvested: investPercent,
           percentageReturn: returnPercent,
-          durationYears: duration
+          endDate: endDate
         })
       })
       if (res.ok) {
@@ -115,7 +115,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, duration, t, fetchData])
+  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, t, fetchData])
 
   const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
     try {
@@ -220,10 +220,10 @@ export default function DomainInvestments() {
             <label className="text-xs text-site-muted px-1">{t('investment.duration')}</label>
             <div className="relative">
               <input 
-                type="number" 
-                value={duration} 
-                onChange={e => setDuration(Number(e.target.value))}
-                min={1}
+                type="date" 
+                value={endDate} 
+                onChange={e => setEndDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full p-2.5 pr-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none"
               />
               <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted" />
@@ -264,7 +264,7 @@ export default function DomainInvestments() {
                     {new Date(inv.createdAt).toLocaleDateString('fa-IR')}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-3 gap-2 text-xs">
                   <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
                     <div className="text-site-muted mb-1">{t('investment.give')}</div>
                     <div className="text-warm-primary font-bold">{inv.percentageInvested}%</div>
@@ -272,6 +272,12 @@ export default function DomainInvestments() {
                   <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
                     <div className="text-site-muted mb-1">{t('investment.receive')}</div>
                     <div className="text-warm-accent font-bold">{inv.percentageReturn}%</div>
+                  </div>
+                  <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
+                    <div className="text-site-muted mb-1">{t('investment.endDate')}</div>
+                    <div className="text-site-text font-bold">
+                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('fa-IR') : '-'}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

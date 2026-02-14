@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, durationYears } = await req.json()
+    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate } = await req.json()
 
-    if (!proposerDomainId || !targetDomainId || percentageInvested === undefined || percentageReturn === undefined) {
+    if (!proposerDomainId || !targetDomainId || percentageInvested === undefined || percentageReturn === undefined || !endDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         targetDomainId,
         percentageInvested,
         percentageReturn,
-        durationYears: durationYears || 1,
+        endDate: new Date(endDate),
         status: 'PENDING'
       }
     })
