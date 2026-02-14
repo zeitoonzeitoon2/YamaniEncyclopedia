@@ -50,7 +50,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
   }
 
   return (
-    <div className="min-h-screen bg-site-bg flex flex-col">
+    <div className="min-h-screen bg-site-bg flex flex-col relative z-0">
       <main className="flex-1 container mx-auto px-4 py-8">
         {headerUrl && (
           <ScrollReveal direction="none" distance={0} duration={1} className="relative h-48 md:h-64 lg:h-80 mb-8 overflow-hidden rounded-xl shadow-2xl">

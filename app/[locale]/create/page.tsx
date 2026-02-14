@@ -379,7 +379,7 @@ function CreatePost() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg flex flex-col">
+    <div className="min-h-screen bg-site-bg flex flex-col relative z-0">
       <main className="flex-1 px-4 py-8">
         <div className="max-w-none">
           <h1 className="text-3xl font-bold text-site-text mb-8 text-center">
