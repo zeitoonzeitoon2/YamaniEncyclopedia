@@ -97,11 +97,11 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
 
   return (
     <>
-      <div className="flex items-center justify-center relative z-[1001] pointer-events-auto">
-        <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50 pointer-events-auto">
+      <div className="flex items-center justify-center relative z-[1001]">
+        <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
           <Link
             href="/"
-            className={`px-3 py-1 rounded-full text-xs transition-colors pointer-events-auto ${
+            className={`px-3 py-1 rounded-full text-xs transition-colors ${
               isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/20 text-site-text font-medium'
             }`}
             onClick={() => setMenuOpen(false)}
@@ -110,7 +110,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
           </Link>
           <Link
             href="/academy"
-            className={`px-3 py-1 rounded-full text-xs transition-colors pointer-events-auto ${
+            className={`px-3 py-1 rounded-full text-xs transition-colors ${
               isAcademy ? 'bg-warm-primary/20 text-site-text font-medium' : 'text-site-muted hover:text-site-text'
             }`}
             onClick={() => setMenuOpen(false)}
@@ -120,35 +120,35 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
         </div>
       </div>
 
-      <nav className="flex items-center justify-end gap-3 relative z-[1001] pointer-events-auto">
+      <nav className="flex items-center justify-end gap-3 relative z-[1001]">
         {status === 'loading' ? (
           <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
         ) : (
-          <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all pointer-events-auto">
-            <div className="flex items-center pointer-events-auto">
+          <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
+            <div className="flex items-center">
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text pointer-events-auto"
+                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
                 aria-label={t('themeToggle')}
               >
                 {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               </button>
             </div>
 
-            <div className="relative pointer-events-auto" ref={langMenuRef}>
+            <div className="relative" ref={langMenuRef}>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setLangMenuOpen((prev) => !prev);
                 }}
-                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text pointer-events-auto"
+                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
                 aria-label={tl('label')}
               >
                 <Languages size={16} />
               </button>
               {langMenuOpen && (
-                <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010] pointer-events-auto">
-                  <div className="py-1 pointer-events-auto">
+                <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
+                  <div className="py-1">
                     {['ar', 'fa', 'en'].map((l) => (
                       <button
                         key={l}
@@ -156,7 +156,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                           router.replace(safePathname, { locale: l })
                           setLangMenuOpen(false)
                         }}
-                        className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors pointer-events-auto ${
+                        className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors ${
                           locale === l ? 'text-warm-primary font-bold' : 'text-site-text'
                         }`}
                       >
@@ -174,7 +174,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                 {!isAcademy && (
                   <Link 
                     href="/create" 
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95 pointer-events-auto"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
                     onClick={() => setMenuOpen(false)}
                   >
                     <Edit size={14} />
@@ -182,14 +182,14 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                   </Link>
                 )}
 
-                <div className="relative pointer-events-auto" ref={menuRef}>
+                <div className="relative" ref={menuRef}>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen((prev) => !prev);
                     }}
-                    className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1 pointer-events-auto"
+                    className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
                   >
                     {session.user?.image && !profileImageError ? (
                       <Image
@@ -197,25 +197,25 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                         alt={session.user.name || ''}
                         width={28}
                         height={28}
-                        className="rounded-full border border-site-border/50 pointer-events-auto"
+                        className="rounded-full border border-site-border/50"
                         onError={() => setProfileImageError(true)}
                       />
                     ) : (
-                      <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text pointer-events-auto">
+                      <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">
                         <User size={14} />
                       </span>
                     )}
                   </button>
                   {menuOpen && (
-                    <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010] pointer-events-auto">
-                      <div className="px-4 py-3 border-b border-gray-700 pointer-events-none">
-                        <div className="text-site-text text-sm font-semibold truncate pointer-events-auto">{session.user?.name || '—'}</div>
-                        <div className="text-site-muted text-xs truncate pointer-events-auto">{session.user?.email || ''}</div>
+                    <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
+                      <div className="px-4 py-3 border-b border-gray-700">
+                        <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
+                        <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
                       </div>
-                      <div className="py-1 pointer-events-auto">
+                      <div className="py-1">
                         <Link
                           href={`/profile/${session.user?.id}`}
-                          className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2 pointer-events-auto"
+                          className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           onClick={() => setMenuOpen(false)}
                         >
                           <User size={16} />
@@ -224,7 +224,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                         {(isExpertLike || effectiveRole === 'EDITOR') && (
                           <Link
                             href="/expert"
-                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2 pointer-events-auto"
+                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                             onClick={() => setMenuOpen(false)}
                           >
                             {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
@@ -234,7 +234,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                         {(isDomainExpert || session.user?.role === 'ADMIN') && (
                           <Link
                             href="/dashboard/admin"
-                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2 pointer-events-auto"
+                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                             onClick={() => setMenuOpen(false)}
                           >
                             <Settings size={16} />
@@ -247,7 +247,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                             signOut()
                             setMenuOpen(false)
                           }}
-                          className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2 pointer-events-auto"
+                          className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
                         >
                           <LogOut size={16} />
                           {t('signOut')}
@@ -262,10 +262,10 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
         )}
 
         {!session && status !== 'loading' && (
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-3">
             <Link
               href="/auth/signin"
-              className="px-4 py-1.5 text-sm font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all border border-transparent hover:border-site-border/50 flex items-center gap-2 pointer-events-auto"
+              className="px-4 py-1.5 text-sm font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all border border-transparent hover:border-site-border/50 flex items-center gap-2"
               onClick={() => setMenuOpen(false)}
             >
               <LogIn size={16} />
@@ -273,7 +273,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
             </Link>
             <Link
               href="/auth/signup"
-              className="px-5 py-1.5 text-sm font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm hover:shadow-md active:scale-95 pointer-events-auto"
+              className="px-5 py-1.5 text-sm font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm hover:shadow-md active:scale-95"
               onClick={() => setMenuOpen(false)}
             >
               {t('signUp')}

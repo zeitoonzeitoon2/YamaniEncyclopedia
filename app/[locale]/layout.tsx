@@ -50,9 +50,9 @@ export default async function RootLayout({
     <NextIntlClientProvider locale={params.locale} messages={messages}>
       <Providers>
         <Header />
-        <div className="pt-16 relative z-0">
+        <main className="pt-16 relative z-0">
           {children}
-        </div>
+        </main>
       </Providers>
     </NextIntlClientProvider>
   )
