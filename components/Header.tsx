@@ -20,7 +20,7 @@ export async function Header() {
   }
 
   return (
-    <header className="bg-site-card border-b border-site-border fixed top-0 left-0 right-0 z-[999999] w-full">
+    <header className="bg-site-card border-b border-site-border fixed top-0 left-0 right-0 z-[999999] w-full" style={{ isolation: 'isolate' }}>
       <div className="container mx-auto px-4 py-2">
         <div className="grid grid-cols-3 items-center gap-4">
           <div className="flex items-center justify-start relative z-[1001] pointer-events-auto">

@@ -121,165 +121,164 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
       </div>
 
       <nav className="flex items-center justify-end gap-3 relative z-[1001]">
-        {status === 'loading' ? (
-          <div className="w-8 h-8 bg-site-border rounded-full animate-pulse"></div>
-        ) : (
-          <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
-            <div className="flex items-center">
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
-                aria-label={t('themeToggle')}
-              >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            </div>
+        <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
+          <div className="flex items-center">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
+              aria-label={t('themeToggle')}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
 
-            <div className="relative" ref={langMenuRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLangMenuOpen((prev) => !prev);
-                }}
-                className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
-                aria-label={tl('label')}
-              >
-                <Languages size={16} />
-              </button>
-              {langMenuOpen && (
-                <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
-                  <div className="py-1">
-                    {['ar', 'fa', 'en'].map((l) => (
-                      <button
-                        key={l}
-                        onClick={() => {
-                          router.replace(safePathname, { locale: l })
-                          setLangMenuOpen(false)
-                        }}
-                        className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors ${
-                          locale === l ? 'text-warm-primary font-bold' : 'text-site-text'
-                        }`}
-                      >
-                        {tl(l)}
-                      </button>
-                    ))}
-                  </div>
+          <div className="relative" ref={langMenuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLangMenuOpen((prev) => !prev);
+              }}
+              className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
+              aria-label={tl('label')}
+            >
+              <Languages size={16} />
+            </button>
+            {langMenuOpen && (
+              <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
+                <div className="py-1">
+                  {['ar', 'fa', 'en'].map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => {
+                        router.replace(safePathname, { locale: l })
+                        setLangMenuOpen(false)
+                      }}
+                      className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors ${
+                        locale === l ? 'text-warm-primary font-bold' : 'text-site-text'
+                      }`}
+                    >
+                      {tl(l)}
+                    </button>
+                  ))}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {session && (
+            <>
+              <div className="w-px h-5 bg-site-border/50 mx-1" />
+              {!isAcademy && (
+                <Link 
+                  href="/create" 
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Edit size={14} />
+                  <span className="hidden sm:inline">{t('newEdit')}</span>
+                </Link>
               )}
-            </div>
 
-            {session && (
-              <>
-                <div className="w-px h-5 bg-site-border/50 mx-1" />
-                {!isAcademy && (
-                  <Link 
-                    href="/create" 
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Edit size={14} />
-                    <span className="hidden sm:inline">{t('newEdit')}</span>
-                  </Link>
-                )}
-
-                <div className="relative" ref={menuRef}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen((prev) => !prev);
-                    }}
-                    className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
-                  >
-                    {session.user?.image && !profileImageError ? (
-                      <Image
-                        src={session.user.image}
-                        alt={session.user.name || ''}
-                        width={28}
-                        height={28}
-                        className="rounded-full border border-site-border/50"
-                        onError={() => setProfileImageError(true)}
-                      />
-                    ) : (
-                      <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">
-                        <User size={14} />
-                      </span>
-                    )}
-                  </button>
-                  {menuOpen && (
-                    <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
-                      <div className="px-4 py-3 border-b border-gray-700">
-                        <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
-                        <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
-                      </div>
-                      <div className="py-1">
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen((prev) => !prev);
+                  }}
+                  className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
+                >
+                  {session.user?.image && !profileImageError ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || ''}
+                      width={28}
+                      height={28}
+                      className="rounded-full border border-site-border/50"
+                      onError={() => setProfileImageError(true)}
+                    />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">
+                      <User size={14} />
+                    </span>
+                  )}
+                </button>
+                {menuOpen && (
+                  <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
+                    <div className="px-4 py-3 border-b border-gray-700">
+                      <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
+                      <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        href={`/profile/${session.user?.id}`}
+                        className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <User size={16} />
+                        {t('profile')}
+                      </Link>
+                      {(isExpertLike || effectiveRole === 'EDITOR') && (
                         <Link
-                          href={`/profile/${session.user?.id}`}
+                          href="/expert"
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
                           onClick={() => setMenuOpen(false)}
                         >
-                          <User size={16} />
-                          {t('profile')}
+                          {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
+                          {isEditorLike ? t('editorDashboard') : t('expertDashboard')}
                         </Link>
-                        {(isExpertLike || effectiveRole === 'EDITOR') && (
-                          <Link
-                            href="/expert"
-                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
-                            onClick={() => setMenuOpen(false)}
-                          >
-                            {isEditorLike ? <Edit size={16} /> : <Settings size={16} />}
-                            {isEditorLike ? t('editorDashboard') : t('expertDashboard')}
-                          </Link>
-                        )}
-                        {(isDomainExpert || session.user?.role === 'ADMIN') && (
-                          <Link
-                            href="/dashboard/admin"
-                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
-                            onClick={() => setMenuOpen(false)}
-                          >
-                            <Settings size={16} />
-                            {t('adminDashboard')}
-                          </Link>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            signOut()
-                            setMenuOpen(false)
-                          }}
-                          className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
+                      )}
+                      {(isDomainExpert || session.user?.role === 'ADMIN') && (
+                        <Link
+                          href="/dashboard/admin"
+                          className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                          onClick={() => setMenuOpen(false)}
                         >
-                          <LogOut size={16} />
-                          {t('signOut')}
-                        </button>
-                      </div>
+                          <Settings size={16} />
+                          {t('adminDashboard')}
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          signOut()
+                          setMenuOpen(false)
+                        }}
+                        className="w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2"
+                      >
+                        <LogOut size={16} />
+                        {t('signOut')}
+                      </button>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
-        {!session && status !== 'loading' && (
-          <div className="flex items-center gap-3">
-            <Link
-              href="/auth/signin"
-              className="px-4 py-1.5 text-sm font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all border border-transparent hover:border-site-border/50 flex items-center gap-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              <LogIn size={16} />
-              {t('signIn')}
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="px-5 py-1.5 text-sm font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm hover:shadow-md active:scale-95"
-              onClick={() => setMenuOpen(false)}
-            >
-              {t('signUp')}
-            </Link>
-          </div>
-        )}
+          {!session && status !== 'loading' && (
+            <>
+              <div className="w-px h-5 bg-site-border/50 mx-1" />
+              <div className="flex items-center gap-1 p-0.5">
+                <Link
+                  href="/auth/signin"
+                  className="px-3 py-1.5 text-xs font-medium text-site-text hover:bg-site-border/30 rounded-full transition-all flex items-center gap-1.5"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <LogIn size={14} />
+                  {t('signIn')}
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="px-3 py-1.5 text-xs font-bold bg-warm-primary hover:bg-warm-accent text-white rounded-full transition-all shadow-sm active:scale-95"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('signUp')}
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
       </nav>
     </>
   )
