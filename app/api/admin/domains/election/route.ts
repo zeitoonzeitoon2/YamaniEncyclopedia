@@ -328,6 +328,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'START_NOW') {
+      if (session.user.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Only global admins can start scheduled elections' }, { status: 403 })
+      }
+      const round = await prisma.electionRound.findUnique({ where: { id: roundId } })
+      if (!round) return NextResponse.json({ error: 'Round not found' }, { status: 404 })
+      
+      const startDate = new Date()
+      const endDate = new Date()
+      // Duration depends on round type. HEAD_ACTIVE -> 2 days, MEMBERS_ACTIVE -> 7 days.
+      // If status is currently MEMBERS_ACTIVE, it might be a scheduled MEMBERS election.
+      // If status is HEAD_ACTIVE, it might be a scheduled HEAD election (though we don't schedule HEAD currently).
+      const duration = round.status === 'HEAD_ACTIVE' ? 2 : 7
+      endDate.setDate(startDate.getDate() + duration)
+
+      await prisma.electionRound.update({
+        where: { id: roundId },
+        data: {
+          startDate,
+          endDate
+        }
+      })
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
     console.error('Error updating election round:', error)

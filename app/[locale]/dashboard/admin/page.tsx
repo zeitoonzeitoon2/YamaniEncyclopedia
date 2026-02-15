@@ -213,6 +213,7 @@ export default function AdminDashboard() {
   const [loadingRounds, setLoadingRounds] = useState(false)
   const [extendingRoundKey, setExtendingRoundKey] = useState<string | null>(null)
   const [startingRoundKey, setStartingRoundKey] = useState<string | null>(null)
+  const [startingScheduledKey, setStartingScheduledKey] = useState<string | null>(null)
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -685,6 +686,25 @@ export default function AdminDashboard() {
       toast.error(error.message || 'Error starting round')
     } finally {
       setStartingRoundKey(null)
+    }
+  }
+
+  async function startScheduledElection(roundId: string) {
+    setStartingScheduledKey(roundId)
+    try {
+      const res = await fetch('/api/admin/domains/election', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId, action: 'START_NOW' })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(t('electionRoundStarted'))
+      if (selectedDomainId) fetchActiveRounds(selectedDomainId)
+    } catch (error: any) {
+      toast.error(error.message || 'Error starting round')
+    } finally {
+      setStartingScheduledKey(null)
     }
   }
 
@@ -1265,31 +1285,51 @@ export default function AdminDashboard() {
                                 }`}>
                                   {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
                                 </span>
+                                {new Date(activeRounds['RIGHT'].startDate) > new Date() && (
+                                  <span className="text-[10px] text-site-muted italic px-1">
+                                    {new Date(activeRounds['RIGHT'].startDate).toLocaleDateString('en-GB')}
+                                  </span>
+                                )}
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
-                                      disabled={extendingRoundKey !== null}
-                                      className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
-                                    >
-                                      {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
-                                    </button>
-                                    {session?.user?.role === 'ADMIN' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => forceFinalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
-                                        disabled={finalizingRoundKey !== null}
-                                        className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                                      >
-                                        {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('forceEndElection')}
-                                      </button>
+                                    {new Date(activeRounds['RIGHT'].startDate) > new Date() ? (
+                                      session?.user?.role === 'ADMIN' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => startScheduledElection(activeRounds['RIGHT']!.id)}
+                                          disabled={startingScheduledKey !== null}
+                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50"
+                                        >
+                                          {startingScheduledKey === activeRounds['RIGHT']!.id ? '...' : 'Start Now'}
+                                        </button>
+                                      )
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                          disabled={extendingRoundKey !== null}
+                                          className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
+                                        >
+                                          {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
+                                        </button>
+                                        {session?.user?.role === 'ADMIN' && (
+                                          <button
+                                            type="button"
+                                            onClick={() => forceFinalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                            disabled={finalizingRoundKey !== null}
+                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                          >
+                                            {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('forceEndElection')}
+                                          </button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              canManageSelectedDomainMembers && (
+                              session?.user?.role === 'ADMIN' && (
                                 <button
                                   type="button"
                                   onClick={() => startElectionRound('RIGHT')}
@@ -1301,7 +1341,7 @@ export default function AdminDashboard() {
                               )
                             )}
                           </div>
-                          {activeRounds['RIGHT'] && (
+                          {activeRounds['RIGHT'] && new Date(activeRounds['RIGHT'].startDate) <= new Date() && (
                             <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
                               <span>{t('remainingTime', { time: new Date(activeRounds['RIGHT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
@@ -1344,31 +1384,51 @@ export default function AdminDashboard() {
                                 }`}>
                                   {activeRounds['LEFT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
                                 </span>
+                                {new Date(activeRounds['LEFT'].startDate) > new Date() && (
+                                  <span className="text-[10px] text-site-muted italic px-1">
+                                    {new Date(activeRounds['LEFT'].startDate).toLocaleDateString('en-GB')}
+                                  </span>
+                                )}
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
-                                      disabled={extendingRoundKey !== null}
-                                      className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
-                                    >
-                                      {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
-                                    </button>
-                                    {session?.user?.role === 'ADMIN' && (
-                                      <button
-                                        type="button"
-                                        onClick={() => forceFinalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
-                                        disabled={finalizingRoundKey !== null}
-                                        className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                                      >
-                                        {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('forceEndElection')}
-                                      </button>
+                                    {new Date(activeRounds['LEFT'].startDate) > new Date() ? (
+                                      session?.user?.role === 'ADMIN' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => startScheduledElection(activeRounds['LEFT']!.id)}
+                                          disabled={startingScheduledKey !== null}
+                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50"
+                                        >
+                                          {startingScheduledKey === activeRounds['LEFT']!.id ? '...' : 'Start Now'}
+                                        </button>
+                                      )
+                                    ) : (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                          disabled={extendingRoundKey !== null}
+                                          className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
+                                        >
+                                          {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
+                                        </button>
+                                        {session?.user?.role === 'ADMIN' && (
+                                          <button
+                                            type="button"
+                                            onClick={() => forceFinalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                            disabled={finalizingRoundKey !== null}
+                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                          >
+                                            {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('forceEndElection')}
+                                          </button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              canManageSelectedDomainMembers && (
+                              session?.user?.role === 'ADMIN' && (
                                 <button
                                   type="button"
                                   onClick={() => startElectionRound('LEFT')}
@@ -1380,7 +1440,7 @@ export default function AdminDashboard() {
                               )
                             )}
                           </div>
-                          {activeRounds['LEFT'] && (
+                          {activeRounds['LEFT'] && new Date(activeRounds['LEFT'].startDate) <= new Date() && (
                             <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
                               <span>{t('remainingTime', { time: new Date(activeRounds['LEFT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
