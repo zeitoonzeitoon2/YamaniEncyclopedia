@@ -105,7 +105,31 @@
     "deleteSuccess": "Message deleted successfully"
   },
   "voting": {
-    "strategicExchanges": "Strategic Exchanges",
+    "strategicExchanges": "Strategic Investment",
+    "investment": {
+      "title": "Investment",
+      "propose": "Propose Investment",
+      "proposer": "Investing Domain",
+      "target": "Target Domain",
+      "give": "Temp Giving %",
+      "receive": "Permanent Return %",
+      "duration": "Duration",
+      "durationValue": "{years} Years",
+      "statusPending": "Pending Proposals",
+      "statusActive": "Active Investments",
+      "endDate": "End Date",
+      "returnBtn": "Approve & Start",
+      "parentChildOnly": "💡 Only possible between direct parent and child.",
+      "status": "Status",
+      "noItems": "No items found",
+      "settleExpired": "Settle Expired Items",
+      "settleSuccess": "{count} investments settled",
+      "settleError": "Error settling investments",
+      "toast": {
+        "createSuccess": "Proposal registered successfully",
+        "createError": "Error registering proposal"
+      }
+    },
     "domainShares": "Domain Voting Shares",
     "ownedShares": "Voting Shares Owned in Other Domains",
     "proposeExchange": "Propose New Exchange",

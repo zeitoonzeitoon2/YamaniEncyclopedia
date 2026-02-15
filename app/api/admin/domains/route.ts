@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils'
 type DomainTreeExpert = {
   id: string
   role: string
+  wing: string
   user: {
     id: string
     name: string | null
@@ -100,6 +101,7 @@ export async function GET(_request: NextRequest) {
           select: {
             id: true,
             role: true,
+            wing: true,
             user: { select: { id: true, name: true, email: true, role: true } },
           },
         },

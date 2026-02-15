@@ -45,7 +45,7 @@ const flattenTree = (nodes: any[]): Domain[] => {
 }
 
 export default function DomainInvestments() {
-  const t = useTranslations('adminCourses')
+  const t = useTranslations('admin.dashboard')
   const { data: session } = useSession()
   const [allDomains, setAllDomains] = useState<Domain[]>([])
   const [selectedMyDomainId, setSelectedMyDomainId] = useState('')
@@ -87,7 +87,7 @@ export default function DomainInvestments() {
 
   const handlePropose = useCallback(async () => {
     if (!selectedMyDomainId || !selectedTargetDomainId || !endDate) {
-      toast.error('لطفاً حوزه‌ها و تاریخ پایان را انتخاب کنید')
+      toast.error(t('investment.toast.createError'))
       return
     }
     try {
@@ -126,14 +126,14 @@ export default function DomainInvestments() {
         body: JSON.stringify({ investmentId: id, vote })
       })
       if (res.ok) {
-        toast.success(t('updateSuccess'))
+        toast.success(t('voteRecorded'))
         fetchData()
       } else {
         const data = await res.json()
-        toast.error(data.error || t('updateError'))
+        toast.error(data.error || t('voteError'))
       }
     } catch (e) {
-      toast.error(t('updateError'))
+      toast.error(t('voteError'))
     } finally {
       setVotingId(null)
     }
@@ -147,17 +147,17 @@ export default function DomainInvestments() {
       })
       if (res.ok) {
         const data = await res.json()
-        toast.success(`${data.results.length} سرمایه‌گذاری تسویه شد`)
+        toast.success(t('investment.settleSuccess', { count: data.results.length }))
         fetchData()
       } else {
-        toast.error('خطا در تسویه سرمایه‌گذاری‌ها')
+        toast.error(t('investment.settleError'))
       }
     } catch (e) {
-      toast.error('خطا در ارتباط با سرور')
+      toast.error(t('investment.settleError'))
     } finally {
       setSubmitting(false)
     }
-  }, [fetchData])
+  }, [fetchData, t])
 
   if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
 
@@ -240,7 +240,7 @@ export default function DomainInvestments() {
           </div>
         </div>
         <p className="mt-4 text-[11px] text-site-muted bg-site-bg/50 p-2 rounded border border-site-border/50">
-          💡 فقط بین والد و فرزند مستقیم امکان‌پذیر است.
+          {t('investment.parentChildOnly')}
         </p>
       </div>
 
@@ -317,12 +317,12 @@ export default function DomainInvestments() {
                 <th className="px-4 py-3 font-medium text-center">{t('investment.give')}</th>
                 <th className="px-4 py-3 font-medium text-center">{t('investment.receive')}</th>
                 <th className="px-4 py-3 font-medium">{t('investment.endDate')}</th>
-                <th className="px-4 py-3 font-medium text-center">وضعیت</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border/50">
               {investments.filter(i => i.status === 'ACTIVE').length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-site-muted italic">موردی یافت نشد</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
               ) : (
                 investments.filter(i => i.status === 'ACTIVE').map(inv => (
                   <tr key={inv.id} className="hover:bg-site-secondary/30 transition-colors">
@@ -353,7 +353,7 @@ export default function DomainInvestments() {
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-warm-primary text-white text-sm font-bold shadow-lg shadow-warm-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               <Clock size={18} />
-              تسویه موارد منقضی شده
+              {t('investment.settleExpired')}
             </button>
           </div>
         )}
