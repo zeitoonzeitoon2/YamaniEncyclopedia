@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/editor/comments/related - جلب التعليقات ذات الصلة للمحرّر
 // بازگرداندن لیست پست‌هایی که کامنت‌های مرتبط با کاربر فعلی دارند
 // معیار «مرتبط»:
