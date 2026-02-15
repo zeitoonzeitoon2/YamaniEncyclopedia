@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
       },
     })
     if (!candidacy) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    if (candidacy.status !== 'PENDING' || candidacy.round?.status !== 'ACTIVE') {
+    const roundStatus = candidacy.round?.status || ''
+    if (candidacy.status !== 'PENDING' || !['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'].includes(roundStatus)) {
       return NextResponse.json({ error: 'Election round is closed' }, { status: 409 })
     }
 
