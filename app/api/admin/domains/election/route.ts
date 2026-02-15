@@ -17,15 +17,27 @@ export async function GET(request: NextRequest) {
       where: {
         domainId,
         wing,
-        status: 'ACTIVE'
+        status: { in: ['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'] }
       },
       orderBy: { startDate: 'desc' }
     })
 
-    if (activeRound && new Date(activeRound.endDate) < new Date()) {
-      // Lazy Finalize
-      await finalizeRound(activeRound.id)
-      return NextResponse.json({ activeRound: null })
+    if (activeRound) {
+      // Check for expiration
+      if (new Date(activeRound.endDate) < new Date()) {
+        // Lazy Finalize
+        await finalizeRound(activeRound.id)
+        // Check if a new round was started (e.g. HEAD round after MEMBERS)
+        const nextRound = await prisma.electionRound.findFirst({
+          where: {
+            domainId,
+            wing,
+            status: { in: ['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'] }
+          },
+          orderBy: { startDate: 'desc' }
+        })
+        return NextResponse.json({ activeRound: nextRound || null })
+      }
     }
 
     return NextResponse.json({ activeRound })
@@ -47,15 +59,22 @@ async function finalizeRound(roundId: string) {
     }
   })
 
-  if (!round || round.status !== 'ACTIVE') return
+  if (!round || !['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'].includes(round.status)) return
+
+  // Determine type from status
+  const isMembersElection = round.status === 'ACTIVE' || round.status === 'MEMBERS_ACTIVE'
+  const isHeadElection = round.status === 'HEAD_ACTIVE'
 
   await prisma.$transaction(async (tx) => {
+    // Mark current round as completed
+    const completedStatus = isMembersElection ? 'MEMBERS_COMPLETED' : 'HEAD_COMPLETED'
+    
     await tx.electionRound.update({
       where: { id: roundId },
-      data: { status: 'COMPLETED' }
+      data: { status: completedStatus }
     })
 
-    if (round.type === 'MEMBERS') {
+    if (isMembersElection) {
       // 1. Clear existing experts/heads for this wing
       await tx.domainExpert.deleteMany({
         where: { domainId: round.domainId, wing: round.wing }
@@ -96,18 +115,18 @@ async function finalizeRound(roundId: string) {
         data: {
           domainId: round.domainId,
           wing: round.wing,
-          type: 'HEAD',
           startDate,
           endDate,
-          status: 'ACTIVE'
+          status: 'HEAD_ACTIVE'
         }
       })
 
-    } else if (round.type === 'HEAD') {
+    } else if (isHeadElection) {
       // 1. Pick top 1 candidate
       const winner = round.candidacies[0]
       if (winner) {
         // Update existing expert role to HEAD
+        // Note: The candidate should already be an EXPERT from the previous round or existing role
         const existingExpert = await tx.domainExpert.findFirst({
           where: { userId: winner.candidateUserId, domainId: round.domainId }
         })
@@ -118,7 +137,7 @@ async function finalizeRound(roundId: string) {
             data: { role: 'HEAD' }
           })
         } else {
-          // If not an expert (should not happen if restrictions enforced), create as HEAD
+          // Fallback if not found (e.g. they were expert but got deleted? unlikely)
           await tx.domainExpert.create({
             data: {
               userId: winner.candidateUserId,
@@ -162,7 +181,11 @@ export async function POST(request: NextRequest) {
 
     // Check if there is already an active round
     const existingActive = await prisma.electionRound.findFirst({
-      where: { domainId, wing, status: 'ACTIVE' }
+      where: { 
+        domainId, 
+        wing, 
+        status: { in: ['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'] } 
+      }
     })
 
     if (existingActive) {
@@ -174,14 +197,17 @@ export async function POST(request: NextRequest) {
     const endDate = new Date()
     endDate.setDate(startDate.getDate() + 7)
 
+    // Determine initial status based on requested type
+    // If user explicitly asks for HEAD, we start HEAD_ACTIVE. Default is MEMBERS_ACTIVE.
+    const initialStatus = type === 'HEAD' ? 'HEAD_ACTIVE' : 'MEMBERS_ACTIVE'
+
     const newRound = await prisma.electionRound.create({
       data: {
         domainId,
         wing,
-        type: type || 'MEMBERS',
         startDate,
         endDate,
-        status: 'ACTIVE'
+        status: initialStatus
       }
     })
 

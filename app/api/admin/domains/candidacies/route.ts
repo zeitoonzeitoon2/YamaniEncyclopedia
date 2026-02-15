@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       where: {
         domainId,
         wing: wingValue as 'RIGHT' | 'LEFT',
-        status: 'ACTIVE'
+        status: { in: ['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'] }
       }
     })
 
@@ -122,8 +122,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No active election round for this wing' }, { status: 400 })
     }
 
-    // Force role based on round type
-    roleValue = activeRound.type === 'HEAD' ? 'HEAD' : 'EXPERT'
+    // Force role based on round status
+    // If status is HEAD_ACTIVE, role is HEAD. Otherwise (MEMBERS_ACTIVE or ACTIVE), role is EXPERT.
+    roleValue = activeRound.status === 'HEAD_ACTIVE' ? 'HEAD' : 'EXPERT'
 
     if (new Date() > activeRound.endDate) {
       return NextResponse.json({ error: 'Nomination period for this round has ended' }, { status: 400 })

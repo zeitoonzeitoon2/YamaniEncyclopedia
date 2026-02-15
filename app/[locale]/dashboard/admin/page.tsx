@@ -1260,8 +1260,12 @@ export default function AdminDashboard() {
                             </h3>
                             {activeRounds['RIGHT'] ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20">
-                                  {t('electionRound')}
+                                <span className={`text-xs px-2 py-1 rounded border ${
+                                  activeRounds['RIGHT'].status === 'HEAD_ACTIVE' 
+                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                }`}>
+                                  {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' ? 'HEAD Election' : t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
@@ -1335,8 +1339,12 @@ export default function AdminDashboard() {
                             </h3>
                             {activeRounds['LEFT'] ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20">
-                                  {t('electionRound')}
+                                <span className={`text-xs px-2 py-1 rounded border ${
+                                  activeRounds['LEFT'].status === 'HEAD_ACTIVE' 
+                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                }`}>
+                                  {activeRounds['LEFT'].status === 'HEAD_ACTIVE' ? 'HEAD Election' : t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
