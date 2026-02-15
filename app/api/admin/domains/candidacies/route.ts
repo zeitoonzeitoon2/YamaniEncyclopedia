@@ -10,7 +10,9 @@ async function hasAnyDomainExpertMembership(userId: string) {
   return !!m
 }
 
-async function canProposeCandidacy(userId: string, domainId: string, targetWing: string) {
+async function canProposeCandidacy(userId: string, domainId: string, targetWing: string, userRole?: string) {
+  if (userRole === 'ADMIN') return { ok: true as const }
+
   if (targetWing === 'RIGHT') {
     // Proposer must be an expert in the parent domain (either wing)
     const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
@@ -125,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (role !== 'ADMIN') {
-      const perm = await canProposeCandidacy(userId, domainId, wingValue)
+      const perm = await canProposeCandidacy(userId, domainId, wingValue, role)
       if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
     } else {
       const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })

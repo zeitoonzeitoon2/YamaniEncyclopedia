@@ -261,7 +261,7 @@ export default function DomainInvestments() {
                     <span>{inv.targetDomain.name}</span>
                   </div>
                   <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted">
-                    {new Date(inv.createdAt).toLocaleDateString('fa-IR')}
+                    {new Date(inv.createdAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
@@ -276,7 +276,7 @@ export default function DomainInvestments() {
                   <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
                     <div className="text-site-muted mb-1">{t('investment.endDate')}</div>
                     <div className="text-site-text font-bold">
-                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('fa-IR') : '-'}
+                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('en-GB') : '-'}
                     </div>
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export default function DomainInvestments() {
                     <td className="px-4 py-4 text-center text-warm-primary font-bold">{inv.percentageInvested}%</td>
                     <td className="px-4 py-4 text-center text-warm-accent font-bold">{inv.percentageReturn}%</td>
                     <td className="px-4 py-4 text-xs text-site-muted">
-                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('fa-IR') : '-'}
+                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('en-GB') : '-'}
                     </td>
                     <td className="px-4 py-4 text-center">
                       <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">

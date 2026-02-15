@@ -175,9 +175,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    // Manual Finalize (kept for potential use, but UI will remove button)
-    await finalizeRound(roundId)
-    return NextResponse.json({ success: true })
+    if (action === 'FINALIZE') {
+      if (session.user.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Only global admins can force end elections' }, { status: 403 })
+      }
+      await finalizeRound(roundId)
+      return NextResponse.json({ success: true })
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
     console.error('Error updating election round:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })

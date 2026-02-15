@@ -89,7 +89,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         <div className="flex-1">
           <p className="text-site-text font-medium text-sm">{post.author.name || t('unknownAuthor')}</p>
           <p className="text-site-muted text-xs">
-            {createdDate.toLocaleDateString(locale)}
+            {createdDate.toLocaleDateString('en-GB')}
           </p>
         </div>
         {/* New comments badge */}

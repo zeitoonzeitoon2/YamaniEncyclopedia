@@ -130,7 +130,7 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
             <p className="text-site-text font-medium">{post.author.name || t('unknownUser')}</p>
             <p className="text-site-muted text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {new Date(post.createdAt).toLocaleDateString(locale)}
+              {new Date(post.createdAt).toLocaleDateString('en-GB')}
             </p>
           </div>
         </div>

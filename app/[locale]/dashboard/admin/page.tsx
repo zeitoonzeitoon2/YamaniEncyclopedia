@@ -672,6 +672,29 @@ export default function AdminDashboard() {
     }
   }
 
+  const [finalizingRoundKey, setFinalizingRoundKey] = useState<string | null>(null)
+  async function forceFinalizeElectionRound(roundId: string, wing: string) {
+    setFinalizingRoundKey(roundId)
+    try {
+      const res = await fetch('/api/admin/domains/election', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId, action: 'FINALIZE' })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(t('electionFinalized'))
+      if (selectedDomainId) {
+        fetchActiveRounds(selectedDomainId)
+        fetchDomains(selectedDomainId)
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error finalizing round')
+    } finally {
+      setFinalizingRoundKey(null)
+    }
+  }
+
   const proposeCourse = async () => {
     if (!selectedDomain) return
     const title = courseForm.title.trim()
@@ -1190,14 +1213,26 @@ export default function AdminDashboard() {
                                   {t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
-                                  <button
-                                    type="button"
-                                    onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
-                                    disabled={extendingRoundKey !== null}
-                                    className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
-                                  >
-                                    {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                      disabled={extendingRoundKey !== null}
+                                      className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
+                                    >
+                                      {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
+                                    </button>
+                                    {session?.user?.role === 'ADMIN' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => forceFinalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
+                                        disabled={finalizingRoundKey !== null}
+                                        className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                      >
+                                        {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('forceEndElection')}
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             ) : (
@@ -1215,7 +1250,7 @@ export default function AdminDashboard() {
                           </div>
                           {activeRounds['RIGHT'] && (
                             <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
-                              <span>{t('remainingTime', { time: new Date(activeRounds['RIGHT'].endDate).toLocaleDateString('fa-IR') })}</span>
+                              <span>{t('remainingTime', { time: new Date(activeRounds['RIGHT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
                           )}
                           <div className="space-y-2">
@@ -1253,14 +1288,26 @@ export default function AdminDashboard() {
                                   {t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
-                                  <button
-                                    type="button"
-                                    onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
-                                    disabled={extendingRoundKey !== null}
-                                    className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
-                                  >
-                                    {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                      disabled={extendingRoundKey !== null}
+                                      className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
+                                    >
+                                      {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
+                                    </button>
+                                    {session?.user?.role === 'ADMIN' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => forceFinalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
+                                        disabled={finalizingRoundKey !== null}
+                                        className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                      >
+                                        {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('forceEndElection')}
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             ) : (
@@ -1278,7 +1325,7 @@ export default function AdminDashboard() {
                           </div>
                           {activeRounds['LEFT'] && (
                             <div className="text-[10px] text-site-muted flex items-center gap-2 mb-2">
-                              <span>{t('remainingTime', { time: new Date(activeRounds['LEFT'].endDate).toLocaleDateString('fa-IR') })}</span>
+                              <span>{t('remainingTime', { time: new Date(activeRounds['LEFT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
                           )}
                           <div className="space-y-2">

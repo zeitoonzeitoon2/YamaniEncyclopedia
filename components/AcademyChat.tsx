@@ -250,7 +250,7 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                       {t('examApprovedMsg')}
                     </div>
                     <div className="mt-1">
-                      {t('examScheduledMsg', { date: new Date(selectedExam.scheduledAt).toLocaleString('fa-IR') })}
+                      {t('examScheduledMsg', { date: new Date(selectedExam.scheduledAt).toLocaleString('en-GB') })}
                     </div>
                     {selectedExam.meetLink && (
                       <a
@@ -329,7 +329,7 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                               </button>
                             )}
                           </div>
-                          <span>{new Date(msg.createdAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>{new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div className="whitespace-pre-wrap">{msg.content}</div>
                       </div>

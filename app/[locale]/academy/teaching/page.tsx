@@ -216,7 +216,7 @@ export default function AcademyTeachingPage() {
                       {exam.scheduledAt && (
                         <div className="flex items-center gap-1.5 text-xs text-site-muted">
                           <Calendar size={14} />
-                          {new Date(exam.scheduledAt).toLocaleString()}
+                          {new Date(exam.scheduledAt).toLocaleString('en-GB')}
                         </div>
                       )}
                       {exam.meetLink && (

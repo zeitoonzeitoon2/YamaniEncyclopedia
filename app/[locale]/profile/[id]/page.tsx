@@ -125,7 +125,7 @@ export default async function ProfilePage({
                   <div className="text-site-text font-medium">
                     {tPost('idLabel')} {getPostDisplayId(post as any, tPost)}
                   </div>
-                  <div className="text-site-muted text-sm">{new Date(post.createdAt).toLocaleDateString(locale)}</div>
+                  <div className="text-site-muted text-sm">{new Date(post.createdAt).toLocaleDateString('en-GB')}</div>
                 </div>
                 <div className="text-sm text-site-muted mt-1">
                   {t('statusLabel')} {tPost(`status.${statusKeyFor(post.status)}` as never)}

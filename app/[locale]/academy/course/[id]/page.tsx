@@ -253,7 +253,7 @@ export default function CourseViewerPage() {
                         {lastExam.scheduledAt && (
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-site-muted">{t('examDate')}:</span>
-                            <span className="text-site-text">{new Date(lastExam.scheduledAt).toLocaleString()}</span>
+                            <span className="text-site-text">{new Date(lastExam.scheduledAt).toLocaleString('en-GB')}</span>
                           </div>
                         )}
                         {lastExam.meetLink && (

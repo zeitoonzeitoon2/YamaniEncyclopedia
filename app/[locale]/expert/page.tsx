@@ -946,7 +946,7 @@ export default function ExpertDashboard() {
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
                               </span>
-                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
+                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-site-text line-clamp-2">
@@ -975,7 +975,7 @@ export default function ExpertDashboard() {
                               <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
                                 {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
                               </span>
-                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString(locale)}</span>
+                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
                             </span>
                           </div>
                           <div className="text-sm text-site-text line-clamp-2">

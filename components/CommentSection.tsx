@@ -354,7 +354,7 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
           {getRoleBadge(node.author.role, t)}
           {categoryBadge(node.category, t)}
         </div>
-        <span className="text-sm text-site-muted">{new Date(node.createdAt).toLocaleDateString(locale)}</span>
+        <span className="text-sm text-site-muted">{new Date(node.createdAt).toLocaleDateString('en-GB')}</span>
       </div>
       <div className="flex items-baseline gap-2">
         {canComment && (

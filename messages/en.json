@@ -284,6 +284,7 @@
       "electionRound": "Election Round",
       "startElectionRound": "Start Election Round",
       "finalizeElection": "Finalize Election",
+      "forceEndElection": "Force End (Admin Only)",
       "nominationPeriodEnds": "Nomination Period Ends",
       "electionEnds": "Election Ends",
       "remainingTime": "Remaining Time: {time}",

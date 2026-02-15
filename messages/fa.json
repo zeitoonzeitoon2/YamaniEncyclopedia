@@ -285,6 +285,7 @@
       "electionRound": "دوره انتخاباتی",
       "startElectionRound": "شروع دوره انتخاباتی",
       "finalizeElection": "نهایی‌سازی انتخابات",
+      "forceEndElection": "پایان اجباری (مخصوص ادمین)",
       "extendElection": "تمدید انتخابات (۱ روز)",
       "electionExtended": "انتخابات به مدت ۱ روز تمدید شد",
       "nominationPeriodEnds": "پایان مهلت پیشنهاد کاندیدا",

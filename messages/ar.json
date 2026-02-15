@@ -284,6 +284,7 @@
     "electionRound": "دورة انتخابية",
     "startElectionRound": "بدء دورة انتخابية",
     "finalizeElection": "إنهاء الانتخابات",
+    "forceEndElection": "إنهاء إجباري (للمدير العام)",
     "nominationPeriodEnds": "نهاية مهلة ترشيح الكانديدا",
     "electionEnds": "نهاية الدورة الانتخابية",
     "remainingTime": "الوقت المتبقي: {time}",

@@ -796,7 +796,7 @@ export default function AdminCourseChaptersPage() {
                                           <div className="text-xs text-site-muted mt-1">{versionLabel(chapter)}</div>
                                         </div>
                                         <div className="text-xs text-site-muted">
-                                          {new Date(chapter.updatedAt).toLocaleDateString(locale)}
+                                          {new Date(chapter.updatedAt).toLocaleDateString('en-GB')}
                                         </div>
                                       </div>
                                     </button>

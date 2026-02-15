@@ -105,7 +105,7 @@ export function PostCard({ post, fullWidth = false, hideArticleLinkInputs = fals
             <p className="text-site-text font-medium">{post.author.name}</p>
           )}
           <p className="text-site-muted text-sm">
-            {mounted ? new Date(post.createdAt).toLocaleDateString(locale) : ''}
+            {mounted ? new Date(post.createdAt).toLocaleDateString('en-GB') : ''}
           </p>
         </div>
       </div>

@@ -174,7 +174,7 @@ export default function AcademyDashboardPage() {
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-site-muted">
                           <Calendar size={14} />
-                          {t('passDate')}: <span className="text-site-text">{new Date(item.updatedAt).toLocaleDateString()}</span>
+                          {t('passDate')}: <span className="text-site-text">{new Date(item.updatedAt).toLocaleDateString('en-GB')}</span>
                         </div>
                       </div>
                     </div>
