@@ -168,6 +168,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Candidacy already exists' }, { status: 409 })
     }
 
+    if (existingCandidacy) {
+      // Clear previous votes if we are re-using the candidacy record for a new round
+      await prisma.candidacyVote.deleteMany({
+        where: { candidacyId: existingCandidacy.id }
+      })
+    }
+
     const candidacy = await prisma.expertCandidacy.upsert({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },
       update: {
