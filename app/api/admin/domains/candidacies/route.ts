@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const domainId = typeof body.domainId === 'string' ? body.domainId.trim() : ''
     const candidateUserId = typeof body.candidateUserId === 'string' ? body.candidateUserId.trim() : ''
     const requestedRole = typeof body.role === 'string' ? body.role.trim() : ''
-    const roleValue = requestedRole || 'EXPERT'
+    let roleValue = requestedRole || 'EXPERT'
     const requestedWing = typeof body.wing === 'string' ? body.wing.trim() : ''
     const wingValue = requestedWing || 'RIGHT'
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Force role based on round type
-    const roleValue = activeRound.type === 'HEAD' ? 'HEAD' : 'EXPERT'
+    roleValue = activeRound.type === 'HEAD' ? 'HEAD' : 'EXPERT'
 
     if (new Date() > activeRound.endDate) {
       return NextResponse.json({ error: 'Nomination period for this round has ended' }, { status: 400 })
