@@ -132,61 +132,60 @@ function CreatePost() {
     ;(async () => {
       const handled = await tryLoadEditTarget()
       if (!handled) {
-        // Scenario: Non-edit mode. First get the latest published version, then decide if local draft is valid
+        // Scenario: Non-edit mode. First get the latest published version
         try {
           const resp = await fetch('/api/posts/latest', { cache: 'no-store' })
           const latest = resp.ok ? await resp.json() : null
 
-          if (!editId) {
-            try {
-              const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
-              if (saved) {
-                const parsed = JSON.parse(saved)
-                const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)
-                if (validDraft) {
-                  // If draft's originalPostId matches latest published ID, it's a valid continuation
-                  // OR if the latest diagram itself matches the draft (to handle cases where latest was just published)
-                  const latestId = latest?.id
-                  const sameBase = latestId && (parsed.originalPostId === latestId)
+          // IMPORTANT: If we found a latest published post, we MUST use its content 
+          // unless we have a VALID draft that matches THIS specific post ID.
+          if (latest) {
+            let useLatestFromServer = true
+            
+            if (!editId) {
+              try {
+                const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
+                if (saved) {
+                  const parsed = JSON.parse(saved)
+                  const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)
                   
-                  if (sameBase) {
+                  // Only use draft if it's based on the CURRENT latest post
+                  if (validDraft && parsed.originalPostId === latest.id) {
                     setTreeData(parsed.treeData)
-                    setOriginalPostId(parsed.originalPostId ?? null)
-                    setIsLoading(false)
-                    return
-                  } else {
-                    // Draft is for an old version or no base; clear it to load new version
-                    console.log('Clearing old draft as it does not match latest published version')
+                    setOriginalPostId(latest.id)
+                    useLatestFromServer = false
+                    console.log('Using valid local draft matching latest post ID:', latest.id)
+                  } else if (validDraft) {
+                    console.log('Draft exists but is outdated. Base ID:', parsed.originalPostId, 'Latest ID:', latest.id)
                     try { localStorage.removeItem(draftKey) } catch {}
                   }
-                } else {
-                  try { localStorage.removeItem(draftKey) } catch {}
                 }
+              } catch (e) {
+                console.warn('Failed to restore draft from localStorage', e)
               }
-            } catch (e) {
-              console.warn('Failed to restore draft from localStorage', e)
             }
-          }
 
-          if (latest) {
-            setOriginalPostId(latest.id)
-            try {
-              const parsedContent = JSON.parse(latest.content)
-              // If latest content is valid and non-trivial, use it
-              if (parsedContent?.nodes && parsedContent.nodes.length > 0) {
-                setTreeData(parsedContent)
-                setIsLoading(false)
-                return
+            if (useLatestFromServer) {
+              setOriginalPostId(latest.id)
+              try {
+                const parsedContent = JSON.parse(latest.content)
+                if (parsedContent?.nodes && parsedContent.nodes.length > 0) {
+                  setTreeData(parsedContent)
+                  console.log('Loaded latest post content from server:', latest.id)
+                }
+              } catch (e) {
+                console.error('Invalid latest post content JSON', e)
               }
-            } catch (e) {
-              console.error('Invalid latest post content JSON', e)
             }
+            
+            setIsLoading(false)
+            return
           }
         } catch (e) {
           console.warn('Failed to fetch latest approved post', e)
         }
 
-        // If unsuccessful or no latest found, fallback flow
+        // Fallback to top post if latest API failed
         await loadTopPost()
       }
     })()
