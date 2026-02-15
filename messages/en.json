@@ -336,7 +336,12 @@
     "columns": {
       "user": "User",
       "email": "Email",
-      "role": "Role"
+      "role": "Role",
+      "domains": "Domains"
+    },
+    "wings": {
+      "right": "Right Wing",
+      "left": "Left Wing"
     },
     "user": {
       "noName": "No name"

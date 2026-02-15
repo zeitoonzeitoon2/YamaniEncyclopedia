@@ -19,6 +19,7 @@ type UserWithDomains = {
   domainExperts: {
     id: string
     role: string
+    wing: string
     domain: DomainStub
   }[]
   _count: {
@@ -94,7 +95,8 @@ export default function UserManagement({}: Props) {
               <tr className="border-b border-site-border text-site-muted text-sm">
                 <th className="pb-3 pr-4 font-medium">{t('columns.user')}</th>
                 <th className="pb-3 px-4 font-medium">{t('columns.email')}</th>
-                <th className="pb-3 pl-4 font-medium">{t('columns.role')}</th>
+                <th className="pb-3 px-4 font-medium">{t('columns.role')}</th>
+                <th className="pb-3 pl-4 font-medium">{t('columns.domains')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border">
@@ -111,11 +113,29 @@ export default function UserManagement({}: Props) {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
-                    <td className="py-3 pl-4">
+                    <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
                         {roleInfo.label === t('roles.globalExpert') ? <ShieldCheck size={12} /> : roleInfo.label === t('roles.domainExpert') ? <Shield size={12} /> : null}
                         {roleInfo.label}
                       </span>
+                    </td>
+                    <td className="py-3 pl-4">
+                      <div className="flex flex-wrap gap-2">
+                        {user.domainExperts.map(de => (
+                          <div 
+                            key={de.id} 
+                            className="flex flex-col gap-0.5 px-2 py-1 rounded bg-site-secondary/20 border border-site-border text-[10px]"
+                          >
+                            <span className="font-bold text-site-text">{de.domain.name}</span>
+                            <span className={de.wing === 'RIGHT' ? 'text-blue-400' : 'text-green-400'}>
+                              {t(`wings.${de.wing.toLowerCase()}`)}
+                            </span>
+                          </div>
+                        ))}
+                        {user.domainExperts.length === 0 && (
+                          <span className="text-site-muted text-xs">-</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
