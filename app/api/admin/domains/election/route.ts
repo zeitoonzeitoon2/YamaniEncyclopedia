@@ -197,6 +197,23 @@ async function finalizeRound(roundId: string) {
           data: { status: 'REJECTED' }
         })
       }
+
+      // 2. Schedule next MEMBERS election in 2 months
+      const nextMembersStartDate = new Date()
+      nextMembersStartDate.setMonth(nextMembersStartDate.getMonth() + 2) // Start 2 months from now
+      
+      const nextMembersEndDate = new Date(nextMembersStartDate)
+      nextMembersEndDate.setDate(nextMembersStartDate.getDate() + 7) // Lasts for 1 week
+
+      await tx.electionRound.create({
+        data: {
+          domainId: round.domainId,
+          wing: round.wing,
+          startDate: nextMembersStartDate,
+          endDate: nextMembersEndDate,
+          status: 'MEMBERS_ACTIVE' // It will be "active" but in the future, effectively "scheduled"
+        }
+      })
     }
   })
 }
