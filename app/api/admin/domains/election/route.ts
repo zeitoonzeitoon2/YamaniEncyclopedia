@@ -111,7 +111,7 @@ async function finalizeRound(roundId: string) {
       const endDate = new Date()
       endDate.setDate(startDate.getDate() + 3) // 3 days for head election
 
-      await tx.electionRound.create({
+      const headRound = await tx.electionRound.create({
         data: {
           domainId: round.domainId,
           wing: round.wing,
@@ -120,6 +120,22 @@ async function finalizeRound(roundId: string) {
           status: 'HEAD_ACTIVE'
         }
       })
+
+      // 4. Automatically nominate all new experts for HEAD position
+      for (const candidacy of winners) {
+        await tx.expertCandidacy.create({
+          data: {
+            domainId: round.domainId,
+            candidateUserId: candidacy.candidateUserId,
+            proposerUserId: candidacy.candidateUserId, // Self-nominated automatically
+            role: 'HEAD',
+            wing: round.wing,
+            status: 'PENDING',
+            roundId: headRound.id,
+            totalScore: 0
+          }
+        })
+      }
 
     } else if (isHeadElection) {
       // 1. Pick top 1 candidate
