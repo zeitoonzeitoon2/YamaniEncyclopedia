@@ -368,7 +368,8 @@
       "deleteConfirmSuffix": "را حذف کنید؟",
       "deleteRequirement": "شرط حذف: حوزه نباید زیرحوزه یا نوشته داشته باشد.",
       "headElectionRight": "انتخابات ریاست - تیم راست",
-      "headElectionLeft": "انتخابات ریاست - تیم چپ"
+      "headElectionLeft": "انتخابات ریاست - تیم چپ",
+      "headElectionLabel": "انتخابات ریاست"
     }
   },
   "adminUsers": {

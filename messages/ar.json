@@ -343,7 +343,8 @@
       "deleteConfirmSuffix": "؟",
       "deleteRequirement": "شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.",
       "headElectionRight": "انتخابات الرئاسة - الفريق الأيمن",
-      "headElectionLeft": "انتخابات الرئاسة - الفريق الأيسر"
+      "headElectionLeft": "انتخابات الرئاسة - الفريق الأيسر",
+      "headElectionLabel": "انتخابات الرئاسة"
     }
   },
   "adminUsers": {

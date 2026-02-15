@@ -169,7 +169,6 @@ export default function AdminDashboard() {
   const [userResults, setUserResults] = useState<DomainUser[]>([])
   const [selectedUser, setSelectedUser] = useState<DomainUser | null>(null)
   const [nominating, setNominating] = useState(false)
-  const [nominateRole, setNominateRole] = useState('EXPERT')
   const [nominateWing, setNominateWing] = useState('RIGHT')
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
@@ -603,7 +602,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ 
           domainId: selectedDomain.id, 
           candidateUserId: selectedUser.id, 
-          role: nominateRole,
+          role: 'EXPERT',
           wing: nominateWing
         }),
       })
@@ -614,7 +613,6 @@ export default function AdminDashboard() {
       }
       toast.success(t('createNominationSuccess'))
       setSelectedUser(null)
-      setNominateRole('EXPERT')
       setNominateWing('RIGHT')
       setUserQuery('')
       setUserResults([])
@@ -1265,7 +1263,7 @@ export default function AdminDashboard() {
                                     ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
                                     : 'bg-green-500/10 text-green-400 border-green-500/20'
                                 }`}>
-                                  {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' ? 'HEAD Election' : t('electionRound')}
+                                  {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
@@ -1344,7 +1342,7 @@ export default function AdminDashboard() {
                                     ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
                                     : 'bg-green-500/10 text-green-400 border-green-500/20'
                                 }`}>
-                                  {activeRounds['LEFT'].status === 'HEAD_ACTIVE' ? 'HEAD Election' : t('electionRound')}
+                                  {activeRounds['LEFT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
                                 </span>
                                 {canManageSelectedDomainMembers && (
                                   <div className="flex items-center gap-2">
@@ -1554,16 +1552,6 @@ export default function AdminDashboard() {
                                   ))}
                                 </div>
                               )}
-                            </div>
-                            <div>
-                              <select
-                                value={nominateRole}
-                                onChange={(e) => setNominateRole(e.target.value)}
-                                className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                              >
-                                <option value="EXPERT">{t('roleExpert')}</option>
-                                <option value="HEAD">{t('roleHead')}</option>
-                              </select>
                             </div>
                             <div>
                               <select
