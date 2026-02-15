@@ -11,9 +11,11 @@ export async function Header() {
   
   let logoUrl = null
   try {
-    const setting = await prisma.setting.findUnique({
+    const settingPromise = prisma.setting.findUnique({
       where: { key: 'site.logo' }
     })
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 2000))
+    const setting = await Promise.race([settingPromise, timeoutPromise]) as any
     logoUrl = setting?.value || null
   } catch (err) {
     console.warn('[Header] Failed to fetch logo setting.')

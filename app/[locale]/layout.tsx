@@ -11,8 +11,11 @@ export async function generateMetadata({ params: { locale } }: { params: { local
   
   let logoUrl = null
   try {
-    // Fetch logo from database for favicon
-    const logo = await prisma.setting.findUnique({ where: { key: 'site.logo' } })
+    // Fetch logo from database for favicon with 2s timeout
+    const logoPromise = prisma.setting.findUnique({ where: { key: 'site.logo' } })
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 2000))
+    
+    const logo = await Promise.race([logoPromise, timeoutPromise]) as any
     logoUrl = logo?.value
   } catch (error) {
     console.warn('Failed to fetch logo for metadata:', error)

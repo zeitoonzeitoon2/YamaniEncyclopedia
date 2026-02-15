@@ -41,12 +41,14 @@ export default async function HomePage({ params: { locale } }: { params: { local
   let headerUrl: string | null = null
   try {
     const { prisma } = await import('@/lib/prisma')
-    const setting = await prisma.setting.findUnique({
+    const settingPromise = prisma.setting.findUnique({
       where: { key: 'home.headerImage' }
     })
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 3000))
+    const setting = await Promise.race([settingPromise, timeoutPromise]) as any
     headerUrl = setting?.value || null
   } catch (err) {
-    console.warn('[HomePage] Failed to fetch header image setting.')
+    console.warn('[HomePage] Failed to fetch header image setting:', err)
   }
 
   return (

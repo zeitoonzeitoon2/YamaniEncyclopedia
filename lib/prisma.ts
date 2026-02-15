@@ -14,7 +14,7 @@ const normalizedDbUrl = (() => {
       u.searchParams.delete('supavisor_session_id')
       u.searchParams.set('pgbouncer', 'true')
       u.searchParams.set('sslmode', 'require')
-      u.searchParams.set('connection_limit', '1')
+      u.searchParams.set('connection_limit', '5')
       return u.toString()
     }
   } catch (e) {
