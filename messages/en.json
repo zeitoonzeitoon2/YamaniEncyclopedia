@@ -341,7 +341,9 @@
       "deleteDomainTitle": "Delete domain",
       "deleteConfirmPrefix": "Are you sure you want to delete the domain",
       "deleteConfirmSuffix": "?",
-      "deleteRequirement": "Delete condition: the domain must have no subdomains or posts."
+      "deleteRequirement": "Delete condition: the domain must have no subdomains or posts.",
+      "headElectionRight": "HEAD Election - Right Team",
+      "headElectionLeft": "HEAD Election - Left Team"
     }
   },
   "adminUsers": {

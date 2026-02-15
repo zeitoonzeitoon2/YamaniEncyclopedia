@@ -366,7 +366,9 @@
       "deleteDomainTitle": "حذف حوزه",
       "deleteConfirmPrefix": "آیا مطمئن هستید که می‌خواهید حوزه",
       "deleteConfirmSuffix": "را حذف کنید؟",
-      "deleteRequirement": "شرط حذف: حوزه نباید زیرحوزه یا نوشته داشته باشد."
+      "deleteRequirement": "شرط حذف: حوزه نباید زیرحوزه یا نوشته داشته باشد.",
+      "headElectionRight": "انتخابات ریاست - تیم راست",
+      "headElectionLeft": "انتخابات ریاست - تیم چپ"
     }
   },
   "adminUsers": {

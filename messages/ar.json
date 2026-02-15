@@ -341,7 +341,9 @@
       "deleteDomainTitle": "حذف المجال",
       "deleteConfirmPrefix": "هل أنت متأكد أنك تريد حذف المجال",
       "deleteConfirmSuffix": "؟",
-      "deleteRequirement": "شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات."
+      "deleteRequirement": "شرط الحذف: يجب ألا يحتوي المجال على مجالات فرعية أو منشورات.",
+      "headElectionRight": "انتخابات الرئاسة - الفريق الأيمن",
+      "headElectionLeft": "انتخابات الرئاسة - الفريق الأيسر"
     }
   },
   "adminUsers": {

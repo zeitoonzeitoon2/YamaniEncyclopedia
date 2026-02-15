@@ -1416,12 +1416,12 @@ export default function AdminDashboard() {
                           <h3 className="text-lg font-bold text-site-text heading">{t('pendingNominationsTitle')}</h3>
                           {activeRounds['RIGHT']?.status === 'HEAD_ACTIVE' && (
                              <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
-                               HEAD Election - Right Team
+                               {t('headElectionRight')}
                              </span>
                           )}
                           {activeRounds['LEFT']?.status === 'HEAD_ACTIVE' && (
                              <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
-                               HEAD Election - Left Team
+                               {t('headElectionLeft')}
                              </span>
                           )}
                         </div>
