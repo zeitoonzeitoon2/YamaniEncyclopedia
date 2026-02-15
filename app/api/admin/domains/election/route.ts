@@ -123,8 +123,23 @@ async function finalizeRound(roundId: string) {
 
       // 4. Automatically nominate all new experts for HEAD position
       for (const candidacy of winners) {
-        await tx.expertCandidacy.create({
-          data: {
+        // Use upsert to avoid Unique constraint violation
+        await tx.expertCandidacy.upsert({
+          where: {
+            domainId_candidateUserId: {
+              domainId: round.domainId,
+              candidateUserId: candidacy.candidateUserId
+            }
+          },
+          update: {
+            proposerUserId: candidacy.candidateUserId,
+            role: 'HEAD',
+            wing: round.wing,
+            status: 'PENDING',
+            roundId: headRound.id,
+            totalScore: 0
+          },
+          create: {
             domainId: round.domainId,
             candidateUserId: candidacy.candidateUserId,
             proposerUserId: candidacy.candidateUserId, // Self-nominated automatically
