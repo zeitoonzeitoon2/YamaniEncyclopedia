@@ -109,7 +109,7 @@ async function finalizeRound(roundId: string) {
       // 3. Start HEAD election automatically
       const startDate = new Date()
       const endDate = new Date()
-      endDate.setDate(startDate.getDate() + 3) // 3 days for head election
+      endDate.setDate(startDate.getDate() + 2) // 2 days for head election
 
       const headRound = await tx.electionRound.create({
         data: {
@@ -123,6 +123,11 @@ async function finalizeRound(roundId: string) {
 
       // 4. Automatically nominate all new experts for HEAD position
       for (const candidacy of winners) {
+        // Clear previous votes for the new round
+        await tx.candidacyVote.deleteMany({
+          where: { candidacyId: candidacy.id }
+        })
+
         // Use upsert to avoid Unique constraint violation
         await tx.expertCandidacy.upsert({
           where: {

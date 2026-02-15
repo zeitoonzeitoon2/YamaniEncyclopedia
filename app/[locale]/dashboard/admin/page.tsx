@@ -1412,7 +1412,19 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="border-t border-site-border pt-4">
-                        <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingNominationsTitle')}</h3>
+                        <div className="flex items-center gap-2 mb-3">
+                          <h3 className="text-lg font-bold text-site-text heading">{t('pendingNominationsTitle')}</h3>
+                          {activeRounds['RIGHT']?.status === 'HEAD_ACTIVE' && (
+                             <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
+                               HEAD Election - Right Team
+                             </span>
+                          )}
+                          {activeRounds['LEFT']?.status === 'HEAD_ACTIVE' && (
+                             <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
+                               HEAD Election - Left Team
+                             </span>
+                          )}
+                        </div>
                         {loadingCandidacies ? (
                           <div className="text-site-muted text-sm">{t('loading')}</div>
                         ) : pendingCandidacies.length === 0 ? (
@@ -1427,13 +1439,16 @@ export default function AdminDashboard() {
                               const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                               
                               const isActiveRound = activeRounds[c.wing]?.id === c.roundId
+                              const isHeadElectionCandidate = c.role === 'HEAD' && activeRounds[c.wing]?.status === 'HEAD_ACTIVE'
 
                               return (
                                 <div key={c.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${roleBadge.cls}`}>{roleBadge.label}</span>
+                                        {!isHeadElectionCandidate && (
+                                          <span className={`text-xs px-2 py-0.5 rounded-full ${roleBadge.cls}`}>{roleBadge.label}</span>
+                                        )}
                                         <span className={`text-xs px-2 py-0.5 rounded-full border ${wingCls}`}>{wingLabel}</span>
                                         <span className="text-site-text font-medium truncate">
                                           {c.candidateUser.name || c.candidateUser.email || t('memberFallback')}
