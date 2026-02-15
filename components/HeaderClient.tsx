@@ -161,8 +161,8 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                       key={l}
                       onClick={(e) => {
                         e.stopPropagation()
-                        router.replace(safePathname, { locale: l })
                         setLangMenuOpen(false)
+                        window.location.href = `/${l}${safePathname === '/' ? '' : safePathname}`
                       }}
                       className={`w-full text-start px-4 py-2 text-sm hover:bg-site-card/60 transition-colors ${
                         locale === l ? 'text-warm-primary font-bold' : 'text-site-text'

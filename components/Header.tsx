@@ -23,8 +23,8 @@ export async function Header() {
     <header className="sticky top-0 left-0 right-0 w-full h-16 bg-site-card border-b border-site-border z-[999] pointer-events-auto" style={{ isolation: 'isolate' }}>
       <div className="container mx-auto px-4 py-2">
         <div className="grid grid-cols-3 items-center gap-4">
-          <div className="flex items-center justify-start relative z-[1001] pointer-events-auto">
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-site-text heading">
+          <div className="flex items-center justify-start relative z-[1001]">
+            <a href={`/${locale}`} className="flex items-center gap-2 text-xl font-bold text-site-text heading">
               {logoUrl ? (
                 <Image 
                   src={logoUrl} 
@@ -36,7 +36,7 @@ export async function Header() {
                 />
               ) : null}
               <span className="hidden sm:inline">{t('title')}</span>
-            </Link>
+            </a>
           </div>
 
           <HeaderClient initialLocale={locale} />
