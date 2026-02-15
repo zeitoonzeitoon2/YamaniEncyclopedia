@@ -155,10 +155,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // For MEMBERS election, we block existing experts (assuming they are already filled).
-    if (roleValue !== 'HEAD' && existingExpert) {
-      return NextResponse.json({ error: 'User is already a domain expert' }, { status: 409 })
-    }
+    // For MEMBERS election, we allow existing experts to run again for re-election.
+    // if (roleValue !== 'HEAD' && existingExpert) {
+    //   return NextResponse.json({ error: 'User is already a domain expert' }, { status: 409 })
+    // }
 
     const existingCandidacy = await prisma.expertCandidacy.findUnique({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },
