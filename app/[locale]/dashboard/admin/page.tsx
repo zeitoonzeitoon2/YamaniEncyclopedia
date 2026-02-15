@@ -1234,17 +1234,6 @@ export default function AdminDashboard() {
                                       </div>
                                       <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                                     </div>
-                                    {canManageSelectedDomainMembers && (
-                                      <button
-                                        type="button"
-                                        onClick={() => removeExpert(ex.user.id)}
-                                        disabled={removingExpertKey === key}
-                                        className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
-                                        title={t('remove')}
-                                      >
-                                        {removingExpertKey === key ? '...' : t('delete')}
-                                      </button>
-                                    )}
                                   </div>
                                 )
                               })
@@ -1308,17 +1297,6 @@ export default function AdminDashboard() {
                                       </div>
                                       <div className="text-xs text-site-muted truncate mt-1">{ex.user.email || ''}</div>
                                     </div>
-                                    {canManageSelectedDomainMembers && (
-                                      <button
-                                        type="button"
-                                        onClick={() => removeExpert(ex.user.id)}
-                                        disabled={removingExpertKey === key}
-                                        className="text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
-                                        title={t('remove')}
-                                      >
-                                        {removingExpertKey === key ? '...' : t('delete')}
-                                      </button>
-                                    )}
                                   </div>
                                 )
                               })
