@@ -111,7 +111,7 @@ function CreatePost() {
 
     const loadTopPost = async () => {
       try {
-        const response = await fetch('/api/posts/latest', { cache: 'no-store' })
+        const response = await fetch('/api/posts/top', { cache: 'no-store' })
         if (response.ok) {
           const topPost = await response.json()
           if (topPost) {
@@ -132,14 +132,14 @@ function CreatePost() {
     ;(async () => {
       const handled = await tryLoadEditTarget()
       if (!handled) {
-        // Scenario: Non-edit mode. First get the latest published version
+        // Scenario: Non-edit mode. Get the "Top" version (which is what appears on the Home Page)
         try {
-          const resp = await fetch('/api/posts/latest', { cache: 'no-store' })
+          const resp = await fetch('/api/posts/top', { cache: 'no-store' })
           const latest = resp.ok ? await resp.json() : null
 
-          // IMPORTANT: If we found a latest published post, we MUST use its content 
+          // IMPORTANT: If we found a latest published post (Top Post), we MUST use its content 
           // unless we have a VALID draft that matches THIS specific post ID.
-          if (latest) {
+          if (latest && latest.id) {
             let useLatestFromServer = true
             
             if (!editId) {
@@ -147,45 +147,49 @@ function CreatePost() {
                 const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null
                 if (saved) {
                   const parsed = JSON.parse(saved)
-                  const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)
+                  const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.nodes.length > 0 && !isTrivialTree(parsed.treeData)
                   
-                  // Only use draft if it's based on the CURRENT latest post
+                  // Only use draft if it's based on the CURRENT top post
                   if (validDraft && parsed.originalPostId === latest.id) {
                     setTreeData(parsed.treeData)
                     setOriginalPostId(latest.id)
                     useLatestFromServer = false
-                    console.log('Using valid local draft matching latest post ID:', latest.id)
+                    console.log('[CreatePage] Using valid local draft matching top post ID:', latest.id)
                   } else if (validDraft) {
-                    console.log('Draft exists but is outdated. Base ID:', parsed.originalPostId, 'Latest ID:', latest.id)
+                    console.log('[CreatePage] Draft exists but is outdated relative to top post. Base ID:', parsed.originalPostId, 'Top ID:', latest.id)
                     try { localStorage.removeItem(draftKey) } catch {}
                   }
                 }
               } catch (e) {
-                console.warn('Failed to restore draft from localStorage', e)
+                console.warn('[CreatePage] Failed to restore draft from localStorage', e)
               }
             }
 
             if (useLatestFromServer) {
               setOriginalPostId(latest.id)
               try {
-                const parsedContent = JSON.parse(latest.content)
-                if (parsedContent?.nodes && parsedContent.nodes.length > 0) {
+                const parsedContent = typeof latest.content === 'string' ? JSON.parse(latest.content) : latest.content
+                if (parsedContent && Array.isArray(parsedContent.nodes) && parsedContent.nodes.length > 0) {
                   setTreeData(parsedContent)
-                  console.log('Loaded latest post content from server:', latest.id)
+                  console.log('[CreatePage] Successfully loaded top post content from server. ID:', latest.id, 'Nodes:', parsedContent.nodes.length)
+                } else {
+                  console.warn('[CreatePage] Top post content is invalid or empty nodes array', latest.id)
                 }
               } catch (e) {
-                console.error('Invalid latest post content JSON', e)
+                console.error('[CreatePage] Failed to parse latest post content JSON', e, latest.content)
               }
             }
             
             setIsLoading(false)
             return
+          } else {
+            console.warn('[CreatePage] No latest post found or ID is missing')
           }
         } catch (e) {
-          console.warn('Failed to fetch latest approved post', e)
+          console.warn('Failed to fetch top approved post', e)
         }
 
-        // Fallback to top post if latest API failed
+        // Fallback flow
         await loadTopPost()
       }
     })()

@@ -952,21 +952,31 @@ export default function TreeDiagramEditor({
   // Sync internal state with incoming initialData when it changes
   useEffect(() => {
     if (!initialData) return
-    if (hasHydratedInitialData.current) return
+    
+    // If we already hydrated a NON-TRIVIAL tree, don't overwrite it
+    // unless the new initialData is also different and we want to force it.
+    // For the "Create" page, we want to make sure the latest diagram from server
+    // actually makes it into the editor.
+    const currentIsTrivial = nodes.length <= 1 && edges.length === 0
+    if (hasHydratedInitialData.current && !currentIsTrivial) return
 
     const nextNodes = (initialData.nodes || []).map((n: any) => ({
       ...n,
       data: { ...(n.data || {}), domainId: (n.data || {}).domainId ?? null, _readOnly: readOnly },
     }))
     const nextEdges = initialData.edges || []
-    setNodes(nextNodes)
-    setEdges(nextEdges)
-    if (selectedNodeId && !nextNodes.find((n) => n.id === selectedNodeId)) {
-      setSelectedNodeId(null)
-      setPanelOpen(false)
+    
+    // Only update if there's actually something to show or if we haven't hydrated at all
+    if (nextNodes.length > 0 || !hasHydratedInitialData.current) {
+      setNodes(nextNodes)
+      setEdges(nextEdges)
+      if (selectedNodeId && !nextNodes.find((n) => n.id === selectedNodeId)) {
+        setSelectedNodeId(null)
+        setPanelOpen(false)
+      }
+      hasHydratedInitialData.current = true
     }
-    hasHydratedInitialData.current = true
-  }, [initialData, readOnly, selectedNodeId, setNodes, setEdges, setSelectedNodeId, setPanelOpen])
+  }, [initialData, readOnly, selectedNodeId, setNodes, setEdges, setSelectedNodeId, setPanelOpen, nodes.length, edges.length])
 
   return (
     <div className="w-full border border-site-border rounded-lg overflow-hidden flex flex-col" style={{ height }}>
