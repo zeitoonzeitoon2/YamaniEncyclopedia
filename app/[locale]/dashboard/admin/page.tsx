@@ -180,7 +180,7 @@ export default function AdminDashboard() {
   const [domainProposals, setDomainProposals] = useState<DomainProposal[]>([])
   const [votingOnProposalKey, setVotingOnProposalKey] = useState<string | null>(null)
 
-  const canVoteOnProposal = (p: any) => {
+  const canVoteOnProposal = useCallback((p: any) => {
     if (!session?.user) return false
     if (session.user.role === 'ADMIN') return true
     
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
     if (!votingDomain) return false
     
     return votingDomain.experts.some((ex: any) => ex.user.id === session.user.id)
-  }
+  }, [session?.user, roots])
 
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])

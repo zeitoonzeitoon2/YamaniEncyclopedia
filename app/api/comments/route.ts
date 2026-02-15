@@ -18,6 +18,19 @@ export async function GET(request: NextRequest) {
     }
     const whereTarget = postId ? { postId } : { chapterId }
 
+    // Fetch domainId for weighted voting
+    let domainId: string | null = null
+    if (postId) {
+      const p = await prisma.post.findUnique({ where: { id: postId }, select: { domainId: true } })
+      domainId = p?.domainId || null
+    } else if (chapterId) {
+      const c = await prisma.courseChapter.findUnique({ 
+        where: { id: chapterId }, 
+        select: { course: { select: { domainId: true } } } 
+      })
+      domainId = c?.course?.domainId || null
+    }
+
     const buildTree = (items: any[]) => {
       const byId: Record<string, any> = {}
       const roots: any[] = []
