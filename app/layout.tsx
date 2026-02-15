@@ -3,8 +3,11 @@ import { getLocale } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 
 export async function generateMetadata() {
+  /*
   const logo = await prisma.setting.findUnique({ where: { key: 'site.logo' } })
   const logoUrl = logo?.value
+  */
+  const logoUrl = null
 
   return {
     title: 'شجرة العلم - منصة للتفكير المشترك',
