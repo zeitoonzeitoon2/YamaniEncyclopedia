@@ -18,6 +18,7 @@ function isTrivialTree(data: Partial<TreeData> | null | undefined): boolean {
   const nodes = (data as any).nodes as Node[]
   const edges = (data as any).edges as Edge[]
   if (edges.length > 0) return false
+  // Consider 1 or 0 nodes as trivial
   if (nodes.length <= 1) return true
   return false
 }
@@ -143,14 +144,19 @@ function CreatePost() {
                 const parsed = JSON.parse(saved)
                 const validDraft = parsed?.treeData?.nodes && parsed?.treeData?.edges && !isTrivialTree(parsed.treeData)
                 if (validDraft) {
-                  const sameBase = !!latest && (parsed.originalPostId === latest.id)
+                  // If draft's originalPostId matches latest published ID, it's a valid continuation
+                  // OR if the latest diagram itself matches the draft (to handle cases where latest was just published)
+                  const latestId = latest?.id
+                  const sameBase = latestId && (parsed.originalPostId === latestId)
+                  
                   if (sameBase) {
                     setTreeData(parsed.treeData)
                     setOriginalPostId(parsed.originalPostId ?? null)
                     setIsLoading(false)
                     return
                   } else {
-                    // Draft is for an old version; clear it to load new version
+                    // Draft is for an old version or no base; clear it to load new version
+                    console.log('Clearing old draft as it does not match latest published version')
                     try { localStorage.removeItem(draftKey) } catch {}
                   }
                 } else {
@@ -166,18 +172,21 @@ function CreatePost() {
             setOriginalPostId(latest.id)
             try {
               const parsedContent = JSON.parse(latest.content)
-              setTreeData(parsedContent)
+              // If latest content is valid and non-trivial, use it
+              if (parsedContent?.nodes && parsedContent.nodes.length > 0) {
+                setTreeData(parsedContent)
+                setIsLoading(false)
+                return
+              }
             } catch (e) {
               console.error('Invalid latest post content JSON', e)
             }
-            setIsLoading(false)
-            return
           }
         } catch (e) {
           console.warn('Failed to fetch latest approved post', e)
         }
 
-        // If unsuccessful, fallback flow
+        // If unsuccessful or no latest found, fallback flow
         await loadTopPost()
       }
     })()
