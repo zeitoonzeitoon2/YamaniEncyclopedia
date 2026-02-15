@@ -243,6 +243,45 @@ export default function AdminDashboard() {
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
+  const pendingMembersVotes = useMemo(() => {
+    if (!session?.user) return 0
+    const canVote = canManageSelectedDomainMembers
+    if (!canVote) return 0
+    return pendingCandidacies.filter(c => 
+      c.status === 'PENDING' && 
+      !c.votes.some(v => v.voterUserId === session.user.id)
+    ).length
+  }, [session?.user, pendingCandidacies, canManageSelectedDomainMembers])
+
+  const pendingCoursesVotes = useMemo(() => {
+    if (!session?.user) return 0
+    const canVote = canVoteOnSelectedDomainCourses
+    if (!canVote) return 0
+    return domainCourses.filter(c => 
+      c.status === 'PENDING' && 
+      !c.votes.some(v => v.voterId === session.user.id)
+    ).length
+  }, [session?.user, domainCourses, canVoteOnSelectedDomainCourses])
+
+  const pendingResearchersVotes = useMemo(() => {
+    if (!session?.user) return 0
+    const canVote = canVoteOnSelectedDomainCourses
+    if (!canVote) return 0
+    return researchPrerequisites.filter(r => 
+      r.status === 'PENDING' && 
+      !r.votes?.some(v => v.voterUserId === session.user.id)
+    ).length
+  }, [session?.user, researchPrerequisites, canVoteOnSelectedDomainCourses])
+
+  const pendingProposalsVotes = useMemo(() => {
+    if (!session?.user) return 0
+    return domainProposals.filter(p => 
+      p.status === 'PENDING' && 
+      canVoteOnProposal(p) &&
+      !p.votes.some(v => v.voterId === session.user.id)
+    ).length
+  }, [session?.user, domainProposals, canVoteOnProposal])
+
   const fetchHeader = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings', { cache: 'no-store' })
@@ -1155,46 +1194,58 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('members')}
-                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'members'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('membersTab')}
+                      {pendingMembersVotes > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-site-bg animate-pulse" />
+                      )}
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTab('courses')}
-                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'courses'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('coursesTab')}
+                      {pendingCoursesVotes > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-site-bg animate-pulse" />
+                      )}
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTab('researchers')}
-                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'researchers'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('researchersTab')}
+                      {pendingResearchersVotes > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-site-bg animate-pulse" />
+                      )}
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTab('proposals')}
-                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
                         activeTab === 'proposals'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
                       {t('proposalsTab')}
+                      {pendingProposalsVotes > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-site-bg animate-pulse" />
+                      )}
                     </button>
                   </div>
 
