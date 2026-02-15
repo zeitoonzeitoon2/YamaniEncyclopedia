@@ -220,7 +220,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                 {menuOpen && (
                   <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
                     <div className="px-4 py-3 border-b border-gray-700">
-                      <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || '—'}</div>
+                      <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || session.user?.email || '—'}</div>
                       <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
                     </div>
                     <div className="py-1">
@@ -235,7 +235,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                         <User size={16} />
                         {t('profile')}
                       </a>
-                      {(isExpertLike || effectiveRole === 'EDITOR') && (
+                      {(isExpertLike || isEditorLike) && (
                         <a
                           href={getLocalizedHref('/expert')}
                           className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
