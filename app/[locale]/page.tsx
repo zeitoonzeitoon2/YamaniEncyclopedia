@@ -39,6 +39,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
   }
   
   let headerUrl: string | null = null
+  /*
   try {
     const { prisma } = await import('@/lib/prisma')
     const settingPromise = prisma.setting.findUnique({
@@ -50,6 +51,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
   } catch (err) {
     console.warn('[HomePage] Failed to fetch header image setting:', err)
   }
+  */
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col relative z-0">

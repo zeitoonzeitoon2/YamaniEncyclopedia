@@ -10,6 +10,7 @@ export async function Header() {
   const locale = await getLocale()
   
   let logoUrl = null
+  /*
   try {
     const settingPromise = prisma.setting.findUnique({
       where: { key: 'site.logo' }
@@ -20,6 +21,7 @@ export async function Header() {
   } catch (err) {
     console.warn('[Header] Failed to fetch logo setting.')
   }
+  */
 
   return (
     <header className="sticky top-0 left-0 right-0 w-full h-16 bg-site-card border-b border-site-border z-[999] pointer-events-auto" style={{ isolation: 'isolate' }}>
