@@ -243,20 +243,6 @@ export default function AdminDashboard() {
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
-  const flattenedDomains = useMemo(() => {
-    const list: { id: string; name: string; slug: string }[] = []
-    const traverse = (nodes: DomainNode[]) => {
-      for (const node of nodes) {
-        list.push({ id: node.id, name: node.name, slug: node.slug })
-        if (node.children) traverse(node.children)
-      }
-    }
-    traverse(roots)
-    return list
-  }, [roots])
-
-
-
   const fetchHeader = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/settings', { cache: 'no-store' })
@@ -1920,7 +1906,7 @@ export default function AdminDashboard() {
           <DomainInvestments />
         </div>
 
-        {session?.user?.role === 'ADMIN' && <UserManagement allDomains={flattenedDomains} />}
+        {session?.user?.role === 'ADMIN' && <UserManagement />}
       </main>
 
       {addModalOpen && (

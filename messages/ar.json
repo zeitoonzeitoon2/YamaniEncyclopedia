@@ -321,19 +321,13 @@
   },
   "adminUsers": {
     "toast": {
-      "loadError": "خطأ في جلب المستخدمين",
-      "alreadyAssigned": "المستخدم معين لهذا المجال بالفعل",
-      "assignSuccess": "تم تعيين المجال بنجاح",
-      "assignFail": "تعذر تعيين المجال",
-      "removeSuccess": "تم حذف المجال",
-      "removeFail": "تعذر حذف المجال"
+      "loadError": "خطأ في جلب المستخدمين"
     },
     "roles": {
       "globalExpert": "خبير عام",
       "domainExpert": "خبير مجال",
       "editor": "محرر"
     },
-    "confirmRemove": "هل أنت متأكد من إزالة هذا المجال؟",
     "title": "إدارة المستخدمين",
     "search": {
       "placeholder": "بحث عن مستخدم..."
@@ -342,25 +336,12 @@
     "columns": {
       "user": "المستخدم",
       "email": "البريد الإلكتروني",
-      "role": "الدور",
-      "domains": "المجالات",
-      "actions": "الإجراءات"
+      "role": "الدور"
     },
     "user": {
       "noName": "بدون اسم"
     },
-    "assignDomains": "تعيين مجالات",
     "emptySearch": "لا توجد نتائج مطابقة.",
-    "modal": {
-      "title": "مجالات {name}",
-      "currentDomains": "المجالات الحالية",
-      "noDomains": "لا توجد مجالات معيّنة.",
-      "remove": "إزالة",
-      "addDomain": "إضافة مجال",
-      "selectDomain": "اختر مجالاً",
-      "add": "إضافة",
-      "close": "إغلاق"
-    },
     "loadingShort": "جارٍ التحميل..."
   },
   "expert": {

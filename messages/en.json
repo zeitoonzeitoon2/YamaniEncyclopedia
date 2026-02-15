@@ -321,19 +321,13 @@
   },
   "adminUsers": {
     "toast": {
-      "loadError": "Failed to load users",
-      "alreadyAssigned": "User already assigned to this domain",
-      "assignSuccess": "Domain assigned",
-      "assignFail": "Failed to assign domain",
-      "removeSuccess": "Domain removed",
-      "removeFail": "Failed to remove domain"
+      "loadError": "Failed to load users"
     },
     "roles": {
       "globalExpert": "Global Expert",
       "domainExpert": "Domain Expert",
       "editor": "Editor"
     },
-    "confirmRemove": "Are you sure you want to remove this domain?",
     "title": "User Management",
     "search": {
       "placeholder": "Search users..."
@@ -342,25 +336,12 @@
     "columns": {
       "user": "User",
       "email": "Email",
-      "role": "Role",
-      "domains": "Domains",
-      "actions": "Actions"
+      "role": "Role"
     },
     "user": {
       "noName": "No name"
     },
-    "assignDomains": "Assign domains",
     "emptySearch": "No users match your search.",
-    "modal": {
-      "title": "{name}'s domains",
-      "currentDomains": "Current domains",
-      "noDomains": "No domains assigned.",
-      "remove": "Remove",
-      "addDomain": "Add domain",
-      "selectDomain": "Select domain",
-      "add": "Add",
-      "close": "Close"
-    },
     "loadingShort": "Loading..."
   },
   "expert": {

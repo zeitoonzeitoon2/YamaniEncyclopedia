@@ -336,19 +336,13 @@
   },
   "adminUsers": {
     "toast": {
-      "loadError": "خطا در دریافت کاربران",
-      "alreadyAssigned": "کاربر قبلاً به این حوزه تخصیص داده شده است",
-      "assignSuccess": "حوزه با موفقیت اختصاص یافت",
-      "assignFail": "اختصاص حوزه ناموفق بود",
-      "removeSuccess": "حوزه حذف شد",
-      "removeFail": "حذف حوزه ناموفق بود"
+      "loadError": "خطا در دریافت کاربران"
     },
     "roles": {
       "globalExpert": "کارشناس کل",
       "domainExpert": "کارشناس حوزه",
       "editor": "ویراستار"
     },
-    "confirmRemove": "آیا مطمئن هستید که این حوزه را حذف می‌کنید؟",
     "title": "مدیریت کاربران",
     "search": {
       "placeholder": "جستجوی کاربران..."
@@ -357,25 +351,12 @@
     "columns": {
       "user": "کاربر",
       "email": "ایمیل",
-      "role": "نقش",
-      "domains": "حوزه‌ها",
-      "actions": "عملیات"
+      "role": "نقش"
     },
     "user": {
       "noName": "بدون نام"
     },
-    "assignDomains": "اختصاص حوزه‌ها",
     "emptySearch": "کاربری مطابق جستجو پیدا نشد.",
-    "modal": {
-      "title": "حوزه‌های {name}",
-      "currentDomains": "حوزه‌های فعلی",
-      "noDomains": "هیچ حوزه‌ای اختصاص داده نشده است.",
-      "remove": "حذف",
-      "addDomain": "افزودن حوزه",
-      "selectDomain": "انتخاب حوزه",
-      "add": "افزودن",
-      "close": "بستن"
-    },
     "loadingShort": "در حال بارگذاری..."
   },
   "expert": {

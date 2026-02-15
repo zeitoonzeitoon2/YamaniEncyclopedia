@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-import { Plus, Trash2, X, Search, Shield, ShieldCheck, User, Edit } from 'lucide-react'
+import { Search, Shield, ShieldCheck, User } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 type DomainStub = {
@@ -28,22 +28,14 @@ type UserWithDomains = {
   }
 }
 
-type Props = {
-  allDomains: DomainStub[]
-}
+type Props = {}
 
-export default function UserManagement({ allDomains }: Props) {
+export default function UserManagement({}: Props) {
   const t = useTranslations('adminUsers')
   const [users, setUsers] = useState<UserWithDomains[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   
-  // Modal state
-  const [selectedUser, setSelectedUser] = useState<UserWithDomains | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [assignDomainId, setAssignDomainId] = useState('')
-  const [assigning, setAssigning] = useState(false)
-
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
@@ -71,82 +63,6 @@ export default function UserManagement({ allDomains }: Props) {
     
     return { label: t('roles.editor'), color: 'text-site-muted bg-site-secondary/30 border-site-border' }
   }
-
-  const handleAssignDomain = useCallback(async () => {
-    if (!selectedUser || !assignDomainId) return
-
-    // Check if already assigned
-    if (selectedUser.domainExperts.some(de => de.domain.id === assignDomainId)) {
-      toast.error(t('toast.alreadyAssigned'))
-      return
-    }
-
-    try {
-      setAssigning(true)
-      const res = await fetch('/api/admin/domains/experts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: selectedUser.id, 
-          domainId: assignDomainId,
-          role: 'EXPERT' // Default role
-        }),
-      })
-      
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || 'Failed to assign domain')
-      }
-
-      toast.success(t('toast.assignSuccess'))
-      await fetchUsers() // Refresh list
-      
-      // Update local selected user state to reflect changes immediately for the modal
-      // But fetchUsers updates the main list. We need to re-find the user or close modal.
-      // Better to refresh and update selectedUser from the new list.
-      const updatedRes = await fetch('/api/admin/users', { cache: 'no-store' })
-      const updatedUsers = await updatedRes.json()
-      setUsers(updatedUsers)
-      const updatedSelected = updatedUsers.find((u: UserWithDomains) => u.id === selectedUser.id)
-      if (updatedSelected) setSelectedUser(updatedSelected)
-      
-      setAssignDomainId('')
-    } catch (error: any) {
-      toast.error(error.message || t('toast.assignFail'))
-    } finally {
-      setAssigning(false)
-    }
-  }, [selectedUser, assignDomainId, t, fetchUsers])
-
-  const handleRemoveDomain = useCallback(async (domainId: string) => {
-    if (!selectedUser) return
-    if (!confirm(t('confirmRemove'))) return
-
-    try {
-      const res = await fetch('/api/admin/domains/experts', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: selectedUser.id, 
-          domainId: domainId 
-        }),
-      })
-
-      if (!res.ok) throw new Error('Failed to remove domain')
-
-      toast.success(t('toast.removeSuccess'))
-      
-      // Refresh
-      const updatedRes = await fetch('/api/admin/users', { cache: 'no-store' })
-      const updatedUsers = await updatedRes.json()
-      setUsers(updatedUsers)
-      const updatedSelected = updatedUsers.find((u: UserWithDomains) => u.id === selectedUser.id)
-      if (updatedSelected) setSelectedUser(updatedSelected)
-
-    } catch (error) {
-      toast.error(t('toast.removeFail'))
-    }
-  }, [selectedUser, t])
 
   const filteredUsers = useMemo(() => users.filter(u => 
     (u.name?.toLowerCase().includes(search.toLowerCase()) || '') ||
@@ -178,9 +94,7 @@ export default function UserManagement({ allDomains }: Props) {
               <tr className="border-b border-site-border text-site-muted text-sm">
                 <th className="pb-3 pr-4 font-medium">{t('columns.user')}</th>
                 <th className="pb-3 px-4 font-medium">{t('columns.email')}</th>
-                <th className="pb-3 px-4 font-medium">{t('columns.role')}</th>
-                <th className="pb-3 px-4 font-medium">{t('columns.domains')}</th>
-                <th className="pb-3 pl-4 font-medium">{t('columns.actions')}</th>
+                <th className="pb-3 pl-4 font-medium">{t('columns.role')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border">
@@ -197,36 +111,11 @@ export default function UserManagement({ allDomains }: Props) {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 pl-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
                         {roleInfo.label === t('roles.globalExpert') ? <ShieldCheck size={12} /> : roleInfo.label === t('roles.domainExpert') ? <Shield size={12} /> : null}
                         {roleInfo.label}
                       </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {user.domainExperts.slice(0, 3).map(de => (
-                          <span key={de.id} className="text-[10px] px-2 py-0.5 rounded-full bg-site-secondary/50 text-site-text border border-site-border">
-                            {de.domain.name}
-                          </span>
-                        ))}
-                        {user.domainExperts.length > 3 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-site-secondary/50 text-site-muted">
-                            +{user.domainExperts.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 pl-4">
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user)
-                          setIsModalOpen(true)
-                        }}
-                        className="btn-secondary text-xs py-1.5 px-3"
-                      >
-                        {t('assignDomains')}
-                      </button>
                     </td>
                   </tr>
                 )
@@ -237,82 +126,6 @@ export default function UserManagement({ allDomains }: Props) {
           {filteredUsers.length === 0 && (
             <div className="text-center py-8 text-site-muted">{t('emptySearch')}</div>
           )}
-        </div>
-      )}
-
-      {/* Modal */}
-      {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-site-card border border-site-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-site-border bg-site-bg/50">
-              <h3 className="font-bold text-lg text-site-text">{t('modal.title', { name: selectedUser.name || t('user.noName') })}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-site-muted hover:text-site-text">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-4 space-y-6">
-              {/* Current Domains */}
-              <div>
-                <h4 className="text-sm font-medium text-site-muted mb-3">{t('modal.currentDomains')}</h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                  {selectedUser.domainExperts.length === 0 ? (
-                    <p className="text-sm text-site-muted italic">{t('modal.noDomains')}</p>
-                  ) : (
-                    selectedUser.domainExperts.map(de => (
-                      <div key={de.id} className="flex items-center justify-between p-2 rounded-lg bg-site-bg border border-site-border">
-                        <span className="text-sm text-site-text">{de.domain.name}</span>
-                        <button
-                          onClick={() => handleRemoveDomain(de.domain.id)}
-                          className="text-red-400 hover:text-red-300 p-1 rounded-md hover:bg-red-400/10 transition-colors"
-                          title={t('modal.remove')}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Add Domain */}
-              <div className="pt-4 border-t border-site-border">
-                <h4 className="text-sm font-medium text-site-muted mb-3">{t('modal.addDomain')}</h4>
-                <div className="flex gap-2">
-                  <select
-                    value={assignDomainId}
-                    onChange={(e) => setAssignDomainId(e.target.value)}
-                    className="flex-1 bg-site-bg border border-site-border rounded-lg px-3 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary"
-                  >
-                    <option value="">{t('modal.selectDomain')}</option>
-                    {allDomains
-                      .filter(d => !selectedUser.domainExperts.some(de => de.domain.id === d.id))
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))
-                    }
-                  </select>
-                  <button
-                    onClick={handleAssignDomain}
-                    disabled={!assignDomainId || assigning}
-                    className="btn-primary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {assigning ? t('loadingShort') : t('modal.add')}
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-site-bg/50 border-t border-site-border text-right">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-sm text-site-muted hover:text-site-text"
-              >
-                {t('modal.close')}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
