@@ -43,7 +43,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Voting has been stopped for this post' }, { status: 400 })
     }
 
-    console.log('Vote attempt:', { postId, score, adminId: user.id, postExists: !!post })
+    let multiplier = 1
+    if (post.domainId) {
+      const expert = await prisma.domainExpert.findFirst({
+        where: { userId: user.id, domainId: post.domainId },
+        select: { role: true }
+      })
+      if (expert?.role === 'HEAD') {
+        multiplier = 2
+      }
+    }
+
+    let finalScore = score
+    if (score !== 0) {
+      finalScore = score * multiplier
+    }
+
+    console.log('Vote attempt:', { postId, score, finalScore, adminId: user.id, postExists: !!post })
 
     // بررسی وجود رای قبلی
     const existingVote = await prisma.vote.findFirst({
@@ -57,7 +73,7 @@ export async function POST(request: NextRequest) {
       // به‌روزرسانی رای موجود
       await prisma.vote.update({
         where: { id: existingVote.id },
-        data: { score },
+        data: { score: finalScore },
       })
       console.log('Vote updated successfully')
     } else {
@@ -66,7 +82,7 @@ export async function POST(request: NextRequest) {
         data: {
           postId,
           adminId: user.id,
-          score,
+          score: finalScore,
         },
       })
       console.log('Vote created successfully')

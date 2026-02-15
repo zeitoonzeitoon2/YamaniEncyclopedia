@@ -122,6 +122,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No active election round for this wing' }, { status: 400 })
     }
 
+    // Force role based on round type
+    const roleValue = activeRound.type === 'HEAD' ? 'HEAD' : 'EXPERT'
+
     if (new Date() > activeRound.endDate) {
       return NextResponse.json({ error: 'Nomination period for this round has ended' }, { status: 400 })
     }
@@ -136,11 +139,25 @@ export async function POST(request: NextRequest) {
 
     const [candidate, existingExpert] = await Promise.all([
       prisma.user.findUnique({ where: { id: candidateUserId }, select: { id: true } }),
-      prisma.domainExpert.findFirst({ where: { domainId, userId: candidateUserId }, select: { id: true } }),
+      prisma.domainExpert.findFirst({ where: { domainId, userId: candidateUserId }, select: { id: true, wing: true } }),
     ])
 
     if (!candidate) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    if (existingExpert) return NextResponse.json({ error: 'User is already a domain expert' }, { status: 409 })
+    
+    // For HEAD election, candidate MUST be an existing expert of the same wing.
+    if (roleValue === 'HEAD') {
+      if (!existingExpert) {
+        return NextResponse.json({ error: 'Only existing experts can run for HEAD' }, { status: 403 })
+      }
+      if (existingExpert.wing !== wingValue) {
+        return NextResponse.json({ error: `You are an expert of ${existingExpert.wing} wing, cannot run for ${wingValue} HEAD` }, { status: 403 })
+      }
+    }
+
+    // For MEMBERS election, we block existing experts (assuming they are already filled).
+    if (roleValue !== 'HEAD' && existingExpert) {
+      return NextResponse.json({ error: 'User is already a domain expert' }, { status: 409 })
+    }
 
     const existingCandidacy = await prisma.expertCandidacy.findUnique({
       where: { domainId_candidateUserId: { domainId, candidateUserId } },

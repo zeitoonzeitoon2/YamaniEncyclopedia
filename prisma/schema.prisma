@@ -89,6 +89,7 @@ model ElectionRound {
   domainId    String
   domain      Domain   @relation(fields: [domainId], references: [id])
   wing        String   // RIGHT or LEFT
+  type        String   @default("MEMBERS") // MEMBERS, HEAD
   startDate   DateTime @default(now())
   endDate     DateTime // End of the 1-week period
   status      String   @default("ACTIVE") // ACTIVE, COMPLETED

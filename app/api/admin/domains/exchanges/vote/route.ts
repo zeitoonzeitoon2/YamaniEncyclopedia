@@ -85,34 +85,43 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for consensus
-    const proposerExpertsCount = await prisma.domainExpert.count({ where: { domainId: proposal.proposerDomainId } })
-    const targetExpertsCount = await prisma.domainExpert.count({ where: { domainId: proposal.targetDomainId } })
+    const getWeightedCounts = async (domainId: string, proposalId: string) => {
+      const experts = await prisma.domainExpert.findMany({ where: { domainId } })
+      const totalPoints = experts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
+      
+      const votes = await prisma.domainExchangeVote.findMany({
+        where: { proposalId, domainId }
+      })
+      
+      const expertMap = new Map(experts.map(e => [e.userId, e.role]))
+      
+      let approvedPoints = 0
+      let rejectedPoints = 0
+      
+      for (const v of votes) {
+        const role = expertMap.get(v.voterId)
+        if (role) {
+          const points = role === 'HEAD' ? 2 : 1
+          if (v.vote === 'APPROVE') approvedPoints += points
+          else if (v.vote === 'REJECT') rejectedPoints += points
+        }
+      }
+      
+      return { totalPoints, approvedPoints, rejectedPoints }
+    }
 
-    const proposerApproveVotes = await prisma.domainExchangeVote.count({
-      where: { proposalId, domainId: proposal.proposerDomainId, vote: 'APPROVE' }
-    })
-
-    const targetApproveVotes = await prisma.domainExchangeVote.count({
-      where: { proposalId, domainId: proposal.targetDomainId, vote: 'APPROVE' }
-    })
-
-    const proposerRejected = await prisma.domainExchangeVote.count({
-      where: { proposalId, domainId: proposal.proposerDomainId, vote: 'REJECT' }
-    })
-
-    const targetRejected = await prisma.domainExchangeVote.count({
-      where: { proposalId, domainId: proposal.targetDomainId, vote: 'REJECT' }
-    })
-
+    const proposerStats = await getWeightedCounts(proposal.proposerDomainId, proposalId)
+    const targetStats = await getWeightedCounts(proposal.targetDomainId, proposalId)
+    
     // Majority check (more than 50%)
-    const proposerThreshold = proposerExpertsCount <= 2 ? 1 : Math.floor(proposerExpertsCount / 2) + 1
-    const targetThreshold = targetExpertsCount <= 2 ? 1 : Math.floor(targetExpertsCount / 2) + 1
+    const proposerThreshold = proposerStats.totalPoints <= 2 ? 1 : Math.floor(proposerStats.totalPoints / 2) + 1
+    const targetThreshold = targetStats.totalPoints <= 2 ? 1 : Math.floor(targetStats.totalPoints / 2) + 1
 
-    const proposerApproved = proposerApproveVotes >= proposerThreshold
-    const targetApproved = targetApproveVotes >= targetThreshold
+    const proposerApproved = proposerStats.approvedPoints >= proposerThreshold
+    const targetApproved = targetStats.approvedPoints >= targetThreshold
 
     // If either side rejects by majority, proposal fails
-    if (proposerRejected >= proposerThreshold || targetRejected >= targetThreshold) {
+    if (proposerStats.rejectedPoints >= proposerThreshold || targetStats.rejectedPoints >= targetThreshold) {
       await prisma.domainExchangeProposal.update({
         where: { id: proposalId },
         data: { status: 'REJECTED' }

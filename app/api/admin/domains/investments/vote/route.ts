@@ -70,27 +70,38 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for consensus
-    const proposerExpertsCount = await prisma.domainExpert.count({ where: { domainId: investment.proposerDomainId } })
-    const targetExpertsCount = await prisma.domainExpert.count({ where: { domainId: investment.targetDomainId } })
+    const getWeightedCounts = async (domainId: string, investmentId: string) => {
+      const experts = await prisma.domainExpert.findMany({ where: { domainId } })
+      const totalPoints = experts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
+      
+      const votes = await prisma.domainInvestmentVote.findMany({
+        where: { investmentId, domainId }
+      })
+      
+      const expertMap = new Map(experts.map(e => [e.userId, e.role]))
+      
+      let approvedPoints = 0
+      let rejectedPoints = 0
+      
+      for (const v of votes) {
+        const role = expertMap.get(v.voterId)
+        if (role) {
+          const points = role === 'HEAD' ? 2 : 1
+          if (v.vote === 'APPROVE') approvedPoints += points
+          else if (v.vote === 'REJECT') rejectedPoints += points
+        }
+      }
+      
+      return { totalPoints, approvedPoints, rejectedPoints }
+    }
 
-    const proposerApproveVotes = await prisma.domainInvestmentVote.count({
-      where: { investmentId, domainId: investment.proposerDomainId, vote: 'APPROVE' }
-    })
-    const targetApproveVotes = await prisma.domainInvestmentVote.count({
-      where: { investmentId, domainId: investment.targetDomainId, vote: 'APPROVE' }
-    })
+    const proposerStats = await getWeightedCounts(investment.proposerDomainId, investmentId)
+    const targetStats = await getWeightedCounts(investment.targetDomainId, investmentId)
 
-    const proposerRejected = await prisma.domainInvestmentVote.count({
-      where: { investmentId, domainId: investment.proposerDomainId, vote: 'REJECT' }
-    })
-    const targetRejected = await prisma.domainInvestmentVote.count({
-      where: { investmentId, domainId: investment.targetDomainId, vote: 'REJECT' }
-    })
+    const proposerThreshold = proposerStats.totalPoints <= 2 ? 1 : Math.floor(proposerStats.totalPoints / 2) + 1
+    const targetThreshold = targetStats.totalPoints <= 2 ? 1 : Math.floor(targetStats.totalPoints / 2) + 1
 
-    const proposerThreshold = Math.max(1, Math.floor(proposerExpertsCount / 2) + 1)
-    const targetThreshold = Math.max(1, Math.floor(targetExpertsCount / 2) + 1)
-
-    if (proposerRejected >= proposerThreshold || targetRejected >= targetThreshold) {
+    if (proposerStats.rejectedPoints >= proposerThreshold || targetStats.rejectedPoints >= targetThreshold) {
       await prisma.domainInvestment.update({
         where: { id: investmentId },
         data: { status: 'REJECTED' }
@@ -98,7 +109,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'REJECTED' })
     }
 
-    if (proposerApproveVotes >= proposerThreshold && targetApproveVotes >= targetThreshold) {
+    if (proposerStats.approvedPoints >= proposerThreshold && targetStats.approvedPoints >= targetThreshold) {
       // ACTIVATE INVESTMENT
       const startDate = new Date()
       const endDate = new Date()

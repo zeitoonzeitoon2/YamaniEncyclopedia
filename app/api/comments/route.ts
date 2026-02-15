@@ -59,16 +59,42 @@ export async function GET(request: NextRequest) {
               id: true,
               question: true,
               options: { select: { id: true, text: true } },
-              votes: { select: { optionId: true } },
+              votes: { select: { optionId: true, voterId: true } },
             }
           },
         },
         orderBy: { createdAt: 'asc' },
       })
+
+      // Calculate voter roles for weighted polling
+      let voterRoles: Record<string, string> = {}
+      if (domainId) {
+        const voterIds = new Set<string>()
+        all.forEach(c => {
+          if (c.poll) {
+            c.poll.votes.forEach((v: any) => voterIds.add(v.voterId))
+          }
+        })
+        if (voterIds.size > 0) {
+          const experts = await prisma.domainExpert.findMany({
+            where: { domainId, userId: { in: Array.from(voterIds) } },
+            select: { userId: true, role: true }
+          })
+          experts.forEach(e => voterRoles[e.userId] = e.role)
+        }
+      }
+
       const normalized = all.map(c => {
         const poll = c.poll ? (() => {
           const counts: Record<string, number> = {}
-          for (const v of c.poll.votes) counts[v.optionId] = (counts[v.optionId] || 0) + 1
+          for (const v of c.poll.votes) {
+             let weight = 1
+             if (domainId) {
+               const role = voterRoles[(v as any).voterId]
+               if (role === 'HEAD') weight = 2
+             }
+             counts[v.optionId] = (counts[v.optionId] || 0) + weight
+          }
           return {
             id: c.poll.id,
             question: c.poll.question,
@@ -103,16 +129,42 @@ export async function GET(request: NextRequest) {
               id: true,
               question: true,
               options: { select: { id: true, text: true } },
-              votes: { select: { optionId: true } },
+              votes: { select: { optionId: true, voterId: true } },
             }
           },
         },
         orderBy: { createdAt: 'asc' },
       })
+
+      // Calculate voter roles for weighted polling
+      let voterRoles: Record<string, string> = {}
+      if (domainId) {
+        const voterIds = new Set<string>()
+        all.forEach(c => {
+          if (c.poll) {
+            c.poll.votes.forEach((v: any) => voterIds.add(v.voterId))
+          }
+        })
+        if (voterIds.size > 0) {
+          const experts = await prisma.domainExpert.findMany({
+            where: { domainId, userId: { in: Array.from(voterIds) } },
+            select: { userId: true, role: true }
+          })
+          experts.forEach(e => voterRoles[e.userId] = e.role)
+        }
+      }
+
       const normalized = all.map(c => {
         const poll = c.poll ? (() => {
           const counts: Record<string, number> = {}
-          for (const v of c.poll.votes) counts[v.optionId] = (counts[v.optionId] || 0) + 1
+          for (const v of c.poll.votes) {
+             let weight = 1
+             if (domainId) {
+               const role = voterRoles[(v as any).voterId]
+               if (role === 'HEAD') weight = 2
+             }
+             counts[v.optionId] = (counts[v.optionId] || 0) + weight
+          }
           return {
             id: c.poll.id,
             question: c.poll.question,

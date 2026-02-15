@@ -42,7 +42,7 @@ async function finalizeRound(roundId: string) {
       candidacies: {
         where: { status: 'PENDING' },
         orderBy: { totalScore: 'desc' },
-        take: 10
+        // No take limit here, we handle slicing in logic
       }
     }
   })
@@ -55,30 +55,94 @@ async function finalizeRound(roundId: string) {
       data: { status: 'COMPLETED' }
     })
 
-    await tx.domainExpert.deleteMany({
-      where: { domainId: round.domainId, wing: round.wing }
-    })
+    if (round.type === 'MEMBERS') {
+      // 1. Clear existing experts/heads for this wing
+      await tx.domainExpert.deleteMany({
+        where: { domainId: round.domainId, wing: round.wing }
+      })
 
-    for (const candidacy of round.candidacies) {
-      await tx.domainExpert.create({
+      // 2. Promote top 10 candidates to EXPERT
+      const winners = round.candidacies.slice(0, 10)
+      for (const candidacy of winners) {
+        await tx.domainExpert.create({
+          data: {
+            userId: candidacy.candidateUserId,
+            domainId: round.domainId,
+            role: 'EXPERT',
+            wing: round.wing
+          }
+        })
+
+        await tx.expertCandidacy.update({
+          where: { id: candidacy.id },
+          data: { status: 'APPROVED' }
+        })
+      }
+
+      const losers = round.candidacies.slice(10)
+      for (const cand of losers) {
+        await tx.expertCandidacy.update({
+          where: { id: cand.id },
+          data: { status: 'REJECTED' }
+        })
+      }
+
+      // 3. Start HEAD election automatically
+      const startDate = new Date()
+      const endDate = new Date()
+      endDate.setDate(startDate.getDate() + 3) // 3 days for head election
+
+      await tx.electionRound.create({
         data: {
-          userId: candidacy.candidateUserId,
           domainId: round.domainId,
-          role: candidacy.role,
-          wing: round.wing
+          wing: round.wing,
+          type: 'HEAD',
+          startDate,
+          endDate,
+          status: 'ACTIVE'
         }
       })
 
-      await tx.expertCandidacy.update({
-        where: { id: candidacy.id },
-        data: { status: 'APPROVED' }
-      })
-    }
+    } else if (round.type === 'HEAD') {
+      // 1. Pick top 1 candidate
+      const winner = round.candidacies[0]
+      if (winner) {
+        // Update existing expert role to HEAD
+        const existingExpert = await tx.domainExpert.findFirst({
+          where: { userId: winner.candidateUserId, domainId: round.domainId }
+        })
 
-    await tx.expertCandidacy.updateMany({
-      where: { roundId, status: 'PENDING' },
-      data: { status: 'REJECTED' }
-    })
+        if (existingExpert) {
+          await tx.domainExpert.update({
+            where: { id: existingExpert.id },
+            data: { role: 'HEAD' }
+          })
+        } else {
+          // If not an expert (should not happen if restrictions enforced), create as HEAD
+          await tx.domainExpert.create({
+            data: {
+              userId: winner.candidateUserId,
+              domainId: round.domainId,
+              role: 'HEAD',
+              wing: round.wing
+            }
+          })
+        }
+
+        await tx.expertCandidacy.update({
+          where: { id: winner.id },
+          data: { status: 'APPROVED' }
+        })
+      }
+
+      const losers = round.candidacies.slice(1)
+      for (const cand of losers) {
+        await tx.expertCandidacy.update({
+          where: { id: cand.id },
+          data: { status: 'REJECTED' }
+        })
+      }
+    }
   })
 }
 
@@ -90,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { domainId, wing } = body
+    const { domainId, wing, type } = body
 
     if (!domainId || !wing) {
       return NextResponse.json({ error: 'domainId and wing are required' }, { status: 400 })
@@ -114,6 +178,7 @@ export async function POST(request: NextRequest) {
       data: {
         domainId,
         wing,
+        type: type || 'MEMBERS',
         startDate,
         endDate,
         status: 'ACTIVE'
@@ -156,7 +221,8 @@ export async function PATCH(request: NextRequest) {
           const parentExpert = await prisma.domainExpert.findFirst({
             where: { domainId: domain.parentId, userId: session.user.id }
           })
-          if (parentExpert) canExtend = true
+          // Only HEAD can extend
+          if (parentExpert && parentExpert.role === 'HEAD') canExtend = true
         }
       }
 

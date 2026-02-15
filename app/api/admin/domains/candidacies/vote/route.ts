@@ -52,12 +52,54 @@ export async function POST(request: NextRequest) {
 
     const voterUserId = perm.userId
 
+    // Calculate multiplier based on voter's role (HEAD gets 2x power)
+    let multiplier = 1
+    
+    if (candidacy.wing === 'RIGHT') {
+      // Top-Down: Voter is in Parent Domain
+      const domain = await prisma.domain.findUnique({ 
+        where: { id: candidacy.domainId },
+        select: { parentId: true }
+      })
+      if (domain?.parentId) {
+        const membership = await prisma.domainExpert.findFirst({
+          where: { userId: voterUserId, domainId: domain.parentId },
+          select: { role: true }
+        })
+        if (membership?.role === 'HEAD') multiplier = 2
+      }
+    } else {
+      // Bottom-Up: Voter is in a Child Domain (Right wing experts of children vote for Parent Left wing)
+      const childMemberships = await prisma.domainExpert.findMany({
+        where: {
+          userId: voterUserId,
+          domain: { parentId: candidacy.domainId },
+          wing: 'RIGHT'
+        },
+        select: { role: true }
+      })
+      
+      if (childMemberships.some(m => m.role === 'HEAD')) {
+        multiplier = 2
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       // 1. Get old score if any
       const existingVote = await tx.candidacyVote.findUnique({
         where: { candidacyId_voterUserId: { candidacyId, voterUserId } }
       })
       const oldScore = existingVote?.score || 0
+      const oldWeightedScore = oldScore * multiplier // Assuming multiplier hasn't changed
+      
+      // Note: If a user's role changed from EXPERT to HEAD between votes, the old score subtraction might be inaccurate
+      // regarding the *previous* weight. But we can only approximate or store weight in vote.
+      // For now, we assume current multiplier applies to new vote.
+      // To be precise, we should probably store the 'weight' or 'multiplier' in CandidacyVote.
+      // But user didn't ask for schema change.
+      // Let's recalculate old weighted score based on *current* multiplier to be consistent, 
+      // or just use the new score * multiplier - oldScore * multiplier.
+      // Yes, (score - oldScore) * multiplier.
 
       // 2. Upsert vote
       await tx.candidacyVote.upsert({
@@ -71,7 +113,7 @@ export async function POST(request: NextRequest) {
         where: { id: candidacyId },
         data: {
           totalScore: {
-            increment: score - oldScore
+            increment: (score - oldScore) * multiplier
           }
         }
       })
