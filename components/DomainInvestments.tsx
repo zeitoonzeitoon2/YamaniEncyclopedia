@@ -283,18 +283,20 @@ export default function DomainInvestments() {
             {investments.filter(i => i.status === 'PENDING').map(inv => (
               <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-site-text font-bold">
-                    <div className="flex flex-col">
-                      <span>{inv.proposerDomain.name}</span>
-                      <span className="text-[10px] text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-site-text font-bold text-sm">
+                      {t('investment.investmentDirection', { 
+                        proposer: inv.proposerDomain.name, 
+                        target: inv.targetDomain.name 
+                      })}
                     </div>
-                    <ArrowUpRight size={16} className="text-warm-primary" />
-                    <div className="flex flex-col text-right">
-                      <span>{inv.targetDomain.name}</span>
-                      <span className="text-[10px] text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
+                    <div className="flex items-center gap-2 text-[10px] text-site-muted">
+                      <span>{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
+                      <ArrowUpRight size={12} className="text-warm-primary" />
+                      <span>{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted">
+                  <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted whitespace-nowrap">
                     {new Date(inv.createdAt).toLocaleDateString('en-GB')}
                   </span>
                 </div>
