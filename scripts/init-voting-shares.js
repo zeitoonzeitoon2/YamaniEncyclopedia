@@ -6,13 +6,13 @@ async function main() {
   console.log(`Initializing voting shares for ${domains.length} domains...`)
 
   for (const domain of domains) {
-    // Check if share already exists
-    const existing = await prisma.domainVotingShare.findUnique({
+    // Check if share already exists (using new unique constraint)
+    const existing = await prisma.domainVotingShare.findFirst({
       where: {
-        domainId_ownerDomainId: {
-          domainId: domain.id,
-          ownerDomainId: domain.id
-        }
+        domainId: domain.id,
+        domainWing: 'RIGHT',
+        ownerDomainId: domain.id,
+        ownerWing: 'RIGHT'
       }
     })
 
@@ -20,7 +20,9 @@ async function main() {
       await prisma.domainVotingShare.create({
         data: {
           domainId: domain.id,
+          domainWing: 'RIGHT',
           ownerDomainId: domain.id,
+          ownerWing: 'RIGHT',
           percentage: 100
         }
       })

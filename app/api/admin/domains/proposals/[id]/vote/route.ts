@@ -96,10 +96,13 @@ export async function POST(
               }
             })
             // Initialize shares
+            // 100% of shares initially in the hands of the Right Wing (of Parent or Self)
             await tx.domainVotingShare.create({
               data: {
                 domainId: domain.id,
+                domainWing: 'RIGHT',
                 ownerDomainId: proposal.parentId || domain.id,
+                ownerWing: 'RIGHT',
                 percentage: 100
               }
             })

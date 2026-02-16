@@ -159,12 +159,14 @@ export async function POST(request: NextRequest) {
       })
 
       // Initialize voting shares: 
-      // If has parent, parent owns 100% of child. 
-      // Otherwise (root), the domain owns 100% of itself.
+      // If has parent, parent's RIGHT wing owns 100% of child's RIGHT wing. 
+      // Otherwise (root), the domain's RIGHT wing owns 100% of itself.
       await tx.domainVotingShare.create({
         data: {
           domainId: domain.id,
+          domainWing: 'RIGHT',
           ownerDomainId: parentId || domain.id,
+          ownerWing: 'RIGHT',
           percentage: 100,
         },
       })
