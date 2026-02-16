@@ -28,14 +28,18 @@ export async function POST(
       return NextResponse.json({ error: 'Proposal not found or closed' }, { status: 404 })
     }
 
-    // Determine voting domain (parent domain)
-    const votingDomainId = proposal.type === 'CREATE' ? proposal.parentId : proposal.targetDomain?.parentId
+    // Determine voting domain (parent domain, or target domain for root rename)
+    let votingDomainId = proposal.type === 'CREATE' ? proposal.parentId : proposal.targetDomain?.parentId
+
+    // Special case: If RENAME and no parent (root domain), voting happens in the domain itself
+    if (!votingDomainId && proposal.type === 'RENAME' && proposal.targetDomainId) {
+      votingDomainId = proposal.targetDomainId
+    }
+
     if (!votingDomainId) {
-      // Root domain actions - only admin can vote? 
-      // User said "اعضای حوزه والد", but root has no parent.
-      // For now, let's allow admins to vote on root actions.
+      // Root domain actions (CREATE/DELETE) - only admin can vote
       if (session.user.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Only admins can vote on root domain proposals' }, { status: 403 })
+        return NextResponse.json({ error: 'Only admins can vote on root domain creation/deletion' }, { status: 403 })
       }
     } else {
       // Check if user is expert of voting domain
@@ -43,7 +47,7 @@ export async function POST(
         where: { domainId: votingDomainId, userId: session.user.id }
       })
       if (!isExpert && session.user.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Only parent domain experts can vote' }, { status: 403 })
+        return NextResponse.json({ error: 'Only voting domain experts can vote' }, { status: 403 })
       }
     }
 

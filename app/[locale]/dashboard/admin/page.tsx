@@ -183,8 +183,14 @@ export default function AdminDashboard() {
     if (!session?.user) return false
     if (session.user.role === 'ADMIN') return true
     
-    const votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
-    if (!votingDomainId) return false // Root domain proposals handled by admin only
+    let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
+
+    // Special case for RENAME on root domain: voting happens in the domain itself
+    if (!votingDomainId && p.type === 'RENAME' && p.targetDomainId) {
+      votingDomainId = p.targetDomainId
+    }
+
+    if (!votingDomainId) return false // Root domain create/delete handled by admin only
     
     const votingDomain = findDomainById(roots, votingDomainId)
     if (!votingDomain) return false
@@ -249,6 +255,9 @@ export default function AdminDashboard() {
     if (selectedDomain.parentId) {
       const parent = findDomainById(roots, selectedDomain.parentId)
       if (parent && parent.experts.some(ex => ex.user.id === userId)) return true
+    } else {
+      // Root domain: Allow any expert of the domain to propose rename
+      if (selectedDomain.experts.some(ex => ex.user.id === userId)) return true
     }
     return false
   }, [roots, selectedDomain, session?.user?.id, session?.user?.role])

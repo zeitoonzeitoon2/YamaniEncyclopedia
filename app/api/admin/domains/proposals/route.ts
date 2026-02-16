@@ -139,6 +139,14 @@ export async function POST(request: NextRequest) {
           if (isParentExpert) hasPermission = true
         }
 
+        // If root domain (no parent), allow any expert of the domain to propose rename
+        if (!hasPermission && !domain.parentId) {
+          const isExpert = await prisma.domainExpert.findFirst({
+            where: { domainId: targetDomainId, userId: session.user.id }
+          })
+          if (isExpert) hasPermission = true
+        }
+
         if (!hasPermission) {
           return NextResponse.json({ error: 'Only domain HEAD or parent domain experts can propose rename' }, { status: 403 })
         }
