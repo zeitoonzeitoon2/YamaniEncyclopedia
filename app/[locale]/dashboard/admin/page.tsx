@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 
@@ -214,6 +214,8 @@ export default function AdminDashboard() {
   const [extendingRoundKey, setExtendingRoundKey] = useState<string | null>(null)
   const [startingRoundKey, setStartingRoundKey] = useState<string | null>(null)
   const [startingScheduledKey, setStartingScheduledKey] = useState<string | null>(null)
+  const [renameModalOpen, setRenameModalOpen] = useState(false)
+  const [renameName, setRenameName] = useState('')
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -230,6 +232,25 @@ export default function AdminDashboard() {
     const parent = findDomainById(roots, selectedDomain.parentId)
     if (!parent) return false
     return parent.experts.some((ex) => ex.user.id === userId)
+  }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
+
+  const canProposeRename = useMemo(() => {
+    const userId = session?.user?.id
+    const userRole = session?.user?.role
+    if (!userId) return false
+    if (!selectedDomain) return false
+    if (userRole === 'ADMIN') return true
+    
+    // Check if HEAD of domain
+    const isHead = selectedDomain.experts.some(ex => ex.user.id === userId && ex.role === 'HEAD')
+    if (isHead) return true
+
+    // Check if expert of parent
+    if (selectedDomain.parentId) {
+      const parent = findDomainById(roots, selectedDomain.parentId)
+      if (parent && parent.experts.some(ex => ex.user.id === userId)) return true
+    }
+    return false
   }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
 
   const canVoteOnSelectedDomainCourses = useMemo(() => {
@@ -752,6 +773,32 @@ export default function AdminDashboard() {
     }
   }
 
+  const submitRenameProposal = async () => {
+    if (!selectedDomain || !renameName.trim()) return
+    setLoadingProposals(true)
+    try {
+      const res = await fetch('/api/admin/domains/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'RENAME',
+          targetDomainId: selectedDomain.id,
+          name: renameName.trim()
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to submit proposal')
+      toast.success(t('renameProposalSubmitted'))
+      setRenameModalOpen(false)
+      setRenameName('')
+      if (selectedDomainId) fetchProposals(selectedDomainId)
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setLoadingProposals(false)
+    }
+  }
+
   const proposeCourse = async () => {
     if (!selectedDomain) return
     const title = courseForm.title.trim()
@@ -1183,18 +1230,34 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                    {canManageSelectedDomainMembers && (
-                      <button
-                        type="button"
-                        onClick={() => setDeleteModalOpen(true)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
-                        title={t('deleteDomain')}
-                        disabled={selectedDomain.slug === 'philosophy'}
-                      >
-                        <Trash2 size={16} />
-                        {t('delete')}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {canProposeRename && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRenameName(selectedDomain.name)
+                            setRenameModalOpen(true)
+                          }}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-site-text hover:bg-site-secondary/50 border border-site-border"
+                          title={t('renameDomainTitle')}
+                        >
+                          <Pencil size={16} />
+                          {t('rename')}
+                        </button>
+                      )}
+                      {canManageSelectedDomainMembers && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModalOpen(true)}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
+                          title={t('deleteDomain')}
+                          disabled={selectedDomain.slug === 'philosophy'}
+                        >
+                          <Trash2 size={16} />
+                          {t('delete')}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm text-site-muted">
@@ -2161,6 +2224,54 @@ export default function AdminDashboard() {
                 </button>
                 <button type="button" onClick={deleteDomain} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
                   {deleting ? '...' : t('delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameModalOpen && selectedDomain && (
+        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
+              <h2 className="text-xl font-bold text-site-text">{t('renameDomainTitle')}</h2>
+              <button
+                onClick={() => setRenameModalOpen(false)}
+                className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
+                aria-label={t('close')}
+                title={t('close')}
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('currentNameLabel')}</label>
+                <div className="w-full p-3 rounded-lg border border-site-border bg-site-secondary/30 text-site-muted">
+                  {selectedDomain.name}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-site-text mb-2">{t('newNameLabel')}</label>
+                <input
+                  value={renameName}
+                  onChange={(e) => setRenameName(e.target.value)}
+                  className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setRenameModalOpen(false)} className="btn-secondary">
+                  {t('cancel')}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={submitRenameProposal} 
+                  disabled={loadingProposals || !renameName.trim() || renameName === selectedDomain.name} 
+                  className="btn-primary disabled:opacity-50"
+                >
+                  {loadingProposals ? '...' : t('submitProposal')}
                 </button>
               </div>
             </div>

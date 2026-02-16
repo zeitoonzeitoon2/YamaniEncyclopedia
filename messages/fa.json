@@ -370,7 +370,14 @@
       "headElectionRight": "انتخابات ریاست - تیم راست",
       "headElectionLeft": "انتخابات ریاست - تیم چپ",
       "headElectionLabel": "انتخابات ریاست",
-      "nextElectionLabel": "دوره انتخاباتی بعدی: {date}"
+      "nextElectionLabel": "دوره انتخاباتی بعدی: {date}",
+      "proposalType_RENAME": "تغییر نام حوزه",
+      "renameDomainTitle": "پیشنهاد تغییر نام حوزه",
+      "rename": "تغییر نام",
+      "currentNameLabel": "نام فعلی",
+      "newNameLabel": "نام جدید",
+      "renameProposalSubmitted": "پیشنهاد تغییر نام ثبت شد",
+      "submitProposal": "ثبت پیشنهاد"
     }
   },
   "adminUsers": {

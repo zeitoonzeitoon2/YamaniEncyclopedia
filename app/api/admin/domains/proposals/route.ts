@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       targetDomainId?: string
     }
 
-    if (!type || !['CREATE', 'DELETE'].includes(type)) {
+    if (!type || !['CREATE', 'DELETE', 'RENAME'].includes(type)) {
       return NextResponse.json({ error: 'Invalid proposal type' }, { status: 400 })
     }
 
@@ -108,6 +108,40 @@ export async function POST(request: NextRequest) {
           where: { domainId: domain.parentId, userId: session.user.id }
         })
         if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose deletion' }, { status: 403 })
+      }
+    } else if (type === 'RENAME') {
+      if (!targetDomainId || !name) {
+        return NextResponse.json({ error: 'targetDomainId and name are required for rename' }, { status: 400 })
+      }
+      const domain = await prisma.domain.findUnique({
+        where: { id: targetDomainId },
+        select: { id: true, parentId: true, slug: true }
+      })
+      if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
+      
+      finalParentId = domain.parentId ?? undefined
+
+      // Check permissions: Head of domain OR Member of parent
+      if (session.user.role !== 'ADMIN') {
+        let hasPermission = false
+        
+        // Check if head of domain
+        const isHead = await prisma.domainExpert.findFirst({
+          where: { domainId: targetDomainId, userId: session.user.id, role: 'HEAD' }
+        })
+        if (isHead) hasPermission = true
+
+        // Check if expert of parent (if parent exists)
+        if (!hasPermission && domain.parentId) {
+          const isParentExpert = await prisma.domainExpert.findFirst({
+            where: { domainId: domain.parentId, userId: session.user.id }
+          })
+          if (isParentExpert) hasPermission = true
+        }
+
+        if (!hasPermission) {
+          return NextResponse.json({ error: 'Only domain HEAD or parent domain experts can propose rename' }, { status: 403 })
+        }
       }
     }
 

@@ -345,7 +345,14 @@
       "headElectionRight": "HEAD Election - Right Team",
       "headElectionLeft": "HEAD Election - Left Team",
       "headElectionLabel": "HEAD Election",
-      "nextElectionLabel": "Next Election: {date}"
+      "nextElectionLabel": "Next Election: {date}",
+      "proposalType_RENAME": "Rename Domain",
+      "renameDomainTitle": "Propose Rename Domain",
+      "rename": "Rename",
+      "currentNameLabel": "Current Name",
+      "newNameLabel": "New Name",
+      "renameProposalSubmitted": "Rename proposal submitted",
+      "submitProposal": "Submit Proposal"
     }
   },
   "adminUsers": {

@@ -345,7 +345,14 @@
       "headElectionRight": "انتخابات الرئاسة - الفريق الأيمن",
       "headElectionLeft": "انتخابات الرئاسة - الفريق الأيسر",
       "headElectionLabel": "انتخابات الرئاسة",
-      "nextElectionLabel": "الانتخابات القادمة: {date}"
+      "nextElectionLabel": "الانتخابات القادمة: {date}",
+      "proposalType_RENAME": "تغيير اسم المجال",
+      "renameDomainTitle": "اقتراح تغيير اسم المجال",
+      "rename": "تغيير الاسم",
+      "currentNameLabel": "الاسم الحالي",
+      "newNameLabel": "الاسم الجديد",
+      "renameProposalSubmitted": "تم إرسال اقتراح تغيير الاسم",
+      "submitProposal": "إرسال الاقتراح"
     }
   },
   "adminUsers": {

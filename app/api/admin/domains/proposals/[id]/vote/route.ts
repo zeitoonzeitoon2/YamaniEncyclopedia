@@ -99,6 +99,27 @@ export async function POST(
                 percentage: 100
               }
             })
+          } else if (proposal.type === 'RENAME' && proposal.targetDomainId && proposal.name) {
+            const newName = proposal.name
+            const newSlug = slugify(newName)
+            
+            // Check slug uniqueness
+            const existing = await tx.domain.findUnique({ where: { slug: newSlug } })
+            if (existing && existing.id !== proposal.targetDomainId) {
+              // Mark as rejected if slug conflict
+              await tx.domainProposal.update({
+                where: { id: proposalId },
+                data: { status: 'REJECTED' } // Could add reason field later
+              })
+            } else {
+              await tx.domain.update({
+                where: { id: proposal.targetDomainId },
+                data: {
+                  name: newName,
+                  slug: newSlug
+                }
+              })
+            }
           } else if (proposal.type === 'DELETE' && proposal.targetDomainId) {
             // Check dependencies before deleting
             const domain = await tx.domain.findUnique({
