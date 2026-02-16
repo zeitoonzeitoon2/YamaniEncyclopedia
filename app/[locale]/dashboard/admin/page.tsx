@@ -1661,8 +1661,8 @@ export default function AdminDashboard() {
                             <div className="text-site-text font-semibold">{t('nominateMemberTitle')}</div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="md:col-span-2 relative">
+                          <div className="flex flex-col md:flex-row gap-3">
+                            <div className="relative flex-grow">
                               <input
                                 value={selectedUser ? (selectedUser.email || selectedUser.name || '') : userQuery}
                                 onChange={(e) => {
@@ -1698,18 +1698,19 @@ export default function AdminDashboard() {
                                         setUserResults([])
                                       }}
                                       className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
+                                      title={`${u.name || t('noName')} (${u.email || ''})`}
                                     >
-                                      <div className="min-w-0">
+                                      <div className="min-w-0 flex-1 text-right">
                                         <div className="text-site-text text-sm truncate">{u.name || t('noName')}</div>
                                         <div className="text-xs text-site-muted truncate">{u.email || ''}</div>
                                       </div>
-                                      <div className="text-xs text-site-muted">{u.role}</div>
+                                      <div className="text-xs text-site-muted whitespace-nowrap">{u.role}</div>
                                     </button>
                                   ))}
                                 </div>
                               )}
                             </div>
-                            <div>
+                            <div className="md:w-48 shrink-0">
                               <select
                                 value={nominateWing}
                                 onChange={(e) => setNominateWing(e.target.value)}
