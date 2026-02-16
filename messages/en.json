@@ -344,7 +344,8 @@
       "deleteRequirement": "Delete condition: the domain must have no subdomains or posts.",
       "headElectionRight": "HEAD Election - Right Team",
       "headElectionLeft": "HEAD Election - Left Team",
-      "headElectionLabel": "HEAD Election"
+      "headElectionLabel": "HEAD Election",
+      "nextElectionLabel": "Next Election: {date}"
     }
   },
   "adminUsers": {

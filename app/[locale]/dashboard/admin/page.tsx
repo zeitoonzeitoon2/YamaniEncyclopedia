@@ -120,8 +120,8 @@ function findDomainById(roots: DomainNode[], id: string): DomainNode | null {
 }
 
 function getRoleBadge(role: string, labels: { head: string; expert: string }) {
-  if (role === 'HEAD') return { label: labels.head, cls: 'bg-red-600/20 text-red-300 border border-red-600/30' }
-  if (role === 'EXPERT') return { label: labels.expert, cls: 'bg-blue-600/20 text-blue-300 border border-blue-600/30' }
+  if (role === 'HEAD') return { label: labels.head, cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800' }
+  if (role === 'EXPERT') return { label: labels.expert, cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }
   return { label: role, cls: 'bg-site-secondary/30 text-site-text border border-site-border' }
 }
 
@@ -1280,13 +1280,19 @@ export default function AdminDashboard() {
                               <div className="flex items-center gap-2">
                                 <span className={`text-xs px-2 py-1 rounded border ${
                                   activeRounds['RIGHT'].status === 'HEAD_ACTIVE' 
-                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800' 
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800'
                                 }`}>
-                                  {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
+                                  {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' 
+                                    ? t('headElectionLabel') 
+                                    : (new Date(activeRounds['RIGHT'].startDate) > new Date() 
+                                      ? t('nextElectionLabel', { date: new Date(activeRounds['RIGHT'].startDate).toLocaleDateString('fa-IR') })
+                                      : t('electionRound')
+                                    )
+                                  }
                                 </span>
                                 {new Date(activeRounds['RIGHT'].startDate) > new Date() && (
-                                  <span className="text-[10px] text-site-muted italic px-1">
+                                  <span className="text-[10px] text-site-muted italic px-1 hidden">
                                     {new Date(activeRounds['RIGHT'].startDate).toLocaleDateString('en-GB')}
                                   </span>
                                 )}
@@ -1379,13 +1385,19 @@ export default function AdminDashboard() {
                               <div className="flex items-center gap-2">
                                 <span className={`text-xs px-2 py-1 rounded border ${
                                   activeRounds['LEFT'].status === 'HEAD_ACTIVE' 
-                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
-                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800' 
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800'
                                 }`}>
-                                  {activeRounds['LEFT'].status === 'HEAD_ACTIVE' ? t('headElectionLabel') : t('electionRound')}
+                                  {activeRounds['LEFT'].status === 'HEAD_ACTIVE' 
+                                    ? t('headElectionLabel') 
+                                    : (new Date(activeRounds['LEFT'].startDate) > new Date() 
+                                      ? t('nextElectionLabel', { date: new Date(activeRounds['LEFT'].startDate).toLocaleDateString('fa-IR') })
+                                      : t('electionRound')
+                                    )
+                                  }
                                 </span>
                                 {new Date(activeRounds['LEFT'].startDate) > new Date() && (
-                                  <span className="text-[10px] text-site-muted italic px-1">
+                                  <span className="text-[10px] text-site-muted italic px-1 hidden">
                                     {new Date(activeRounds['LEFT'].startDate).toLocaleDateString('en-GB')}
                                   </span>
                                 )}

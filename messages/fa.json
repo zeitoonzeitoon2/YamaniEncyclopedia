@@ -369,7 +369,8 @@
       "deleteRequirement": "شرط حذف: حوزه نباید زیرحوزه یا نوشته داشته باشد.",
       "headElectionRight": "انتخابات ریاست - تیم راست",
       "headElectionLeft": "انتخابات ریاست - تیم چپ",
-      "headElectionLabel": "انتخابات ریاست"
+      "headElectionLabel": "انتخابات ریاست",
+      "nextElectionLabel": "دوره انتخاباتی بعدی: {date}"
     }
   },
   "adminUsers": {
