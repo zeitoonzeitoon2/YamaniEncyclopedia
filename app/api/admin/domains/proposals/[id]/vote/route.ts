@@ -86,7 +86,17 @@ export async function POST(
         if (nextStatus === 'APPROVED') {
           if (proposal.type === 'CREATE') {
             const name = proposal.name || ''
-            const slug = proposal.slug || slugify(name)
+            let slug = proposal.slug || slugify(name)
+
+            // Ensure slug uniqueness
+            let existing = await tx.domain.findUnique({ where: { slug } })
+            let counter = 1
+            while (existing) {
+              slug = `${slugify(name)}-${counter}`
+              existing = await tx.domain.findUnique({ where: { slug } })
+              counter++
+            }
+
             const domain = await tx.domain.create({
               data: {
                 name,
