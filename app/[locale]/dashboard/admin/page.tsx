@@ -1286,7 +1286,7 @@ export default function AdminDashboard() {
                                   {activeRounds['RIGHT'].status === 'HEAD_ACTIVE' 
                                     ? t('headElectionLabel') 
                                     : (new Date(activeRounds['RIGHT'].startDate) > new Date() 
-                                      ? t('nextElectionLabel', { date: new Date(activeRounds['RIGHT'].startDate).toLocaleDateString('fa-IR') })
+                                      ? t('nextElectionLabel', { date: new Date(activeRounds['RIGHT'].startDate).toLocaleDateString('en-GB') })
                                       : t('electionRound')
                                     )
                                   }
@@ -1391,7 +1391,7 @@ export default function AdminDashboard() {
                                   {activeRounds['LEFT'].status === 'HEAD_ACTIVE' 
                                     ? t('headElectionLabel') 
                                     : (new Date(activeRounds['LEFT'].startDate) > new Date() 
-                                      ? t('nextElectionLabel', { date: new Date(activeRounds['LEFT'].startDate).toLocaleDateString('fa-IR') })
+                                      ? t('nextElectionLabel', { date: new Date(activeRounds['LEFT'].startDate).toLocaleDateString('en-GB') })
                                       : t('electionRound')
                                     )
                                   }
