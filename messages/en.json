@@ -1030,7 +1030,8 @@
     "loginLink": "Login"
   },
   "pageGuides": {
-    "helpButtonTitle": "Page Guide",
+    "helpButtonTitle": "Help",
+    "close": "Close",
     "home": {
       "title": "Home Page Guide",
       "content": "<p>Welcome to <strong>Knowledge Tree</strong>.</p><p>This platform organizes human knowledge into a tree structure.</p><h3>Main Sections:</h3><ul><li><strong>Knowledge Tree:</strong> Interactive graphical view of all scientific domains.</li><li><strong>Academy:</strong> Educational system for learning and leveling up.</li><li><strong>Dashboards:</strong> Access to management tools based on your role.</li></ul>"
@@ -1048,8 +1049,8 @@
       "content": "<p>Manage educational content here.</p><h3>Chapters & Versions:</h3><ul><li>Courses consist of <strong>Chapters</strong>.</li><li>Content is <strong>Versioned</strong>. Changes are drafts until approved.</li></ul><h3>Prerequisites:</h3><ul><li><strong>Study:</strong> Required for students.</li><li><strong>Teach:</strong> Required for instructors.</li></ul>"
     },
     "adminDomains": {
-      "title": "Domain Management Guide",
-      "content": "<p>This section is the heart of the system's scientific management, governed by <strong>elections and collective wisdom</strong>.</p><h3>1. Hierarchical Structure</h3><p>Domains are organized in a tree structure (parent and child). Creating or deleting any subdomain requires voting.</p><h3>2. Election Process</h3><p>Each domain is managed by two wings (Right and Left) and a Head.</p><ul><li><strong>Election Cycle:</strong><ul><li><strong>Phase 1 (Member Election):</strong> 7-day voting period to elect members of the Right and Left wings.</li><li><strong>Phase 2 (Head Election):</strong> Immediately after members are selected, a 2-day period to elect a Head from among the selected members.</li><li><strong>Breathing Period:</strong> After the Head is determined, the term becomes active, and the next election is automatically scheduled for 2 months later.</li></ul></li><li><strong>Nomination:</strong> <strong>All members of a domain and its direct subdomains</strong> can nominate eligible individuals for wing membership.</li><li><strong>Voting:</strong> Only <strong>official experts of the same domain</strong> have the right to vote for candidates.</li><li><strong>Early Start:</strong> The Global Admin can start a scheduled election earlier if needed.</li></ul><h3>3. Domain Renaming</h3><ul><li><strong>Proposer:</strong> The Domain Head or experts of the parent domain (and for the root domain, its own members) can propose a name change.</li><li><strong>Approval:</strong> Requires a majority vote from the domain experts.</li></ul>"
+      "title": "Domains & Site Management Guide",
+      "content": "<p>This page is the central command for the entire system. Here you can manage the scientific structure, users, and general site settings.</p><h3>1. Site Settings:</h3><ul><li><strong>Change Logo & Header:</strong> You can upload and change the site logo and header images at the top of the page.</li></ul><h3>2. Domain Management:</h3><p>The tree structure of knowledge is managed here. Selecting a domain activates the following tools:</p><ul><li><strong>Add Sub-domain (+):</strong> Create a new scientific branch (requires expert approval).</li><li><strong>Edit/Rename:</strong> Modify domain name and description (requires voting).</li><li><strong>Delete Domain:</strong> Remove branches with no sub-domains.</li></ul><h3>3. User Management & Elections:</h3><ul><li><strong>Appointments:</strong> View and manage experts and heads of each domain.</li><li><strong>Nomination:</strong> Register qualified individuals for domain management.</li><li><strong>Voting:</strong> Participate in elections to approve structural changes or new appointments.</li></ul><h3>4. Strategic Investments:</h3><p>At the bottom of the page, you can find the section for managing shares and distributing voting power among domains.</p>"
     },
     "create": {
       "title": "Create New Article Guide",
