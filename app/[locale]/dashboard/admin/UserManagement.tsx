@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-import { Search, Shield, User } from 'lucide-react'
+import { Search, Shield, User, Crown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 type DomainStub = {
@@ -57,6 +57,9 @@ export default function UserManagement({}: Props) {
   }, [fetchUsers])
 
   const getGlobalRole = (user: UserWithDomains) => {
+    if (user.domainExperts.some(de => de.role === 'HEAD')) {
+      return { label: t('roles.head'), color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' }
+    }
     if (user.domainExperts.length > 0) return { label: t('roles.domainExpert'), color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
     
     return { label: t('roles.editor'), color: 'text-site-muted bg-site-secondary/30 border-site-border' }
@@ -112,7 +115,7 @@ export default function UserManagement({}: Props) {
                     <td className="py-3 px-4 text-site-muted text-sm">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${roleInfo.color}`}>
-                        {roleInfo.label === t('roles.domainExpert') ? <Shield size={12} /> : null}
+                        {roleInfo.label === t('roles.head') ? <Crown size={12} /> : roleInfo.label === t('roles.domainExpert') ? <Shield size={12} /> : null}
                         {roleInfo.label}
                       </span>
                     </td>
@@ -123,10 +126,18 @@ export default function UserManagement({}: Props) {
                             key={de.id} 
                             className="flex flex-col gap-0.5 px-2 py-1 rounded bg-site-secondary/20 border border-site-border text-[10px]"
                           >
-                            <span className="font-bold text-site-text">{de.domain.name}</span>
-                            <span className={de.wing === 'RIGHT' ? 'text-blue-400' : 'text-green-400'}>
-                              {t(`wings.${de.wing.toLowerCase()}`)}
-                            </span>
+                            <div className="flex items-center gap-1 justify-between">
+                              <span className="font-bold text-site-text">{de.domain.name}</span>
+                              {de.role === 'HEAD' && <Crown size={10} className="text-amber-500" />}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={de.wing === 'RIGHT' ? 'text-blue-400' : 'text-green-400'}>
+                                {t(`wings.${de.wing.toLowerCase()}`)}
+                              </span>
+                              <span className="text-site-muted opacity-75">
+                                {de.role === 'HEAD' ? t('roles.head') : t('roles.domainExpert')}
+                              </span>
+                            </div>
                           </div>
                         ))}
                         {user.domainExperts.length === 0 && (

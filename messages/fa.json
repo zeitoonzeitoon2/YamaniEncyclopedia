@@ -406,7 +406,10 @@
     "roles": {
       "globalExpert": "کارشناس کل",
       "domainExpert": "کارشناس حوزه",
-      "editor": "ویراستار"
+      "head": "رئیس حوزه",
+      "editor": "ویراستار",
+      "headShort": "رئیس",
+      "expertShort": "کارشناس"
     },
     "title": "مدیریت کاربران",
     "search": {
