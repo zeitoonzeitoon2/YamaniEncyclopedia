@@ -37,6 +37,8 @@ export function PageGuide() {
         }
     } else if (path.startsWith('/create') || path.startsWith('/articles/new')) {
         key = 'create'
+    } else if (path.startsWith('/expert')) {
+        key = 'expert'
     } else if (path.startsWith('/academy')) {
         key = 'academy'
     } else if (path.startsWith('/dashboard')) {

@@ -1054,6 +1054,10 @@
     "create": {
       "title": "Create New Article Guide",
       "content": "<p>On this page, you can share your knowledge in the form of a <strong>Tree Diagram</strong>.</p><h3>Creation Steps:</h3><ul><li><strong>Select Domain:</strong> First, choose the scientific domain related to your article.</li><li><strong>Draw Diagram:</strong> Use the editor tools to create Nodes and Edges.</li><li><strong>Add Content:</strong> You can add text, images, or mathematical formulas to each node.</li><li><strong>Publish:</strong> Once completed, submit your article. It will be saved as a <strong>draft</strong> initially and will be published in the encyclopedia after review and approval by domain experts.</li></ul><h3>Important Tips:</h3><ul><li>Try to break down concepts into smaller components (nodes).</li><li>Show relationships between concepts with directed edges.</li><li>Use reliable sources to support your claims.</li></ul>"
+    },
+    "expert": {
+      "title": "Expert Dashboard Guide",
+      "content": "<p>Welcome to your specialized panel. Here you have the necessary tools for the scientific management of your domain.</p><h3>Main Duties:</h3><ul><li><strong>Review Articles:</strong> Study, edit, and approve or reject articles submitted by users.</li><li><strong>Manage Comments:</strong> Respond to user questions and comments regarding articles in your domain.</li><li><strong>Participate in Voting:</strong> Take part in elections and important domain decisions (such as renaming, adding subdomains, etc.).</li></ul><h3>Tools:</h3><ul><li><strong>Filters:</strong> Filter articles by status (new, reviewable, approved) for quicker access.</li><li><strong>Statistics:</strong> View your performance and the overall status of the domain in the statistics section.</li></ul>"
     }
   }
 }
