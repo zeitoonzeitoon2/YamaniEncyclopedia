@@ -13,31 +13,28 @@ async function hasAnyDomainExpertMembership(userId: string) {
 async function canProposeCandidacy(userId: string, domainId: string, targetWing: string, userRole?: string) {
   if (userRole === 'ADMIN') return { ok: true as const }
 
-  if (targetWing === 'RIGHT') {
-    // Proposer must be an expert in the parent domain (either wing)
-    const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
-    if (!domain?.parentId) return { ok: false as const, status: 403 as const, error: 'No parent domain to appoint right wing' }
+  // New logic per user request:
+  // "همه اعضای یک حوزه و زیرحوزه های مستقیمش بتونن برای عضویت در تیم راست یا چپ یک حوزه نامزد معرفی کنند"
+  // "All members of a domain and its direct sub-domains can propose candidates for membership in the Right or Left team of a domain"
 
-    const membership = await prisma.domainExpert.findFirst({
-      where: { userId, domainId: domain.parentId },
-      select: { id: true }
-    })
-    if (membership) return { ok: true as const }
-  } else {
-    // targetWing === 'LEFT'
-    // Proposer must be a RIGHT wing expert in any child domain
-    const membership = await prisma.domainExpert.findFirst({
-      where: { 
-        userId, 
-        wing: 'RIGHT',
-        domain: { parentId: domainId }
-      },
-      select: { id: true }
-    })
-    if (membership) return { ok: true as const }
-  }
+  // 1. Check if user is expert in the target domain itself
+  const isMemberOfDomain = await prisma.domainExpert.findFirst({
+    where: { userId, domainId },
+    select: { id: true }
+  })
+  if (isMemberOfDomain) return { ok: true as const }
 
-  return { ok: false as const, status: 403 as const, error: 'You are not authorized to propose for this wing' }
+  // 2. Check if user is expert in any direct child domain of the target domain
+  const isMemberOfChild = await prisma.domainExpert.findFirst({
+    where: {
+      userId,
+      domain: { parentId: domainId }
+    },
+    select: { id: true }
+  })
+  if (isMemberOfChild) return { ok: true as const }
+
+  return { ok: false as const, status: 403 as const, error: 'Only members of this domain or its sub-domains can propose candidates' }
 }
 
 export async function GET(request: NextRequest) {

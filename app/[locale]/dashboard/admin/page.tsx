@@ -234,10 +234,20 @@ export default function AdminDashboard() {
     if (!userId) return false
     if (!selectedDomain) return false
     if (userRole === 'ADMIN') return true
-    if (!selectedDomain.parentId) return false
-    const parent = findDomainById(roots, selectedDomain.parentId)
-    if (!parent) return false
-    return parent.experts.some((ex) => ex.user.id === userId)
+
+    // 1. Check if user is expert of selectedDomain
+    if (selectedDomain.experts.some((ex) => ex.user.id === userId)) return true
+
+    // 2. Check if user is expert of any direct child domain
+    if (selectedDomain.children) {
+      for (const child of selectedDomain.children) {
+        if (child.experts && child.experts.some((ex) => ex.user.id === userId)) {
+          return true
+        }
+      }
+    }
+    
+    return false
   }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
 
   const canProposeRename = useMemo(() => {
