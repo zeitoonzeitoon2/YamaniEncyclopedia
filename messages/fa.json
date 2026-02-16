@@ -367,6 +367,25 @@
       "deleteConfirmPrefix": "آیا مطمئن هستید که می‌خواهید حوزه",
       "deleteConfirmSuffix": "را حذف کنید؟",
       "deleteRequirement": "شرط حذف: حوزه نباید زیرحوزه یا نوشته داشته باشد.",
+      "portfolio": {
+        "title": "پرتفوی و حق رأی",
+        "selectTeam": "انتخاب تیم (حوزه و جناح شما)",
+        "teamSummary": "خلاصه وضعیت تیم",
+        "totalPower": "مجموع قدرت رأی تیم",
+        "members": "تعداد اعضا",
+        "myRole": "نقش من",
+        "holdingsTable": {
+          "target": "حوزه هدف",
+          "permanent": "سهام دائمی",
+          "active": "تغییرات فعال",
+          "effective": "قدرت مؤثر تیم",
+          "myPower": "قدرت رأی من",
+          "contracts": "قراردادها"
+        },
+        "noHoldings": "این تیم هنوز هیچ سهام یا حق رأیی در حوزه‌های دیگر ندارد.",
+        "contractType_OUTBOUND": "واگذاری (سرمایه‌گذاری)",
+        "contractType_INBOUND": "دریافتی (بازگشت سرمایه)"
+      },
       "headElectionRight": "انتخابات ریاست - تیم راست",
       "headElectionLeft": "انتخابات ریاست - تیم چپ",
       "headElectionLabel": "انتخابات ریاست",

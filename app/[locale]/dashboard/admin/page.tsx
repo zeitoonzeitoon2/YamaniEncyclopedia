@@ -9,6 +9,7 @@ import Image from 'next/image'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
+import DomainPortfolio from '@/components/DomainPortfolio'
 
 type DomainUser = {
   id: string
@@ -222,6 +223,7 @@ export default function AdminDashboard() {
   const [startingScheduledKey, setStartingScheduledKey] = useState<string | null>(null)
   const [renameModalOpen, setRenameModalOpen] = useState(false)
   const [renameName, setRenameName] = useState('')
+  const [activeStrategicTab, setActiveStrategicTab] = useState<'investments' | 'portfolio'>('investments')
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null
@@ -2152,11 +2154,32 @@ export default function AdminDashboard() {
         
         {/* بخش مبادلات استراتژیک سهام رای */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-site-text mb-6 flex items-center gap-3 px-2 heading">
-            <ArrowRightLeft className="text-warm-primary" />
-            {t('strategicExchanges')}
-          </h2>
-          <DomainInvestments />
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2 gap-4">
+            <h2 className="text-2xl font-bold text-site-text flex items-center gap-3 heading">
+              <ArrowRightLeft className="text-warm-primary" />
+              {t('strategicExchanges')}
+            </h2>
+            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto">
+               <button 
+                 onClick={() => setActiveStrategicTab('investments')}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow' : 'text-site-muted hover:text-site-text'}`}
+               >
+                 {t('investment.title')}
+               </button>
+               <button 
+                 onClick={() => setActiveStrategicTab('portfolio')}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow' : 'text-site-muted hover:text-site-text'}`}
+               >
+                 {t('portfolio.title')}
+               </button>
+            </div>
+          </div>
+          
+          {activeStrategicTab === 'investments' ? (
+            <DomainInvestments />
+          ) : (
+            <DomainPortfolio />
+          )}
         </div>
 
         {session?.user?.role === 'ADMIN' && <UserManagement />}
