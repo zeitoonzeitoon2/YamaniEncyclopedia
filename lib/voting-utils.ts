@@ -2,53 +2,9 @@ import { prisma } from './prisma'
 
 export type VotingMode = 'DIRECT' | 'STRATEGIC' | 'CANDIDACY'
 
-/**
- * Calculates the voting weight of a user in a target domain.
- * 
- * Mode 'STRATEGIC':
- * Weight = Sum across all domains D_i where user is an expert:
- * (Effective Share of D_i (Wing_i) in Target (TargetWing)) / (Number of experts in D_i (Wing_i))
- * 
- * Mode 'DIRECT':
- * Weight = 100 / (Total number of direct experts in Target Domain) if user is a direct expert, else 0.
- * 
- * Mode 'CANDIDACY':
- * This mode handles the complex wing-based appointment/selection logic with "Separate Baskets".
- * - Right Wing Election: Top-down. Only Parent's Right Wing share in Child(Right) counts. Voters are Parent's experts.
- * - Left Wing Election: Bottom-up. Internal Right Wing share in Target(Left) + Subdomain Right Wing shares in Target(Left) count. Voters are Right Wing experts.
- * 
- * @param userId The ID of the user whose voting weight is being calculated.
- * @param targetDomainId The ID of the domain where the vote is being cast.
- * @param mode The voting mode.
- * @param extraParams Optional parameters like targetWing for CANDIDACY mode.
- * @returns The total voting weight (percentage, 0-100).
- */
-export async function calculateUserVotingWeight(
-  userId: string, 
-  targetDomainId: string, 
-  mode: VotingMode = 'STRATEGIC',
-  extraParams?: { targetWing?: string }
-): Promise<number> {
-  if (mode === 'DIRECT') {
-    const membership = await prisma.domainExpert.findFirst({
-      where: { userId, domainId: targetDomainId },
-      select: { role: true }
-    })
-
-    if (!membership) return 0
-
-    // Get all experts to calculate total weight (HEAD=2, EXPERT=1)
-    const allExperts = await prisma.domainExpert.findMany({
-      where: { domainId: targetDomainId },
-      select: { role: true }
-    })
-
-    const totalPoints = allExperts.reduce((sum, expert) => sum + (expert.role === 'HEAD' ? 2 : 1), 0)
-    const userPoints = membership.role === 'HEAD' ? 2 : 1
-
-    return totalPoints > 0 ? (100 / totalPoints) * userPoints : 0
-  }
-
+// Helper to calculate Effective Share of Owner (specific Wing) in Target (specific Wing)
+// Logic: Permanent Share + Returns from Outbound + Invested from Inbound
+// Minus (if Owner==Target) shares given away.
 export async function getEffectiveShare(
   ownerId: string, 
   targetId: string, 
@@ -132,6 +88,27 @@ export async function getEffectiveShare(
   return Math.max(0, effective)
 }
 
+/**
+ * Calculates the voting weight of a user in a target domain.
+ * 
+ * Mode 'STRATEGIC':
+ * Weight = Sum across all domains D_i where user is an expert:
+ * (Effective Share of D_i (Wing_i) in Target (TargetWing)) / (Number of experts in D_i (Wing_i))
+ * 
+ * Mode 'DIRECT':
+ * Weight = 100 / (Total number of direct experts in Target Domain) if user is a direct expert, else 0.
+ * 
+ * Mode 'CANDIDACY':
+ * This mode handles the complex wing-based appointment/selection logic with "Separate Baskets".
+ * - Right Wing Election: Top-down. Only Parent's Right Wing share in Child(Right) counts. Voters are Parent's experts.
+ * - Left Wing Election: Bottom-up. Internal Right Wing share in Target(Left) + Subdomain Right Wing shares in Target(Left) count. Voters are Right Wing experts.
+ * 
+ * @param userId The ID of the user whose voting weight is being calculated.
+ * @param targetDomainId The ID of the domain where the vote is being cast.
+ * @param mode The voting mode.
+ * @param extraParams Optional parameters like targetWing for CANDIDACY mode.
+ * @returns The total voting weight (percentage, 0-100).
+ */
 export async function calculateUserVotingWeight(
   userId: string, 
   targetDomainId: string, 
