@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getEffectiveShare } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,34 +35,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if proposer domain owns enough percentage to give
-    let proposerOwnShare = await prisma.domainVotingShare.findUnique({
-      where: {
-        domainId_ownerDomainId: {
-          domainId: proposerDomainId,
-          ownerDomainId: proposerDomainId
-        }
-      }
-    })
-
-    // If no share record exists, it means the domain still owns 100% of itself
-    const proposerPercentage = proposerOwnShare ? proposerOwnShare.percentage : 100
+    // Defaulting to RIGHT wing exchange as DomainExchangeProposal doesn't support wings yet
+    const proposerPercentage = await getEffectiveShare(proposerDomainId, proposerDomainId, 'RIGHT', 'RIGHT')
 
     if (proposerPercentage < percentageProposerToTarget) {
       return NextResponse.json({ error: 'Proposer domain does not own enough voting shares to give' }, { status: 400 })
     }
 
     // Check if target domain owns enough percentage to give
-    let targetOwnShare = await prisma.domainVotingShare.findUnique({
-      where: {
-        domainId_ownerDomainId: {
-          domainId: targetDomainId,
-          ownerDomainId: targetDomainId
-        }
-      }
-    })
-
-    // If no share record exists, it means the domain still owns 100% of itself
-    const targetPercentage = targetOwnShare ? targetOwnShare.percentage : 100
+    const targetPercentage = await getEffectiveShare(targetDomainId, targetDomainId, 'RIGHT', 'RIGHT')
 
     if (targetPercentage < percentageTargetToProposer) {
       return NextResponse.json({ error: 'Target domain does not own enough voting shares to give' }, { status: 400 })
