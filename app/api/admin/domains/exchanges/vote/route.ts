@@ -137,15 +137,19 @@ export async function POST(req: NextRequest) {
           // Decrease proposer's own share
           await tx.domainVotingShare.upsert({
             where: {
-              domainId_ownerDomainId: {
+              domainId_domainWing_ownerDomainId_ownerWing: {
                 domainId: proposal.proposerDomainId,
-                ownerDomainId: proposal.proposerDomainId
+                domainWing: 'RIGHT',
+                ownerDomainId: proposal.proposerDomainId,
+                ownerWing: 'RIGHT'
               }
             },
             update: { percentage: { decrement: proposal.percentageProposerToTarget } },
             create: {
               domainId: proposal.proposerDomainId,
+              domainWing: 'RIGHT',
               ownerDomainId: proposal.proposerDomainId,
+              ownerWing: 'RIGHT',
               percentage: 100 - proposal.percentageProposerToTarget
             }
           })
@@ -153,15 +157,19 @@ export async function POST(req: NextRequest) {
           // Increase or create target's share in proposer domain
           await tx.domainVotingShare.upsert({
             where: {
-              domainId_ownerDomainId: {
+              domainId_domainWing_ownerDomainId_ownerWing: {
                 domainId: proposal.proposerDomainId,
-                ownerDomainId: proposal.targetDomainId
+                domainWing: 'RIGHT',
+                ownerDomainId: proposal.targetDomainId,
+                ownerWing: 'RIGHT'
               }
             },
             update: { percentage: { increment: proposal.percentageProposerToTarget } },
             create: {
               domainId: proposal.proposerDomainId,
+              domainWing: 'RIGHT',
               ownerDomainId: proposal.targetDomainId,
+              ownerWing: 'RIGHT',
               percentage: proposal.percentageProposerToTarget
             }
           })
@@ -172,15 +180,19 @@ export async function POST(req: NextRequest) {
           // Decrease target's own share
           await tx.domainVotingShare.upsert({
             where: {
-              domainId_ownerDomainId: {
+              domainId_domainWing_ownerDomainId_ownerWing: {
                 domainId: proposal.targetDomainId,
-                ownerDomainId: proposal.targetDomainId
+                domainWing: 'RIGHT',
+                ownerDomainId: proposal.targetDomainId,
+                ownerWing: 'RIGHT'
               }
             },
             update: { percentage: { decrement: proposal.percentageTargetToProposer } },
             create: {
               domainId: proposal.targetDomainId,
+              domainWing: 'RIGHT',
               ownerDomainId: proposal.targetDomainId,
+              ownerWing: 'RIGHT',
               percentage: 100 - proposal.percentageTargetToProposer
             }
           })
@@ -188,15 +200,19 @@ export async function POST(req: NextRequest) {
           // Increase or create proposer's share in target domain
           await tx.domainVotingShare.upsert({
             where: {
-              domainId_ownerDomainId: {
+              domainId_domainWing_ownerDomainId_ownerWing: {
                 domainId: proposal.targetDomainId,
-                ownerDomainId: proposal.proposerDomainId
+                domainWing: 'RIGHT',
+                ownerDomainId: proposal.proposerDomainId,
+                ownerWing: 'RIGHT'
               }
             },
             update: { percentage: { increment: proposal.percentageTargetToProposer } },
             create: {
               domainId: proposal.targetDomainId,
+              domainWing: 'RIGHT',
               ownerDomainId: proposal.proposerDomainId,
+              ownerWing: 'RIGHT',
               percentage: proposal.percentageTargetToProposer
             }
           })
