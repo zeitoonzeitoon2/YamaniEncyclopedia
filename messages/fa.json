@@ -396,7 +396,11 @@
       "currentNameLabel": "نام فعلی",
       "newNameLabel": "نام جدید",
       "renameProposalSubmitted": "پیشنهاد تغییر نام ثبت شد",
-      "submitProposal": "ثبت پیشنهاد"
+      "submitProposal": "ثبت پیشنهاد",
+      "wings": {
+        "right": "جناح راست",
+        "left": "جناح چپ"
+      }
     }
   },
   "adminUsers": {
