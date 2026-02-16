@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname } from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import { HelpCircle, X } from 'lucide-react'
@@ -11,6 +12,11 @@ export function PageGuide() {
   const t = useTranslations('pageGuides')
   const [isOpen, setIsOpen] = useState(false)
   const [pageKey, setPageKey] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Determine the page key based on the pathname
@@ -56,11 +62,64 @@ export function PageGuide() {
 
   // If no key or no translation found (we can't easily check existence of nested object without try/catch or helper)
   // We'll rely on the user to provide content for the keys we support.
+  if (!mounted) return null
   if (!pageKey) return null
 
   // Check if title exists to decide whether to show the button
   const title = t(`${pageKey}.title`)
   if (title === `pageGuides.${pageKey}.title`) return null
+
+  const modalContent = (
+    <AnimatePresence>
+      {isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" style={{ isolation: 'isolate' }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-site-card border border-site-border rounded-xl shadow-2xl max-h-[85vh] flex flex-col z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+            <div className="flex items-center justify-between p-4 border-b border-site-border">
+              <h2 className="text-xl font-bold text-site-text flex items-center gap-2">
+                <HelpCircle size={24} className="text-warm-primary" />
+                {title}
+              </h2>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-site-muted hover:text-red-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div 
+                className="prose prose-sm dark:prose-invert max-w-none text-site-text"
+                dangerouslySetInnerHTML={{ __html: t.raw(`${pageKey}.content`) }}
+              />
+            </div>
+
+            <div className="p-4 border-t border-site-border flex justify-end">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="px-4 py-2 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-lg transition-colors font-medium text-sm"
+              >
+                {t('close')}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  )
 
   return (
     <>
@@ -73,49 +132,7 @@ export function PageGuide() {
         <HelpCircle size={20} />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-[1002] flex items-center justify-center p-4 sm:p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-site-card border border-site-border rounded-xl shadow-2xl max-h-[80vh] flex flex-col"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-site-border">
-                <h2 className="text-xl font-bold text-site-text flex items-center gap-2">
-                  <HelpCircle size={24} className="text-warm-primary" />
-                  {title}
-                </h2>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="text-site-muted hover:text-red-500 transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              
-              <div className="p-6 overflow-y-auto custom-scrollbar text-site-text leading-relaxed space-y-4">
-                 {/* Render content paragraphs */}
-                 {t.rich(`${pageKey}.content`, {
-                    p: (chunks) => <p className="mb-2">{chunks}</p>,
-                    ul: (chunks) => <ul className="list-disc list-inside space-y-1 ml-4 mb-2">{chunks}</ul>,
-                    li: (chunks) => <li>{chunks}</li>,
-                    strong: (chunks) => <strong className="font-bold text-warm-primary">{chunks}</strong>,
-                    h3: (chunks) => <h3 className="text-lg font-bold mt-4 mb-2 text-site-text">{chunks}</h3>
-                 })}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {createPortal(modalContent, document.body)}
     </>
   )
 }
