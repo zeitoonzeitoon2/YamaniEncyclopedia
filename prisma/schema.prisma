@@ -620,11 +620,13 @@ model DomainVotingShare {
   domain          Domain   @relation("DomainShares", fields: [domainId], references: [id])
   ownerDomainId   String   // The domain that owns this share
   ownerDomain     Domain   @relation("OwnedShares", fields: [ownerDomainId], references: [id])
+  ownerWing       String   @default("RIGHT") // RIGHT or LEFT
+  domainWing      String   @default("RIGHT") // RIGHT or LEFT
   percentage      Float    // Percentage of total voting power (0-100)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@unique([domainId, ownerDomainId])
+  @@unique([domainId, domainWing, ownerDomainId, ownerWing])
   @@index([domainId])
   @@index([ownerDomainId])
 }
@@ -636,6 +638,11 @@ model DomainInvestment {
   targetDomainId    String
   targetDomain      Domain   @relation("ReceivedInvestments", fields: [targetDomainId], references: [id])
   
+  // Which wing of the proposer is giving the power
+  proposerWing      String   @default("RIGHT") // RIGHT or LEFT
+  // Which wing of the target is receiving the power
+  targetWing        String   @default("RIGHT") // RIGHT or LEFT
+
   // Percentage of Proposer's power given to Target (Investment amount)
   percentageInvested    Float
   // Percentage of Target's power given to Proposer after duration (Interest/Return)

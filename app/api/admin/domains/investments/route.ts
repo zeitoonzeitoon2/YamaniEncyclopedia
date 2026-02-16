@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate } = await req.json()
+    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate, proposerWing = 'RIGHT', targetWing = 'RIGHT' } = await req.json()
 
     if (!proposerDomainId || !targetDomainId || percentageInvested === undefined || percentageReturn === undefined || !endDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -29,42 +29,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investments are only allowed between direct parent and child domains' }, { status: 403 })
     }
 
-    // Check if proposer is an expert in the proposer domain
+    // Check if proposer is an expert in the proposer domain and specific wing
     const membership = await prisma.domainExpert.findFirst({
       where: {
         userId: session.user.id,
         domainId: proposerDomainId,
+        wing: proposerWing,
         role: { in: ['HEAD', 'EXPERT'] }
       }
     })
 
     if (!membership && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'You must be an expert in the proposer domain' }, { status: 403 })
+      return NextResponse.json({ error: `You must be an expert in the ${proposerWing} wing of the proposer domain` }, { status: 403 })
     }
 
-    // Check if proposer domain owns enough percentage to give (invest)
-    // We check their permanent shares. 
-    const proposerOwnShare = await prisma.domainVotingShare.findUnique({
+    // Check if proposer domain (wing) owns enough percentage to give (invest)
+    // We check their permanent shares (Internal Share of that Wing). 
+    const proposerOwnShare = await prisma.domainVotingShare.findFirst({
       where: {
-        domainId_ownerDomainId: {
-          domainId: proposerDomainId,
-          ownerDomainId: proposerDomainId
-        }
+        domainId: proposerDomainId,
+        domainWing: proposerWing,
+        ownerDomainId: proposerDomainId,
+        ownerWing: proposerWing
       }
     })
 
-    const currentPermanentPercentage = proposerOwnShare ? proposerOwnShare.percentage : 100
+    const currentPermanentPercentage = proposerOwnShare ? proposerOwnShare.percentage : (proposerWing === 'RIGHT' ? 100 : 0)
     
-    // Also consider existing ACTIVE investments where this domain is already giving power
+    // Also consider existing ACTIVE investments where this wing is already giving power
     const existingOutbound = await prisma.domainInvestment.aggregate({
-      where: { proposerDomainId, status: 'ACTIVE' },
+      where: { 
+        proposerDomainId, 
+        proposerWing,
+        status: 'ACTIVE' 
+      },
       _sum: { percentageInvested: true }
     })
+
+    // And existing ACTIVE investments where this wing is promising returns (Target=Self, TargetWing=SelfWing)
+    // Because if we promised to return power, we shouldn't invest it elsewhere? 
+    // Usually Return is a future obligation. But "percentageInvested" is immediate transfer.
+    // Let's count promised returns as "Reserved" if we want to be safe.
+    const promisedReturns = await prisma.domainInvestment.aggregate({
+      where: {
+        targetDomainId: proposerDomainId,
+        targetWing: proposerWing,
+        status: 'ACTIVE'
+      },
+      _sum: { percentageReturn: true }
+    })
     
-    const availablePercentage = currentPermanentPercentage - (existingOutbound._sum.percentageInvested || 0)
+    const availablePercentage = currentPermanentPercentage - (existingOutbound._sum.percentageInvested || 0) - (promisedReturns._sum.percentageReturn || 0)
 
     if (availablePercentage < percentageInvested) {
-      return NextResponse.json({ error: 'Proposer domain does not have enough available voting power to invest' }, { status: 400 })
+      return NextResponse.json({ error: `Proposer domain (${proposerWing}) does not have enough available voting power to invest` }, { status: 400 })
     }
 
     // Create the investment proposal
@@ -74,6 +92,8 @@ export async function POST(req: NextRequest) {
         targetDomainId,
         percentageInvested,
         percentageReturn,
+        proposerWing,
+        targetWing,
         endDate: new Date(endDate),
         status: 'PENDING'
       }

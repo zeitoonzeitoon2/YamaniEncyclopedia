@@ -7,15 +7,15 @@ export type VotingMode = 'DIRECT' | 'STRATEGIC' | 'CANDIDACY'
  * 
  * Mode 'STRATEGIC':
  * Weight = Sum across all domains D_i where user is an expert:
- * (Effective Share of D_i in Target) / (Number of experts in D_i)
+ * (Effective Share of D_i (Wing_i) in Target (TargetWing)) / (Number of experts in D_i (Wing_i))
  * 
  * Mode 'DIRECT':
  * Weight = 100 / (Total number of direct experts in Target Domain) if user is a direct expert, else 0.
  * 
  * Mode 'CANDIDACY':
  * This mode handles the complex wing-based appointment/selection logic with "Separate Baskets".
- * - Right Wing Election: Top-down. Only Parent's share counts. Voters are Parent's experts.
- * - Left Wing Election: Bottom-up. Internal + Subdomain shares count. Voters are Right Wing experts of Domain and Subdomains.
+ * - Right Wing Election: Top-down. Only Parent's Right Wing share in Child(Right) counts. Voters are Parent's experts.
+ * - Left Wing Election: Bottom-up. Internal Right Wing share in Target(Left) + Subdomain Right Wing shares in Target(Left) count. Voters are Right Wing experts.
  * 
  * @param userId The ID of the user whose voting weight is being calculated.
  * @param targetDomainId The ID of the domain where the vote is being cast.
@@ -49,53 +49,113 @@ export async function calculateUserVotingWeight(
     return totalPoints > 0 ? (100 / totalPoints) * userPoints : 0
   }
 
-  // Helper to calculate Effective Share of Owner in Target
-  // Logic: Permanent Share + Returns from Outbound (Owner->Target) + Invested from Inbound (Target->Owner)
-  // Minus (if Owner==Target) shares given away.
-  const getEffectiveShare = async (ownerId: string, targetId: string) => {
-    // 1. Permanent Share
-    const share = await prisma.domainVotingShare.findFirst({
-      where: { domainId: targetId, ownerDomainId: ownerId },
-      select: { percentage: true }
+export async function getEffectiveShare(
+  ownerId: string, 
+  targetId: string, 
+  ownerWing: string = 'RIGHT',
+  domainWing: string = 'RIGHT'
+) {
+  // 1. Permanent Share
+  const share = await prisma.domainVotingShare.findFirst({
+    where: { 
+      domainId: targetId, 
+      domainWing: domainWing,
+      ownerDomainId: ownerId,
+      ownerWing: ownerWing
+    },
+    select: { percentage: true }
+  })
+  let effective = share?.percentage || 0
+
+  // 2. Adjustments for Investments
+  if (ownerId === targetId) {
+    // Internal Share Calculation (Self-Governance of that Wing)
+    
+    // Subtract shares given to others via Returns (Investments where Target=Self & TargetWing=DomainWing)
+    // We are giving away shares of OURSELVES (DomainWing).
+    const givenAsReturns = await prisma.domainInvestment.aggregate({
+      where: { 
+        targetDomainId: targetId, 
+        targetWing: domainWing,
+        status: 'ACTIVE' 
+      },
+      _sum: { percentageReturn: true }
     })
-    let effective = share?.percentage || 0
+    effective -= (givenAsReturns._sum.percentageReturn || 0)
 
-    // 2. Adjustments for Investments
-    if (ownerId === targetId) {
-      // Internal Share Calculation
-      // Start with Base Internal Share
-      // Subtract shares given to others via Returns (Investments where Target=Target)
-      const givenAsReturns = await prisma.domainInvestment.aggregate({
-        where: { targetDomainId: targetId, status: 'ACTIVE' },
-        _sum: { percentageReturn: true }
-      })
-      effective -= (givenAsReturns._sum.percentageReturn || 0)
+    // Subtract shares staked in others via Invested (Investments where Proposer=Self & ProposerWing=DomainWing)
+    // We are giving away shares of OURSELVES (DomainWing) as investment stake.
+    const stakedAsInvested = await prisma.domainInvestment.aggregate({
+      where: { 
+        proposerDomainId: targetId, 
+        proposerWing: domainWing,
+        status: 'ACTIVE' 
+      },
+      _sum: { percentageInvested: true }
+    })
+    effective -= (stakedAsInvested._sum.percentageInvested || 0)
 
-      // Subtract shares staked in others via Invested (Investments where Proposer=Target)
-      const stakedAsInvested = await prisma.domainInvestment.aggregate({
-        where: { proposerDomainId: targetId, status: 'ACTIVE' },
-        _sum: { percentageInvested: true }
-      })
-      effective -= (stakedAsInvested._sum.percentageInvested || 0)
+  } else {
+    // External Share Calculation (Owner in Target)
+    
+    // Add shares gained via Returns (Owner invested in Target)
+    // Owner is Proposer (OwnerWing), Target is Target (DomainWing)
+    // Owner gets shares of Target (DomainWing).
+    const gainedAsReturn = await prisma.domainInvestment.aggregate({
+      where: { 
+        proposerDomainId: ownerId, 
+        proposerWing: ownerWing,
+        targetDomainId: targetId, 
+        targetWing: domainWing,
+        status: 'ACTIVE' 
+      },
+      _sum: { percentageReturn: true }
+    })
+    effective += (gainedAsReturn._sum.percentageReturn || 0)
 
-    } else {
-      // External Share Calculation (Owner in Target)
-      // Add shares gained via Returns (Owner invested in Target)
-      const gainedAsReturn = await prisma.domainInvestment.aggregate({
-        where: { proposerDomainId: ownerId, targetDomainId: targetId, status: 'ACTIVE' },
-        _sum: { percentageReturn: true }
-      })
-      effective += (gainedAsReturn._sum.percentageReturn || 0)
+    // Add shares gained via Invested (Target invested in Owner)
+    // Target (Proposer) gives shares of Target (ProposerWing) to Owner.
+    // Proposer=Target, ProposerWing=DomainWing.
+    const gainedAsInvested = await prisma.domainInvestment.aggregate({
+      where: { 
+        proposerDomainId: targetId, 
+        proposerWing: domainWing,
+        targetDomainId: ownerId, 
+        targetWing: ownerWing,
+        status: 'ACTIVE' 
+      },
+      _sum: { percentageInvested: true }
+    })
+    effective += (gainedAsInvested._sum.percentageInvested || 0)
+  }
 
-      // Add shares gained via Invested (Target invested in Owner)
-      const gainedAsInvested = await prisma.domainInvestment.aggregate({
-        where: { proposerDomainId: targetId, targetDomainId: ownerId, status: 'ACTIVE' },
-        _sum: { percentageInvested: true }
-      })
-      effective += (gainedAsInvested._sum.percentageInvested || 0)
-    }
+  return Math.max(0, effective)
+}
 
-    return Math.max(0, effective)
+export async function calculateUserVotingWeight(
+  userId: string, 
+  targetDomainId: string, 
+  mode: VotingMode = 'STRATEGIC',
+  extraParams?: { targetWing?: string }
+): Promise<number> {
+  if (mode === 'DIRECT') {
+    const membership = await prisma.domainExpert.findFirst({
+      where: { userId, domainId: targetDomainId },
+      select: { role: true }
+    })
+
+    if (!membership) return 0
+
+    // Get all experts to calculate total weight (HEAD=2, EXPERT=1)
+    const allExperts = await prisma.domainExpert.findMany({
+      where: { domainId: targetDomainId },
+      select: { role: true }
+    })
+
+    const totalPoints = allExperts.reduce((sum, expert) => sum + (expert.role === 'HEAD' ? 2 : 1), 0)
+    const userPoints = membership.role === 'HEAD' ? 2 : 1
+
+    return totalPoints > 0 ? (100 / totalPoints) * userPoints : 0
   }
 
   if (mode === 'CANDIDACY') {
@@ -104,7 +164,7 @@ export async function calculateUserVotingWeight(
     if (targetWing === 'RIGHT') {
       // Right Wing Election (Top-Down)
       // Voters: Members of Parent's Right Wing OR Parent's Left Wing
-      // Share: Only shares held by Parent Domain
+      // Share: Only Parent's RIGHT Wing share in Child's RIGHT Wing counts.
       
       const targetDomain = await prisma.domain.findUnique({
         where: { id: targetDomainId },
@@ -119,8 +179,8 @@ export async function calculateUserVotingWeight(
       })
       if (!voterMembership) return 0
 
-      // 2. Calculate Parent's Effective Share in Child
-      const effectivePercentage = await getEffectiveShare(targetDomain.parentId, targetDomainId)
+      // 2. Calculate Parent's Effective Share in Child (Right Wing Basket)
+      const effectivePercentage = await getEffectiveShare(targetDomain.parentId, targetDomainId, 'RIGHT', 'RIGHT')
       
       if (effectivePercentage <= 0) return 0
 
@@ -138,9 +198,10 @@ export async function calculateUserVotingWeight(
     } else {
       // Left Wing Election (Bottom-Up)
       // Voters: Members of Domain's Right Wing OR Subdomains' Right Wings
-      // Share: Internal Shares (Domain) + Subdomain Shares
+      // Share: Internal Right Shares (in Left Wing) + Subdomain Right Shares (in Left Wing)
       
       let totalWeight = 0
+      const domainWing = 'LEFT' // Voting on Left Wing
 
       // Part A: Voter is in Domain's Right Wing (Internal Share)
       const internalMembership = await prisma.domainExpert.findFirst({
@@ -149,7 +210,8 @@ export async function calculateUserVotingWeight(
       })
 
       if (internalMembership) {
-        const effectiveInternal = await getEffectiveShare(targetDomainId, targetDomainId)
+        // How much of Left Wing is owned by Right Wing?
+        const effectiveInternal = await getEffectiveShare(targetDomainId, targetDomainId, 'RIGHT', domainWing)
         
         const rightExperts = await prisma.domainExpert.findMany({
           where: { domainId: targetDomainId, wing: 'RIGHT' },
@@ -182,8 +244,8 @@ export async function calculateUserVotingWeight(
         })
 
         for (const membership of subMemberships) {
-          // Get share of Target (Child) owned by Subdomain
-          const effectiveSub = await getEffectiveShare(membership.domainId, targetDomainId)
+          // Get share of Target (Left) owned by Subdomain's RIGHT Wing
+          const effectiveSub = await getEffectiveShare(membership.domainId, targetDomainId, 'RIGHT', domainWing)
           
           if (effectiveSub <= 0) continue
 
@@ -209,22 +271,25 @@ export async function calculateUserVotingWeight(
   // STRATEGIC Mode Logic (Standard cross-domain voting)
   const userMemberships = await prisma.domainExpert.findMany({
     where: { userId },
-    select: { domainId: true, role: true }
+    select: { domainId: true, role: true, wing: true }
   })
 
   if (userMemberships.length === 0) return 0
 
   let totalWeight = 0
+  const domainWing = extraParams?.targetWing || 'RIGHT' // Default to RIGHT if not specified
 
   for (const membership of userMemberships) {
     const domainId = membership.domainId
+    const wing = membership.wing || 'RIGHT' // Voter's wing
     
-    // Calculate Effective Share of user's domain in target domain
-    const effectiveShare = await getEffectiveShare(domainId, targetDomainId)
+    // Calculate Effective Share of user's domain (specific Wing) in target domain (specific Wing)
+    const effectiveShare = await getEffectiveShare(domainId, targetDomainId, wing, domainWing)
 
     if (effectiveShare > 0) {
+      // Distribute among experts of that specific wing in that domain
       const domainExperts = await prisma.domainExpert.findMany({
-        where: { domainId: domainId },
+        where: { domainId: domainId, wing: wing },
         select: { role: true }
       })
       
@@ -267,12 +332,14 @@ export async function settleExpiredInvestments() {
 
         // 2. Transfer return percentage as permanent share
         // Proposer (investor) gets permanent share in Target domain
-        const existingShare = await tx.domainVotingShare.findUnique({
+        // Share Owner: Proposer, OwnerWing: ProposerWing
+        // Target: TargetDomain, TargetWing: TargetWing
+        const existingShare = await tx.domainVotingShare.findFirst({
           where: {
-            domainId_ownerDomainId: {
-              domainId: inv.targetDomainId,
-              ownerDomainId: inv.proposerDomainId
-            }
+            domainId: inv.targetDomainId,
+            domainWing: inv.targetWing,
+            ownerDomainId: inv.proposerDomainId,
+            ownerWing: inv.proposerWing
           }
         })
 
@@ -285,7 +352,9 @@ export async function settleExpiredInvestments() {
           await tx.domainVotingShare.create({
             data: {
               domainId: inv.targetDomainId,
+              domainWing: inv.targetWing,
               ownerDomainId: inv.proposerDomainId,
+              ownerWing: inv.proposerWing,
               percentage: inv.percentageReturn
             }
           })
@@ -336,6 +405,9 @@ export async function getDomainPowerDistribution(domainId: string) {
       ownerDomain: {
         select: { id: true, name: true, slug: true }
       }
+    },
+    orderBy: {
+      percentage: 'desc'
     }
   })
 }

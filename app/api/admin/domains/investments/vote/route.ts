@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getEffectiveShare } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,17 +33,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investment is no longer pending' }, { status: 400 })
     }
 
-    // Check if voter is expert in proposer or target domain
+    // Check if voter is expert in proposer or target domain (specific wing)
     const proposerMembership = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.proposerDomainId }
+      where: { 
+        userId: session.user.id, 
+        domainId: investment.proposerDomainId,
+        wing: investment.proposerWing
+      }
     })
 
     const targetMembership = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.targetDomainId }
+      where: { 
+        userId: session.user.id, 
+        domainId: investment.targetDomainId,
+        wing: investment.targetWing
+      }
     })
 
     if (!proposerMembership && !targetMembership && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'You are not an expert in either affected domain' }, { status: 403 })
+      return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
     }
 
     const affectedDomains = []
@@ -70,8 +79,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for consensus
-    const getWeightedCounts = async (domainId: string, investmentId: string) => {
-      const experts = await prisma.domainExpert.findMany({ where: { domainId } })
+    const getWeightedCounts = async (domainId: string, investmentId: string, wing: string) => {
+      const experts = await prisma.domainExpert.findMany({ 
+        where: { 
+          domainId,
+          wing: wing // Filter by wing
+        } 
+      })
       const totalPoints = experts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
       
       const votes = await prisma.domainInvestmentVote.findMany({
@@ -95,8 +109,8 @@ export async function POST(req: NextRequest) {
       return { totalPoints, approvedPoints, rejectedPoints }
     }
 
-    const proposerStats = await getWeightedCounts(investment.proposerDomainId, investmentId)
-    const targetStats = await getWeightedCounts(investment.targetDomainId, investmentId)
+    const proposerStats = await getWeightedCounts(investment.proposerDomainId, investmentId, investment.proposerWing)
+    const targetStats = await getWeightedCounts(investment.targetDomainId, investmentId, investment.targetWing)
 
     const proposerThreshold = proposerStats.totalPoints <= 2 ? 1 : Math.floor(proposerStats.totalPoints / 2) + 1
     const targetThreshold = targetStats.totalPoints <= 2 ? 1 : Math.floor(targetStats.totalPoints / 2) + 1
@@ -110,6 +124,35 @@ export async function POST(req: NextRequest) {
     }
 
     if (proposerStats.approvedPoints >= proposerThreshold && targetStats.approvedPoints >= targetThreshold) {
+      // Validate share availability before activation
+      // 1. Check if Proposer Wing has enough shares to give (percentageInvested)
+      const proposerEffective = await getEffectiveShare(
+        investment.proposerDomainId, 
+        investment.proposerDomainId, 
+        investment.proposerWing, 
+        investment.proposerWing
+      )
+      
+      if (proposerEffective < investment.percentageInvested) {
+        return NextResponse.json({ 
+          error: `Activation failed: Proposer wing (${investment.proposerWing}) has insufficient effective shares (${proposerEffective.toFixed(2)}%)` 
+        }, { status: 409 })
+      }
+
+      // 2. Check if Target Wing has enough shares to return (percentageReturn)
+      const targetEffective = await getEffectiveShare(
+        investment.targetDomainId, 
+        investment.targetDomainId, 
+        investment.targetWing, 
+        investment.targetWing
+      )
+
+      if (targetEffective < investment.percentageReturn) {
+        return NextResponse.json({ 
+          error: `Activation failed: Target wing (${investment.targetWing}) has insufficient effective shares (${targetEffective.toFixed(2)}%)` 
+        }, { status: 409 })
+      }
+
       // ACTIVATE INVESTMENT
       const startDate = new Date()
       const endDate = new Date()
