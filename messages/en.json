@@ -1028,5 +1028,28 @@
     "signupError": "Error signing up. Email might already be registered",
     "hasAccount": "Already have an account?",
     "loginLink": "Login"
+  },
+  "pageGuides": {
+    "helpButtonTitle": "Page Guide",
+    "home": {
+      "title": "Home Page Guide",
+      "content": "<p>Welcome to <strong>Knowledge Tree</strong>.</p><p>This platform organizes human knowledge into a tree structure.</p><h3>Main Sections:</h3><ul><li><strong>Knowledge Tree:</strong> Interactive graphical view of all scientific domains.</li><li><strong>Academy:</strong> Educational system for learning and leveling up.</li><li><strong>Dashboards:</strong> Access to management tools based on your role.</li></ul>"
+    },
+    "dashboard": {
+      "title": "Dashboard Guide",
+      "content": "<p>Here you can view your account status.</p><h3>Features:</h3><ul><li><strong>Profile:</strong> View and edit personal info.</li><li><strong>Courses:</strong> Track enrolled courses and exam scores.</li><li><strong>Quick Access:</strong> Shortcuts to frequently used sections.</li></ul>"
+    },
+    "academy": {
+      "title": "Academy Guide",
+      "content": "<p>The Academy is the learning and assessment hub.</p><h3>Rules:</h3><ul><li><strong>Prerequisites:</strong> Must be completed before enrolling in advanced courses.</li><li><strong>Exams:</strong> Request exams after studying. Examiners grade them.</li><li><strong>Level Up:</strong> Passing courses is required to become an Expert or Editor.</li></ul>"
+    },
+    "adminCourses": {
+      "title": "Course Management Guide",
+      "content": "<p>Manage educational content here.</p><h3>Chapters & Versions:</h3><ul><li>Courses consist of <strong>Chapters</strong>.</li><li>Content is <strong>Versioned</strong>. Changes are drafts until approved.</li></ul><h3>Prerequisites:</h3><ul><li><strong>Study:</strong> Required for students.</li><li><strong>Teach:</strong> Required for instructors.</li></ul>"
+    },
+    "adminDomains": {
+      "title": "Domain Management Guide",
+      "content": "<p>The scientific management core, governed by <strong>Elections</strong>.</p><h3>1. Hierarchy</h3><p>Domains are tree-structured. Creating/deleting sub-domains requires voting.</p><h3>2. Elections</h3><p>Managed by Right/Left wings and a Head.</p><ul><li><strong>Cycle:</strong><ul><li><strong>Phase 1 (Members):</strong> 7 days voting for team members.</li><li><strong>Phase 2 (Head):</strong> 2 days voting for Head.</li><li><strong>Gap:</strong> 2 months scheduled break.</li></ul></li><li><strong>Nominations:</strong> <strong>All members of a domain AND its direct sub-domains</strong> can nominate.</li><li><strong>Voting:</strong> Only <strong>Experts of the domain</strong> can vote.</li><li><strong>Early Start:</strong> Global Admin can start elections early.</li></ul><h3>3. Renaming</h3><ul><li><strong>Proposer:</strong> Domain Head or Parent Expert (Root members for Root).</li><li><strong>Approval:</strong> Majority vote of domain experts.</li></ul>"
+    }
   }
 }

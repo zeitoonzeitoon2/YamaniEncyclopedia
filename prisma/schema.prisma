@@ -34,7 +34,7 @@ model Domain {
   ownedShares       DomainVotingShare[] @relation("OwnedShares")
   proposedInvestments DomainInvestment[] @relation("ProposedInvestments")
   receivedInvestments DomainInvestment[] @relation("ReceivedInvestments")
-  deleteProposals   DomainProposal[] @relation("DeleteProposals")
+  targetedProposals DomainProposal[] @relation("TargetedProposals")
   exchangeProposalsProposed DomainExchangeProposal[] @relation("ProposedExchanges")
   exchangeProposalsReceived DomainExchangeProposal[] @relation("ReceivedExchanges")
   
@@ -544,13 +544,15 @@ model DomainExchangeVote {
 
 model DomainProposal {
   id             String               @id @default(cuid())
-  type           String               // CREATE or DELETE
+  type           String               // CREATE, DELETE, RENAME
   name           String?
+  newName        String?
   slug           String?
   description    String?
+  reason         String?
   parentId       String?
   targetDomainId String?
-  targetDomain   Domain?              @relation("DeleteProposals", fields: [targetDomainId], references: [id])
+  targetDomain   Domain?              @relation("TargetedProposals", fields: [targetDomainId], references: [id])
   status         String               @default("PENDING") // PENDING, APPROVED, REJECTED
   proposerId     String
   proposer       User                 @relation("ProposedDomainProposals", fields: [proposerId], references: [id])

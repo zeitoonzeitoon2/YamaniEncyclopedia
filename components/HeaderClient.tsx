@@ -8,6 +8,7 @@ import { User, LogOut, Edit, Settings, Sun, Moon, Languages, LogIn } from 'lucid
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
 import { locales } from '@/i18n'
+import { PageGuide } from './PageGuide'
 
 interface HeaderClientProps {
   initialLocale: string
@@ -132,6 +133,8 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
 
       <nav className="flex items-center justify-end gap-3 relative z-[1001]">
         <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
+          <PageGuide />
+          
           <div className="flex items-center">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

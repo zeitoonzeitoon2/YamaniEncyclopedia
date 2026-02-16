@@ -83,7 +83,7 @@ type DomainProposalVote = {
 
 type DomainProposal = {
   id: string
-  type: 'CREATE' | 'DELETE'
+  type: 'CREATE' | 'DELETE' | 'RENAME'
   name: string | null
   slug: string | null
   description: string | null
@@ -1757,12 +1757,24 @@ export default function AdminDashboard() {
                                       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
                                         p.type === 'CREATE' 
                                           ? 'bg-green-500/10 text-green-400 border-green-500/20' 
-                                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                          : p.type === 'DELETE'
+                                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                          : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                       }`}>
                                         {t(`proposalType_${p.type}`)}
                                       </span>
-                                      <span className="text-site-text font-medium">
-                                        {p.type === 'CREATE' ? p.name : p.targetDomain?.name}
+                                      <span className="text-site-text font-medium flex items-center gap-2">
+                                        {p.type === 'CREATE' ? (
+                                          p.name
+                                        ) : p.type === 'RENAME' ? (
+                                          <>
+                                            <span className="line-through opacity-50">{p.targetDomain?.name}</span>
+                                            <ArrowRightLeft size={14} className="text-site-muted" />
+                                            <span className="text-blue-400">{p.name}</span>
+                                          </>
+                                        ) : (
+                                          p.targetDomain?.name
+                                        )}
                                       </span>
                                     </div>
                                     <div className="text-xs text-site-muted mt-1">
