@@ -16,6 +16,8 @@ type Investment = {
   id: string
   proposerDomainId: string
   targetDomainId: string
+  proposerWing: string
+  targetWing: string
   percentageInvested: number
   percentageReturn: number
   durationYears: number
@@ -49,7 +51,9 @@ export default function DomainInvestments() {
   const { data: session } = useSession()
   const [allDomains, setAllDomains] = useState<Domain[]>([])
   const [selectedMyDomainId, setSelectedMyDomainId] = useState('')
+  const [proposerWing, setProposerWing] = useState('RIGHT')
   const [selectedTargetDomainId, setSelectedTargetDomainId] = useState('')
+  const [targetWing, setTargetWing] = useState('RIGHT')
   const [investPercent, setInvestPercent] = useState(10)
   const [returnPercent, setReturnPercent] = useState(1)
   const [endDate, setEndDate] = useState('')
@@ -100,7 +104,9 @@ export default function DomainInvestments() {
           targetDomainId: selectedTargetDomainId,
           percentageInvested: investPercent,
           percentageReturn: returnPercent,
-          endDate: endDate
+          endDate: endDate,
+          proposerWing,
+          targetWing
         })
       })
       if (res.ok) {
@@ -115,7 +121,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, t, fetchData])
+  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, t, fetchData])
 
   const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
     try {
@@ -169,7 +175,7 @@ export default function DomainInvestments() {
           <TrendingUp size={20} className="text-warm-primary" />
           {t('investment.propose')}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.proposer')}</label>
             <select 
@@ -182,6 +188,17 @@ export default function DomainInvestments() {
             </select>
           </div>
           <div className="space-y-1">
+            <label className="text-xs text-site-muted px-1">{t('wingLabel')}</label>
+            <select 
+              value={proposerWing} 
+              onChange={e => setProposerWing(e.target.value)}
+              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
+            >
+              <option value="RIGHT">{t('rightWing')}</option>
+              <option value="LEFT">{t('leftWing')}</option>
+            </select>
+          </div>
+          <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.target')}</label>
             <select 
               value={selectedTargetDomainId} 
@@ -190,6 +207,17 @@ export default function DomainInvestments() {
             >
               <option value="">{t('investment.target')}...</option>
               {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-site-muted px-1">{t('wingLabel')}</label>
+            <select 
+              value={targetWing} 
+              onChange={e => setTargetWing(e.target.value)}
+              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
+            >
+              <option value="RIGHT">{t('rightWing')}</option>
+              <option value="LEFT">{t('leftWing')}</option>
             </select>
           </div>
           <div className="space-y-1">
@@ -256,9 +284,15 @@ export default function DomainInvestments() {
               <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-site-text font-bold">
-                    <span>{inv.proposerDomain.name}</span>
+                    <div className="flex flex-col">
+                      <span>{inv.proposerDomain.name}</span>
+                      <span className="text-[10px] text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
+                    </div>
                     <ArrowUpRight size={16} className="text-warm-primary" />
-                    <span>{inv.targetDomain.name}</span>
+                    <div className="flex flex-col text-right">
+                      <span>{inv.targetDomain.name}</span>
+                      <span className="text-[10px] text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
+                    </div>
                   </div>
                   <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted">
                     {new Date(inv.createdAt).toLocaleDateString('en-GB')}
@@ -326,8 +360,14 @@ export default function DomainInvestments() {
               ) : (
                 investments.filter(i => i.status === 'ACTIVE').map(inv => (
                   <tr key={inv.id} className="hover:bg-site-secondary/30 transition-colors">
-                    <td className="px-4 py-4 font-medium text-site-text">{inv.proposerDomain.name}</td>
-                    <td className="px-4 py-4 font-medium text-site-text">{inv.targetDomain.name}</td>
+                    <td className="px-4 py-4 font-medium text-site-text">
+                      <div>{inv.proposerDomain.name}</div>
+                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</div>
+                    </td>
+                    <td className="px-4 py-4 font-medium text-site-text">
+                      <div>{inv.targetDomain.name}</div>
+                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</div>
+                    </td>
                     <td className="px-4 py-4 text-center text-warm-primary font-bold">{inv.percentageInvested}%</td>
                     <td className="px-4 py-4 text-center text-warm-accent font-bold">{inv.percentageReturn}%</td>
                     <td className="px-4 py-4 text-xs text-site-muted">
