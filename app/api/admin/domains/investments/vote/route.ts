@@ -55,8 +55,15 @@ export async function POST(req: NextRequest) {
     }
 
     const affectedDomains = []
-    if (proposerMembership || session.user.role === 'ADMIN') affectedDomains.push(investment.proposerDomainId)
-    if (targetMembership || session.user.role === 'ADMIN') affectedDomains.push(investment.targetDomainId)
+    if (proposerMembership) affectedDomains.push(investment.proposerDomainId)
+    if (targetMembership) affectedDomains.push(investment.targetDomainId)
+
+    // If user is ADMIN and not a member of any affected domain, allow voting for both (Super Admin Override)
+    // But if they are a member of one, they only vote for that one.
+    if (session.user.role === 'ADMIN' && affectedDomains.length === 0) {
+      affectedDomains.push(investment.proposerDomainId)
+      affectedDomains.push(investment.targetDomainId)
+    }
 
     // Record votes
     for (const dId of affectedDomains) {
