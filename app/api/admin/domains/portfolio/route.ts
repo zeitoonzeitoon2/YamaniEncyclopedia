@@ -160,14 +160,126 @@ export async function GET(req: NextRequest) {
           ...investmentsAsTarget.filter(i => i.proposerDomainId === targetId && i.proposerWing === targetWing)
         ]
 
-        if (effectiveShare > 0 || permanent > 0 || relevantInvestments.length > 0) {
+        // Calculate Balance Sheet Components
+        let lent = 0 // Outbound Invested (Assets that are temporarily gone) -> Wait, user sees it as "Given Away" (Liability/Loss of power)
+        let borrowed = 0 // Inbound Invested (Power received)
+        let claims = 0 // Outbound Return (Future Receivable)
+        let obligations = 0 // Inbound Return (Future Payable)
+
+        // Case 1: Self (Internal Power)
+        if (team.domainId === targetId && team.wing === targetWing) {
+           // We are looking at our own domain.
+           // Lent = We gave power to others (Invested in others)
+           // But wait, relevantInvestments filters by targetId=targetId.
+           // If targetId=Self, then we are looking at Inbound Investments (Others investing in us)?
+           // No. "Self" row means "How much power do I have in MYSELF".
+           // This is reduced by what I gave away (Outbound Invested).
+           // And reduced by what I promised to return (Inbound Return).
+           
+           // Actually, the loop iterates over "Targets".
+           // If Target=Self, we are calculating "Effective Self-Governance".
+           
+           // Let's look at all ACTIVE investments to sum up totals correctly.
+           
+           // Outbound Investments (Proposer=Team)
+           // - We gave away `percentageInvested` to Target. (Lent)
+           // - We will receive `percentageReturn` from Target. (Claim)
+           
+           // Inbound Investments (Target=Team)
+           // - We received `percentageInvested` from Proposer. (Borrowed)
+           // - We must return `percentageReturn` to Proposer. (Obligation)
+           
+           // But here we are inside the loop for a SPECIFIC Target.
+           
+           if (targetId === team.domainId) {
+             // Target is SELF.
+             // We start with 100% (Permanent).
+             // We lose what we gave to others (Outbound Invested).
+             // We lose what we promised to others (Inbound Return) -> Only if it's considered "Reserved". 
+             // But user says "Return" is future. So maybe we don't lose it yet?
+             // Actually, if we promised to give 2% back, we still have it until we give it back.
+             // So Effective Self = 100 - Outbound Invested + Inbound Invested (Others gave us power in ourselves? No, that's not possible. Proposer gives power of Proposer to Target.)
+             
+             // Let's stick to the definitions:
+             // Investment: Proposer gives Proposer's power to Target.
+             // So if I am Proposer, I lose power in Myself.
+             // If I am Target, I gain power in Proposer (not Myself).
+             
+             // So for Target=Self:
+             // Lent = Sum of all Outbound Invested.
+             // Borrowed = 0 (Nobody gives me power in Myself, they give me power in Them).
+             
+             const allOutbound = await prisma.domainInvestment.aggregate({
+               where: { proposerDomainId: team.domainId, proposerWing: team.wing, status: 'ACTIVE' },
+               _sum: { percentageInvested: true, percentageReturn: true }
+             })
+             
+             const allInbound = await prisma.domainInvestment.aggregate({
+                where: { targetDomainId: team.domainId, targetWing: team.wing, status: 'ACTIVE' },
+                _sum: { percentageReturn: true }
+             })
+
+             lent = allOutbound._sum.percentageInvested || 0
+             // Inbound Return means I promised to give power back to Proposer. (Future Liability)
+             obligations = allInbound._sum.percentageReturn || 0
+             
+             // Claims? I will receive power in Others. Not relevant to "Self" power.
+             // Borrowed? I received power in Others. Not relevant to "Self" power.
+             
+           } else {
+             // Target is EXTERNAL.
+             // I have power in External if:
+             // 1. I have Permanent Shares.
+             // 2. I invested in them (Proposer=Me) -> I gave My power to Them. (Wait, investment gives power to TARGET).
+             //    So if I invest in Them, THEY get power in ME.
+             //    So I don't get power in Them.
+             //    Unless there is a Return? Yes, Return gives Me power in Them. (Future Claim).
+             
+             // 3. They invested in Me (Target=Me) -> They gave Their power to Me.
+             //    So I get power in Them. (Borrowed/Active Received).
+             
+             // So for Target=External:
+             
+             // Borrowed (Active Received) = Sum of Inbound Invested (where Proposer=External)
+             const inboundFromTarget = investmentsAsTarget.filter(i => i.proposerDomainId === targetId && i.proposerWing === targetWing)
+             borrowed = inboundFromTarget.reduce((sum, i) => sum + i.percentageInvested, 0)
+             
+             // Claims (Future Receivable) = Sum of Outbound Return (where Target=External)
+             const outboundToTarget = investmentsAsProposer.filter(i => i.targetDomainId === targetId && i.targetWing === targetWing)
+             claims = outboundToTarget.reduce((sum, i) => sum + i.percentageReturn, 0)
+             
+             // Obligations? (Future Payable)
+             // If I invested in them, did I promise to give them power in ME? No, I gave them power in ME immediately.
+             // If they invested in me, did I promise to return power in THEM? No, I promise to return power in ME.
+             // So Obligations are always about power in Self.
+           }
+
+        } else {
+           // Target is EXTERNAL
+           
+           // Borrowed (I have power in Target because Target invested in Me)
+           // Target (Proposer) -> Me (Target). Investment = Power of Proposer (Target) given to Target (Me).
+           const inbound = investmentsAsTarget.filter(i => i.proposerDomainId === targetId && i.proposerWing === targetWing)
+           borrowed = inbound.reduce((sum, i) => sum + i.percentageInvested, 0)
+           
+           // Claims (I have future power in Target because I invested in Target)
+           // Me (Proposer) -> Target (Target). Return = Power of Target given to Me.
+           const outbound = investmentsAsProposer.filter(i => i.targetDomainId === targetId && i.targetWing === targetWing)
+           claims = outbound.reduce((sum, i) => sum + i.percentageReturn, 0)
+        }
+
+        if (effectiveShare > 0 || permanent > 0 || relevantInvestments.length > 0 || claims > 0 || borrowed > 0) {
           portfolio.push({
             team: { id: team.domainId, name: team.domainName, wing: team.wing },
             target: { id: targetDomain.id, name: targetDomain.name, wing: targetWing },
             stats: {
               permanent,
               effective: effectiveShare,
-              myPower
+              myPower,
+              lent: (targetId === team.domainId) ? lent : 0, // Only show "Lent" (Given Away) on Self row
+              borrowed,
+              claims,
+              obligations: (targetId === team.domainId) ? obligations : 0 // Only show "Obligations" on Self row
             },
             contracts: relevantInvestments.map(i => ({
               id: i.id,

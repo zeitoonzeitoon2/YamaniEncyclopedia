@@ -27,18 +27,6 @@ export async function getEffectiveShare(
   if (ownerId === targetId) {
     // Internal Share Calculation (Self-Governance of that Wing)
     
-    // Subtract shares given to others via Returns (Investments where Target=Self & TargetWing=DomainWing)
-    // We are giving away shares of OURSELVES (DomainWing).
-    const givenAsReturns = await prisma.domainInvestment.aggregate({
-      where: { 
-        targetDomainId: targetId, 
-        targetWing: domainWing,
-        status: 'ACTIVE' 
-      },
-      _sum: { percentageReturn: true }
-    })
-    effective -= (givenAsReturns._sum.percentageReturn || 0)
-
     // Subtract shares staked in others via Invested (Investments where Proposer=Self & ProposerWing=DomainWing)
     // We are giving away shares of OURSELVES (DomainWing) as investment stake.
     const stakedAsInvested = await prisma.domainInvestment.aggregate({
@@ -54,21 +42,6 @@ export async function getEffectiveShare(
   } else {
     // External Share Calculation (Owner in Target)
     
-    // Add shares gained via Returns (Owner invested in Target)
-    // Owner is Proposer (OwnerWing), Target is Target (DomainWing)
-    // Owner gets shares of Target (DomainWing).
-    const gainedAsReturn = await prisma.domainInvestment.aggregate({
-      where: { 
-        proposerDomainId: ownerId, 
-        proposerWing: ownerWing,
-        targetDomainId: targetId, 
-        targetWing: domainWing,
-        status: 'ACTIVE' 
-      },
-      _sum: { percentageReturn: true }
-    })
-    effective += (gainedAsReturn._sum.percentageReturn || 0)
-
     // Add shares gained via Invested (Target invested in Owner)
     // Target (Proposer) gives shares of Target (ProposerWing) to Owner.
     // Proposer=Target, ProposerWing=DomainWing.

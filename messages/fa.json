@@ -379,8 +379,12 @@
         "holdingsTable": {
           "target": "حوزه هدف",
           "permanent": "سهام دائمی",
+          "lent": "واگذار شده (قرض)",
+          "borrowed": "دریافت شده (قرض)",
           "active": "تغییرات فعال",
           "effective": "قدرت مؤثر تیم",
+          "claims": "مطالبات (سود آتی)",
+          "obligations": "تعهدات (بازپرداخت)",
           "myPower": "قدرت رأی من",
           "contracts": "قراردادها"
         },

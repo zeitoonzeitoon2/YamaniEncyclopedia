@@ -12,6 +12,10 @@ type PortfolioItem = {
     permanent: number
     effective: number
     myPower: number
+    lent: number
+    borrowed: number
+    claims: number
+    obligations: number
   }
   contracts: {
     id: string
@@ -171,14 +175,18 @@ export default function DomainPortfolio() {
                 <th className="px-6 py-4 font-medium w-12"></th>
                 <th className="px-6 py-4 font-medium">{t('holdingsTable.target')}</th>
                 <th className="px-6 py-4 font-medium text-center">{t('holdingsTable.permanent')}</th>
+                <th className="px-6 py-4 font-medium text-center text-red-400">{t('holdingsTable.lent')}</th>
+                <th className="px-6 py-4 font-medium text-center text-green-400">{t('holdingsTable.borrowed')}</th>
                 <th className="px-6 py-4 font-medium text-center">{t('holdingsTable.effective')}</th>
+                <th className="px-6 py-4 font-medium text-center text-blue-400">{t('holdingsTable.claims')}</th>
+                <th className="px-6 py-4 font-medium text-center text-orange-400">{t('holdingsTable.obligations')}</th>
                 <th className="px-6 py-4 font-medium text-center">{t('holdingsTable.myPower')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border/50">
               {teamPortfolio.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-site-muted italic">
+                  <td colSpan={9} className="px-6 py-12 text-center text-site-muted italic">
                     {t('noHoldings')}
                   </td>
                 </tr>
@@ -210,8 +218,20 @@ export default function DomainPortfolio() {
                         <td className="px-6 py-4 text-center text-site-muted font-mono">
                           {item.stats.permanent}%
                         </td>
+                        <td className="px-6 py-4 text-center text-red-400 font-mono">
+                          {item.stats.lent > 0 ? `-${item.stats.lent}%` : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-center text-green-400 font-mono">
+                          {item.stats.borrowed > 0 ? `+${item.stats.borrowed}%` : '-'}
+                        </td>
                         <td className="px-6 py-4 text-center font-bold text-warm-primary text-lg font-mono">
                           {item.stats.effective}%
+                        </td>
+                        <td className="px-6 py-4 text-center text-blue-400 font-mono">
+                          {item.stats.claims > 0 ? `+${item.stats.claims}%` : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-center text-orange-400 font-mono">
+                          {item.stats.obligations > 0 ? `-${item.stats.obligations}%` : '-'}
                         </td>
                         <td className="px-6 py-4 text-center font-bold text-warm-accent font-mono">
                           {item.stats.myPower.toFixed(2)} pts
@@ -220,7 +240,7 @@ export default function DomainPortfolio() {
                       
                       {isExpanded && item.contracts.length > 0 && (
                         <tr className="bg-site-secondary/10">
-                          <td colSpan={5} className="px-6 py-4 border-t border-site-border/30 shadow-inner">
+                          <td colSpan={9} className="px-6 py-4 border-t border-site-border/30 shadow-inner">
                             <div className="space-y-2 pl-4 border-r-2 border-site-border/50">
                               <h4 className="text-xs font-bold text-site-muted mb-2 flex items-center gap-2">
                                 <FileText size={14} />
