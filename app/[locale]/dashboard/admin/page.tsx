@@ -6,10 +6,12 @@ import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainPortfolio from '@/components/DomainPortfolio'
+import DomainElectionStatus from '@/components/DomainElectionStatus'
+
 
 type DomainUser = {
   id: string
@@ -1436,6 +1438,7 @@ export default function AdminDashboard() {
                               <span>{t('remainingTime', { time: new Date(activeRounds['RIGHT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
                           )}
+                          <DomainElectionStatus domainId={selectedDomain.id} wing="RIGHT" />
                           <div className="space-y-2">
                             {selectedDomain.experts.filter(ex => ex.wing === 'RIGHT').length === 0 ? (
                               <div className="text-site-muted text-sm italic py-2">{t('noMembersRight')}</div>
@@ -1541,6 +1544,7 @@ export default function AdminDashboard() {
                               <span>{t('remainingTime', { time: new Date(activeRounds['LEFT'].endDate).toLocaleDateString('en-GB') })}</span>
                             </div>
                           )}
+                          <DomainElectionStatus domainId={selectedDomain.id} wing="LEFT" />
                           <div className="space-y-2">
                             {selectedDomain.experts.filter(ex => ex.wing === 'LEFT').length === 0 ? (
                               <div className="text-site-muted text-sm italic py-2">{t('noMembersLeft')}</div>
