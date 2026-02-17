@@ -79,41 +79,39 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for consensus
-    const getWeightedCounts = async (domainId: string, investmentId: string, wing: string) => {
+    const getVoteCounts = async (domainId: string, investmentId: string, wing: string) => {
       const experts = await prisma.domainExpert.findMany({ 
         where: { 
           domainId,
-          wing: wing // Filter by wing
+          wing: wing
         } 
       })
-      const totalPoints = experts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
+      const totalPoints = experts.length // 1 person 1 vote
       
       const votes = await prisma.domainInvestmentVote.findMany({
         where: { investmentId, domainId }
       })
       
-      const expertMap = new Map(experts.map(e => [e.userId, e.role]))
+      const expertIds = new Set(experts.map(e => e.userId))
       
       let approvedPoints = 0
       let rejectedPoints = 0
       
       for (const v of votes) {
-        const role = expertMap.get(v.voterId)
-        if (role) {
-          const points = role === 'HEAD' ? 2 : 1
-          if (v.vote === 'APPROVE') approvedPoints += points
-          else if (v.vote === 'REJECT') rejectedPoints += points
+        if (expertIds.has(v.voterId)) {
+          if (v.vote === 'APPROVE') approvedPoints += 1
+          else if (v.vote === 'REJECT') rejectedPoints += 1
         }
       }
       
       return { totalPoints, approvedPoints, rejectedPoints }
     }
 
-    const proposerStats = await getWeightedCounts(investment.proposerDomainId, investmentId, investment.proposerWing)
-    const targetStats = await getWeightedCounts(investment.targetDomainId, investmentId, investment.targetWing)
+    const proposerStats = await getVoteCounts(investment.proposerDomainId, investmentId, investment.proposerWing)
+    const targetStats = await getVoteCounts(investment.targetDomainId, investmentId, investment.targetWing)
 
-    const proposerThreshold = proposerStats.totalPoints <= 2 ? 1 : Math.floor(proposerStats.totalPoints / 2) + 1
-    const targetThreshold = targetStats.totalPoints <= 2 ? 1 : Math.floor(targetStats.totalPoints / 2) + 1
+    const proposerThreshold = Math.floor(proposerStats.totalPoints / 2) + 1
+    const targetThreshold = Math.floor(targetStats.totalPoints / 2) + 1
 
     if (proposerStats.rejectedPoints >= proposerThreshold || targetStats.rejectedPoints >= targetThreshold) {
       await prisma.domainInvestment.update({

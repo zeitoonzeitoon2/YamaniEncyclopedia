@@ -120,12 +120,48 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         proposerDomain: { select: { id: true, name: true, slug: true } },
-        targetDomain: { select: { id: true, name: true, slug: true } }
+        targetDomain: { select: { id: true, name: true, slug: true } },
+        votes: true
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ investments })
+    const enrichedInvestments = await Promise.all(investments.map(async (inv) => {
+      const proposerTotal = await prisma.domainExpert.count({
+        where: {
+          domainId: inv.proposerDomainId,
+          wing: inv.proposerWing
+        }
+      })
+
+      const targetTotal = await prisma.domainExpert.count({
+        where: {
+          domainId: inv.targetDomainId,
+          wing: inv.targetWing
+        }
+      })
+
+      const proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
+      const targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
+
+      return {
+        ...inv,
+        stats: {
+          proposer: {
+            total: proposerTotal,
+            approved: proposerVotes.filter(v => v.vote === 'APPROVE').length,
+            rejected: proposerVotes.filter(v => v.vote === 'REJECT').length
+          },
+          target: {
+            total: targetTotal,
+            approved: targetVotes.filter(v => v.vote === 'APPROVE').length,
+            rejected: targetVotes.filter(v => v.vote === 'REJECT').length
+          }
+        }
+      }
+    }))
+
+    return NextResponse.json({ investments: enrichedInvestments })
   } catch (error) {
     console.error('Error fetching investments:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

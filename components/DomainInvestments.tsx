@@ -27,12 +27,10 @@ type Investment = {
   startDate?: string
   endDate?: string
   createdAt: string
-  votes: {
-    id: string
-    voterId: string
-    vote: 'APPROVE' | 'REJECT'
-    domainId: string
-  }[]
+  stats?: {
+    proposer: { total: number; approved: number; rejected: number }
+    target: { total: number; approved: number; rejected: number }
+  }
 }
 
 const flattenTree = (nodes: any[]): Domain[] => {
@@ -279,59 +277,115 @@ export default function DomainInvestments() {
             <Clock size={20} className="text-warm-accent" />
             {t('investment.statusPending')}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {investments.filter(i => i.status === 'PENDING').map(inv => (
-              <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <div className="text-site-text font-bold text-sm">
-                      {t('investment.investmentDirection', { 
-                        proposer: inv.proposerDomain.name, 
-                        target: inv.targetDomain.name 
-                      })}
+              <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 flex flex-col md:flex-row gap-4">
+                {/* Left Side: Contract Details */}
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <div className="text-site-text font-bold text-sm">
+                        {t('investment.investmentDirection', { 
+                          proposer: inv.proposerDomain.name, 
+                          target: inv.targetDomain.name 
+                        })}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-site-muted">
+                        <span>{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
+                        <ArrowUpRight size={12} className="text-warm-primary" />
+                        <span>{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-site-muted">
-                      <span>{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
-                      <ArrowUpRight size={12} className="text-warm-primary" />
-                      <span>{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
+                    <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted whitespace-nowrap">
+                      {new Date(inv.createdAt).toLocaleDateString('en-GB')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
+                      <div className="text-site-muted mb-1">{t('investment.give')}</div>
+                      <div className="text-warm-primary font-bold">{inv.percentageInvested}%</div>
+                    </div>
+                    <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
+                      <div className="text-site-muted mb-1">{t('investment.receive')}</div>
+                      <div className="text-warm-accent font-bold">{inv.percentageReturn}%</div>
+                    </div>
+                    <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
+                      <div className="text-site-muted mb-1">{t('investment.endDate')}</div>
+                      <div className="text-site-text font-bold">
+                        {inv.endDate ? new Date(inv.endDate).toLocaleDateString('en-GB') : '-'}
+                      </div>
                     </div>
                   </div>
-                  <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted whitespace-nowrap">
-                    {new Date(inv.createdAt).toLocaleDateString('en-GB')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleVote(inv.id, 'APPROVE')}
+                      disabled={!!votingId}
+                      className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-colors"
+                    >
+                      {votingId === `${inv.id}:APPROVE` ? '...' : t('investment.returnBtn')}
+                    </button>
+                    <button 
+                      onClick={() => handleVote(inv.id, 'REJECT')}
+                      disabled={!!votingId}
+                      className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-colors"
+                    >
+                      {votingId === `${inv.id}:REJECT` ? '...' : t('reject')}
+                    </button>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
-                    <div className="text-site-muted mb-1">{t('investment.give')}</div>
-                    <div className="text-warm-primary font-bold">{inv.percentageInvested}%</div>
-                  </div>
-                  <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
-                    <div className="text-site-muted mb-1">{t('investment.receive')}</div>
-                    <div className="text-warm-accent font-bold">{inv.percentageReturn}%</div>
-                  </div>
-                  <div className="bg-site-bg/50 p-2 rounded border border-site-border/30">
-                    <div className="text-site-muted mb-1">{t('investment.endDate')}</div>
-                    <div className="text-site-text font-bold">
-                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('en-GB') : '-'}
+
+                {/* Right Side: Voting Stats */}
+                {inv.stats && (
+                  <div className="w-full md:w-64 flex flex-col gap-2 border-t md:border-t-0 md:border-r border-site-border/30 pt-4 md:pt-0 md:pr-4 md:mr-4 order-first md:order-last bg-site-bg/20 p-3 rounded-lg">
+                    <div className="text-xs font-bold text-site-muted mb-1">{t('portfolio.title')}</div>
+                    
+                    {/* Proposer Stats */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-site-muted">
+                        <span>{inv.proposerDomain.name} ({t(`wings.${inv.proposerWing.toLowerCase()}`)})</span>
+                        <span>{inv.stats.proposer.approved}/{Math.floor(inv.stats.proposer.total / 2) + 1}</span>
+                      </div>
+                      <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
+                        <div 
+                          className="bg-green-500" 
+                          style={{ width: `${(inv.stats.proposer.approved / inv.stats.proposer.total) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-red-500" 
+                          style={{ width: `${(inv.stats.proposer.rejected / inv.stats.proposer.total) * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-site-muted/70">
+                        <span>{inv.stats.proposer.total} members</span>
+                        <span>{inv.stats.proposer.approved + inv.stats.proposer.rejected} voted</span>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-site-border/30 my-1" />
+
+                    {/* Target Stats */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-site-muted">
+                        <span>{inv.targetDomain.name} ({t(`wings.${inv.targetWing.toLowerCase()}`)})</span>
+                        <span>{inv.stats.target.approved}/{Math.floor(inv.stats.target.total / 2) + 1}</span>
+                      </div>
+                      <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
+                        <div 
+                          className="bg-green-500" 
+                          style={{ width: `${(inv.stats.target.approved / inv.stats.target.total) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-red-500" 
+                          style={{ width: `${(inv.stats.target.rejected / inv.stats.target.total) * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-site-muted/70">
+                        <span>{inv.stats.target.total} members</span>
+                        <span>{inv.stats.target.approved + inv.stats.target.rejected} voted</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => handleVote(inv.id, 'APPROVE')}
-                    disabled={!!votingId}
-                    className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-colors"
-                  >
-                    {votingId === `${inv.id}:APPROVE` ? '...' : t('investment.returnBtn')}
-                  </button>
-                  <button 
-                    onClick={() => handleVote(inv.id, 'REJECT')}
-                    disabled={!!votingId}
-                    className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-colors"
-                  >
-                    {votingId === `${inv.id}:REJECT` ? '...' : t('reject')}
-                  </button>
-                </div>
+                )}
               </div>
             ))}
           </div>

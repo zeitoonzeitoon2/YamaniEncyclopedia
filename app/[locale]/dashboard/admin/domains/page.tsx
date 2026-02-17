@@ -98,6 +98,7 @@ export default function AdminDomainsPage() {
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
   const [votingKey, setVotingKey] = useState<string | null>(null)
+  const [activeStrategicTab, setActiveStrategicTab] = useState<'investments' | 'portfolio'>('investments')
 
   const selectedDomain = useMemo(() => {
     if (!selectedDomainId) return null

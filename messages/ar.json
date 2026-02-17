@@ -386,6 +386,7 @@
     "roles": {
       "globalExpert": "خبير عام",
       "domainExpert": "خبير مجال",
+      "head": "رئيس مجال",
       "editor": "محرر"
     },
     "title": "إدارة المستخدمين",
