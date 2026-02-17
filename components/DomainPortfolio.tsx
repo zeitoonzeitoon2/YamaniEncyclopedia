@@ -35,22 +35,50 @@ export default function DomainPortfolio() {
   const { data: session } = useSession()
 
   const [myTeams, setMyTeams] = useState<MyTeam[]>([])
+  const [allDomains, setAllDomains] = useState<{id: string, name: string}[]>([])
   const [selectedTeamKey, setSelectedTeamKey] = useState<string>('')
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
+  const flattenTree = (nodes: any[]): {id: string, name: string}[] => {
+    let result: {id: string, name: string}[] = []
+    for (const node of nodes) {
+      result.push({ id: node.id, name: node.name })
+      if (node.children && node.children.length > 0) {
+        result = [...result, ...flattenTree(node.children)]
+      }
+    }
+    return result
+  }
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/admin/domains/portfolio')
+      
+      // Fetch all domains for the dropdown
+      const domainsRes = await fetch('/api/admin/domains')
+      const domainsData = await domainsRes.json()
+      if (domainsRes.ok) {
+        const domains = domainsData.roots ? flattenTree(domainsData.roots) : (domainsData.domains || [])
+        setAllDomains(domains)
+      }
+
+      // Fetch portfolio
+      let url = '/api/admin/domains/portfolio'
+      if (selectedTeamKey) {
+        const [dId, dWing] = selectedTeamKey.split(':')
+        url += `?domainId=${dId}&wing=${dWing}`
+      }
+      
+      const res = await fetch(url)
       const data = await res.json()
       
       if (res.ok) {
         setMyTeams(data.myTeams || [])
         setPortfolio(data.portfolio || [])
         
-        // Select first team by default if none selected
+        // Select first team by default if none selected AND no specific selection
         if (!selectedTeamKey && data.myTeams?.length > 0) {
           const first = data.myTeams[0]
           setSelectedTeamKey(`${first.id}:${first.wing}`)
@@ -76,8 +104,12 @@ export default function DomainPortfolio() {
 
   const selectedTeam = myTeams.find(t => `${t.id}:${t.wing}` === selectedTeamKey)
   const teamPortfolio = portfolio.filter(p => `${p.team.id}:${p.team.wing}` === selectedTeamKey)
+  
+  // Find selected domain name if not in myTeams
+  const selectedDomainName = selectedTeam?.name || allDomains.find(d => d.id === selectedTeamKey.split(':')[0])?.name || ''
+  const selectedWingStr = selectedTeam?.wing || selectedTeamKey.split(':')[1] || ''
 
-  if (loading && myTeams.length === 0) return <div className="p-8 text-center animate-pulse">...</div>
+  if (loading && allDomains.length === 0) return <div className="p-8 text-center animate-pulse">...</div>
 
   return (
     <div className="space-y-8">
@@ -98,10 +130,16 @@ export default function DomainPortfolio() {
               onChange={(e) => setSelectedTeamKey(e.target.value)}
               className="w-full p-2.5 rounded-lg border border-site-border bg-site-secondary/50 text-site-text text-sm appearance-none outline-none focus:ring-2 focus:ring-warm-primary"
             >
-              {myTeams.map(team => (
-                <option key={`${team.id}:${team.wing}`} value={`${team.id}:${team.wing}`}>
-                  {team.name} - {tWings(team.wing.toLowerCase())}
-                </option>
+              <option value="">{t('selectTeam')}...</option>
+              {allDomains.map(d => (
+                <>
+                  <option key={`${d.id}:RIGHT`} value={`${d.id}:RIGHT`}>
+                    {d.name} - {tWings('right')}
+                  </option>
+                  <option key={`${d.id}:LEFT`} value={`${d.id}:LEFT`}>
+                    {d.name} - {tWings('left')}
+                  </option>
+                </>
               ))}
             </select>
             <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
@@ -109,7 +147,7 @@ export default function DomainPortfolio() {
         </div>
       </div>
 
-      {selectedTeam && (
+      {(selectedTeam || selectedTeamKey) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card bg-site-secondary/20 border-warm-primary/20 flex items-center gap-4">
             <div className="p-3 rounded-full bg-warm-primary/10 text-warm-primary">
@@ -117,7 +155,7 @@ export default function DomainPortfolio() {
             </div>
             <div>
               <div className="text-sm text-site-muted">{t('myRole')}</div>
-              <div className="text-xl font-bold text-site-text">{selectedTeam.role}</div>
+              <div className="text-xl font-bold text-site-text">{selectedTeam?.role || 'VIEWER'}</div>
             </div>
           </div>
           {/* Add more summary cards if needed */}

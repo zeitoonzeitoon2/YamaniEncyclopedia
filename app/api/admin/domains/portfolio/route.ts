@@ -30,21 +30,21 @@ export async function GET(req: NextRequest) {
       userId: e.userId
     }))
 
-    if (session.user.role === 'ADMIN' && filterDomainId) {
-      // Admin can view any team's portfolio
+    if (filterDomainId && filterWing) {
+      // Allow viewing any team's portfolio (Public Transparency)
       const domain = await prisma.domain.findUnique({ where: { id: filterDomainId } })
-      if (domain && filterWing) {
+      if (domain) {
+        // Check if user is actually a member to set correct role
+        const memberRecord = myExpertise.find(e => e.domainId === filterDomainId && e.wing === filterWing)
+        
         teamsToAnalyze = [{
           domainId: domain.id,
           domainName: domain.name,
           wing: filterWing,
-          role: 'ADMIN', // Admin simulates a view
+          role: memberRecord ? memberRecord.role : 'VIEWER',
           userId: session.user.id
         }]
       }
-    } else if (filterDomainId && filterWing) {
-      // Filter to specific team if user belongs to it
-      teamsToAnalyze = teamsToAnalyze.filter(t => t.domainId === filterDomainId && t.wing === filterWing)
     }
 
     const portfolio = []
@@ -118,7 +118,10 @@ export async function GET(req: NextRequest) {
            select: { role: true }
          })
          teamTotalPoints = teamExperts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
-         myPoints = team.role === 'HEAD' ? 2 : 1
+         
+         if (team.role === 'HEAD') myPoints = 2
+         else if (team.role === 'VIEWER') myPoints = 0
+         else myPoints = 1
       }
 
       // Collect all unique Target IDs to bulk fetch details
