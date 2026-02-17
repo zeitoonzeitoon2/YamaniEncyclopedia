@@ -281,6 +281,11 @@
       "nominateMemberTitle": "نامزد کردن عضو",
       "searchPlaceholder": "جستجو...",
       "clear": "پاک کردن",
+    "voting": {
+      "electionStatusTitle": "وضعیت انتخابات",
+      "votingPower": "قدرت رای",
+      "voted": "مشارکت"
+    },
     "strategicExchanges": "سرمایه‌گذاری‌های استراتژیک",
     "investment": {
       "title": "سرمایه‌گذاری",

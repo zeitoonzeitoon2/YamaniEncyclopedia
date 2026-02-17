@@ -5,8 +5,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, PieChart } from 'lucide-react'
 import DomainInvestments from '@/components/DomainInvestments'
+import DomainElectionStatus from '@/components/DomainElectionStatus'
 
 type DomainUser = {
   id: string
@@ -608,6 +609,11 @@ export default function AdminDomainsPage() {
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DomainElectionStatus domainId={selectedDomain.id} wing="RIGHT" />
+                    <DomainElectionStatus domainId={selectedDomain.id} wing="LEFT" />
                   </div>
 
                   <div className="mt-6 border-t border-site-border pt-4">
