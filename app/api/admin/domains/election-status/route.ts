@@ -35,10 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Get Voting Shares for this election (domainId + wing)
-    // Who holds the voting power for this election?
-    // domainId = The domain having the election (e.g. Philosophy)
-    // domainWing = The wing having the election (e.g. LEFT)
-    const shares = await prisma.domainVotingShare.findMany({
+    let shares: any[] = await prisma.domainVotingShare.findMany({
       where: {
         domainId,
         domainWing: wing
@@ -48,44 +45,74 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // If no explicit shares defined, assume 100% owned by the same domain's opposite wing for LEFT, or same for RIGHT?
-    // User said: "For Left Team elections, voters are Right Team of that domain..."
-    // Let's add a default if shares are empty.
-    let effectiveShares = shares
-
-    if (effectiveShares.length === 0) {
-      // Default: The domain itself owns 100% of the voting power.
-      // For LEFT wing election, the voters are RIGHT wing experts.
-      // For RIGHT wing election, the voters are RIGHT wing experts (usually).
-      const ownerWing = 'RIGHT' 
-      
-      effectiveShares = [{
-        id: 'default',
-        domainId,
-        domainWing: wing,
-        ownerDomainId: domainId,
-        ownerWing: ownerWing,
-        percentage: 100,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ownerDomain: {
-          id: domainId,
-          // We need to fetch the name if it's not in the include. 
-          // But since we are inside the domain, we can just use the domain's name if we had it.
-          // Let's fetch domain name separately if needed, or just let the loop handle it.
-          name: '', // Will be fetched below or we need to fetch it now.
+    // If no explicit shares defined, calculate from investments
+    if (shares.length === 0) {
+      const investments = await prisma.domainInvestment.findMany({
+        where: {
+          OR: [
+            { targetDomainId: domainId },
+            { proposerDomainId: domainId }
+          ],
+          status: 'ACTIVE'
+        },
+        include: {
+          proposerDomain: { select: { id: true, name: true } },
+          targetDomain: { select: { id: true, name: true } }
         }
-      }] as any // casting for simplicity, or we fetch domain name
-      
-      const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { name: true } })
-      if (domain && effectiveShares[0]) {
-        effectiveShares[0].ownerDomain.name = domain.name
+      })
+
+      let totalExternalShare = 0
+      const calculatedShares = []
+
+      for (const inv of investments) {
+        if (inv.targetDomainId === domainId) {
+          // Incoming: Target (this domain) gives power to Proposer via percentageReturn
+          if (inv.percentageReturn > 0) {
+            calculatedShares.push({
+              ownerDomainId: inv.proposerDomainId,
+              ownerWing: 'RIGHT',
+              percentage: inv.percentageReturn,
+              ownerDomain: inv.proposerDomain
+            })
+            totalExternalShare += inv.percentageReturn
+          }
+        } else {
+          // Outgoing: Proposer (this domain) gives power to Target via percentageInvested
+          if (inv.percentageInvested > 0) {
+            calculatedShares.push({
+              ownerDomainId: inv.targetDomainId,
+              ownerWing: 'RIGHT',
+              percentage: inv.percentageInvested,
+              ownerDomain: inv.targetDomain
+            })
+            totalExternalShare += inv.percentageInvested
+          }
+        }
       }
+
+      // Add the domain itself (Remainder)
+      const remainingShare = Math.max(0, 100 - totalExternalShare)
+      if (remainingShare > 0) {
+        const domain = await prisma.domain.findUnique({ 
+          where: { id: domainId }, 
+          select: { id: true, name: true } 
+        })
+        if (domain) {
+          calculatedShares.push({
+            ownerDomainId: domain.id,
+            ownerWing: 'RIGHT',
+            percentage: remainingShare,
+            ownerDomain: domain
+          })
+        }
+      }
+      
+      shares = calculatedShares
     }
 
     const results = []
 
-    for (const share of effectiveShares) {
+    for (const share of shares) {
       // 3. Count total experts in the Owner Team (voters)
       const totalExperts = await prisma.domainExpert.count({
         where: {
