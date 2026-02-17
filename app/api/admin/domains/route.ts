@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         data: {
           domainId: domain.id,
           domainWing: 'RIGHT',
-          ownerDomainId: parentId || domain.id,
+          ownerDomainId: domain.id,
           ownerWing: 'RIGHT',
           percentage: 100,
         },
