@@ -123,7 +123,11 @@ export async function POST(request: NextRequest) {
     // If status is HEAD_ACTIVE, role is HEAD. Otherwise (MEMBERS_ACTIVE or ACTIVE), role is EXPERT.
     roleValue = activeRound.status === 'HEAD_ACTIVE' ? 'HEAD' : 'EXPERT'
 
-    if (new Date() > activeRound.endDate) {
+    const now = new Date()
+    if (now < activeRound.startDate) {
+      return NextResponse.json({ error: 'Election for this wing has not started yet' }, { status: 400 })
+    }
+    if (now > activeRound.endDate) {
       return NextResponse.json({ error: 'Nomination period for this round has ended' }, { status: 400 })
     }
 
