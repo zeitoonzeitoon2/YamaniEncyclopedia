@@ -298,6 +298,7 @@
       "top10Candidates": "Top 10 Candidates",
       "noActiveElection": "No active election round at the moment.",
       "nominationPeriodEnded": "Nomination period has ended.",
+      "electionNotStarted": "Election for this wing has not started yet",
       "approvedCoursesTitle": "Approved courses",
       "noApprovedCourses": "No approved courses yet.",
       "manageChapters": "Manage chapters",

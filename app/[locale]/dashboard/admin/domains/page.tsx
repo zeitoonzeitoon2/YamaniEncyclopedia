@@ -296,7 +296,13 @@ export default function AdminDomainsPage() {
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
-        toast.error(payload.error || t('createNominationError'))
+        let msg = payload.error || t('createNominationError')
+        if (payload.error === 'electionNotStarted') {
+          msg = t('electionNotStarted')
+        } else if (payload.error === 'nominationPeriodEnded') {
+          msg = t('nominationPeriodEnded')
+        }
+        toast.error(msg)
         return
       }
       toast.success(t('createNominationSuccess'))

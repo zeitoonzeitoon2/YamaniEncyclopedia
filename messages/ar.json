@@ -299,6 +299,7 @@
     "top10Candidates": "أفضل ۱۰ مرشحين",
     "noActiveElection": "لا توجد دورة انتخابية نشطة حالياً.",
     "nominationPeriodEnded": "انتهت فترة الترشيح.",
+      "electionNotStarted": "لم تبدأ الانتخابات لهذا الجناح بعد",
     "electionRoundStarted": "تم بدء الدورة الانتخابية بنجاح",
     "electionFinalized": "تم إنهاء الانتخابات بنجاح وتعيين الخبراء الجدد",
     "approvedCoursesTitle": "الدورات المعتمدة",
