@@ -205,3 +205,17 @@ export async function getEffectiveShare(
   const myShares = shares.filter(s => s.ownerDomainId === ownerDomainId && s.ownerWing === ownerWing)
   return myShares.reduce((sum, s) => sum + s.percentage, 0)
 }
+
+export async function settleExpiredInvestments() {
+  const now = new Date()
+  const result = await prisma.domainInvestment.updateMany({
+    where: {
+      status: 'ACTIVE',
+      endDate: { lt: now }
+    },
+    data: {
+      status: 'COMPLETED'
+    }
+  })
+  return { count: result.count }
+}
