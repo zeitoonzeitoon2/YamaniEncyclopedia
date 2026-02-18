@@ -647,6 +647,14 @@ export default function AdminDomainsPage() {
 
                   <div className="mt-6 border-t border-site-border pt-4">
                     <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingCandidacies')}</h3>
+                    {/* DEBUG INFO */}
+                    <div className="mb-4 p-2 bg-black/50 text-xs font-mono text-green-400 rounded border border-green-900 overflow-auto max-h-40">
+                      <div>User: {session?.user?.email} ({session?.user?.id})</div>
+                      <div>Domain: {selectedDomain?.name} ({selectedDomain?.id})</div>
+                      <div>Rights: {JSON.stringify(userVotingRights, null, 2)}</div>
+                      <div>CanParticipate: {String(canParticipateInElection)}</div>
+                    </div>
+
                     {loadingCandidacies ? (
                       <div className="text-site-muted text-sm">{t('loading')}</div>
                     ) : pendingCandidacies.length === 0 ? (
