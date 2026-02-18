@@ -21,83 +21,64 @@ export interface VotingShare {
  * 3. The remaining share (100 - totalExternal) belongs to the domain itself.
  */
 export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'LEFT'): Promise<VotingShare[]> {
-  // 1. Get explicit Voting Shares
-  let shares = await prisma.domainVotingShare.findMany({
+  // 1. Calculate shares from active investments first (Dynamic)
+  const investments = await prisma.domainInvestment.findMany({
     where: {
-      domainId,
-      domainWing: wing
+      OR: [
+        { targetDomainId: domainId },
+        { proposerDomainId: domainId }
+      ],
+      status: 'ACTIVE'
     },
     include: {
-      ownerDomain: { select: { id: true, name: true } }
+      proposerDomain: { select: { id: true, name: true } },
+      targetDomain: { select: { id: true, name: true } }
     }
   })
 
-  // 2. If no explicit shares, calculate from investments
-  if (shares.length === 0) {
-    const investments = await prisma.domainInvestment.findMany({
-      where: {
-        OR: [
-          { targetDomainId: domainId },
-          { proposerDomainId: domainId }
-        ],
-        status: 'ACTIVE'
-      },
-      include: {
-        proposerDomain: { select: { id: true, name: true } },
-        targetDomain: { select: { id: true, name: true } }
-      }
-    })
+  let totalExternalShare = 0
+  const calculatedShares: VotingShare[] = []
 
-    let totalExternalShare = 0
-    const calculatedShares: VotingShare[] = []
-
-    for (const inv of investments) {
-      if (wing === 'RIGHT') {
-        // Election for RIGHT Team (Executive/Main)
-        // Rule: Parent Domain (Proposer) votes for Child Domain (Target)
-        // Logic: Incoming Investment (target === domainId)
-        if (inv.targetDomainId === domainId) {
-          if (inv.percentageInvested > 0) {
-            const halfShare = inv.percentageInvested / 2
-            
-            // Parent Right
-            calculatedShares.push({
-              ownerDomainId: inv.proposerDomainId,
-              ownerWing: 'RIGHT',
-              percentage: halfShare,
-              ownerDomain: inv.proposerDomain
-            })
-            
-            // Parent Left
-            calculatedShares.push({
-              ownerDomainId: inv.proposerDomainId,
-              ownerWing: 'LEFT', 
-              percentage: halfShare,
-              ownerDomain: inv.proposerDomain
-            })
-            
-            totalExternalShare += inv.percentageInvested
-          }
+  for (const inv of investments) {
+    if (wing === 'RIGHT') {
+      // Election for RIGHT Team (Executive/Main) - e.g. Social Sciences
+      // Rule: Parent Domain (Proposer) votes for Child Domain (Target)
+      // Logic: Incoming Investment (target === domainId)
+      if (inv.targetDomainId === domainId) {
+        // Use percentageInvested (The amount Parent invested in Child)
+        if (inv.percentageInvested > 0) {
+          calculatedShares.push({
+            ownerDomainId: inv.proposerDomainId,
+            ownerWing: inv.proposerWing, // Use the specific wing that invested
+            percentage: inv.percentageInvested,
+            ownerDomain: inv.proposerDomain
+          })
+          totalExternalShare += inv.percentageInvested
         }
-      } else {
-        // Election for LEFT Team (Legislative/Supervisory)
-        // Rule: Child Domains (Targets) vote for Parent Domain (Proposer)
-        // Logic: Outgoing Investment (proposer === domainId)
-        if (inv.proposerDomainId === domainId) {
-          if (inv.percentageReturn > 0) {
-            calculatedShares.push({
-              ownerDomainId: inv.targetDomainId,
-              ownerWing: 'RIGHT', // Child Right votes
-              percentage: inv.percentageReturn,
-              ownerDomain: inv.targetDomain
-            })
-            totalExternalShare += inv.percentageReturn
-          }
+      }
+    } else {
+      // Election for LEFT Team (Legislative/Supervisory) - e.g. Philosophy
+      // Rule: Child Domains (Targets) vote for Parent Domain (Proposer)
+      // Logic: Outgoing Investment (proposer === domainId)
+      if (inv.proposerDomainId === domainId) {
+        // Use percentageReturn (The amount Child votes in Parent)
+        // Note: If percentageReturn is 0, check if we should use percentageInvested instead? 
+        // For now, sticking to percentageReturn as per schema 'Target power given to Proposer' logic
+        if (inv.percentageReturn > 0) {
+          calculatedShares.push({
+            ownerDomainId: inv.targetDomainId,
+            ownerWing: inv.targetWing, // Use the specific wing of the target
+            percentage: inv.percentageReturn,
+            ownerDomain: inv.targetDomain
+          })
+          totalExternalShare += inv.percentageReturn
         }
       }
     }
+  }
 
-    // Add the domain itself (Remainder)
+  // Add the domain itself (Remainder) if there are investments calculated
+  if (calculatedShares.length > 0) {
     const remainingShare = Math.max(0, 100 - totalExternalShare)
     if (remainingShare > 0) {
       const domain = await prisma.domain.findUnique({ 
@@ -113,12 +94,41 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
         })
       }
     }
-    
     // @ts-ignore
-    shares = calculatedShares
+    return calculatedShares
   }
 
-  return shares
+  // 2. Fallback to explicit Voting Shares
+  const shares = await prisma.domainVotingShare.findMany({
+    where: {
+      domainId,
+      domainWing: wing
+    },
+    include: {
+      ownerDomain: { select: { id: true, name: true } }
+    }
+  })
+
+  if (shares.length > 0) {
+    return shares as VotingShare[]
+  }
+
+  // 3. If no shares found (explicit or implicit), return 100% self share
+  const domain = await prisma.domain.findUnique({
+    where: { id: domainId },
+    select: { id: true, name: true }
+  })
+  
+  if (domain) {
+    return [{
+      ownerDomainId: domain.id,
+      ownerWing: wing, // Self-ownership: LEFT owns LEFT, RIGHT owns RIGHT
+      percentage: 100,
+      ownerDomain: domain
+    }]
+  }
+
+  return []
 }
 
 export async function calculateUserVotingWeight(
