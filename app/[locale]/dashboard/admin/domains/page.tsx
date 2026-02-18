@@ -118,6 +118,28 @@ export default function AdminDomainsPage() {
     return parent.experts.some((ex) => ex.user.id === userId)
   }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
 
+  const canParticipateInElection = useMemo(() => {
+    const userId = session?.user?.id
+    const userRole = session?.user?.role
+    if (!userId) return false
+    if (!selectedDomain) return false
+    if (userRole === 'ADMIN') return true
+
+    // 1. Check if user is expert in the domain itself
+    if (selectedDomain.experts.some(ex => ex.user.id === userId)) return true
+
+    // 2. Check if user is expert in any direct child domain
+    if (selectedDomain.children && selectedDomain.children.some(child => child.experts.some(ex => ex.user.id === userId))) return true
+
+    // 3. Check if user is expert in parent domain
+    if (selectedDomain.parentId) {
+       const parent = findDomainById(roots, selectedDomain.parentId)
+       if (parent && parent.experts.some(ex => ex.user.id === userId)) return true
+    }
+
+    return false
+  }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
+
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
   const fetchDomains = useCallback(async (selectDomainId?: string) => {
@@ -649,7 +671,7 @@ export default function AdminDomainsPage() {
                                     {myVote && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myVote === 'APPROVE' ? t('approve') : t('reject')}</span>}
                                   </div>
                                 </div>
-                                {canManageSelectedDomainMembers && (
+                                {canParticipateInElection && (
                                   <div className="flex items-center gap-2 shrink-0">
                                     <button
                                       type="button"
@@ -685,7 +707,7 @@ export default function AdminDomainsPage() {
                     )}
                   </div>
 
-                  {canManageSelectedDomainMembers && (
+                  {canParticipateInElection && (
                   <div className="mt-4 p-4 rounded-lg border border-site-border bg-site-secondary/30">
                       <div className="flex items-center gap-2 mb-2">
                         <UserPlus size={16} className="text-warm-accent" />
