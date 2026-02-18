@@ -31,10 +31,6 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    if (!activeRound) {
-      return NextResponse.json({ status: 'NO_ELECTION' })
-    }
-
     // 2. Get Voting Shares using the helper
     const shares = await getDomainVotingShares(domainId, wing as 'RIGHT' | 'LEFT')
 
@@ -50,26 +46,29 @@ export async function GET(request: NextRequest) {
       })
 
       // 4. Count how many of these experts have voted in this round
-      // A voter is someone who has cast at least one vote for any candidacy in this round.
-      const voters = await prisma.candidacyVote.findMany({
-        where: {
-          candidacy: {
-            roundId: activeRound.id
-          },
-          voterUser: {
-            domainExperts: {
-              some: {
-                domainId: share.ownerDomainId,
-                wing: share.ownerWing
+      let votedCount = 0
+      if (activeRound) {
+        const voters = await prisma.candidacyVote.findMany({
+          where: {
+            candidacy: {
+              roundId: activeRound.id
+            },
+            voterUser: {
+              domainExperts: {
+                some: {
+                  domainId: share.ownerDomainId,
+                  wing: share.ownerWing
+                }
               }
             }
+          },
+          distinct: ['voterUserId'],
+          select: {
+            voterUserId: true
           }
-        },
-        distinct: ['voterUserId'],
-        select: {
-          voterUserId: true
-        }
-      })
+        })
+        votedCount = voters.length
+      }
 
       results.push({
         ownerDomainId: share.ownerDomainId,
@@ -77,13 +76,13 @@ export async function GET(request: NextRequest) {
         ownerWing: share.ownerWing,
         percentage: share.percentage,
         totalExperts,
-        votedExperts: voters.length
+        votedExperts: votedCount
       })
     }
 
     return NextResponse.json({
-      status: 'ACTIVE',
-      roundId: activeRound.id,
+      status: activeRound ? 'ACTIVE' : 'IDLE',
+      roundId: activeRound?.id || null,
       shares: results
     })
 

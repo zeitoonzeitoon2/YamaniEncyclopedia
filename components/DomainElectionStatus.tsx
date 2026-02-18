@@ -33,7 +33,7 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
       const res = await fetch(`/api/admin/domains/election-status?domainId=${domainId}&wing=${wing}`)
       if (res.ok) {
         const data = await res.json()
-        if (data.status === 'ACTIVE' || data.status === 'MEMBERS_ACTIVE' || data.status === 'HEAD_ACTIVE') {
+        if (data.status === 'ACTIVE' || data.status === 'MEMBERS_ACTIVE' || data.status === 'HEAD_ACTIVE' || data.status === 'IDLE') {
           setStatus(data)
         } else {
           setStatus(null)
