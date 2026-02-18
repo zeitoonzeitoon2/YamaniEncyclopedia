@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { PieChart, Users, Percent, Vote } from 'lucide-react'
+import { PieChart, Users, Percent, Vote, ChevronDown, ChevronUp } from 'lucide-react'
 
 type ElectionShare = {
   ownerDomainId: string
@@ -24,6 +24,7 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
   const tAdmin = useTranslations('admin')
   const [status, setStatus] = useState<ElectionStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const fetchStatus = useCallback(async () => {
     if (!domainId || !wing) return
@@ -54,64 +55,72 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
 
   return (
     <div className="mt-6 p-5 rounded-2xl border border-site-border bg-gradient-to-br from-site-secondary/10 to-site-bg shadow-sm">
-      <h3 className="text-base font-bold text-site-text mb-4 flex items-center gap-2 border-b border-site-border/50 pb-2">
+      <h3 
+        className="text-base font-bold text-site-text flex items-center gap-2 border-b border-site-border/50 pb-2 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <Vote className="text-warm-primary" size={20} />
         {t('electionStatusTitle')}
-        <span className="text-xs font-normal text-site-muted mr-auto bg-site-secondary/30 px-2 py-0.5 rounded-full">
-          {wing === 'LEFT' ? tAdmin('leftWing') : tAdmin('rightWing')}
+        <span className="mr-auto flex items-center gap-2">
+          <span className="text-xs font-normal text-site-muted bg-site-secondary/30 px-2 py-0.5 rounded-full">
+            {wing === 'LEFT' ? tAdmin('leftWing') : tAdmin('rightWing')}
+          </span>
+          {isExpanded ? <ChevronUp size={16} className="text-site-muted" /> : <ChevronDown size={16} className="text-site-muted" />}
         </span>
       </h3>
       
-      <div className="space-y-3">
-        {status.shares.map((share) => {
-          const turnoutPercent = share.totalExperts > 0 
-            ? Math.round((share.votedExperts / share.totalExperts) * 100) 
-            : 0
-          
-          return (
-            <div key={`${share.ownerDomainId}-${share.ownerWing}`} className="bg-site-bg p-3 rounded-xl border border-site-border/60 hover:border-warm-primary/30 transition-colors">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-site-text flex items-center gap-1">
-                    {share.ownerDomainName}
-                    <span className="text-[10px] text-site-muted bg-site-border/20 px-1.5 py-0.5 rounded">
-                      {tAdmin(share.ownerWing === 'RIGHT' ? 'rightWing' : 'leftWing')}
+      {isExpanded && (
+        <div className="space-y-3 mt-4 animate-in slide-in-from-top-2 fade-in duration-200">
+          {status.shares.map((share) => {
+            const turnoutPercent = share.totalExperts > 0 
+              ? Math.round((share.votedExperts / share.totalExperts) * 100) 
+              : 0
+            
+            return (
+              <div key={`${share.ownerDomainId}-${share.ownerWing}`} className="bg-site-bg p-3 rounded-xl border border-site-border/60 hover:border-warm-primary/30 transition-colors">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-site-text flex items-center gap-1">
+                      {share.ownerDomainName}
+                      <span className="text-[10px] text-site-muted bg-site-border/20 px-1.5 py-0.5 rounded">
+                        {tAdmin(share.ownerWing === 'RIGHT' ? 'rightWing' : 'leftWing')}
+                      </span>
                     </span>
-                  </span>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-site-muted flex items-center gap-1">
-                      <Percent size={12} className="text-warm-primary" />
-                      {t('votingPower')}: <span className="text-site-text font-medium">{share.percentage}%</span>
-                    </span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-site-muted flex items-center gap-1">
+                        <Percent size={12} className="text-warm-primary" />
+                        {t('votingPower')}: <span className="text-site-text font-medium">{share.percentage}%</span>
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-4 bg-site-secondary/10 px-3 py-1.5 rounded-lg border border-site-border/30">
-                  <div className="text-center">
-                    <div className="text-xs text-site-muted mb-0.5">{t('voted')}</div>
-                    <div className="text-sm font-bold text-warm-primary">{turnoutPercent}%</div>
-                  </div>
-                  <div className="h-6 w-px bg-site-border/30"></div>
-                  <div className="text-center">
-                    <div className="text-xs text-site-muted mb-0.5">{tAdmin('roleExpert')}</div>
-                    <div className="text-sm font-bold text-site-text">
-                      {share.votedExperts} <span className="text-site-muted font-normal text-[10px]">/ {share.totalExperts}</span>
+                  <div className="flex items-center gap-4 bg-site-secondary/10 px-3 py-1.5 rounded-lg border border-site-border/30">
+                    <div className="text-center">
+                      <div className="text-xs text-site-muted mb-0.5">{t('voted')}</div>
+                      <div className="text-sm font-bold text-warm-primary">{turnoutPercent}%</div>
+                    </div>
+                    <div className="h-6 w-px bg-site-border/30"></div>
+                    <div className="text-center">
+                      <div className="text-xs text-site-muted mb-0.5">{tAdmin('roleExpert')}</div>
+                      <div className="text-sm font-bold text-site-text">
+                        {share.votedExperts} <span className="text-site-muted font-normal text-[10px]">/ {share.totalExperts}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-site-secondary/20 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-warm-primary h-full rounded-full transition-all duration-500"
+                    style={{ width: `${turnoutPercent}%` }}
+                  ></div>
+                </div>
               </div>
-              
-              {/* Progress Bar for Turnout */}
-              <div className="relative h-2 w-full bg-site-secondary/20 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-warm-primary transition-all duration-700 ease-out rounded-full"
-                  style={{ width: `${turnoutPercent}%` }}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
