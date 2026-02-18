@@ -343,7 +343,7 @@ export default function DomainInvestments() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] text-site-muted">
                         <span>{inv.proposerDomain.name} ({t(`wings.${inv.proposerWing.toLowerCase()}`)})</span>
-                        <span>{inv.stats.proposer.approved}/{Math.floor(inv.stats.proposer.total / 2) + 1}</span>
+                        <span>{inv.stats.proposer.approved}/{inv.stats.proposer.total}</span>
                       </div>
                       <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
                         <div 
@@ -367,7 +367,7 @@ export default function DomainInvestments() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] text-site-muted">
                         <span>{inv.targetDomain.name} ({t(`wings.${inv.targetWing.toLowerCase()}`)})</span>
-                        <span>{inv.stats.target.approved}/{Math.floor(inv.stats.target.total / 2) + 1}</span>
+                        <span>{inv.stats.target.approved}/{inv.stats.target.total}</span>
                       </div>
                       <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
                         <div 
