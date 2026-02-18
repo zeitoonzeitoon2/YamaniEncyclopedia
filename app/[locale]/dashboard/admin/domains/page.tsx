@@ -647,33 +647,7 @@ export default function AdminDomainsPage() {
 
                   <div className="mt-6 border-t border-site-border pt-4">
                     <h3 className="text-lg font-bold text-site-text mb-3 heading">{t('pendingCandidacies')}</h3>
-                    {/* DEBUG INFO - UPDATED */}
-                    <div className="mb-6 p-4 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-yellow-400 text-sm shadow-sm">
-                      <h4 className="font-bold text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                        Debug Info (Status)
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-site-muted text-xs uppercase tracking-wider mb-1">User Context</div>
-                          <div className="font-mono text-xs">Email: {session?.user?.email}</div>
-                          <div className="font-mono text-xs">ID: {session?.user?.id?.substring(0, 8)}...</div>
-                          <div className="font-mono text-xs mt-1">Domain: {selectedDomain?.name}</div>
-                        </div>
-                        <div>
-                          <div className="text-site-muted text-xs uppercase tracking-wider mb-1">Voting Rights</div>
-                          <div className={`flex items-center justify-between p-2 rounded mb-1 ${userVotingRights.LEFT?.canVote ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            <span className="font-bold">LEFT Wing:</span>
-                            <span>{userVotingRights.LEFT?.canVote ? 'YES' : 'NO'} ({userVotingRights.LEFT?.weight || 0}%)</span>
-                          </div>
-                          <div className={`flex items-center justify-between p-2 rounded ${userVotingRights.RIGHT?.canVote ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            <span className="font-bold">RIGHT Wing:</span>
-                            <span>{userVotingRights.RIGHT?.canVote ? 'YES' : 'NO'} ({userVotingRights.RIGHT?.weight || 0}%)</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
+                    
                     {loadingCandidacies ? (
                       <div className="text-site-muted text-sm">{t('loading')}</div>
                     ) : pendingCandidacies.length === 0 ? (
