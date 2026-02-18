@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getEffectiveShare } from '@/lib/voting-utils'
+import { getEffectiveShare, getAvailableVotingPower } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -131,30 +131,26 @@ export async function POST(req: NextRequest) {
     if (proposerStats.approvedPoints >= proposerThreshold && targetStats.approvedPoints >= targetThreshold) {
       // Validate share availability before activation
       // 1. Check if Proposer Wing has enough shares to give (percentageInvested)
-      const proposerEffective = await getEffectiveShare(
+      const proposerAvailable = await getAvailableVotingPower(
         investment.proposerDomainId, 
-        investment.proposerDomainId, 
-        investment.proposerWing, 
         investment.proposerWing
       )
       
-      if (proposerEffective < investment.percentageInvested) {
+      if (proposerAvailable < investment.percentageInvested) {
         return NextResponse.json({ 
-          error: `Activation failed: Proposer wing (${investment.proposerWing}) has insufficient effective shares (${proposerEffective.toFixed(2)}%)` 
+          error: `Activation failed: Proposer wing (${investment.proposerWing}) has insufficient available shares (${proposerAvailable.toFixed(2)}%)` 
         }, { status: 409 })
       }
 
       // 2. Check if Target Wing has enough shares to return (percentageReturn)
-      const targetEffective = await getEffectiveShare(
+      const targetAvailable = await getAvailableVotingPower(
         investment.targetDomainId, 
-        investment.targetDomainId, 
-        investment.targetWing, 
         investment.targetWing
       )
 
-      if (targetEffective < investment.percentageReturn) {
+      if (targetAvailable < investment.percentageReturn) {
         return NextResponse.json({ 
-          error: `Activation failed: Target wing (${investment.targetWing}) has insufficient effective shares (${targetEffective.toFixed(2)}%)` 
+          error: `Activation failed: Target wing (${investment.targetWing}) has insufficient available shares (${targetAvailable.toFixed(2)}%)` 
         }, { status: 409 })
       }
 

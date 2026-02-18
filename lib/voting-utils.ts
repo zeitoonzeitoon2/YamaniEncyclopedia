@@ -288,6 +288,41 @@ export async function getEffectiveShare(
   return myShares.reduce((sum, s) => sum + s.percentage, 0)
 }
 
+export async function getAvailableVotingPower(
+  domainId: string,
+  wing: string
+): Promise<number> {
+  // Calculate total power consumed by ACTIVE investments
+  const investments = await prisma.domainInvestment.findMany({
+    where: {
+      OR: [
+        { proposerDomainId: domainId, proposerWing: wing },
+        { targetDomainId: domainId, targetWing: wing }
+      ],
+      status: 'ACTIVE'
+    }
+  })
+
+  let usedPower = 0
+  for (const inv of investments) {
+    if (inv.proposerDomainId === domainId && inv.proposerWing === wing) {
+      usedPower += inv.percentageInvested
+    }
+    if (inv.targetDomainId === domainId && inv.targetWing === wing) {
+      usedPower += inv.percentageReturn
+    }
+  }
+
+  // Also consider Explicit Shares?
+  // If Explicit Shares exist, they might define a "Hard Cap" on what the domain owns of itself?
+  // But generally, Explicit Shares are the "Result" of distribution, not the "Consumption".
+  // However, if there are Explicit Shares allocating 100% to Parent, then the Domain technically has 0% to invest.
+  // BUT, if the user wants to allow the domain to invest, we assume the Investment overrides Explicit Shares.
+  // The only thing that strictly limits capacity is *other* Active Investments.
+  
+  return Math.max(0, 100 - usedPower)
+}
+
 export async function settleExpiredInvestments() {
   const now = new Date()
   const result = await prisma.domainInvestment.updateMany({
