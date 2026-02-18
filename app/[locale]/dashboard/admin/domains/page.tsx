@@ -180,7 +180,7 @@ export default function AdminDomainsPage() {
   const fetchCandidacies = useCallback(async (domainId: string) => {
     try {
       setLoadingCandidacies(true)
-      setUserVotingRights({}) // Clear previous rights
+      setUserVotingRights({ RIGHT: { canVote: false, weight: 0 }, LEFT: { canVote: false, weight: 0 } }) // Clear previous rights
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string; userVotingRights?: any }
       if (!res.ok) {
@@ -715,6 +715,7 @@ export default function AdminDomainsPage() {
                                 )}
                               </div>
                             </div>
+                          </div>
                           )
                         })}
                       </div>
