@@ -180,6 +180,7 @@ export default function AdminDomainsPage() {
   const fetchCandidacies = useCallback(async (domainId: string) => {
     try {
       setLoadingCandidacies(true)
+      setUserVotingRights({}) // Clear previous rights
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string; userVotingRights?: any }
       if (!res.ok) {
@@ -657,12 +658,25 @@ export default function AdminDomainsPage() {
                           const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
                           const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
                           const myScore = c.votes.find((v) => v.voterUserId === session?.user?.id)?.score || 0
-                          const canVoteOnThis = userVotingRights[c.wing as 'RIGHT' | 'LEFT']?.canVote || canParticipateInElection
+                          const wingKey = (c.wing || 'RIGHT').toUpperCase() as 'RIGHT' | 'LEFT'
+                          const rights = userVotingRights[wingKey]
+                          const canVoteOnThis = rights?.canVote
                           const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
                           const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                           return (
                             <div key={c.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex flex-col gap-2">
+                                <div className="text-[10px] text-red-500 font-mono bg-black/10 p-1 rounded">
+                                   DEBUG: {JSON.stringify({ 
+                                     id: c.id,
+                                     wing: c.wing,
+                                     wingKey,
+                                     rights, 
+                                     canVoteOnThis, 
+                                     userId: session?.user?.id
+                                   })}
+                                 </div>
+                                <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs px-2 py-0.5 rounded-full border ${wingCls}`}>{wingLabel}</span>

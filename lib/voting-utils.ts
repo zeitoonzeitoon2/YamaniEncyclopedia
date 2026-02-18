@@ -112,20 +112,26 @@ export async function calculateUserVotingWeight(
      // Shares for the ELECTION (targetWing)
      const shares = await getDomainVotingShares(domainId, targetWing as 'RIGHT' | 'LEFT')
      
+     console.log(`[DEBUG] calculateUserVotingWeight userId=${userId} domainId=${domainId} targetWing=${targetWing}`)
+     console.log(`[DEBUG] shares:`, JSON.stringify(shares, null, 2))
+
      let maxWeight = 0
      const userExperts = await prisma.domainExpert.findMany({
        where: { userId },
        select: { domainId: true, wing: true }
      })
+     console.log(`[DEBUG] userExperts:`, JSON.stringify(userExperts, null, 2))
      
      for (const exp of userExperts) {
        // My expert power (exp.domainId, exp.wing)
        // Matches share owner (s.ownerDomainId, s.ownerWing)
        const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
        if (share) {
+         console.log(`[DEBUG] Match found for expert domain=${exp.domainId}: ${share.percentage}%`)
          maxWeight = Math.max(maxWeight, share.percentage)
        }
      }
+     console.log(`[DEBUG] Result maxWeight=${maxWeight}`)
      return maxWeight
   }
 

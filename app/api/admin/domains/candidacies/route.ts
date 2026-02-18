@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDomainVotingShares } from '@/lib/voting-utils'
+import { getDomainVotingShares, calculateUserVotingWeight } from '@/lib/voting-utils'
 
 const ALLOWED_ROLES = new Set(['HEAD', 'EXPERT'])
 
@@ -38,7 +38,7 @@ async function canProposeCandidacy(userId: string, domainId: string, targetWing:
   return { ok: false as const, status: 403 as const, error: 'Only members of this domain or its sub-domains can propose candidates' }
 }
 
-import { calculateUserVotingWeight } from '@/lib/voting-utils'
+import { getDomainVotingShares, calculateUserVotingWeight } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
