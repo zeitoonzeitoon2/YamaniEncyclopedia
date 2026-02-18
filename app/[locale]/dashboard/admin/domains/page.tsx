@@ -98,6 +98,10 @@ export default function AdminDomainsPage() {
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
+  const [userVotingRights, setUserVotingRights] = useState<{
+    RIGHT: { canVote: boolean, weight: number },
+    LEFT: { canVote: boolean, weight: number }
+  }>({ RIGHT: { canVote: false, weight: 0 }, LEFT: { canVote: false, weight: 0 } })
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [activeStrategicTab, setActiveStrategicTab] = useState<'investments' | 'portfolio'>('investments')
 
@@ -176,12 +180,15 @@ export default function AdminDomainsPage() {
     try {
       setLoadingCandidacies(true)
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
-      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string; userVotingRights?: any }
       if (!res.ok) {
         toast.error(payload.error || t('toast.candidacyFetchError'))
         return
       }
       setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
+      if (payload.userVotingRights) {
+        setUserVotingRights(payload.userVotingRights)
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.candidacyFetchError')
       toast.error(msg)
@@ -342,24 +349,22 @@ export default function AdminDomainsPage() {
     }
   }
 
-  const voteOnCandidacy = async (candidacyId: string, vote: 'APPROVE' | 'REJECT') => {
+  const voteOnCandidacy = async (candidacyId: string, score: number) => {
     if (!selectedDomain) return
-    const key = `${candidacyId}:${vote}`
+    const key = `${candidacyId}:${score}`
     try {
       setVotingKey(key)
       const res = await fetch('/api/admin/domains/candidacies/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidacyId, vote }),
+        body: JSON.stringify({ candidacyId, score }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
         toast.error(payload.error || t('toast.voteError'))
         return
       }
-      if (payload.status === 'APPROVED') toast.success(t('toast.approved'))
-      else if (payload.status === 'REJECTED') toast.success(t('toast.rejected'))
-      else toast.success(t('toast.voteSuccess'))
+      toast.success(t('toast.voteSuccess'))
       await Promise.all([fetchCandidacies(selectedDomain.id), fetchDomains(selectedDomain.id)])
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('toast.voteError')
@@ -650,6 +655,8 @@ export default function AdminDomainsPage() {
                           const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
                           const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
                           const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
+                          const myScore = c.votes.find((v) => v.voterUserId === session?.user?.id)?.score || 0
+                          const canVoteOnThis = userVotingRights[c.wing as 'RIGHT' | 'LEFT']?.canVote || canParticipateInElection
                           const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
                           const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                           return (
@@ -668,35 +675,27 @@ export default function AdminDomainsPage() {
                                   <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
                                     <span className="border border-site-border rounded-full px-2 py-0.5">{t('approvals')}: {approvals}</span>
                                     <span className="border border-site-border rounded-full px-2 py-0.5">{t('rejections')}: {rejections}</span>
-                                    {myVote && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myVote === 'APPROVE' ? t('approve') : t('reject')}</span>}
+                                    {myVote && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myScore}</span>}
                                   </div>
                                 </div>
-                                {canParticipateInElection && (
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnCandidacy(c.id, 'APPROVE')}
-                                      disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-                                        myVote === 'APPROVE'
-                                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingKey === `${c.id}:APPROVE` ? '...' : t('approve')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnCandidacy(c.id, 'REJECT')}
-                                      disabled={votingKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-                                        myVote === 'REJECT'
-                                          ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingKey === `${c.id}:REJECT` ? '...' : t('reject')}
-                                    </button>
+                                {canVoteOnThis && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {[1, 2, 3].map((score) => (
+                                      <button
+                                        key={score}
+                                        type="button"
+                                        onClick={() => voteOnCandidacy(c.id, score)}
+                                        disabled={votingKey !== null}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+                                          myScore === score
+                                            ? 'border-warm-primary bg-warm-primary text-site-bg'
+                                            : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
+                                        } disabled:opacity-50`}
+                                        title={`${score}`}
+                                      >
+                                        {votingKey === `${c.id}:${score}` ? '...' : score}
+                                      </button>
+                                    ))}
                                   </div>
                                 )}
                               </div>
