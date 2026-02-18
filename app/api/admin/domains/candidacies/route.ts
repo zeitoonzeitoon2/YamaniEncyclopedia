@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getDomainVotingShares } from '@/lib/voting-utils'
 
 const ALLOWED_ROLES = new Set(['HEAD', 'EXPERT'])
 
@@ -70,11 +71,64 @@ export async function GET(request: NextRequest) {
         domain: { select: { name: true } },
         candidateUser: { select: { name: true, email: true } },
         proposerUser: { select: { name: true, email: true } },
-        votes: { select: { voterUserId: true, vote: true, score: true } },
+        votes: { 
+          select: { 
+            voterUserId: true, 
+            vote: true, 
+            score: true,
+            voterUser: {
+              select: {
+                domainExperts: {
+                  select: { domainId: true, wing: true }
+                }
+              }
+            }
+          } 
+        },
       },
     })
 
-    return NextResponse.json({ candidacies })
+    // Calculate Weighted Scores
+    // Fetch shares for both wings (memoized)
+    const [sharesRight, sharesLeft] = await Promise.all([
+      getDomainVotingShares(domainId, 'RIGHT'),
+      getDomainVotingShares(domainId, 'LEFT')
+    ])
+
+    const candidaciesWithWeightedScore = candidacies.map(c => {
+      const shares = c.wing === 'RIGHT' ? sharesRight : sharesLeft
+      let weightedScore = 0
+
+      // Calculate weighted score based on voter's share
+      if (shares.length > 0) {
+        for (const vote of c.votes) {
+          let maxShare = 0
+          // Check all expert memberships of the voter
+          // @ts-ignore
+          const experts = vote.voterUser?.domainExperts || []
+          for (const exp of experts) {
+            // Find if this expert membership corresponds to a share owner
+            const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
+            if (share) {
+              maxShare = Math.max(maxShare, share.percentage)
+            }
+          }
+          
+          // Add weighted score: VoteScore * (Share / 100)
+          weightedScore += (vote.score || 0) * (maxShare / 100)
+        }
+      } else {
+        // Fallback (should not happen due to default share logic)
+        weightedScore = c.totalScore
+      }
+
+      // Round to 2 decimal places for display
+      weightedScore = Math.round(weightedScore * 100) / 100
+
+      return { ...c, weightedScore }
+    })
+
+    return NextResponse.json({ candidacies: candidaciesWithWeightedScore })
   } catch (error) {
     console.error('Error fetching candidacies:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -95,6 +149,7 @@ export async function POST(request: NextRequest) {
     let roleValue = requestedRole || 'EXPERT'
     const requestedWing = typeof body.wing === 'string' ? body.wing.trim() : ''
     const wingValue = requestedWing || 'RIGHT'
+    const wingVal = (wingValue === 'LEFT' ? 'LEFT' : 'RIGHT') as 'RIGHT' | 'LEFT'
 
     if (!domainId || !candidateUserId) {
       return NextResponse.json({ error: 'domainId and candidateUserId are required' }, { status: 400 })
@@ -102,15 +157,12 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_ROLES.has(roleValue)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
-    if (!['RIGHT', 'LEFT'].includes(wingValue)) {
-      return NextResponse.json({ error: 'Invalid wing' }, { status: 400 })
-    }
 
     // Find active election round for this domain and wing
     const activeRound = await prisma.electionRound.findFirst({
       where: {
         domainId,
-        wing: wingValue as 'RIGHT' | 'LEFT',
+        wing: wingVal,
         status: { in: ['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'] }
       }
     })
@@ -132,7 +184,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (role !== 'ADMIN') {
-      const perm = await canProposeCandidacy(userId, domainId, wingValue, role)
+      const perm = await canProposeCandidacy(userId, domainId, wingVal, role)
       if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
     } else {
       const domain = await prisma.domain.findUnique({ where: { id: domainId }, select: { parentId: true } })
@@ -148,69 +200,39 @@ export async function POST(request: NextRequest) {
     
     // For HEAD election, candidate MUST be an existing expert of the same wing.
     if (roleValue === 'HEAD') {
-      if (!existingExpert) {
-        return NextResponse.json({ error: 'Only existing experts can run for HEAD' }, { status: 403 })
-      }
-      if (existingExpert.wing !== wingValue) {
-        return NextResponse.json({ error: `You are an expert of ${existingExpert.wing} wing, cannot run for ${wingValue} HEAD` }, { status: 403 })
+      if (!existingExpert || existingExpert.wing !== wingVal) {
+        return NextResponse.json({ error: 'Candidate must be an expert of this wing to be Head' }, { status: 400 })
       }
     }
 
-    // For MEMBERS election, we allow existing experts to run again for re-election.
-    // if (roleValue !== 'HEAD' && existingExpert) {
-    //   return NextResponse.json({ error: 'User is already a domain expert' }, { status: 409 })
-    // }
-
-    const existingCandidacy = await prisma.expertCandidacy.findUnique({
-      where: { domainId_candidateUserId: { domainId, candidateUserId } },
-      select: { id: true, status: true },
+    // Check if already proposed in this round
+    const existingCandidacy = await prisma.expertCandidacy.findFirst({
+      where: {
+        domainId,
+        candidateUserId,
+        roundId: activeRound.id,
+        status: { not: 'REJECTED' }
+      }
     })
-    if (existingCandidacy?.status === 'PENDING') {
-      return NextResponse.json({ error: 'Candidacy already exists' }, { status: 409 })
-    }
 
     if (existingCandidacy) {
-      // Clear previous votes if we are re-using the candidacy record for a new round
-      await prisma.candidacyVote.deleteMany({
-        where: { candidacyId: existingCandidacy.id }
-      })
+      return NextResponse.json({ error: 'User is already a candidate in this round' }, { status: 400 })
     }
 
-    const candidacy = await prisma.expertCandidacy.upsert({
-      where: { domainId_candidateUserId: { domainId, candidateUserId } },
-      update: {
-        proposerUserId: userId,
-        status: 'PENDING',
-        role: roleValue,
-        wing: wingValue,
-        roundId: activeRound.id,
-        totalScore: 0
-      },
-      create: {
+    const candidacy = await prisma.expertCandidacy.create({
+      data: {
         domainId,
         candidateUserId,
         proposerUserId: userId,
-        status: 'PENDING',
         role: roleValue,
-        wing: wingValue,
+        wing: wingVal,
         roundId: activeRound.id,
+        status: 'PENDING',
         totalScore: 0
-      },
-      select: {
-        id: true,
-        domainId: true,
-        candidateUserId: true,
-        proposerUserId: true,
-        role: true,
-        wing: true,
-        status: true,
-        createdAt: true,
-        candidateUser: { select: { id: true, name: true, email: true, role: true } },
-        proposerUser: { select: { id: true, name: true, email: true, role: true } },
-      },
+      }
     })
 
-    return NextResponse.json({ success: true, candidacy })
+    return NextResponse.json({ candidacy })
   } catch (error) {
     console.error('Error creating candidacy:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

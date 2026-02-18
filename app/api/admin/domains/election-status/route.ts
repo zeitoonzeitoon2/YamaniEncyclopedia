@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getDomainVotingShares } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,81 +35,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'NO_ELECTION' })
     }
 
-    // 2. Get Voting Shares for this election (domainId + wing)
-    let shares: any[] = await prisma.domainVotingShare.findMany({
-      where: {
-        domainId,
-        domainWing: wing
-      },
-      include: {
-        ownerDomain: { select: { id: true, name: true } }
-      }
-    })
-
-    // If no explicit shares defined, calculate from investments
-    if (shares.length === 0) {
-      const investments = await prisma.domainInvestment.findMany({
-        where: {
-          OR: [
-            { targetDomainId: domainId },
-            { proposerDomainId: domainId }
-          ],
-          status: 'ACTIVE'
-        },
-        include: {
-          proposerDomain: { select: { id: true, name: true } },
-          targetDomain: { select: { id: true, name: true } }
-        }
-      })
-
-      let totalExternalShare = 0
-      const calculatedShares = []
-
-      for (const inv of investments) {
-        if (inv.targetDomainId === domainId) {
-          // Incoming: Target (this domain) gives power to Proposer via percentageReturn
-          if (inv.percentageReturn > 0) {
-            calculatedShares.push({
-              ownerDomainId: inv.proposerDomainId,
-              ownerWing: 'RIGHT',
-              percentage: inv.percentageReturn,
-              ownerDomain: inv.proposerDomain
-            })
-            totalExternalShare += inv.percentageReturn
-          }
-        } else {
-          // Outgoing: Proposer (this domain) gives power to Target via percentageInvested
-          if (inv.percentageInvested > 0) {
-            calculatedShares.push({
-              ownerDomainId: inv.targetDomainId,
-              ownerWing: 'RIGHT',
-              percentage: inv.percentageInvested,
-              ownerDomain: inv.targetDomain
-            })
-            totalExternalShare += inv.percentageInvested
-          }
-        }
-      }
-
-      // Add the domain itself (Remainder)
-      const remainingShare = Math.max(0, 100 - totalExternalShare)
-      if (remainingShare > 0) {
-        const domain = await prisma.domain.findUnique({ 
-          where: { id: domainId }, 
-          select: { id: true, name: true } 
-        })
-        if (domain) {
-          calculatedShares.push({
-            ownerDomainId: domain.id,
-            ownerWing: 'RIGHT',
-            percentage: remainingShare,
-            ownerDomain: domain
-          })
-        }
-      }
-      
-      shares = calculatedShares
-    }
+    // 2. Get Voting Shares using the helper
+    const shares = await getDomainVotingShares(domainId, wing as 'RIGHT' | 'LEFT')
 
     const results = []
 

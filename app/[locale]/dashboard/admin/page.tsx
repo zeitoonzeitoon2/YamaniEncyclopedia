@@ -51,6 +51,7 @@ type ExpertCandidacy = {
   wing: string
   status: string
   totalScore: number
+  weightedScore?: number
   roundId: string | null
   createdAt: string
   candidateUser: DomainUser
@@ -1618,7 +1619,7 @@ export default function AdminDashboard() {
                                       </div>
                                       <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
                                         <span className="border border-warm-primary/30 text-warm-primary rounded-full px-2 py-0.5 font-bold">
-                                          {t('totalScore', { score: c.totalScore })}
+                                          {t('totalScore', { score: c.weightedScore ?? c.totalScore })}
                                         </span>
                                         {myScore > 0 && (
                                           <span className="border border-site-border rounded-full px-2 py-0.5">

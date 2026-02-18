@@ -20,7 +20,7 @@ type ElectionStatus = {
 }
 
 export default function DomainElectionStatus({ domainId, wing }: { domainId: string, wing: string }) {
-  const t = useTranslations('admin.dashboard.voting')
+  const t = useTranslations('admin.voting')
   const tAdmin = useTranslations('admin')
   const [status, setStatus] = useState<ElectionStatus | null>(null)
   const [loading, setLoading] = useState(true)
