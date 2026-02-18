@@ -1,0 +1,1 @@
+Feat: Implement weighted score display for pending candidacies
