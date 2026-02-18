@@ -190,6 +190,14 @@
     "validationError": "لطفاً موارد اجباری (ستاره‌دار) را پر کنید."
   },
   "admin": {
+    "rightWing": "تیم راست",
+    "leftWing": "تیم چپ",
+    "roleExpert": "کارشناس",
+    "voting": {
+      "electionStatusTitle": "وضعیت انتخابات",
+      "votingPower": "قدرت رای",
+      "voted": "مشارکت"
+    },
     "dashboard": {
       "uploadSelectFileFirst": "لطفاً ابتدا یک فایل انتخاب کنید",
       "uploadFailed": "آپلود ناموفق بود",
