@@ -141,6 +141,11 @@ type DomainPrerequisite = {
   votes?: { voterUserId: string; vote: string }[]
 }
 
+type UserVotingRights = {
+  RIGHT: { canVote: boolean; weight: number }
+  LEFT: { canVote: boolean; weight: number }
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -177,6 +182,10 @@ export default function AdminDashboard() {
   const [removingExpertKey, setRemovingExpertKey] = useState<string | null>(null)
   const [loadingCandidacies, setLoadingCandidacies] = useState(false)
   const [pendingCandidacies, setPendingCandidacies] = useState<ExpertCandidacy[]>([])
+  const [userVotingRights, setUserVotingRights] = useState<UserVotingRights>({
+    RIGHT: { canVote: false, weight: 0 },
+    LEFT: { canVote: false, weight: 0 }
+  })
   const [votingKey, setVotingKey] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'members' | 'courses' | 'researchers' | 'proposals'>('members')
   const [loadingProposals, setLoadingProposals] = useState(false)
@@ -474,12 +483,15 @@ export default function AdminDashboard() {
     try {
       setLoadingCandidacies(true)
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
-      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string }
+      const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; userVotingRights?: UserVotingRights; error?: string }
       if (!res.ok) {
         toast.error(payload.error || t('loadCandidaciesError'))
         return
       }
       setPendingCandidacies(Array.isArray(payload.candidacies) ? payload.candidacies : [])
+      if (payload.userVotingRights) {
+        setUserVotingRights(payload.userVotingRights)
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : t('loadCandidaciesError')
       toast.error(msg)
@@ -1573,6 +1585,23 @@ export default function AdminDashboard() {
                       <div className="border-t border-site-border pt-4">
                         <div className="flex items-center gap-2 mb-3">
                           <h3 className="text-lg font-bold text-site-text heading">{t('pendingNominationsTitle')}</h3>
+                          {/* DEBUG INFO */}
+                          <div className="mb-4 p-3 bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-yellow-400 text-sm shadow-sm">
+                            <h4 className="font-bold text-yellow-600 dark:text-yellow-400 mb-1 flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                              Debug Info (Voting Rights)
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className={`flex items-center justify-between p-1 rounded ${userVotingRights.LEFT?.canVote ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <span className="font-bold text-xs">LEFT:</span>
+                                <span className="text-xs">{userVotingRights.LEFT?.canVote ? 'YES' : 'NO'} ({userVotingRights.LEFT?.weight || 0}%)</span>
+                              </div>
+                              <div className={`flex items-center justify-between p-1 rounded ${userVotingRights.RIGHT?.canVote ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <span className="font-bold text-xs">RIGHT:</span>
+                                <span className="text-xs">{userVotingRights.RIGHT?.canVote ? 'YES' : 'NO'} ({userVotingRights.RIGHT?.weight || 0}%)</span>
+                              </div>
+                            </div>
+                          </div>
                           {activeRounds['RIGHT']?.status === 'HEAD_ACTIVE' && (
                              <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
                                {t('headElectionRight')}
@@ -1631,7 +1660,7 @@ export default function AdminDashboard() {
                                         )}
                                       </div>
                                     </div>
-                                    {canVoteOnSelectedDomainCourses && isActiveRound && (
+                                    {isActiveRound && (canVoteOnSelectedDomainCourses || userVotingRights[(c.wing || 'RIGHT').toUpperCase() as 'LEFT' | 'RIGHT']?.canVote) && (
                                       <div className="flex items-center gap-1 shrink-0">
                                         {[1, 2, 3].map((score) => (
                                           <button
