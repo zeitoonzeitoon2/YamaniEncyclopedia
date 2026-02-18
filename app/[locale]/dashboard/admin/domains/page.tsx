@@ -26,6 +26,7 @@ type DomainExpert = {
 type CandidacyVote = {
   voterUserId: string
   vote: string
+  score?: number
 }
 
 type ExpertCandidacy = {
