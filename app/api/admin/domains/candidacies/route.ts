@@ -55,22 +55,14 @@ export async function GET(request: NextRequest) {
     const domainId = (searchParams.get('domainId') || '').trim()
     if (!domainId) return NextResponse.json({ error: 'domainId is required' }, { status: 400 })
 
-    // Check user's voting weight for both wings
-    const [weightRight, weightLeft] = await Promise.all([
-      calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'RIGHT' }),
-      calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'LEFT' })
-    ])
-    
-    // Admin has infinite weight effectively, but calculateUserVotingWeight returns 0 for non-experts usually.
-    // However, we want to flag if they can vote.
-    // If Admin, we can manually set weight or handle it in frontend. 
-    // But let's stick to returning what the logic says.
-    // If Admin is not expert, weight is 0. But Admin should be able to vote with weight 100?
-    // calculateVotingResult handles Admin specially.
-    // Let's return isEligibleToVote flag.
-    
+    // Calculate sequentially to avoid connection issues
+    const weightRight = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'RIGHT' })
+    const weightLeft = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'LEFT' })
+
     const canVoteRight = role === 'ADMIN' || weightRight > 0
     const canVoteLeft = role === 'ADMIN' || weightLeft > 0
+
+    console.log(`[API] userVotingRights for ${userId}: RIGHT=${weightRight}(${canVoteRight}), LEFT=${weightLeft}(${canVoteLeft})`)
 
     const candidacies = await prisma.expertCandidacy.findMany({
       where: { domainId, status: 'PENDING' },

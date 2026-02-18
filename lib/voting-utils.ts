@@ -124,9 +124,22 @@ export async function calculateUserVotingWeight(
      
      for (const exp of userExperts) {
        const expWing = (exp.wing || '').toUpperCase()
-       const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
+       const expDomainId = exp.domainId
+       
+       console.log(`[DEBUG] Checking expert domain=${expDomainId} wing=${expWing}`)
+       
+       const share = shares.find(s => {
+         const shareDomainId = s.ownerDomainId
+         const shareWing = (s.ownerWing || '').toUpperCase()
+         const match = shareDomainId === expDomainId && shareWing === expWing
+         if (match) {
+            console.log(`[DEBUG] Found matching share! shareDomainId=${shareDomainId} shareWing=${shareWing} percentage=${s.percentage}`)
+         }
+         return match
+       })
+       
        if (share) {
-         console.log(`[DEBUG] Match found for expert domain=${exp.domainId}: ${share.percentage}%`)
+         console.log(`[DEBUG] Match confirmed. Adding weight: ${share.percentage}`)
          maxWeight = Math.max(maxWeight, share.percentage)
        }
      }
