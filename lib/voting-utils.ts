@@ -83,15 +83,48 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     if (remainingShare > 0) {
       const domain = await prisma.domain.findUnique({ 
         where: { id: domainId }, 
-        select: { id: true, name: true } 
+        select: { id: true, name: true, parentId: true } 
       })
       if (domain) {
-        calculatedShares.push({
-          ownerDomainId: domain.id,
-          ownerWing: 'RIGHT',
-          percentage: remainingShare,
-          ownerDomain: domain
-        })
+        // If election is for RIGHT team and domain has a Parent,
+        // the remaining share belongs to the Parent's LEFT team (Legislative).
+        // Unless Parent's LEFT is already in calculatedShares? (Unlikely for standard setup)
+        if (wing === 'RIGHT' && domain.parentId) {
+          const parent = await prisma.domain.findUnique({
+            where: { id: domain.parentId },
+            select: { id: true, name: true }
+          })
+          if (parent) {
+            // Check if Parent LEFT is already present to avoid duplicates
+            const existingParentLeft = calculatedShares.find(s => s.ownerDomainId === parent.id && s.ownerWing === 'LEFT')
+            if (existingParentLeft) {
+              existingParentLeft.percentage += remainingShare
+            } else {
+              calculatedShares.push({
+                ownerDomainId: parent.id,
+                ownerWing: 'LEFT',
+                percentage: remainingShare,
+                ownerDomain: parent
+              })
+            }
+          } else {
+            // Fallback to self if parent not found (shouldn't happen with valid FK)
+            calculatedShares.push({
+              ownerDomainId: domain.id,
+              ownerWing: 'RIGHT',
+              percentage: remainingShare,
+              ownerDomain: domain
+            })
+          }
+        } else {
+          // Standard case: Self ownership
+          calculatedShares.push({
+            ownerDomainId: domain.id,
+            ownerWing: wing, // Self-ownership: LEFT owns LEFT, RIGHT owns RIGHT
+            percentage: remainingShare,
+            ownerDomain: domain
+          })
+        }
       }
     }
     // @ts-ignore
