@@ -58,16 +58,25 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
         // Logic: Incoming Investment (target === domainId)
         if (inv.targetDomainId === domainId) {
           if (inv.percentageInvested > 0) {
+            const halfShare = inv.percentageInvested / 2
+            
+            // Parent Right
             calculatedShares.push({
               ownerDomainId: inv.proposerDomainId,
-              ownerWing: 'RIGHT', // Parent Right votes (Primary)
-              percentage: inv.percentageInvested,
+              ownerWing: 'RIGHT',
+              percentage: halfShare,
               ownerDomain: inv.proposerDomain
             })
+            
+            // Parent Left
+            calculatedShares.push({
+              ownerDomainId: inv.proposerDomainId,
+              ownerWing: 'LEFT', 
+              percentage: halfShare,
+              ownerDomain: inv.proposerDomain
+            })
+            
             totalExternalShare += inv.percentageInvested
-
-            // Special Case: If user wants Parent LEFT to vote too, we'd need to split this share 
-            // or look for a specific flag. For now, we assume Parent Right holds the share.
           }
         }
       } else {
