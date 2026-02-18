@@ -52,27 +52,38 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     const calculatedShares: VotingShare[] = []
 
     for (const inv of investments) {
-      if (inv.targetDomainId === domainId) {
-        // Incoming: Target (this domain) gives power to Proposer via percentageReturn
-        if (inv.percentageReturn > 0) {
-          calculatedShares.push({
-            ownerDomainId: inv.proposerDomainId,
-            ownerWing: 'RIGHT', // Default to RIGHT wing (Experts) holding the power
-            percentage: inv.percentageReturn,
-            ownerDomain: inv.proposerDomain
-          })
-          totalExternalShare += inv.percentageReturn
+      if (wing === 'RIGHT') {
+        // Election for RIGHT Team (Executive/Main)
+        // Rule: Parent Domain (Proposer) votes for Child Domain (Target)
+        // Logic: Incoming Investment (target === domainId)
+        if (inv.targetDomainId === domainId) {
+          if (inv.percentageInvested > 0) {
+            calculatedShares.push({
+              ownerDomainId: inv.proposerDomainId,
+              ownerWing: 'RIGHT', // Parent Right votes (Primary)
+              percentage: inv.percentageInvested,
+              ownerDomain: inv.proposerDomain
+            })
+            totalExternalShare += inv.percentageInvested
+
+            // Special Case: If user wants Parent LEFT to vote too, we'd need to split this share 
+            // or look for a specific flag. For now, we assume Parent Right holds the share.
+          }
         }
       } else {
-        // Outgoing: Proposer (this domain) gives power to Target via percentageInvested
-        if (inv.percentageInvested > 0) {
-          calculatedShares.push({
-            ownerDomainId: inv.targetDomainId,
-            ownerWing: 'RIGHT', // Default to RIGHT wing
-            percentage: inv.percentageInvested,
-            ownerDomain: inv.targetDomain
-          })
-          totalExternalShare += inv.percentageInvested
+        // Election for LEFT Team (Legislative/Supervisory)
+        // Rule: Child Domains (Targets) vote for Parent Domain (Proposer)
+        // Logic: Outgoing Investment (proposer === domainId)
+        if (inv.proposerDomainId === domainId) {
+          if (inv.percentageReturn > 0) {
+            calculatedShares.push({
+              ownerDomainId: inv.targetDomainId,
+              ownerWing: 'RIGHT', // Child Right votes
+              percentage: inv.percentageReturn,
+              ownerDomain: inv.targetDomain
+            })
+            totalExternalShare += inv.percentageReturn
+          }
         }
       }
     }
