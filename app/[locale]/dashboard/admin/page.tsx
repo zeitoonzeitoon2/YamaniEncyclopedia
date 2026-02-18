@@ -253,7 +253,7 @@ export default function AdminDashboard() {
     }
     
     return false
-  }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
+  }, [selectedDomain, session?.user?.id, session?.user?.role])
 
   const canProposeRename = useMemo(() => {
     const userId = session?.user?.id

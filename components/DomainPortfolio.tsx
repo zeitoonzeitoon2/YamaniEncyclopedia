@@ -33,6 +33,18 @@ type MyTeam = {
   role: string
 }
 
+const flattenTree = (nodes: any[]): {id: string, name: string}[] => {
+  let result: {id: string, name: string}[] = []
+  for (const node of nodes) {
+    result.push({ id: node.id, name: node.name })
+    if (node.children && node.children.length > 0) {
+      // @ts-ignore
+      result = [...result, ...flattenTree(node.children)]
+    }
+  }
+  return result
+}
+
 export default function DomainPortfolio() {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
@@ -44,17 +56,6 @@ export default function DomainPortfolio() {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-
-  const flattenTree = (nodes: any[]): {id: string, name: string}[] => {
-    let result: {id: string, name: string}[] = []
-    for (const node of nodes) {
-      result.push({ id: node.id, name: node.name })
-      if (node.children && node.children.length > 0) {
-        result = [...result, ...flattenTree(node.children)]
-      }
-    }
-    return result
-  }
 
   const fetchData = useCallback(async () => {
     try {

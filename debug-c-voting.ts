@@ -42,7 +42,7 @@ async function main() {
   const shares = await getDomainVotingShares(domain.id, targetWing)
   console.log('Shares found:')
   shares.forEach(s => {
-    console.log(`- Owner Domain: ${s.ownerDomainName} (${s.ownerDomainId}), Owner Wing: ${s.ownerWing}, Percentage: ${s.percentage}`)
+    console.log(`- Owner Domain: ${s.ownerDomain.name} (${s.ownerDomainId}), Owner Wing: ${s.ownerWing}, Percentage: ${s.percentage}`)
   })
 
   // 5. Match Logic
@@ -52,7 +52,7 @@ async function main() {
   for (const exp of experts) {
     const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
     if (share) {
-      console.log(`MATCH FOUND! Expert in ${exp.domain.name} (${exp.wing}) matches share owned by ${share.ownerDomainName} (${share.ownerWing}) with ${share.percentage}%`)
+      console.log(`MATCH FOUND! Expert in ${exp.domain.name} (${exp.wing}) matches share owned by ${share.ownerDomain.name} (${share.ownerWing}) with ${share.percentage}%`)
       maxWeight = Math.max(maxWeight, share.percentage)
       canVote = true
     } else {
