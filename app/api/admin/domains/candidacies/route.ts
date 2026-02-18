@@ -38,8 +38,6 @@ async function canProposeCandidacy(userId: string, domainId: string, targetWing:
   return { ok: false as const, status: 403 as const, error: 'Only members of this domain or its sub-domains can propose candidates' }
 }
 
-import { getDomainVotingShares, calculateUserVotingWeight } from '@/lib/voting-utils'
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
