@@ -123,9 +123,8 @@ export async function calculateUserVotingWeight(
      console.log(`[DEBUG] userExperts:`, JSON.stringify(userExperts, null, 2))
      
      for (const exp of userExperts) {
-       // My expert power (exp.domainId, exp.wing)
-       // Matches share owner (s.ownerDomainId, s.ownerWing)
-       const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
+       const expWing = (exp.wing || '').toUpperCase()
+       const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
        if (share) {
          console.log(`[DEBUG] Match found for expert domain=${exp.domainId}: ${share.percentage}%`)
          maxWeight = Math.max(maxWeight, share.percentage)
@@ -153,7 +152,8 @@ export async function calculateUserVotingWeight(
   })
   
   for (const exp of userExperts) {
-    const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
+    const expWing = (exp.wing || '').toUpperCase()
+    const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
     if (share) {
       maxWeight = Math.max(maxWeight, share.percentage)
     }

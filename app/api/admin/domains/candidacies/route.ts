@@ -125,8 +125,8 @@ export async function GET(request: NextRequest) {
           // @ts-ignore
           const experts = vote.voterUser?.domainExperts || []
           for (const exp of experts) {
-            // Find if this expert membership corresponds to a share owner
-            const share = shares.find(s => s.ownerDomainId === exp.domainId && s.ownerWing === exp.wing)
+            const expWing = (exp.wing || '').toUpperCase()
+            const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
             if (share) {
               maxShare = Math.max(maxShare, share.percentage)
             }

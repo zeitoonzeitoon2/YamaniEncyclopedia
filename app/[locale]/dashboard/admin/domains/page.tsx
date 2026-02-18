@@ -183,7 +183,6 @@ export default function AdminDomainsPage() {
       setUserVotingRights({ RIGHT: { canVote: false, weight: 0 }, LEFT: { canVote: false, weight: 0 } }) // Clear previous rights
       const res = await fetch(`/api/admin/domains/candidacies?domainId=${encodeURIComponent(domainId)}`, { cache: 'no-store' })
       const payload = (await res.json().catch(() => ({}))) as { candidacies?: ExpertCandidacy[]; error?: string; userVotingRights?: any }
-      console.log('Fetch Candidacies Response:', payload)
       if (!res.ok) {
         toast.error(payload.error || t('toast.candidacyFetchError'))
         return
@@ -662,20 +661,11 @@ export default function AdminDomainsPage() {
                           const wingKey = (c.wing || 'RIGHT').toUpperCase() as 'RIGHT' | 'LEFT'
                           const rights = userVotingRights[wingKey]
                           const canVoteOnThis = rights?.canVote
-                          console.log('Rendering candidacy:', c.id, 'Wing:', wingKey, 'Rights:', rights, 'CanVote:', canVoteOnThis)
                           const wingLabel = c.wing === 'RIGHT' ? t('rightWing') : t('leftWing')
                           const wingCls = c.wing === 'RIGHT' ? 'bg-warm-primary/10 text-warm-primary border-warm-primary/30' : 'bg-site-secondary/10 text-site-muted border-site-border'
                           return (
                             <div key={c.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
-                              <div className="flex flex-col gap-2">
-                                <div className="text-xs bg-gray-100 p-2 rounded text-gray-800">
-                                   <strong>Debug Info:</strong><br/>
-                                   User: {session?.user?.email} ({session?.user?.id})<br/>
-                                   Candidacy Wing: {c.wing} ({wingKey})<br/>
-                                   My Rights: {rights?.canVote ? 'YES' : 'NO'} (Weight: {rights?.weight}%)<br/>
-                                   Can Vote On This: {canVoteOnThis ? 'YES' : 'NO'}
-                                </div>
-                                <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs px-2 py-0.5 rounded-full border ${wingCls}`}>{wingLabel}</span>
@@ -714,7 +704,6 @@ export default function AdminDomainsPage() {
                                 )}
                               </div>
                             </div>
-                          </div>
                           )
                         })}
                       </div>
