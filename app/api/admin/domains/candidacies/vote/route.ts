@@ -2,27 +2,38 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
+import { calculateUserVotingWeight } from '@/lib/voting-utils'
 
-const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
+// Remove ALLOWED_VOTES as we use score now
 
 async function canVoteOnCandidacy(sessionUser: { id?: string; role?: string } | undefined, domainId: string, targetWing: string) {
   const userId = (sessionUser?.id || '').trim()
   const role = (sessionUser?.role || '').trim()
-  if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
-  if (role === 'ADMIN') return { ok: true as const, userId }
+  if (!userId) return { ok: false as const, status: 401, error: 'Unauthorized' }
+  
+  if (role === 'ADMIN') return { ok: true as const, userId, weight: 100 }
 
   // Check if user has any voting power in the candidacy domain using the new CANDIDACY mode
   const weight = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing })
 
-  return weight > 0 ? { ok: true as const, userId, weight } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
+  // Ensure weight is positive
+  if (weight > 0) {
+    return { ok: true as const, userId, weight }
+  }
+
+  return { ok: false as const, status: 403, error: 'Forbidden: No voting rights' }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const candidacyId = typeof body.candidacyId === 'string' ? body.candidacyId.trim() : ''
+    // Allow score to be 1, 2, or 3. If missing, default to 0 which is invalid.
     const score = typeof body.score === 'number' ? body.score : 0
 
     if (!candidacyId || score < 1 || score > 3) {
@@ -31,45 +42,60 @@ export async function POST(request: NextRequest) {
 
     const candidacy = await prisma.expertCandidacy.findUnique({
       where: { id: candidacyId },
-      select: {
-        id: true,
-        domainId: true,
-        candidateUserId: true,
-        role: true,
-        wing: true,
-        status: true,
-        roundId: true,
+      include: {
         round: { select: { status: true, endDate: true } }
-      },
+      }
     })
-    if (!candidacy) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    const roundStatus = candidacy.round?.status || ''
-    if (candidacy.status !== 'PENDING' || !['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'].includes(roundStatus)) {
-      return NextResponse.json({ error: 'Election round is closed' }, { status: 409 })
+
+    if (!candidacy) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const perm = await canVoteOnCandidacy(session?.user, candidacy.domainId, candidacy.wing)
-    if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
+    const roundStatus = candidacy.round?.status || ''
+    // Check if round is active
+    if (candidacy.status !== 'PENDING' || !['ACTIVE', 'MEMBERS_ACTIVE', 'HEAD_ACTIVE'].includes(roundStatus)) {
+       return NextResponse.json({ error: 'Election round is closed or candidacy not pending' }, { status: 409 })
+    }
+
+    // Check permissions
+    const perm = await canVoteOnCandidacy(session.user, candidacy.domainId, candidacy.wing)
+    if (!perm.ok) {
+      return NextResponse.json({ error: perm.error }, { status: perm.status as number })
+    }
 
     const voterUserId = perm.userId
     const voterWeight = perm.weight || 0
 
+    // Use transaction to update vote and total score
     await prisma.$transaction(async (tx) => {
-      // 1. Get old score if any
+      // 1. Get old vote to adjust score
       const existingVote = await tx.candidacyVote.findUnique({
-        where: { candidacyId_voterUserId: { candidacyId, voterUserId } }
+        where: { 
+          candidacyId_voterUserId: { 
+            candidacyId, 
+            voterUserId 
+          } 
+        }
       })
       
-      const oldRawScore = existingVote?.score || 0
-      // We assume the voter's weight hasn't changed significantly between votes
-      // or we accept the slight inaccuracy. Ideally we'd store the applied weight.
-      const oldWeightedScore = Math.round(oldRawScore * voterWeight)
-      const newWeightedScore = Math.round(score * voterWeight)
+      const oldScore = existingVote?.score || 0
       
+      // Calculate weighted score difference
+      // Score is 1-3. Weight is percentage (e.g., 20).
+      // Weighted Score = Score * (Weight / 100)
+      // We store totalScore as float in DB? Or scaled integer?
+      // Prisma schema says totalScore is Float usually or Int? 
+      // Let's assume Float. If Int, we might need scaling.
+      // Based on `voting-utils.ts` in GET route: `weightedScore += (vote.score || 0) * (maxShare / 100)`
+      
+      const oldWeighted = oldScore * (voterWeight / 100)
+      const newWeighted = score * (voterWeight / 100)
+      const diff = newWeighted - oldWeighted
+
       // 2. Upsert vote
       await tx.candidacyVote.upsert({
         where: { candidacyId_voterUserId: { candidacyId, voterUserId } },
-        update: { score },
+        update: { score, vote: 'APPROVE' }, // Always APPROVE for score-based? Or we can use score to determine?
         create: { candidacyId, voterUserId, score, vote: 'APPROVE' },
       })
 
@@ -78,7 +104,7 @@ export async function POST(request: NextRequest) {
         where: { id: candidacyId },
         data: {
           totalScore: {
-            increment: newWeightedScore - oldWeightedScore
+            increment: diff
           }
         }
       })
