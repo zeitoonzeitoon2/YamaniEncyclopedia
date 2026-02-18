@@ -40,128 +40,126 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
   const calculatedShares: VotingShare[] = []
 
   for (const inv of investments) {
-    if (wing === 'RIGHT') {
-      // Election for RIGHT Team (Executive/Main) - e.g. Social Sciences
-      // Rule: Parent Domain (Proposer) votes for Child Domain (Target)
-      // Logic: Incoming Investment (target === domainId)
-      if (inv.targetDomainId === domainId) {
-        // Use percentageInvested (The amount Parent invested in Child)
-        if (inv.percentageInvested > 0) {
-          calculatedShares.push({
-            ownerDomainId: inv.proposerDomainId,
-            ownerWing: inv.proposerWing, // Use the specific wing that invested
-            percentage: inv.percentageInvested,
-            ownerDomain: inv.proposerDomain
-          })
-          totalExternalShare += inv.percentageInvested
-        }
-      }
-    } else {
-      // Election for LEFT Team (Legislative/Supervisory) - e.g. Philosophy
-      // Rule: Child Domains (Targets) vote for Parent Domain (Proposer)
-      // Logic: Outgoing Investment (proposer === domainId)
-      if (inv.proposerDomainId === domainId) {
-        // Use percentageReturn (The amount Child votes in Parent)
-        // Note: If percentageReturn is 0, check if we should use percentageInvested instead? 
-        // For now, sticking to percentageReturn as per schema 'Target power given to Proposer' logic
-        if (inv.percentageReturn > 0) {
-          calculatedShares.push({
-            ownerDomainId: inv.targetDomainId,
-            ownerWing: inv.targetWing, // Use the specific wing of the target
-            percentage: inv.percentageReturn,
-            ownerDomain: inv.targetDomain
-          })
-          totalExternalShare += inv.percentageReturn
-        }
+    // Determine which share value to use based on the relationship
+    // Investments affect BOTH Right and Left wing elections of the Domain (Total Power)
+    // unless we decide otherwise. For now, we assume "Voting Power" is universal.
+    
+    // Case 1: We are the Target (Receiver). Proposer invested in us.
+    // Proposer gets `percentageInvested` of our power.
+    if (inv.targetDomainId === domainId) {
+      if (inv.percentageInvested > 0) {
+        calculatedShares.push({
+          ownerDomainId: inv.proposerDomainId,
+          ownerWing: inv.proposerWing, // The wing that invested gets the power
+          percentage: inv.percentageInvested,
+          ownerDomain: inv.proposerDomain
+        })
+        totalExternalShare += inv.percentageInvested
       }
     }
-  }
-
-  // Add the domain itself (Remainder) if there are investments calculated
-  if (calculatedShares.length > 0) {
-    const remainingShare = Math.max(0, 100 - totalExternalShare)
-    if (remainingShare > 0) {
-      const domain = await prisma.domain.findUnique({ 
-        where: { id: domainId }, 
-        select: { id: true, name: true, parentId: true } 
-      })
-      if (domain) {
-        // If election is for RIGHT team and domain has a Parent,
-        // the remaining share belongs to the Parent's LEFT team (Legislative).
-        // Unless Parent's LEFT is already in calculatedShares? (Unlikely for standard setup)
-        if (wing === 'RIGHT' && domain.parentId) {
-          const parent = await prisma.domain.findUnique({
-            where: { id: domain.parentId },
-            select: { id: true, name: true }
-          })
-          if (parent) {
-            // Check if Parent LEFT is already present to avoid duplicates
-            const existingParentLeft = calculatedShares.find(s => s.ownerDomainId === parent.id && s.ownerWing === 'LEFT')
-            if (existingParentLeft) {
-              existingParentLeft.percentage += remainingShare
-            } else {
-              calculatedShares.push({
-                ownerDomainId: parent.id,
-                ownerWing: 'LEFT',
-                percentage: remainingShare,
-                ownerDomain: parent
-              })
-            }
-          } else {
-            // Fallback to self if parent not found (shouldn't happen with valid FK)
-            calculatedShares.push({
-              ownerDomainId: domain.id,
-              ownerWing: 'RIGHT',
-              percentage: remainingShare,
-              ownerDomain: domain
-            })
-          }
-        } else {
-          // Standard case: Self ownership
-          calculatedShares.push({
-            ownerDomainId: domain.id,
-            ownerWing: wing, // Self-ownership: LEFT owns LEFT, RIGHT owns RIGHT
-            percentage: remainingShare,
-            ownerDomain: domain
-          })
-        }
+    
+    // Case 2: We are the Proposer (Giver). Target returns power to us.
+    // Target gets `percentageReturn` of our power.
+    // Wait. `percentageReturn` is "Percentage of Target's power given to Proposer".
+    // It means Proposer gets power IN Target.
+    // It does NOT mean Target gets power in Proposer.
+    // So if we are the Proposer (inv.proposerDomainId === domainId),
+    // does this investment reduce OUR voting power?
+    // User said: "Social Sciences Right team can give 20% of Social Sciences shares to Philosophy".
+    // This implies Social Sciences (Proposer?) gives to Philosophy (Target?).
+    // If Social Sciences gives 20% OF ITSELF, then Social Sciences is the "Target" of the power distribution?
+    // But usually Proposer initiates.
+    // If Social Sciences says "I want to give you 20% of me", Social Sciences is Proposer of the transaction.
+    // But in the Investment Model:
+    // `percentageInvested` = Proposer's power given to Target?
+    // OR Proposer's Money given for Target's Equity?
+    
+    // Let's rely on the schema comments which seemed to align with user description:
+    // "Percentage of Proposer's power given to Target"
+    // So if I am Proposer, I am giving away my power. Target GETS my power.
+    else if (inv.proposerDomainId === domainId) {
+      if (inv.percentageInvested > 0) {
+        calculatedShares.push({
+          ownerDomainId: inv.targetDomainId,
+          ownerWing: inv.targetWing, // Target gets the power
+          percentage: inv.percentageInvested,
+          ownerDomain: inv.targetDomain
+        })
+        totalExternalShare += inv.percentageInvested
       }
     }
-    // @ts-ignore
-    return calculatedShares
+    // Note: `percentageReturn` is irrelevant for calculating *Proposer's* voting distribution
+    // because `percentageReturn` is about Target giving power back to Proposer.
+    // So `percentageReturn` affects *Target's* voting distribution (Case 1 above).
+    // Wait, in Case 1 (We are Target), Proposer gets `percentageInvested`?
+    // NO.
+    // If `percentageInvested` is "Proposer's power given to Target", then:
+    // Proposer (Giver) -> Target (Receiver).
+    // Proposer LOSES power. Target GAINS power in Proposer.
+    
+    // Let's re-read User: "Right team... can give... to Philosophy Left team".
+    // This implies Transfer of Power.
+    // If A gives to B. B has power in A.
+    
+    // So:
+    // If I am A (Proposer): I give `percentageInvested` to B.
+    // B (Target) owns `percentageInvested` of ME.
+    // So when calculating SHARES OF A:
+    // Include B as owner.
+    
+    // If I am B (Target): A gives `percentageInvested` to me.
+    // I own shares in A. This doesn't affect SHARES OF B.
+    // UNLESS `percentageReturn` exists.
+    // `percentageReturn`: "Percentage of Target's power given to Proposer".
+    // So B gives `percentageReturn` to A.
+    // A (Proposer) owns `percentageReturn` of B.
+    // So when calculating SHARES OF B:
+    // Include A as owner.
   }
 
-  // 2. Fallback to explicit Voting Shares
-  const shares = await prisma.domainVotingShare.findMany({
-    where: {
-      domainId,
-      domainWing: wing
-    },
-    include: {
-      ownerDomain: { select: { id: true, name: true } }
-    }
-  })
-
-  if (shares.length > 0) {
-    return shares as VotingShare[]
-  }
-
-  // 3. If no shares found (explicit or implicit), return 100% self share
-  const domain = await prisma.domain.findUnique({
-    where: { id: domainId },
-    select: { id: true, name: true }
-  })
+  // Deduplicate shares (in case multiple investments exist between same pair)
+  // (Simplified for now, assuming unique pair logic or additive)
+  // Ideally we should sum up if multiple entries exist for same owner/wing.
   
-  if (domain) {
-    return [{
-      ownerDomainId: domain.id,
-      ownerWing: wing, // Self-ownership: LEFT owns LEFT, RIGHT owns RIGHT
-      percentage: 100,
-      ownerDomain: domain
-    }]
+  const aggregatedShares: VotingShare[] = []
+  for (const share of calculatedShares) {
+    const existing = aggregatedShares.find(s => s.ownerDomainId === share.ownerDomainId && s.ownerWing === share.ownerWing)
+    if (existing) {
+      existing.percentage += share.percentage
+    } else {
+      aggregatedShares.push(share)
+    }
+  }
+  
+  // Recalculate totalExternalShare based on aggregated
+  totalExternalShare = aggregatedShares.reduce((sum, s) => sum + s.percentage, 0)
+
+  // Add the domain itself (Remainder)
+  // Always default to Self-Right if not distributed.
+  if (totalExternalShare < 100) {
+    const remainingShare = 100 - totalExternalShare
+    const domain = await prisma.domain.findUnique({ 
+      where: { id: domainId }, 
+      select: { id: true, name: true } 
+    })
+    
+    if (domain) {
+      // Check if Self-Right is already in aggregatedShares (unlikely but possible if circular?)
+      const existingSelf = aggregatedShares.find(s => s.ownerDomainId === domain.id && s.ownerWing === 'RIGHT')
+      if (existingSelf) {
+        existingSelf.percentage += remainingShare
+      } else {
+        aggregatedShares.push({
+          ownerDomainId: domain.id,
+          ownerWing: 'RIGHT', // Default 100% to Right Team
+          percentage: remainingShare,
+          ownerDomain: domain
+        })
+      }
+    }
   }
 
-  return []
+  return aggregatedShares
 }
 
 export async function calculateUserVotingWeight(
