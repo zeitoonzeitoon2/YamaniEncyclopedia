@@ -194,3 +194,14 @@ export async function calculateVotingResult(
 
   return { approvals, rejections }
 }
+
+export async function getEffectiveShare(
+  ownerDomainId: string,
+  targetDomainId: string,
+  ownerWing: string,
+  targetWing: string
+): Promise<number> {
+  const shares = await getDomainVotingShares(targetDomainId, targetWing as 'RIGHT' | 'LEFT')
+  const myShares = shares.filter(s => s.ownerDomainId === ownerDomainId && s.ownerWing === ownerWing)
+  return myShares.reduce((sum, s) => sum + s.percentage, 0)
+}
