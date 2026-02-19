@@ -127,22 +127,41 @@ export async function GET(req: NextRequest) {
     })
 
     const enrichedInvestments = await Promise.all(investments.map(async (inv) => {
-      const proposerTotal = await prisma.domainExpert.count({
+      // Fetch experts to validate votes
+      const proposerExperts = await prisma.domainExpert.findMany({
         where: {
           domainId: inv.proposerDomainId,
           wing: inv.proposerWing
-        }
+        },
+        select: { userId: true }
       })
+      const proposerExpertIds = new Set(proposerExperts.map(e => e.userId))
 
-      const targetTotal = await prisma.domainExpert.count({
+      const targetExperts = await prisma.domainExpert.findMany({
         where: {
           domainId: inv.targetDomainId,
           wing: inv.targetWing
-        }
+        },
+        select: { userId: true }
       })
+      const targetExpertIds = new Set(targetExperts.map(e => e.userId))
 
-      const proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
-      const targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
+      const proposerTotal = proposerExperts.length
+      const targetTotal = targetExperts.length
+
+      // Filter votes: Only count votes from current experts
+      // If no experts exist, we might count admin votes (fallback), so we keep them all
+      // But if experts exist, we strictly filter.
+      
+      let proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
+      if (proposerTotal > 0) {
+        proposerVotes = proposerVotes.filter(v => proposerExpertIds.has(v.voterId))
+      }
+
+      let targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
+      if (targetTotal > 0) {
+        targetVotes = targetVotes.filter(v => targetExpertIds.has(v.voterId))
+      }
 
       return {
         ...inv,
