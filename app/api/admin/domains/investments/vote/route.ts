@@ -33,65 +33,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investment is no longer pending' }, { status: 400 })
     }
 
-    // Check if voter is expert in proposer or target domain (specific wing)
-    const proposerMembership = await prisma.domainExpert.findFirst({
-      where: { 
-        userId: session.user.id, 
-        domainId: investment.proposerDomainId,
-        wing: investment.proposerWing
-      }
+    // Check general presence in domain (ignoring wing) to scope admin power
+    // This helps determine if an Admin is "part of the conflict" or an "external arbiter"
+    const proposerPresence = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: investment.proposerDomainId }
     })
 
-    const targetMembership = await prisma.domainExpert.findFirst({
-      where: { 
-        userId: session.user.id, 
-        domainId: investment.targetDomainId,
-        wing: investment.targetWing
-      }
+    const targetPresence = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: investment.targetDomainId }
     })
-
-    if (!proposerMembership && !targetMembership && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
-    }
 
     const affectedDomains = []
-    if (proposerMembership) affectedDomains.push(investment.proposerDomainId)
-    if (targetMembership) affectedDomains.push(investment.targetDomainId)
-
-    // If user is ADMIN and not a member of any affected domain, allow voting for both (Super Admin Override)
-    // But if they are a member of one, they only vote for that one.
+    
     if (session.user.role === 'ADMIN') {
-      // If admin is also a member, respect their membership first
-      if (affectedDomains.length === 0) {
-        // Pure admin (not a member of either): Vote for BOTH by default
-        affectedDomains.push(investment.proposerDomainId)
-        affectedDomains.push(investment.targetDomainId)
-      } else {
-        // Admin is a member of at least one side.
-        // Do NOT auto-add the other side.
-        // The loop below will only register votes for the domains they are explicitly a member of.
-      }
-    } else if (affectedDomains.length === 0) {
-       // Should be caught by the earlier 403 check, but safe guard
-       return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
+        // ADMIN LOGIC:
+        // If present in a domain, they vote for that domain (Cross-wing allowed for Admin)
+        if (proposerPresence) affectedDomains.push(investment.proposerDomainId)
+        if (targetPresence) affectedDomains.push(investment.targetDomainId)
+
+        // If not present in ANY of them, they are a Super Admin (External Arbiter) -> Vote for BOTH
+        if (!proposerPresence && !targetPresence) {
+            affectedDomains.push(investment.proposerDomainId)
+            affectedDomains.push(investment.targetDomainId)
+        }
+    } else {
+        // STANDARD USER LOGIC:
+        // Must have STRICT wing membership
+        const proposerStrict = await prisma.domainExpert.findFirst({
+            where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
+        })
+        const targetStrict = await prisma.domainExpert.findFirst({
+            where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
+        })
+
+        if (proposerStrict) affectedDomains.push(investment.proposerDomainId)
+        if (targetStrict) affectedDomains.push(investment.targetDomainId)
+        
+        if (affectedDomains.length === 0) {
+            return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
+        }
     }
 
     // Record votes
     for (const dId of affectedDomains) {
       // Determine which wing we are voting for in this domain
-      // If dId is proposerDomainId, we are voting for proposerWing
-      // If dId is targetDomainId, we are voting for targetWing
-      
-      // Safety check: prevent voting if not actually a member (unless pure admin override active)
-      if (session.user.role === 'ADMIN' && affectedDomains.length > 0 && !proposerMembership && !targetMembership) {
-          // This is the "Pure Admin" case where we added both domains manually above
-          // Allow
-      } else {
-          // Verify membership for this specific domain/wing pair to be extra safe
-          // (Though affectedDomains construction already filtered this mostly)
-          if (dId === investment.proposerDomainId && !proposerMembership && session.user.role !== 'ADMIN') continue;
-          if (dId === investment.targetDomainId && !targetMembership && session.user.role !== 'ADMIN') continue;
-      }
+      // ... logic handled by upsert using investmentId + domainId
 
       await prisma.domainInvestmentVote.upsert({
         where: {
