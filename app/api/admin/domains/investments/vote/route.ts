@@ -46,17 +46,35 @@ export async function POST(req: NextRequest) {
     const affectedDomains = []
     
     if (session.user.role === 'ADMIN') {
-        // ADMIN LOGIC:
-        // If present in a domain, they vote for that domain (Cross-wing allowed for Admin)
-        if (proposerPresence) affectedDomains.push(investment.proposerDomainId)
-        if (targetPresence) affectedDomains.push(investment.targetDomainId)
+         // ADMIN LOGIC:
+         // If Admin is a member of a domain, they are bound by that domain's internal rules (Wings).
+         // If Admin is NOT a member of a domain, they act as an External Arbiter (Super Admin) for that domain.
 
-        // If not present in ANY of them, they are a Super Admin (External Arbiter) -> Vote for BOTH
-        if (!proposerPresence && !targetPresence) {
-            affectedDomains.push(investment.proposerDomainId)
-            affectedDomains.push(investment.targetDomainId)
-        }
-    } else {
+         // 1. Proposer Domain Logic
+         if (proposerPresence) {
+             // Admin is "Internal" to this domain. Must have correct wing membership.
+             const isStrictMember = await prisma.domainExpert.findFirst({
+                 where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
+             })
+             if (isStrictMember) affectedDomains.push(investment.proposerDomainId)
+         } else {
+             // Admin is "External" to this domain. Has full power.
+             affectedDomains.push(investment.proposerDomainId)
+         }
+
+         // 2. Target Domain Logic
+         if (targetPresence) {
+             // Admin is "Internal" to this domain. Must have correct wing membership.
+             const isStrictMember = await prisma.domainExpert.findFirst({
+                 where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
+             })
+             if (isStrictMember) affectedDomains.push(investment.targetDomainId)
+         } else {
+             // Admin is "External" to this domain. Has full power.
+             affectedDomains.push(investment.targetDomainId)
+         }
+
+     } else {
         // STANDARD USER LOGIC:
         // Must have STRICT wing membership
         const proposerStrict = await prisma.domainExpert.findFirst({
