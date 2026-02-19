@@ -33,63 +33,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investment is no longer pending' }, { status: 400 })
     }
 
-    // Check general presence in domain (ignoring wing) to scope admin power
-    // This helps determine if an Admin is "part of the conflict" or an "external arbiter"
-    const proposerPresence = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.proposerDomainId }
+    // Check strict membership (Wing-specific)
+    // Even ADMINS are restricted to their actual domain/wing membership for voting.
+    const proposerStrict = await prisma.domainExpert.findFirst({
+        where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
     })
-
-    const targetPresence = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.targetDomainId }
+    
+    const targetStrict = await prisma.domainExpert.findFirst({
+        where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
     })
 
     const affectedDomains = []
+    if (proposerStrict) affectedDomains.push(investment.proposerDomainId)
+    if (targetStrict) affectedDomains.push(investment.targetDomainId)
     
-    if (session.user.role === 'ADMIN') {
-         // ADMIN LOGIC:
-         // If Admin is a member of a domain, they are bound by that domain's internal rules (Wings).
-         // If Admin is NOT a member of a domain, they act as an External Arbiter (Super Admin) for that domain.
-
-         // 1. Proposer Domain Logic
-         if (proposerPresence) {
-             // Admin is "Internal" to this domain. Must have correct wing membership.
-             const isStrictMember = await prisma.domainExpert.findFirst({
-                 where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
-             })
-             if (isStrictMember) affectedDomains.push(investment.proposerDomainId)
-         } else {
-             // Admin is "External" to this domain. Has full power.
-             affectedDomains.push(investment.proposerDomainId)
-         }
-
-         // 2. Target Domain Logic
-         if (targetPresence) {
-             // Admin is "Internal" to this domain. Must have correct wing membership.
-             const isStrictMember = await prisma.domainExpert.findFirst({
-                 where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
-             })
-             if (isStrictMember) affectedDomains.push(investment.targetDomainId)
-         } else {
-             // Admin is "External" to this domain. Has full power.
-             affectedDomains.push(investment.targetDomainId)
-         }
-
-     } else {
-        // STANDARD USER LOGIC:
-        // Must have STRICT wing membership
-        const proposerStrict = await prisma.domainExpert.findFirst({
-            where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
-        })
-        const targetStrict = await prisma.domainExpert.findFirst({
-            where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
-        })
-
-        if (proposerStrict) affectedDomains.push(investment.proposerDomainId)
-        if (targetStrict) affectedDomains.push(investment.targetDomainId)
-        
-        if (affectedDomains.length === 0) {
-            return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
-        }
+    if (affectedDomains.length === 0) {
+        // If user has no valid membership in the affected wings, they cannot vote.
+        // This applies to everyone, including Global Admins.
+        return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
     }
 
     // Record votes

@@ -158,17 +158,16 @@ export async function GET(req: NextRequest) {
       const targetTotal = targetExperts.length
 
       // Filter votes: Only count votes from current experts
-      // If no experts exist, we might count admin votes (fallback), so we keep them all
-      // But if experts exist, we strictly filter, but always allow ADMIN votes.
+      // This applies to everyone, including Admins.
       
       let proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
       if (proposerTotal > 0) {
-        proposerVotes = proposerVotes.filter(v => proposerExpertIds.has(v.voterId) || v.voter.role === 'ADMIN')
+        proposerVotes = proposerVotes.filter(v => proposerExpertIds.has(v.voterId))
       }
 
       let targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
       if (targetTotal > 0) {
-        targetVotes = targetVotes.filter(v => targetExpertIds.has(v.voterId) || v.voter.role === 'ADMIN')
+        targetVotes = targetVotes.filter(v => targetExpertIds.has(v.voterId))
       }
 
       return {
