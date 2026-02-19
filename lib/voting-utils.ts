@@ -22,6 +22,8 @@ export interface VotingShare {
  */
 export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'LEFT'): Promise<VotingShare[]> {
   // 1. Calculate shares from active investments first (Dynamic)
+  // NOTE: Investments affect BOTH Right and Left wing elections of the Domain (Total Power)
+  // unless we decide otherwise. For now, we assume "Voting Power" is universal.
   const investments = await prisma.domainInvestment.findMany({
     where: {
       OR: [
@@ -40,10 +42,6 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
   const calculatedShares: VotingShare[] = []
 
   for (const inv of investments) {
-    // Determine which share value to use based on the relationship
-    // Investments affect BOTH Right and Left wing elections of the Domain (Total Power)
-    // unless we decide otherwise. For now, we assume "Voting Power" is universal.
-    
     // Case 1: We are the Target (Receiver). Proposer invested in us.
     // Proposer gets `percentageInvested` of our power.
     if (inv.targetDomainId === domainId) {
@@ -60,23 +58,6 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     
     // Case 2: We are the Proposer (Giver). Target returns power to us.
     // Target gets `percentageReturn` of our power.
-    // Wait. `percentageReturn` is "Percentage of Target's power given to Proposer".
-    // It means Proposer gets power IN Target.
-    // It does NOT mean Target gets power in Proposer.
-    // So if we are the Proposer (inv.proposerDomainId === domainId),
-    // does this investment reduce OUR voting power?
-    // User said: "Social Sciences Right team can give 20% of Social Sciences shares to Philosophy".
-    // This implies Social Sciences (Proposer?) gives to Philosophy (Target?).
-    // If Social Sciences gives 20% OF ITSELF, then Social Sciences is the "Target" of the power distribution?
-    // But usually Proposer initiates.
-    // If Social Sciences says "I want to give you 20% of me", Social Sciences is Proposer of the transaction.
-    // But in the Investment Model:
-    // `percentageInvested` = Proposer's power given to Target?
-    // OR Proposer's Money given for Target's Equity?
-    
-    // Let's rely on the schema comments which seemed to align with user description:
-    // "Percentage of Proposer's power given to Target"
-    // So if I am Proposer, I am giving away my power. Target GETS my power.
     else if (inv.proposerDomainId === domainId) {
       if (inv.percentageInvested > 0) {
         calculatedShares.push({
@@ -88,39 +69,9 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
         totalExternalShare += inv.percentageInvested
       }
     }
-    // Note: `percentageReturn` is irrelevant for calculating *Proposer's* voting distribution
-    // because `percentageReturn` is about Target giving power back to Proposer.
-    // So `percentageReturn` affects *Target's* voting distribution (Case 1 above).
-    // Wait, in Case 1 (We are Target), Proposer gets `percentageInvested`?
-    // NO.
-    // If `percentageInvested` is "Proposer's power given to Target", then:
-    // Proposer (Giver) -> Target (Receiver).
-    // Proposer LOSES power. Target GAINS power in Proposer.
-    
-    // Let's re-read User: "Right team... can give... to Philosophy Left team".
-    // This implies Transfer of Power.
-    // If A gives to B. B has power in A.
-    
-    // So:
-    // If I am A (Proposer): I give `percentageInvested` to B.
-    // B (Target) owns `percentageInvested` of ME.
-    // So when calculating SHARES OF A:
-    // Include B as owner.
-    
-    // If I am B (Target): A gives `percentageInvested` to me.
-    // I own shares in A. This doesn't affect SHARES OF B.
-    // UNLESS `percentageReturn` exists.
-    // `percentageReturn`: "Percentage of Target's power given to Proposer".
-    // So B gives `percentageReturn` to A.
-    // A (Proposer) owns `percentageReturn` of B.
-    // So when calculating SHARES OF B:
-    // Include A as owner.
   }
 
   // Deduplicate shares (in case multiple investments exist between same pair)
-  // (Simplified for now, assuming unique pair logic or additive)
-  // Ideally we should sum up if multiple entries exist for same owner/wing.
-  
   const aggregatedShares: VotingShare[] = []
   for (const share of calculatedShares) {
     const existing = aggregatedShares.find(s => s.ownerDomainId === share.ownerDomainId && s.ownerWing === share.ownerWing)
@@ -144,7 +95,6 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     })
     
     if (domain) {
-      // Check if Self-Right is already in aggregatedShares (unlikely but possible if circular?)
       const existingSelf = aggregatedShares.find(s => s.ownerDomainId === domain.id && s.ownerWing === 'RIGHT')
       if (existingSelf) {
         existingSelf.percentage += remainingShare
@@ -168,46 +118,107 @@ export async function calculateUserVotingWeight(
   mode: string = 'STANDARD',
   options?: { targetWing?: string }
 ): Promise<number> {
+  // 1. CANDIDACY MODE (Voting for a Candidate)
   if (mode === 'CANDIDACY') {
-     const targetWing = options?.targetWing || 'RIGHT'
-     // Shares for the ELECTION (targetWing)
-     const shares = await getDomainVotingShares(domainId, targetWing as 'RIGHT' | 'LEFT')
+     const targetWing = (options?.targetWing || 'RIGHT').toUpperCase()
      
-     console.log(`[DEBUG] calculateUserVotingWeight userId=${userId} domainId=${domainId} targetWing=${targetWing}`)
-     console.log(`[DEBUG] shares:`, JSON.stringify(shares, null, 2))
+     // Fetch Domain Relations (Parent/Children) to determine Eligibility
+     const domain = await prisma.domain.findUnique({
+       where: { id: domainId },
+       include: {
+         parent: { select: { id: true, name: true } },
+         children: { select: { id: true, name: true } }
+       }
+     })
 
+     if (!domain) return 0
+
+     // Fetch Universal Shares of the Domain
+     // (We ask for 'RIGHT' but the function currently returns all shares regardless of wing arg, 
+     //  checking both Right and Left investors)
+     const shares = await getDomainVotingShares(domainId, 'RIGHT')
+     
+     // Determine Eligible Voter Groups based on Governance Rules
+     let eligibleGroups: { domainId: string, wing: string }[] = []
+
+     if (targetWing === 'RIGHT') {
+       // RULE: Election of RIGHT Team
+       if (!domain.parent) {
+         // ROOT EXCEPTION: Root Domain's Right Team is self-appointed (or votes for itself)
+         // We allow Self-Right to vote.
+         eligibleGroups.push({ domainId: domainId, wing: 'RIGHT' })
+       } else {
+         // SUB-DOMAINS: Competition between Direct Parent Right & Direct Parent Left
+         eligibleGroups.push({ domainId: domain.parent.id, wing: 'RIGHT' })
+         eligibleGroups.push({ domainId: domain.parent.id, wing: 'LEFT' })
+       }
+     } else {
+       // RULE: Election of LEFT Team
+       // Competition between Self Right & Direct Children Right
+       // Note: Even for Root Domain, Left Team is elected by Self Right + Children Right
+       eligibleGroups.push({ domainId: domainId, wing: 'RIGHT' })
+       
+       if (domain.children && domain.children.length > 0) {
+         for (const child of domain.children) {
+           eligibleGroups.push({ domainId: child.id, wing: 'RIGHT' })
+         }
+       }
+     }
+
+     // Calculate Max Weight for User based on Eligible Groups
      let maxWeight = 0
+     
+     // Determine total percentage owned by ALL Eligible Groups (for relative weighting)
+     // This is the Denominator for calculating Relative Power.
+     let totalEligibleSharePercentage = 0
+     
+     // We need to fetch the share percentage for ALL eligible groups, not just the user's.
+     for (const group of eligibleGroups) {
+        const groupShare = shares.find(s => 
+           s.ownerDomainId === group.domainId && 
+           (s.ownerWing || '').toUpperCase() === group.wing
+        )
+        if (groupShare) {
+          totalEligibleSharePercentage += groupShare.percentage
+        }
+     }
+     
+     // Prevent division by zero
+     if (totalEligibleSharePercentage === 0) totalEligibleSharePercentage = 1
+
+     // Get User's Expert Positions
      const userExperts = await prisma.domainExpert.findMany({
        where: { userId },
        select: { domainId: true, wing: true }
      })
-     console.log(`[DEBUG] userExperts:`, JSON.stringify(userExperts, null, 2))
      
      for (const exp of userExperts) {
        const expWing = (exp.wing || '').toUpperCase()
        const expDomainId = exp.domainId
        
-       console.log(`[DEBUG] Checking expert domain=${expDomainId} wing=${expWing}`)
+       // Check if this Expert position is Eligible to vote
+       const isEligible = eligibleGroups.some(g => g.domainId === expDomainId && g.wing === expWing)
        
-       const share = shares.find(s => {
-         const shareDomainId = s.ownerDomainId
-         const shareWing = (s.ownerWing || '').toUpperCase()
-         const match = shareDomainId === expDomainId && shareWing === expWing
-         if (match) {
-            console.log(`[DEBUG] Found matching share! shareDomainId=${shareDomainId} shareWing=${shareWing} percentage=${s.percentage}`)
+       if (isEligible) {
+         // Find the Share owned by this Eligible Group
+         const share = shares.find(s => 
+           s.ownerDomainId === expDomainId && 
+           (s.ownerWing || '').toUpperCase() === expWing
+         )
+         
+         if (share) {
+           // Calculate RELATIVE WEIGHT
+           // Formula: (Group's Share / Total Eligible Share) * 100
+           const relativeWeight = (share.percentage / totalEligibleSharePercentage) * 100
+           maxWeight = Math.max(maxWeight, relativeWeight)
          }
-         return match
-       })
-       
-       if (share) {
-         console.log(`[DEBUG] Match confirmed. Adding weight: ${share.percentage}`)
-         maxWeight = Math.max(maxWeight, share.percentage)
        }
      }
-     console.log(`[DEBUG] Result maxWeight=${maxWeight}`)
+     
      return maxWeight
   }
 
+  // 2. STANDARD MODE (Expert Check)
   if (mode !== 'STRATEGIC' && mode !== 'DIRECT') {
     const isExpert = await prisma.domainExpert.findFirst({
       where: { userId, domainId }
@@ -215,8 +226,9 @@ export async function calculateUserVotingWeight(
     return isExpert ? 1 : 0
   }
 
-  // STRATEGIC/DIRECT (Content/Proposal Voting)
-  // Uses RIGHT wing shares (Experts)
+  // 3. STRATEGIC/DIRECT MODE (Content/Proposal Voting)
+  // Uses RIGHT wing shares (Experts) by default, or specific logic if needed.
+  // Currently assuming Content Voting uses the Domain's Right Wing Logic (Self-Governance).
   const shares = await getDomainVotingShares(domainId, 'RIGHT')
   let maxWeight = 0
   
