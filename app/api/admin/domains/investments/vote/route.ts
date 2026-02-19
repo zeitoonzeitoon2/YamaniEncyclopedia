@@ -60,13 +60,39 @@ export async function POST(req: NextRequest) {
 
     // If user is ADMIN and not a member of any affected domain, allow voting for both (Super Admin Override)
     // But if they are a member of one, they only vote for that one.
-    if (session.user.role === 'ADMIN' && affectedDomains.length === 0) {
-      affectedDomains.push(investment.proposerDomainId)
-      affectedDomains.push(investment.targetDomainId)
+    if (session.user.role === 'ADMIN') {
+      // If admin is also a member, respect their membership first
+      if (affectedDomains.length === 0) {
+        // Pure admin (not a member of either): Vote for BOTH by default
+        affectedDomains.push(investment.proposerDomainId)
+        affectedDomains.push(investment.targetDomainId)
+      } else {
+        // Admin is a member of at least one side.
+        // Do NOT auto-add the other side.
+        // The loop below will only register votes for the domains they are explicitly a member of.
+      }
+    } else if (affectedDomains.length === 0) {
+       // Should be caught by the earlier 403 check, but safe guard
+       return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
     }
 
     // Record votes
     for (const dId of affectedDomains) {
+      // Determine which wing we are voting for in this domain
+      // If dId is proposerDomainId, we are voting for proposerWing
+      // If dId is targetDomainId, we are voting for targetWing
+      
+      // Safety check: prevent voting if not actually a member (unless pure admin override active)
+      if (session.user.role === 'ADMIN' && affectedDomains.length > 0 && !proposerMembership && !targetMembership) {
+          // This is the "Pure Admin" case where we added both domains manually above
+          // Allow
+      } else {
+          // Verify membership for this specific domain/wing pair to be extra safe
+          // (Though affectedDomains construction already filtered this mostly)
+          if (dId === investment.proposerDomainId && !proposerMembership && session.user.role !== 'ADMIN') continue;
+          if (dId === investment.targetDomainId && !targetMembership && session.user.role !== 'ADMIN') continue;
+      }
+
       await prisma.domainInvestmentVote.upsert({
         where: {
           investmentId_voterId_domainId: {
@@ -93,7 +119,6 @@ export async function POST(req: NextRequest) {
           wing: wing
         } 
       })
-      const totalPoints = experts.length // 1 person 1 vote
       
       const votes = await prisma.domainInvestmentVote.findMany({
         where: { investmentId, domainId }
@@ -103,6 +128,19 @@ export async function POST(req: NextRequest) {
       
       let approvedPoints = 0
       let rejectedPoints = 0
+      let totalPoints = experts.length
+
+      // If no experts exist, and user is admin, their vote should count as 1/1
+      // But only if they actually voted
+      if (experts.length === 0) {
+        const adminVotes = votes.filter(v => v.voterId === session.user.id) // Assuming current user is the admin
+        if (adminVotes.length > 0) {
+           totalPoints = 1
+           if (adminVotes[0].vote === 'APPROVE') approvedPoints = 1
+           if (adminVotes[0].vote === 'REJECT') rejectedPoints = 1
+        }
+        return { totalPoints, approvedPoints, rejectedPoints }
+      }
       
       for (const v of votes) {
         if (expertIds.has(v.voterId)) {
