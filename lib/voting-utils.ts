@@ -21,16 +21,17 @@ export interface VotingShare {
  * 3. The remaining share (100 - totalExternal) belongs to the domain itself.
  */
 export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'LEFT'): Promise<VotingShare[]> {
-  // 1. Calculate shares from active investments first (Dynamic)
-  // NOTE: Investments affect BOTH Right and Left wing elections of the Domain (Total Power)
-  // unless we decide otherwise. For now, we assume "Voting Power" is universal.
+  // 1. Calculate shares from investments (Dynamic)
+  // Status Logic:
+  // - ACTIVE: Proposer gives power to Target (percentageInvested). Return is not yet realized.
+  // - COMPLETED/RETURNED: Principal is returned. Proposer gets profit (percentageReturn) from Target.
   const investments = await prisma.domainInvestment.findMany({
     where: {
       OR: [
         { targetDomainId: domainId },
         { proposerDomainId: domainId }
       ],
-      status: 'ACTIVE'
+      status: { in: ['ACTIVE', 'COMPLETED', 'RETURNED'] }
     },
     include: {
       proposerDomain: { select: { id: true, name: true } },
@@ -43,11 +44,10 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
 
   for (const inv of investments) {
     // Case 1: We are the Target (Receiver). Proposer invested in us.
-    // Proposer gives THEIR power to US. We do NOT give our power to them.
-    // UNLESS there is a percentageReturn (Interest) involved.
-    // So Proposer only gets `percentageReturn` of our power.
+    // - ACTIVE: We don't give power to Proposer yet.
+    // - COMPLETED: We give `percentageReturn` (Profit) to Proposer.
     if (inv.targetDomainId === domainId) {
-      if (inv.percentageReturn > 0) {
+      if ((inv.status === 'COMPLETED' || inv.status === 'RETURNED') && inv.percentageReturn > 0) {
         calculatedShares.push({
           ownerDomainId: inv.proposerDomainId,
           ownerWing: inv.proposerWing, // The wing that invested gets the return power
@@ -59,9 +59,10 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     }
     
     // Case 2: We are the Proposer (Giver). We invested in Target.
-    // We give OUR power to Target. Target gets `percentageInvested` of our power.
+    // - ACTIVE: We give `percentageInvested` of OUR power to Target.
+    // - COMPLETED: We get our power back (so Target has 0 share of us).
     else if (inv.proposerDomainId === domainId) {
-      if (inv.percentageInvested > 0) {
+      if (inv.status === 'ACTIVE' && inv.percentageInvested > 0) {
         calculatedShares.push({
           ownerDomainId: inv.targetDomainId,
           ownerWing: inv.targetWing, // Target gets the power
