@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart, ArrowLeftRight } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainPortfolio from '@/components/DomainPortfolio'
@@ -164,6 +164,9 @@ export default function AdminDashboard() {
   const [roots, setRoots] = useState<DomainNode[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
+
+  // Layout state: 'default' (2/3 left, 1/3 right), 'tree-expanded' (1/3 left, 2/3 right), 'equal' (1/2 left, 1/2 right)
+  const [layoutMode, setLayoutMode] = useState<'default' | 'tree-expanded' | 'equal'>('default')
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [addParentId, setAddParentId] = useState<string | null>(null)
@@ -1127,6 +1130,29 @@ export default function AdminDashboard() {
     )
   }
 
+  const getLayoutClasses = () => {
+    switch (layoutMode) {
+      case 'tree-expanded':
+        // Tree is big (Right in RTL)
+        // RTL: Col 1 (Right/Tree) = 2fr, Col 2 (Left/Details) = 1fr
+        return 'lg:grid-cols-[2fr_1fr]'
+      case 'equal':
+        return 'lg:grid-cols-2'
+      default:
+        // Tree is small (Right in RTL)
+        // RTL: Col 1 (Right/Tree) = 1fr, Col 2 (Left/Details) = 2fr
+        return 'lg:grid-cols-[1fr_2fr]'
+    }
+  }
+
+  const toggleLayout = () => {
+    setLayoutMode(current => {
+      if (current === 'default') return 'equal'
+      if (current === 'equal') return 'tree-expanded'
+      return 'default'
+    })
+  }
+
   if (status === 'loading' || (loadingDomains && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
@@ -1215,10 +1241,19 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
+        <div className={`grid grid-cols-1 ${getLayoutClasses()} gap-6 transition-all duration-300 ease-in-out`}>
+          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24">
+            <div className="flex items-center justify-between mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
+                <button 
+                  onClick={toggleLayout}
+                  className="p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                  title="تغییر اندازه پنل‌ها"
+                >
+                  <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
+                </button>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -1236,27 +1271,38 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
-
-            {roots.length === 0 ? (
-              <div className="text-site-muted">{t('noDomainsYet')}</div>
-            ) : (
-              <div className="space-y-2">
-                {roots.map((r) => (
-                  <DomainRow key={r.id} node={r} depth={0} />
-                ))}
-              </div>
-            )}
+            
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
+              {roots.length === 0 ? (
+                <div className="text-site-muted">{t('noDomainsYet')}</div>
+              ) : (
+                <div className="space-y-2">
+                  {roots.map((r) => (
+                    <DomainRow key={r.id} node={r} depth={0} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="card">
+          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24">
             {!selectedDomain ? (
-              <div className="text-site-muted">{t('selectDomainPrompt')}</div>
+              <div className="text-site-muted h-full flex items-center justify-center">{t('selectDomainPrompt')}</div>
             ) : (
-              <div className="space-y-6">
+              <div className="flex-1 overflow-y-auto pr-2 -mr-2 custom-scrollbar space-y-6">
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
+                        <button 
+                          onClick={toggleLayout}
+                          className="p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                          title="تغییر اندازه پنل‌ها"
+                        >
+                          <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
+                        </button>
+                      </div>
                       <div className="text-xs text-site-muted mt-1">
                         {t('slugLabel')}: {selectedDomain.slug}
                       </div>
