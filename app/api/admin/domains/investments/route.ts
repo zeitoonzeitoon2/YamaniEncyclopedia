@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate, proposerWing = 'RIGHT', targetWing = 'RIGHT' } = await req.json()
+    const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate, proposerWing = 'RIGHT', targetWing = 'RIGHT', investedDomainId } = await req.json()
 
     if (!proposerDomainId || !targetDomainId || percentageInvested === undefined || percentageReturn === undefined || !endDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -51,46 +51,126 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `You must be an expert in the ${proposerWing} wing of the proposer domain OR the ${targetWing} wing of the target domain` }, { status: 403 })
     }
 
-    // Check if proposer domain (wing) owns enough percentage to give (invest)
-    // We check their permanent shares (Internal Share of that Wing). 
-    const proposerOwnShare = await prisma.domainVotingShare.findFirst({
-      where: {
-        domainId: proposerDomainId,
-        domainWing: proposerWing,
-        ownerDomainId: proposerDomainId,
-        ownerWing: proposerWing
-      }
-    })
+    // Identify the currency domain (whose shares are being moved)
+    // If investedDomainId is not provided, it defaults to the proposer's own shares
+    const currencyDomainId = investedDomainId || proposerDomainId
 
-    const currentPermanentPercentage = proposerOwnShare ? proposerOwnShare.percentage : (proposerWing === 'RIGHT' ? 100 : 0)
-    
-    // Also consider existing ACTIVE investments where this wing is already giving power
-    const existingOutbound = await prisma.domainInvestment.aggregate({
-      where: { 
-        proposerDomainId, 
-        proposerWing,
-        status: 'ACTIVE' 
-      },
-      _sum: { percentageInvested: true }
-    })
+    // 1. Calculate Initial Base Balance (from Permanent Shares)
+    // Only applies if we are investing our OWN shares
+    let currentBalance = 0
+    if (currencyDomainId === proposerDomainId) {
+      const proposerOwnShare = await prisma.domainVotingShare.findFirst({
+        where: {
+          domainId: proposerDomainId,
+          domainWing: proposerWing,
+          ownerDomainId: proposerDomainId,
+          ownerWing: proposerWing
+        }
+      })
+      currentBalance = proposerOwnShare ? proposerOwnShare.percentage : (proposerWing === 'RIGHT' ? 100 : 0)
+    }
 
-    // And existing ACTIVE investments where this wing is promising returns (Target=Self, TargetWing=SelfWing)
-    // Because if we promised to return power, we shouldn't invest it elsewhere? 
-    // Usually Return is a future obligation. But "percentageInvested" is immediate transfer.
-    // Let's count promised returns as "Reserved" if we want to be safe.
-    const promisedReturns = await prisma.domainInvestment.aggregate({
+    // 2. Fetch Active Investments affecting the balance
+    // Incoming: Proposer RECEIVED currency shares (Target=Proposer, TargetWing=SpendingWing, Invested=Currency)
+    const incoming = await prisma.domainInvestment.findMany({
       where: {
         targetDomainId: proposerDomainId,
         targetWing: proposerWing,
-        status: 'ACTIVE'
-      },
-      _sum: { percentageReturn: true }
+        status: 'ACTIVE',
+        OR: [
+          { investedDomainId: currencyDomainId },
+          { investedDomainId: null, proposerDomainId: currencyDomainId }
+        ]
+      }
     })
-    
-    const availablePercentage = currentPermanentPercentage - (existingOutbound._sum.percentageInvested || 0) - (promisedReturns._sum.percentageReturn || 0)
 
-    if (availablePercentage < percentageInvested) {
-      return NextResponse.json({ error: `Proposer domain (${proposerWing}) does not have enough available voting power to invest` }, { status: 400 })
+    // Outgoing: Proposer GAVE currency shares (Proposer=Proposer, ProposerWing=SpendingWing, Invested=Currency)
+    const outgoing = await prisma.domainInvestment.findMany({
+      where: {
+        proposerDomainId: proposerDomainId,
+        proposerWing: proposerWing,
+        status: 'ACTIVE',
+        OR: [
+          { investedDomainId: currencyDomainId },
+          { investedDomainId: null, proposerDomainId: currencyDomainId }
+        ]
+      }
+    })
+
+    // Dividend Obligations: Proposer OWES currency shares as return (Target=Proposer, TargetWing=SpendingWing)
+    // This only applies if currency is Proposer's own shares (since dividends are paid in own shares)
+    let dividendObligations: any[] = []
+    if (currencyDomainId === proposerDomainId) {
+      dividendObligations = await prisma.domainInvestment.findMany({
+        where: {
+          targetDomainId: proposerDomainId,
+          targetWing: proposerWing,
+          percentageReturn: { gt: 0 },
+          status: 'ACTIVE'
+        }
+      })
+    }
+
+    // 3. Construct Timeline Events
+    // We only care about events in [Now, NewInvestmentEndDate]
+    // And specifically events that REDUCE balance (Expiry of Incoming, Due Date of Dividend).
+    // Events that INCREASE balance (Expiry of Outgoing) are also relevant as they replenish funds.
+    
+    interface TimelineEvent {
+      date: Date
+      change: number
+      type: string
+    }
+
+    const events: TimelineEvent[] = []
+    const newInvestmentEnd = new Date(endDate)
+
+    // Add Incoming (Positive Balance now, Negative at End)
+    incoming.forEach(inv => {
+      currentBalance += inv.percentageInvested
+      if (inv.endDate && inv.endDate <= newInvestmentEnd) {
+        events.push({ date: inv.endDate, change: -inv.percentageInvested, type: 'incoming_expiry' })
+      }
+    })
+
+    // Add Outgoing (Negative Balance now, Positive at End)
+    outgoing.forEach(inv => {
+      currentBalance -= inv.percentageInvested
+      if (inv.endDate && inv.endDate <= newInvestmentEnd) {
+        events.push({ date: inv.endDate, change: inv.percentageInvested, type: 'outgoing_expiry' })
+      }
+    })
+
+    // Add Dividends (Future Negative)
+    dividendObligations.forEach(inv => {
+      // Obligation is due at endDate
+      if (inv.endDate && inv.endDate <= newInvestmentEnd) {
+        events.push({ date: inv.endDate, change: -inv.percentageReturn, type: 'dividend_due' })
+      }
+    })
+
+    // Check Initial Balance (Current Status)
+    if (currentBalance < percentageInvested) {
+      return NextResponse.json({ 
+        error: `Insufficient current balance. Have ${currentBalance.toFixed(2)}%, need ${percentageInvested}%` 
+      }, { status: 400 })
+    }
+
+    // Sort events by date
+    events.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    // Simulate Timeline
+    let simulatedBalance = currentBalance - percentageInvested // Immediate deduction for new investment
+    
+    for (const event of events) {
+      simulatedBalance += event.change
+      // Allow small floating point error margin? 
+      // JavaScript float precision issues might cause 0 to be -0.00000001.
+      if (simulatedBalance < -0.00001) {
+         return NextResponse.json({ 
+           error: `Insufficient balance at ${event.date.toISOString().split('T')[0]}. Balance drops to ${simulatedBalance.toFixed(2)}% due to ${event.type}.` 
+         }, { status: 400 })
+      }
     }
 
     // Create the investment proposal
@@ -98,6 +178,7 @@ export async function POST(req: NextRequest) {
       data: {
         proposerDomainId,
         targetDomainId,
+        investedDomainId: currencyDomainId === proposerDomainId ? null : currencyDomainId, // Store explicit ID only if not own
         percentageInvested,
         percentageReturn,
         proposerWing,

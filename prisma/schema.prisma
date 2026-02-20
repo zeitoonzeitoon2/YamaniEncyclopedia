@@ -34,6 +34,7 @@ model Domain {
   ownedShares       DomainVotingShare[] @relation("OwnedShares")
   proposedInvestments DomainInvestment[] @relation("ProposedInvestments")
   receivedInvestments DomainInvestment[] @relation("ReceivedInvestments")
+  investedInvestments DomainInvestment[] @relation("InvestedInvestments")
   targetedProposals DomainProposal[] @relation("TargetedProposals")
   exchangeProposalsProposed DomainExchangeProposal[] @relation("ProposedExchanges")
   exchangeProposalsReceived DomainExchangeProposal[] @relation("ReceivedExchanges")
@@ -638,6 +639,10 @@ model DomainInvestment {
   targetDomainId    String
   targetDomain      Domain   @relation("ReceivedInvestments", fields: [targetDomainId], references: [id])
   
+  // The domain currency being invested (usually proposerDomainId, but can be a third domain if re-investing)
+  investedDomainId  String?
+  investedDomain    Domain?  @relation("InvestedInvestments", fields: [investedDomainId], references: [id])
+
   // Which wing of the proposer is giving the power
   proposerWing      String   @default("RIGHT") // RIGHT or LEFT
   // Which wing of the target is receiving the power
