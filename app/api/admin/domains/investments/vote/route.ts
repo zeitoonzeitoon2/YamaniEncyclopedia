@@ -159,15 +159,16 @@ export async function POST(req: NextRequest) {
 
       // ACTIVATE INVESTMENT
       const startDate = new Date()
-      const endDate = new Date()
-      endDate.setFullYear(startDate.getFullYear() + investment.durationYears)
+      // We do NOT overwrite endDate here. We respect the endDate set during proposal creation.
+      // const endDate = new Date()
+      // endDate.setFullYear(startDate.getFullYear() + investment.durationYears)
 
       await prisma.domainInvestment.update({
         where: { id: investmentId },
         data: { 
           status: 'ACTIVE',
           startDate,
-          endDate
+          // endDate // Removed to keep original endDate
         }
       })
       return NextResponse.json({ status: 'ACTIVE' })
