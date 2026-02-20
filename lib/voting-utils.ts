@@ -43,21 +43,23 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
 
   for (const inv of investments) {
     // Case 1: We are the Target (Receiver). Proposer invested in us.
-    // Proposer gets `percentageInvested` of our power.
+    // Proposer gives THEIR power to US. We do NOT give our power to them.
+    // UNLESS there is a percentageReturn (Interest) involved.
+    // So Proposer only gets `percentageReturn` of our power.
     if (inv.targetDomainId === domainId) {
-      if (inv.percentageInvested > 0) {
+      if (inv.percentageReturn > 0) {
         calculatedShares.push({
           ownerDomainId: inv.proposerDomainId,
-          ownerWing: inv.proposerWing, // The wing that invested gets the power
-          percentage: inv.percentageInvested,
+          ownerWing: inv.proposerWing, // The wing that invested gets the return power
+          percentage: inv.percentageReturn,
           ownerDomain: inv.proposerDomain
         })
-        totalExternalShare += inv.percentageInvested
+        totalExternalShare += inv.percentageReturn
       }
     }
     
-    // Case 2: We are the Proposer (Giver). Target returns power to us.
-    // Target gets `percentageReturn` of our power.
+    // Case 2: We are the Proposer (Giver). We invested in Target.
+    // We give OUR power to Target. Target gets `percentageInvested` of our power.
     else if (inv.proposerDomainId === domainId) {
       if (inv.percentageInvested > 0) {
         calculatedShares.push({
