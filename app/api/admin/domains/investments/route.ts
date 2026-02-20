@@ -29,18 +29,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investments are only allowed between direct parent and child domains' }, { status: 403 })
     }
 
-    // Check if proposer is an expert in the proposer domain and specific wing
+    // Check if proposer is an expert in the proposer domain OR the target domain
     const membership = await prisma.domainExpert.findFirst({
       where: {
         userId: session.user.id,
-        domainId: proposerDomainId,
-        wing: proposerWing,
-        role: { in: ['HEAD', 'EXPERT'] }
+        role: { in: ['HEAD', 'EXPERT'] },
+        OR: [
+          {
+            domainId: proposerDomainId,
+            wing: proposerWing
+          },
+          {
+            domainId: targetDomainId,
+            wing: targetWing
+          }
+        ]
       }
     })
 
     if (!membership && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: `You must be an expert in the ${proposerWing} wing of the proposer domain` }, { status: 403 })
+      return NextResponse.json({ error: `You must be an expert in the ${proposerWing} wing of the proposer domain OR the ${targetWing} wing of the target domain` }, { status: 403 })
     }
 
     // Check if proposer domain (wing) owns enough percentage to give (invest)
