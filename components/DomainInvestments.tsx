@@ -404,8 +404,8 @@ export default function DomainInvestments() {
               <tr>
                 <th className="px-4 py-3 font-medium">{t('investment.proposer')}</th>
                 <th className="px-4 py-3 font-medium">{t('investment.target')}</th>
-                <th className="px-4 py-3 font-medium text-center">{t('investment.give')}</th>
-                <th className="px-4 py-3 font-medium text-center">{t('investment.receive')}</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.tableGive')}</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.tableReceive')}</th>
                 <th className="px-4 py-3 font-medium">{t('investment.endDate')}</th>
                 <th className="px-4 py-3 font-medium text-center">{t('investment.status')}</th>
               </tr>

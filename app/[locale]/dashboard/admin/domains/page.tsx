@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, PieChart } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, PieChart, LayoutTemplate, ArrowRightLeft, ArrowLeftRight } from 'lucide-react'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainElectionStatus from '@/components/DomainElectionStatus'
 
@@ -81,6 +81,9 @@ export default function AdminDomainsPage() {
   const [roots, setRoots] = useState<DomainNode[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
+  
+  // Layout state: 'default' (2/3 left, 1/3 right), 'tree-expanded' (1/3 left, 2/3 right), 'equal' (1/2 left, 1/2 right)
+  const [layoutMode, setLayoutMode] = useState<'default' | 'tree-expanded' | 'equal'>('default')
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [addParentId, setAddParentId] = useState<string | null>(null)
@@ -497,6 +500,27 @@ export default function AdminDomainsPage() {
     )
   }
 
+  const getLayoutClasses = () => {
+    switch (layoutMode) {
+      case 'tree-expanded': // Tree is big (Right in RTL)
+        // RTL: Col 1 (Right/Tree) = 2fr, Col 2 (Left/Details) = 1fr
+        return 'lg:grid-cols-[2fr_1fr]'
+      case 'equal':
+        return 'lg:grid-cols-2'
+      default: // Tree is small (Right in RTL)
+        // RTL: Col 1 (Right/Tree) = 1fr, Col 2 (Left/Details) = 2fr
+        return 'lg:grid-cols-[1fr_2fr]'
+    }
+  }
+
+  const toggleLayout = () => {
+    setLayoutMode(current => {
+      if (current === 'default') return 'equal'
+      if (current === 'equal') return 'tree-expanded'
+      return 'default'
+    })
+  }
+
   if (status === 'loading' || (loading && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
@@ -510,10 +534,53 @@ export default function AdminDomainsPage() {
       <main className="flex-1 container mx-auto px-4 py-8 relative z-0">
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-site-text heading">{t('treeTitle')}</h2>
+        <div className={`grid grid-cols-1 ${getLayoutClasses()} gap-6 transition-all duration-300 ease-in-out`}>
+          {/* Tree Section (Right in RTL, Left in LTR) - but flex-row-reverse handles it? No, grid handles it by order. 
+              In RTL, the first column is on the right. 
+              So if we want Tree on Right (RTL), it should be the first child if direction is RTL.
+              The current code has Tree as first child.
+              In LTR: Tree is Left.
+              In RTL: Tree is Right.
+              User wants Tree on Right.
+              If `dir="rtl"`, grid-cols-[2fr_1fr] means First Child gets 2fr, Second gets 1fr.
+              Wait, in RTL grid tracks are ordered right-to-left. 
+              So Column 1 is Right, Column 2 is Left.
+              
+              Current Code:
+              Child 1: Tree
+              Child 2: Details
+              
+              If grid-cols-[2fr_1fr] in RTL:
+              Right Col (Tree): 2fr
+              Left Col (Details): 1fr
+              
+              User wants: Details (Left) = 2/3, Tree (Right) = 1/3.
+              So Left Col should be larger.
+              In RTL:
+              Col 1 (Right): Tree -> Should be 1fr
+              Col 2 (Left): Details -> Should be 2fr
+              
+              So we need grid-cols-[1fr_2fr] for the DEFAULT case (Tree smaller).
+              
+              Let's re-check getLayoutClasses logic.
+              default (Tree small): 1fr (Tree) 2fr (Details).
+              equal: 1fr 1fr.
+              tree-expanded: 2fr (Tree) 1fr (Details).
+           */}
+          
+          {/* Tree Panel */}
+          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24">
+            <div className="flex items-center justify-between mb-4 shrink-0">
+              <h2 className="text-xl font-bold text-site-text heading flex items-center gap-2">
+                {t('treeTitle')}
+                <button 
+                  onClick={toggleLayout}
+                  className="p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                  title="تغییر اندازه پنل‌ها"
+                >
+                  <ArrowRightLeft size={16} className="text-site-muted hover:text-warm-primary" />
+                </button>
+              </h2>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -532,32 +599,43 @@ export default function AdminDomainsPage() {
               </div>
             </div>
 
-            {roots.length === 0 ? (
-              <div className="text-site-muted">{t('noDomains')}</div>
-            ) : (
-              <div className="space-y-2">
-                {roots.map((r) => (
-                  <DomainRow key={r.id} node={r} depth={0} />
-                ))}
-              </div>
-            )}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              {roots.length === 0 ? (
+                <div className="text-site-muted">{t('noDomains')}</div>
+              ) : (
+                <div className="space-y-2">
+                  {roots.map((r) => (
+                    <DomainRow key={r.id} node={r} depth={0} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="card">
+          <div className="card overflow-y-auto h-auto min-h-[calc(100vh-12rem)]">
             {!selectedDomain ? (
               <div className="text-site-muted">{t('selectDomain')}</div>
             ) : (
               <div className="space-y-6">
                 <div>
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
-                      <div className="text-xs text-site-muted mt-1">slug: {selectedDomain.slug}</div>
-                      {selectedDomain.description && (
-                        <div className="text-sm text-site-text mt-2 leading-6 whitespace-pre-wrap">
-                          {selectedDomain.description}
-                        </div>
-                      )}
+                    <div className="flex items-start gap-3">
+                      <button 
+                        onClick={toggleLayout}
+                        className="mt-1 p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                        title="تغییر اندازه پنل‌ها"
+                      >
+                        <ArrowLeftRight size={20} className="text-site-muted hover:text-warm-primary" />
+                      </button>
+                      <div>
+                        <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
+                        <div className="text-xs text-site-muted mt-1">slug: {selectedDomain.slug}</div>
+                        {selectedDomain.description && (
+                          <div className="text-sm text-site-text mt-2 leading-6 whitespace-pre-wrap">
+                            {selectedDomain.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {canManageSelectedDomainMembers && (
                       <button
