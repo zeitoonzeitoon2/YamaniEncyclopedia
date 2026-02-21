@@ -32,9 +32,10 @@ type TeamPortfolioCardProps = {
   teamName: string
   wing: string
   items: PortfolioItem[]
+  highlightedDomainId?: string
 }
 
-const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) => {
+const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
 
@@ -81,8 +82,13 @@ const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) =>
             // Let's cap at 100
             const height = Math.min(item.stats.effective, 100)
             
+            // Highlight logic
+            const isHighlighted = !highlightedDomainId || item.target.id === highlightedDomainId
+            const barOpacity = isHighlighted ? 1 : 0.2
+            const barFilter = isHighlighted ? 'none' : 'grayscale(100%)'
+
             return (
-              <div key={item.target.id} className="flex flex-col items-center gap-1 min-w-[50px] group relative">
+              <div key={item.target.id} className="flex flex-col items-center gap-1 min-w-[50px] group relative" style={{ opacity: barOpacity, filter: barFilter }}>
                 {/* Tooltip on hover */}
                 <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-site-bg border border-site-border p-2 rounded shadow-lg text-xs z-10 w-48 pointer-events-none">
                   <div className="font-bold mb-1">{item.target.name}</div>

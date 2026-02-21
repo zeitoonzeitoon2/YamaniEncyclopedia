@@ -59,6 +59,7 @@ export default function DomainPortfolio() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
   const [showLegend, setShowLegend] = useState(false)
+  const [highlightedAssetId, setHighlightedAssetId] = useState<string>('')
 
   const fetchData = useCallback(async () => {
     try {
@@ -160,27 +161,46 @@ export default function DomainPortfolio() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-2">{t('selectTeam')}</label>
-          <div className="relative">
-            <select
-              className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
-              value={selectedTeamKey}
-              onChange={(e) => setSelectedTeamKey(e.target.value)}
-            >
-              <option value="">{t('allMyTeamsLabel')}</option>
-              {myTeams.map(team => (
-                <option key={`${team.id}:${team.wing}`} value={`${team.id}:${team.wing}`}>
-                  {team.name} ({team.wing === 'RIGHT' ? tWings('right') : tWings('left')})
-                </option>
-              ))}
-              <optgroup label={t('allDomains')}>
-                {allDomains.map(d => (
-                  <option key={d.id} value={`${d.id}:RIGHT`}>{d.name} ({tWings('right')})</option>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('selectTeam')}</label>
+            <div className="relative">
+              <select
+                className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
+                value={selectedTeamKey}
+                onChange={(e) => setSelectedTeamKey(e.target.value)}
+              >
+                <option value="">{t('allMyTeamsLabel')}</option>
+                {myTeams.map(team => (
+                  <option key={`${team.id}:${team.wing}`} value={`${team.id}:${team.wing}`}>
+                    {team.name} ({team.wing === 'RIGHT' ? tWings('right') : tWings('left')})
+                  </option>
                 ))}
-              </optgroup>
-            </select>
-            <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none" />
+                <optgroup label={t('allDomains')}>
+                  {allDomains.map(d => (
+                    <option key={d.id} value={`${d.id}:RIGHT`}>{d.name} ({tWings('right')})</option>
+                  ))}
+                </optgroup>
+              </select>
+              <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('selectAsset')}</label>
+            <div className="relative">
+              <select
+                className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
+                value={highlightedAssetId}
+                onChange={(e) => setHighlightedAssetId(e.target.value)}
+              >
+                <option value="">{t('allAssets')}</option>
+                {allDomains.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none" />
+            </div>
           </div>
         </div>
 
@@ -254,6 +274,7 @@ export default function DomainPortfolio() {
                       teamName={teamName}
                       wing={wing}
                       items={items}
+                      highlightedDomainId={highlightedAssetId}
                     />
                   </div>
                 )
