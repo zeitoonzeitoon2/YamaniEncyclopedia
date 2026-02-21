@@ -211,7 +211,9 @@ export default function DomainPortfolio() {
   }, [teamPortfolio, selectedTeamKey, selectedTeam, selectedDomainName])
 
   if (loading && allDomains.length === 0) {
-    return <div className="p-8 text-center animate-pulse">...</div>
+    return (
+      <div className="p-8 text-center animate-pulse">...</div>
+    )
   }
 
   return (
@@ -267,6 +269,7 @@ export default function DomainPortfolio() {
             <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
           </div>
         </div>
+      </div>
       </div>
 
       {(selectedTeam || selectedTeamKey) && (
