@@ -206,13 +206,11 @@
       "portfolio": {
         "title": "پرتفوی دارایی‌های قدرت",
         "selectTeam": "انتخاب تیم (حوزه)",
-        "allMyTeams": "همه تیم‌های من",
+        "allMyTeamsLabel": "همه تیم‌های من",
         "loading": "در حال بارگذاری...",
         "myRole": "نقش من",
         "noHoldings": "هنوز هیچ دارایی یا تعهدی وجود ندارد.",
-        "legend": {
-          "title": "راهنمای رنگ‌ها"
-        },
+        "legendTitle": "راهنمای رنگ‌ها",
         "visualMap": "نقشه بصری جریان قدرت",
         "viewTable": "نمایش جدول",
         "viewVisual": "نمایش نمودار",

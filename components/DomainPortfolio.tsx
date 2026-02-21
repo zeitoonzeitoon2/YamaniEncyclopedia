@@ -165,7 +165,7 @@ export default function DomainPortfolio() {
               value={selectedTeamKey}
               onChange={(e) => setSelectedTeamKey(e.target.value)}
             >
-              <option value="">{t('allMyTeams') || 'All My Teams'}</option>
+              <option value="">{t('allMyTeamsLabel')}</option>
               {myTeams.map(team => (
                 <option key={`${team.id}:${team.wing}`} value={`${team.id}:${team.wing}`}>
                   {team.name} ({team.wing === 'RIGHT' ? tWings('right') : tWings('left')})
@@ -186,7 +186,7 @@ export default function DomainPortfolio() {
              <button
                onClick={() => setShowLegend(!showLegend)}
                className={`p-2 rounded border ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
-               title={t('legend.title') || 'Color Guide'}
+               title={t('legendTitle')}
              >
                <Info size={20} />
              </button>
@@ -212,7 +212,7 @@ export default function DomainPortfolio() {
         <div className="bg-site-secondary/10 border border-site-border rounded p-4 mb-8 animate-in fade-in slide-in-from-top-2">
           <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
             <Info size={16} />
-            {t('legend.title') || 'Color Guide'}
+            {t('legendTitle')}
           </h3>
           <div className="flex flex-wrap gap-4">
             {uniqueTargets.map(target => (
