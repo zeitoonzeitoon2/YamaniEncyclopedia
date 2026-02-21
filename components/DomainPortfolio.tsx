@@ -252,14 +252,14 @@ export default function DomainPortfolio() {
             >
               <option value="">{t('selectTeam')}...</option>
               {allDomains.map(d => (
-                <>
-                  <option key={`${d.id}:RIGHT`} value={`${d.id}:RIGHT`}>
+                <Fragment key={d.id}>
+                  <option value={`${d.id}:RIGHT`}>
                     {d.name} - {tWings('right')}
                   </option>
-                  <option key={`${d.id}:LEFT`} value={`${d.id}:LEFT`}>
+                  <option value={`${d.id}:LEFT`}>
                     {d.name} - {tWings('left')}
                   </option>
-                </>
+                </Fragment>
               ))}
             </select>
             <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
@@ -323,9 +323,8 @@ export default function DomainPortfolio() {
                         const isExpanded = expandedRows.has(key)
                         
                         return (
-                          <>
+                          <Fragment key={key}>
                             <tr 
-                              key={key} 
                               className={`transition-colors cursor-pointer ${isExpanded ? 'bg-site-secondary/30' : 'hover:bg-site-secondary/20'}`}
                               onClick={() => toggleRow(key)}
                             >
@@ -395,7 +394,7 @@ export default function DomainPortfolio() {
                                 </td>
                               </tr>
                             )}
-                          </>
+                          </Fragment>
                         )
                       })
                     )}
