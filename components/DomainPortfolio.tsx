@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network } from 'lucide-react'
@@ -210,7 +210,9 @@ export default function DomainPortfolio() {
     return { nodes, links }
   }, [teamPortfolio, selectedTeamKey, selectedTeam, selectedDomainName])
 
-  if (loading && allDomains.length === 0) return <div className="p-8 text-center animate-pulse">...</div>
+  if (loading && allDomains.length === 0) {
+    return <div className="p-8 text-center animate-pulse">...</div>
+  }
 
   return (
     <div className="space-y-8">
