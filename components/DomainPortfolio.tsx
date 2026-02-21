@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
-import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network, BarChart3 } from 'lucide-react'
-import TeamPortfolioCard from './TeamPortfolioCard'
+import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network, BarChart3, Info } from 'lucide-react'
+import TeamPortfolioCard, { stringToColor } from './TeamPortfolioCard'
 
 type PortfolioItem = {
   team: { id: string; name: string; wing: string }
@@ -58,6 +58,7 @@ export default function DomainPortfolio() {
   const [loading, setLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
+  const [showLegend, setShowLegend] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -139,6 +140,14 @@ export default function DomainPortfolio() {
     return grouped
   }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam])
 
+  const uniqueTargets = useMemo(() => {
+    const targets = new Map<string, string>()
+    filteredPortfolio.forEach(p => {
+      targets.set(p.target.id, p.target.name)
+    })
+    return Array.from(targets.entries()).map(([id, name]) => ({ id, name }))
+  }, [filteredPortfolio])
+
   if (loading && allDomains.length === 0) {
     return (
       <div className="p-8 text-center animate-pulse">...</div>
@@ -173,6 +182,15 @@ export default function DomainPortfolio() {
         </div>
 
         <div className="flex items-end gap-2">
+          {viewMode === 'cards' && (
+             <button
+               onClick={() => setShowLegend(!showLegend)}
+               className={`p-2 rounded border ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
+               title={t('legend.title') || 'Color Guide'}
+             >
+               <Info size={20} />
+             </button>
+           )}
            <button 
             onClick={() => setViewMode('cards')}
             className={`p-2 rounded border ${viewMode === 'cards' ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
@@ -189,6 +207,29 @@ export default function DomainPortfolio() {
           </button>
         </div>
       </div>
+
+      {showLegend && viewMode === 'cards' && (
+        <div className="bg-site-secondary/10 border border-site-border rounded p-4 mb-8 animate-in fade-in slide-in-from-top-2">
+          <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+            <Info size={16} />
+            {t('legend.title') || 'Color Guide'}
+          </h3>
+          <div className="flex flex-wrap gap-4">
+            {uniqueTargets.map(target => (
+              <div key={target.id} className="flex items-center gap-2 bg-site-bg/50 px-2 py-1 rounded border border-site-border/50">
+                <div 
+                  className="w-3 h-3 rounded-full shrink-0" 
+                  style={{ backgroundColor: stringToColor(target.id) }}
+                />
+                <span className="text-xs">{target.name}</span>
+              </div>
+            ))}
+            {uniqueTargets.length === 0 && (
+              <span className="text-xs text-site-muted">{t('noHoldings')}</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-20">{t('loading')}...</div>
