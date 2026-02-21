@@ -124,18 +124,19 @@ export default function DomainPortfolio() {
     const links: { source: number; target: number; value: number; type: string }[] = []
 
     // Helper to get or add node
-    const getNodeIndex = (id: string, wing: string, name: string, type: string) => {
-      const key = `${id}:${wing}`
+    // role: 'self' | 'upstream' (source) | 'downstream' (target)
+    const getNodeIndex = (id: string, wing: string, name: string, role: string) => {
+      const key = `${id}:${wing}:${role}`
       if (nodesMap.has(key)) return nodesMap.get(key)!
       
       const index = nodes.length
-      nodes.push({ name, type })
+      // Append role to name only for tooltip clarity if needed, or keep clean
+      nodes.push({ name, type: role })
       nodesMap.set(key, index)
       return index
     }
 
     // Add Self (Center)
-    // We need the self name. If selectedTeam is defined use it, otherwise use available info
     const selfName = selectedTeam?.name || selectedDomainName || 'Self'
     const selfId = selectedTeamKey.split(':')[0]
     const selfWing = selectedTeamKey.split(':')[1]
@@ -147,17 +148,18 @@ export default function DomainPortfolio() {
     teamPortfolio.forEach(item => {
       const targetKey = `${item.target.id}:${item.target.wing}`
       
-      // Skip Self row for node creation (it's already added or will be handled)
-      // But we need to check contracts in other rows
       if (targetKey === selectedTeamKey) return
 
-      const targetIndex = getNodeIndex(item.target.id, item.target.wing, item.target.name, 'target')
+      // We might need two nodes for the target: one if it's a source, one if it's a destination
+      // This prevents cycles (A -> B -> A) which break Sankey diagrams
+      const upstreamIndex = getNodeIndex(item.target.id, item.target.wing, item.target.name, 'upstream')
+      const downstreamIndex = getNodeIndex(item.target.id, item.target.wing, item.target.name, 'downstream')
 
       // 1. Permanent Ownership (Me -> Target)
       if (item.stats.permanent > 0) {
         links.push({
           source: selfIndex,
-          target: targetIndex,
+          target: downstreamIndex,
           value: item.stats.permanent,
           type: 'permanent'
         })
@@ -170,35 +172,35 @@ export default function DomainPortfolio() {
           if (c.percentageInvested > 0) {
             links.push({
               source: selfIndex,
-              target: targetIndex,
+              target: downstreamIndex,
               value: c.percentageInvested,
               type: 'active_given'
             })
           }
-          // Target -> Me (Claim/Return)
+          // Target -> Me (Claim/Return) - Incoming flow
           if (c.percentageReturn > 0) {
             links.push({
-              source: targetIndex,
+              source: upstreamIndex,
               target: selfIndex,
               value: c.percentageReturn,
               type: 'claim'
             })
           }
         } else {
-          // Target -> Me (Received)
+          // Target -> Me (Received) - Incoming flow
           if (c.percentageInvested > 0) {
             links.push({
-              source: targetIndex,
+              source: upstreamIndex,
               target: selfIndex,
               value: c.percentageInvested,
               type: 'active_received'
             })
           }
-          // Me -> Target (Obligation/Return)
+          // Me -> Target (Obligation/Return) - Outgoing flow
           if (c.percentageReturn > 0) {
             links.push({
               source: selfIndex,
-              target: targetIndex,
+              target: downstreamIndex,
               value: c.percentageReturn,
               type: 'obligation'
             })
@@ -206,6 +208,13 @@ export default function DomainPortfolio() {
         }
       })
     })
+
+    // Filter out unused nodes (optional, but cleaner)
+    // Actually, if a node has no links, it might just sit there.
+    // But our logic only adds links to created indices.
+    // However, we create both upstream/downstream indices eagerly.
+    // If one is unused, it will be a node with no links.
+    // Recharts handles isolated nodes okay, but let's leave it for now.
 
     return { nodes, links }
   }, [teamPortfolio, selectedTeamKey, selectedTeam, selectedDomainName])
