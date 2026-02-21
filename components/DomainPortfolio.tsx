@@ -178,10 +178,10 @@ export default function DomainPortfolio() {
                 ))}
                 <optgroup label={t('allDomains')}>
                   {allDomains.map(d => (
-                    <React.Fragment key={d.id}>
+                    <Fragment key={d.id}>
                       <option value={`${d.id}:RIGHT`}>{d.name} ({tWings('right')})</option>
                       <option value={`${d.id}:LEFT`}>{d.name} ({tWings('left')})</option>
-                    </React.Fragment>
+                    </Fragment>
                   ))}
                 </optgroup>
               </select>
