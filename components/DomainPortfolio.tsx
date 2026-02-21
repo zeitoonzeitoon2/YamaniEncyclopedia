@@ -77,6 +77,9 @@ export default function DomainPortfolio() {
       if (selectedTeamKey) {
         const [dId, dWing] = selectedTeamKey.split(':')
         url += `?domainId=${dId}&wing=${dWing}`
+      } else {
+        // Default to showing all teams (Admin view)
+        url += '?all=true'
       }
       
       const res = await fetch(url)
@@ -236,7 +239,7 @@ export default function DomainPortfolio() {
       ) : (
         <>
           {viewMode === 'cards' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 mb-8">
               {Array.from(portfolioByTeam.entries()).map(([key, items]) => {
                 const [id, wing] = key.split(':')
                 // Try to find name in myTeams or items or allDomains

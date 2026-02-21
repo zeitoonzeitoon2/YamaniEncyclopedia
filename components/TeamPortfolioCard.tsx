@@ -69,7 +69,7 @@ const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) =>
         </button>
       </div>
       
-      <div className="p-6 flex-1 flex items-end gap-4 overflow-x-auto min-h-[300px]">
+      <div className="p-4 flex-1 flex items-end gap-2 overflow-x-auto min-h-[200px]">
         {holdings.length === 0 ? (
           <div className="w-full text-center text-site-muted py-10">
             {t('noHoldings')}
@@ -82,7 +82,7 @@ const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) =>
             const height = Math.min(item.stats.effective, 100)
             
             return (
-              <div key={item.target.id} className="flex flex-col items-center gap-2 min-w-[60px] group relative">
+              <div key={item.target.id} className="flex flex-col items-center gap-1 min-w-[50px] group relative">
                 {/* Tooltip on hover */}
                 <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-site-bg border border-site-border p-2 rounded shadow-lg text-xs z-10 w-48 pointer-events-none">
                   <div className="font-bold mb-1">{item.target.name}</div>

@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const filterDomainId = searchParams.get('domainId')
     const filterWing = searchParams.get('wing')
+    const filterAll = searchParams.get('all')
 
     // 1. Get User's Teams (Expertise)
     const myExpertise = await prisma.domainExpert.findMany({
@@ -21,16 +22,24 @@ export async function GET(req: NextRequest) {
       include: { domain: { select: { id: true, name: true, slug: true } } }
     })
 
-    // If filters provided, verify user has access or is admin
-    let teamsToAnalyze = myExpertise.map(e => ({
-      domainId: e.domainId,
-      domainName: e.domain.name,
-      wing: e.wing,
-      role: e.role,
-      userId: e.userId
-    }))
+    let teamsToAnalyze: any[] = []
 
-    if (filterDomainId && filterWing) {
+    if (filterAll === 'true') {
+      // Fetch ALL domains for admin view
+      const allDomains = await prisma.domain.findMany({
+        select: { id: true, name: true }
+      })
+      
+      // Add both wings for each domain? Or just Right?
+      // Based on UI, let's add Right wing for all.
+      teamsToAnalyze = allDomains.map(d => ({
+        domainId: d.id,
+        domainName: d.name,
+        wing: 'RIGHT',
+        role: 'VIEWER',
+        userId: session.user.id
+      }))
+    } else if (filterDomainId && filterWing) {
       // Allow viewing any team's portfolio (Public Transparency)
       const domain = await prisma.domain.findUnique({ where: { id: filterDomainId } })
       if (domain) {
@@ -45,6 +54,15 @@ export async function GET(req: NextRequest) {
           userId: session.user.id
         }]
       }
+    } else {
+      // Default: Show My Teams
+      teamsToAnalyze = myExpertise.map(e => ({
+        domainId: e.domainId,
+        domainName: e.domain.name,
+        wing: e.wing,
+        role: e.role,
+        userId: e.userId
+      }))
     }
 
     const portfolio = []
