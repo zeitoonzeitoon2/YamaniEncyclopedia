@@ -1,0 +1,51 @@
+import React from 'react'
+import { Link } from '@/lib/navigation'
+import Image from 'next/image'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { prisma } from '@/lib/prisma'
+import { HeaderClient } from './HeaderClient'
+
+export async function Header() {
+  const t = await getTranslations('header')
+  const locale = await getLocale()
+  
+  let logoUrl = null
+  /*
+  try {
+    const settingPromise = prisma.setting.findUnique({
+      where: { key: 'site.logo' }
+    })
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 2000))
+    const setting = await Promise.race([settingPromise, timeoutPromise]) as any
+    logoUrl = setting?.value || null
+  } catch (err) {
+    console.warn('[Header] Failed to fetch logo setting.')
+  }
+  */
+
+  return (
+    <header className="sticky top-0 left-0 right-0 w-full h-16 bg-site-card border-b border-site-border z-[999] pointer-events-auto" style={{ isolation: 'isolate' }}>
+      <div className="container mx-auto px-4 py-2">
+        <div className="grid grid-cols-3 items-center gap-4">
+          <div className="flex items-center justify-start relative z-[1001]">
+            <a href={`/${locale}`} className="flex items-center gap-2 text-xl font-bold text-site-text heading">
+              {logoUrl ? (
+                <Image 
+                  src={logoUrl} 
+                  alt={t('logoAlt')} 
+                  width={32} 
+                  height={32} 
+                  className="h-8 w-8 object-contain" 
+                  unoptimized 
+                />
+              ) : null}
+              <span className="hidden sm:inline">{t('title')}</span>
+            </a>
+          </div>
+
+          <HeaderClient initialLocale={locale} />
+        </div>
+      </div>
+    </header>
+  )
+}
