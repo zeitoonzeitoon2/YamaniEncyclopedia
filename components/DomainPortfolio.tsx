@@ -171,9 +171,9 @@ export default function DomainPortfolio() {
                   {team.name} ({team.wing === 'RIGHT' ? tWings('right') : tWings('left')})
                 </option>
               ))}
-              <optgroup label="All Domains">
+              <optgroup label={t('allDomains')}>
                 {allDomains.map(d => (
-                  <option key={d.id} value={`${d.id}:RIGHT`}>{d.name} (Right)</option>
+                  <option key={d.id} value={`${d.id}:RIGHT`}>{d.name} ({tWings('right')})</option>
                 ))}
               </optgroup>
             </select>
