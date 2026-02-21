@@ -253,7 +253,7 @@ export default function DomainPortfolio() {
               className="w-full p-2.5 rounded-lg border border-site-border bg-site-secondary/50 text-site-text text-sm appearance-none outline-none focus:ring-2 focus:ring-warm-primary"
             >
               <option value="">{t('selectTeam')}...</option>
-              {allDomains.map(d => (
+              {allDomains.map((d) => (
                 <Fragment key={d.id}>
                   <option value={`${d.id}:RIGHT`}>
                     {d.name} - {tWings('right')}
