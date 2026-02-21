@@ -26,19 +26,27 @@ export async function GET(req: NextRequest) {
 
     if (filterAll === 'true') {
       // Fetch ALL domains for admin view
-      const allDomains = await prisma.domain.findMany({
-        select: { id: true, name: true }
-      })
-      
-      // Add both wings for each domain? Or just Right?
-      // Based on UI, let's add Right wing for all.
-      teamsToAnalyze = allDomains.map(d => ({
-        domainId: d.id,
-        domainName: d.name,
-        wing: 'RIGHT',
-        role: 'VIEWER',
-        userId: session.user.id
-      }))
+       const allDomains = await prisma.domain.findMany({
+         select: { id: true, name: true }
+       })
+       
+       // Add both wings for each domain
+       teamsToAnalyze = allDomains.flatMap(d => [
+         {
+           domainId: d.id,
+           domainName: d.name,
+           wing: 'RIGHT',
+           role: 'VIEWER',
+           userId: session.user.id
+         },
+         {
+           domainId: d.id,
+           domainName: d.name,
+           wing: 'LEFT',
+           role: 'VIEWER',
+           userId: session.user.id
+         }
+       ])
     } else if (filterDomainId && filterWing) {
       // Allow viewing any team's portfolio (Public Transparency)
       const domain = await prisma.domain.findUnique({ where: { id: filterDomainId } })
