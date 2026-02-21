@@ -35,6 +35,7 @@ type TeamPortfolioCardProps = {
 
 const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
+  const tWings = useTranslations('admin.dashboard.wings')
 
   // Filter items that have significant holdings (> 0.1%)
   const holdings = items.filter(item => item.stats.permanent > 0.1 || item.stats.effective > 0.1)
@@ -58,7 +59,7 @@ const TeamPortfolioCard = ({ teamName, wing, items }: TeamPortfolioCardProps) =>
         <div>
           <h3 className="font-bold text-lg text-site-text">{teamName}</h3>
           <span className={`text-xs px-2 py-0.5 rounded-full ${wing === 'RIGHT' ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
-            {wing === 'RIGHT' ? 'Right Wing' : 'Left Wing'}
+            {wing === 'RIGHT' ? tWings('right') : tWings('left')}
           </span>
         </div>
         {/* Placeholder for actions */}
