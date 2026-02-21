@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
-import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network } from 'lucide-react'
-import PortfolioSankey from './PortfolioSankey'
+import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network, BarChart3 } from 'lucide-react'
+import TeamPortfolioCard from './TeamPortfolioCard'
 
 type PortfolioItem = {
   team: { id: string; name: string; wing: string }
@@ -57,7 +57,7 @@ export default function DomainPortfolio() {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [viewMode, setViewMode] = useState<'table' | 'sankey'>('sankey')
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
 
   const fetchData = useCallback(async () => {
     try {
@@ -84,12 +84,7 @@ export default function DomainPortfolio() {
       if (res.ok) {
         setMyTeams(data.myTeams || [])
         setPortfolio(data.portfolio || [])
-        
-        // Select first team by default if none selected AND no specific selection
-        if (!selectedTeamKey && data.myTeams?.length > 0) {
-          const first = data.myTeams[0]
-          setSelectedTeamKey(`${first.id}:${first.wing}`)
-        }
+        // Default selection removed to allow "All Teams" view by default
       }
     } catch (e) {
       console.error(e)
@@ -110,114 +105,39 @@ export default function DomainPortfolio() {
   }
 
   const selectedTeam = myTeams.find(t => `${t.id}:${t.wing}` === selectedTeamKey)
-  const teamPortfolio = portfolio.filter(p => `${p.team.id}:${p.team.wing}` === selectedTeamKey)
+  // If selectedTeamKey is set, filter. If not, show all.
+  const filteredPortfolio = selectedTeamKey 
+    ? portfolio.filter(p => `${p.team.id}:${p.team.wing}` === selectedTeamKey)
+    : portfolio
   
   // Find selected domain name if not in myTeams
   const selectedDomainName = selectedTeam?.name || allDomains.find(d => d.id === selectedTeamKey.split(':')[0])?.name || ''
   const selectedWingStr = selectedTeam?.wing || selectedTeamKey.split(':')[1] || ''
 
-  const sankeyData = useMemo(() => {
-    if (!teamPortfolio || teamPortfolio.length === 0) return { nodes: [], links: [] }
-
-    const nodesMap = new Map<string, number>()
-    const nodes: { name: string; type: string }[] = []
-    const links: { source: number; target: number; value: number; type: string }[] = []
-
-    // Helper to get or add node
-    // role: 'self' | 'upstream' (source) | 'downstream' (target)
-    const getNodeIndex = (id: string, wing: string, name: string, role: string) => {
-      const key = `${id}:${wing}:${role}`
-      if (nodesMap.has(key)) return nodesMap.get(key)!
-      
-      const index = nodes.length
-      // Append role to name only for tooltip clarity if needed, or keep clean
-      nodes.push({ name, type: role })
-      nodesMap.set(key, index)
-      return index
-    }
-
-    // Add Self (Center)
-    const selfName = selectedTeam?.name || selectedDomainName || 'Self'
-    const selfId = selectedTeamKey.split(':')[0]
-    const selfWing = selectedTeamKey.split(':')[1]
+  // Group portfolio by team for Card View
+  const portfolioByTeam = useMemo(() => {
+    const grouped = new Map<string, PortfolioItem[]>()
     
-    if (!selfId || !selfWing) return { nodes: [], links: [] }
+    // Ensure all myTeams are initialized even if empty portfolio (optional, but good for completeness)
+    // If selectedTeamKey is set, we only care about that team.
+    // If not, we care about all myTeams.
+    const teamsToShow = selectedTeamKey ? (selectedTeam ? [selectedTeam] : []) : myTeams
 
-    const selfIndex = getNodeIndex(selfId, selfWing, selfName, 'self')
-
-    teamPortfolio.forEach(item => {
-      const targetKey = `${item.target.id}:${item.target.wing}`
-      
-      if (targetKey === selectedTeamKey) return
-
-      // We might need two nodes for the target: one if it's a source, one if it's a destination
-      // This prevents cycles (A -> B -> A) which break Sankey diagrams
-      const upstreamIndex = getNodeIndex(item.target.id, item.target.wing, item.target.name, 'upstream')
-      const downstreamIndex = getNodeIndex(item.target.id, item.target.wing, item.target.name, 'downstream')
-
-      // 1. Permanent Ownership (Me -> Target)
-      if (item.stats.permanent > 0) {
-        links.push({
-          source: selfIndex,
-          target: downstreamIndex,
-          value: item.stats.permanent,
-          type: 'permanent'
-        })
-      }
-
-      // 2. Active Contracts
-      item.contracts.forEach(c => {
-        if (c.type === 'OUTBOUND') {
-          // Me -> Target (Given)
-          if (c.percentageInvested > 0) {
-            links.push({
-              source: selfIndex,
-              target: downstreamIndex,
-              value: c.percentageInvested,
-              type: 'active_given'
-            })
-          }
-          // Target -> Me (Claim/Return) - Incoming flow
-          if (c.percentageReturn > 0) {
-            links.push({
-              source: upstreamIndex,
-              target: selfIndex,
-              value: c.percentageReturn,
-              type: 'claim'
-            })
-          }
-        } else {
-          // Target -> Me (Received) - Incoming flow
-          if (c.percentageInvested > 0) {
-            links.push({
-              source: upstreamIndex,
-              target: selfIndex,
-              value: c.percentageInvested,
-              type: 'active_received'
-            })
-          }
-          // Me -> Target (Obligation/Return) - Outgoing flow
-          if (c.percentageReturn > 0) {
-            links.push({
-              source: selfIndex,
-              target: downstreamIndex,
-              value: c.percentageReturn,
-              type: 'obligation'
-            })
-          }
-        }
-      })
+    teamsToShow.forEach(team => {
+      grouped.set(`${team.id}:${team.wing}`, [])
     })
 
-    // Filter out unused nodes (optional, but cleaner)
-    // Actually, if a node has no links, it might just sit there.
-    // But our logic only adds links to created indices.
-    // However, we create both upstream/downstream indices eagerly.
-    // If one is unused, it will be a node with no links.
-    // Recharts handles isolated nodes okay, but let's leave it for now.
-
-    return { nodes, links }
-  }, [teamPortfolio, selectedTeamKey, selectedTeam, selectedDomainName])
+    filteredPortfolio.forEach(item => {
+      const key = `${item.team.id}:${item.team.wing}`
+      if (!grouped.has(key)) {
+        // If portfolio contains items for teams not in myTeams (e.g. if we fetched by ID but not in myTeams list?), add it
+        grouped.set(key, [])
+      }
+      grouped.get(key)?.push(item)
+    })
+    
+    return grouped
+  }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam])
 
   if (loading && allDomains.length === 0) {
     return (
@@ -227,86 +147,82 @@ export default function DomainPortfolio() {
 
   return (
     <div className="space-y-8">
-      {/* Header & Team Selection */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-site-text flex items-center gap-2">
-            <PieChart className="text-warm-primary" />
-            {t('title')}
-          </h2>
-        </div>
-        
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          {/* View Toggle */}
-          <div className="flex bg-site-secondary/50 p-1 rounded-lg border border-site-border">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-warm-primary text-white shadow-sm' : 'text-site-muted hover:text-site-text'}`}
-              title={t('viewTable')}
-            >
-              <LayoutGrid size={18} />
-            </button>
-            <button
-              onClick={() => setViewMode('sankey')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'sankey' ? 'bg-warm-primary text-white shadow-sm' : 'text-site-muted hover:text-site-text'}`}
-              title={t('viewVisual')}
-            >
-              <Network size={18} />
-            </button>
-          </div>
-
-          <div className="w-full md:w-auto min-w-[200px]">
-            <label className="text-xs text-site-muted mb-1 block px-1">{t('selectTeam')}</label>
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex-1">
+          <label className="block text-sm font-medium mb-2">{t('selectTeam')}</label>
           <div className="relative">
             <select
+              className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
               value={selectedTeamKey}
               onChange={(e) => setSelectedTeamKey(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-secondary/50 text-site-text text-sm appearance-none outline-none focus:ring-2 focus:ring-warm-primary"
             >
-              <option value="">{t('selectTeam')}...</option>
-              {allDomains.map((d) => (
-                <Fragment key={d.id}>
-                  <option value={`${d.id}:RIGHT`}>
-                    {d.name} - {tWings('right')}
-                  </option>
-                  <option value={`${d.id}:LEFT`}>
-                    {d.name} - {tWings('left')}
-                  </option>
-                </Fragment>
+              <option value="">{t('allMyTeams') || 'All My Teams'}</option>
+              {myTeams.map(team => (
+                <option key={`${team.id}:${team.wing}`} value={`${team.id}:${team.wing}`}>
+                  {team.name} ({team.wing === 'RIGHT' ? tWings('right') : tWings('left')})
+                </option>
               ))}
+              <optgroup label="All Domains">
+                {allDomains.map(d => (
+                  <option key={d.id} value={`${d.id}:RIGHT`}>{d.name} (Right)</option>
+                ))}
+              </optgroup>
             </select>
-            <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none" />
           </div>
         </div>
-      </div>
+
+        <div className="flex items-end gap-2">
+           <button 
+            onClick={() => setViewMode('cards')}
+            className={`p-2 rounded border ${viewMode === 'cards' ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
+            title={t('viewVisual')}
+          >
+            <BarChart3 size={20} />
+          </button>
+          <button 
+            onClick={() => setViewMode('table')}
+            className={`p-2 rounded border ${viewMode === 'table' ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
+            title={t('viewTable')}
+          >
+            <FileText size={20} />
+          </button>
+        </div>
       </div>
 
-      {(selectedTeam || selectedTeamKey) && (
+      {loading ? (
+        <div className="text-center py-20">{t('loading')}...</div>
+      ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card bg-site-secondary/20 border-warm-primary/20 flex items-center gap-4">
-              <div className="p-3 rounded-full bg-warm-primary/10 text-warm-primary">
-                <Award size={24} />
-              </div>
-              <div>
-                <div className="text-sm text-site-muted">{t('myRole')}</div>
-                <div className="text-xl font-bold text-site-text">{selectedTeam?.role || 'VIEWER'}</div>
-              </div>
+          {viewMode === 'cards' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+              {Array.from(portfolioByTeam.entries()).map(([key, items]) => {
+                const [id, wing] = key.split(':')
+                // Try to find name in myTeams or items or allDomains
+                const teamName = myTeams.find(t => t.id === id && t.wing === wing)?.name 
+                  || items[0]?.team.name 
+                  || allDomains.find(d => d.id === id)?.name 
+                  || 'Unknown Team'
+                
+                return (
+                  <div key={key} className="h-full">
+                    <TeamPortfolioCard 
+                      teamName={teamName}
+                      wing={wing}
+                      items={items}
+                    />
+                  </div>
+                )
+              })}
+              {portfolioByTeam.size === 0 && (
+                <div className="col-span-full text-center py-10 text-site-muted">
+                  {t('noHoldings')}
+                </div>
+              )}
             </div>
-            {/* Add more summary cards if needed */}
-          </div>
+          )}
 
-          {viewMode === 'sankey' ? (
-            <div className="card p-4 bg-site-bg min-h-[600px] border border-site-border overflow-hidden">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <Network className="text-warm-primary" size={20} />
-                {t('visualMap')}
-              </h3>
-              <div className="h-[500px]">
-                <PortfolioSankey data={sankeyData} />
-              </div>
-            </div>
-          ) : (
+          {viewMode === 'table' && (
             /* Portfolio Table */
             <div className="card p-0 overflow-hidden border border-site-border bg-site-secondary/10">
               <div className="overflow-x-auto">
@@ -325,14 +241,14 @@ export default function DomainPortfolio() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-site-border/50">
-                    {teamPortfolio.length === 0 ? (
+                    {filteredPortfolio.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="px-6 py-12 text-center text-site-muted italic">
                           {t('noHoldings')}
                         </td>
                       </tr>
                     ) : (
-                      teamPortfolio.map((item) => {
+                      filteredPortfolio.map((item) => {
                         const key = `${item.target.id}:${item.target.wing}`
                         const isExpanded = expandedRows.has(key)
                         
