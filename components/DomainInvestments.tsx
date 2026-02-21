@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
@@ -16,6 +16,7 @@ type Investment = {
   id: string
   proposerDomainId: string
   targetDomainId: string
+  investedDomainId?: string | null
   proposerWing: string
   targetWing: string
   percentageInvested: number
@@ -55,6 +56,7 @@ export default function DomainInvestments() {
   const [investPercent, setInvestPercent] = useState(10)
   const [returnPercent, setReturnPercent] = useState(1)
   const [endDate, setEndDate] = useState('')
+  const [sourceDomainId, setSourceDomainId] = useState('')
   
   const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
@@ -87,6 +89,42 @@ export default function DomainInvestments() {
     fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    setSourceDomainId(selectedMyDomainId)
+  }, [selectedMyDomainId])
+
+  const availableAssets = useMemo(() => {
+    if (!selectedMyDomainId) return []
+    const balances: Record<string, number> = {}
+    
+    investments.forEach(inv => {
+      if (inv.status !== 'ACTIVE') return
+
+      // Incoming (I received power)
+      if (inv.targetDomainId === selectedMyDomainId && inv.targetWing === proposerWing) {
+         const currency = inv.investedDomainId || inv.proposerDomainId
+         balances[currency] = (balances[currency] || 0) + inv.percentageInvested
+      }
+      
+      // Outgoing (I gave power)
+      if (inv.proposerDomainId === selectedMyDomainId && inv.proposerWing === proposerWing) {
+         const currency = inv.investedDomainId || inv.proposerDomainId
+         balances[currency] = (balances[currency] || 0) - inv.percentageInvested
+      }
+    })
+    
+    return Object.entries(balances)
+      .filter(([id, bal]) => id !== selectedMyDomainId && bal > 0.0001) // Exclude own shares & zero balance
+      .map(([id, bal]) => {
+        const domain = allDomains.find(d => d.id === id)
+        return {
+          id,
+          name: domain?.name || 'Unknown',
+          balance: bal
+        }
+      })
+  }, [investments, selectedMyDomainId, proposerWing, allDomains])
+
   const handlePropose = useCallback(async () => {
     if (!selectedMyDomainId || !selectedTargetDomainId || !endDate) {
       toast.error(t('investment.toast.createError'))
@@ -104,7 +142,8 @@ export default function DomainInvestments() {
           percentageReturn: returnPercent,
           endDate: endDate,
           proposerWing,
-          targetWing
+          targetWing,
+          investedDomainId: sourceDomainId === selectedMyDomainId ? null : sourceDomainId
         })
       })
       if (res.ok) {
@@ -119,7 +158,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, t, fetchData])
+  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, sourceDomainId, t, fetchData])
 
   const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
     try {
@@ -194,6 +233,21 @@ export default function DomainInvestments() {
             >
               <option value="RIGHT">{t('rightWing')}</option>
               <option value="LEFT">{t('leftWing')}</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-site-muted px-1">{t('investment.sourceOfFunds')}</label>
+            <select 
+              value={sourceDomainId} 
+              onChange={e => setSourceDomainId(e.target.value)}
+              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
+            >
+              <option value={selectedMyDomainId}>{t('investment.ownShares', { name: allDomains.find(d => d.id === selectedMyDomainId)?.name || '' })}</option>
+              {availableAssets.map(asset => (
+                <option key={asset.id} value={asset.id}>
+                  {t('investment.assetItem', { name: asset.name, balance: asset.balance.toFixed(2) })}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-1">

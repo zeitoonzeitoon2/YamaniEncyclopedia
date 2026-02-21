@@ -193,6 +193,26 @@
     "rightWing": "تیم راست",
     "leftWing": "تیم چپ",
     "roleExpert": "کارشناس",
+    "portfolio": {
+      "title": "پرتفوی دارایی‌های قدرت",
+      "selectTeam": "انتخاب تیم (حوزه)",
+      "myRole": "نقش من",
+      "noHoldings": "هنوز هیچ دارایی یا تعهدی وجود ندارد.",
+      "visualMap": "نقشه بصری جریان قدرت",
+      "viewTable": "نمایش جدول",
+      "viewVisual": "نمایش نمودار",
+      "holdingsTable": {
+        "target": "حوزه هدف",
+        "permanent": "مالکیت دائم",
+        "lent": "واگذار شده (قرض)",
+        "borrowed": "دریافت شده (قرض)",
+        "effective": "قدرت مؤثر",
+        "claims": "مطالبات آتی",
+        "obligations": "تعهدات آتی",
+        "myPower": "سهم قدرت من",
+        "contracts": "قراردادهای فعال"
+      }
+    },
     "voting": {
       "electionStatusTitle": "وضعیت سهام ها و آرا",
       "votingPower": "قدرت رای",
@@ -301,6 +321,9 @@
       "proposer": "حوزه سرمایه‌گذار",
       "investmentDirection": "سرمایه‌گذاری {proposer} روی {target}",
       "target": "حوزه هدف",
+      "sourceOfFunds": "منبع تأمین (دارایی)",
+      "ownShares": "سهام خود ({name})",
+      "assetItem": "{name} (موجودی: {balance}٪)",
       "give": "سرمایه گذاری (از سهام مبدا)",
       "tableGive": "درصد اعطایی",
       "receive": "سود (از سهام مقصد)",
