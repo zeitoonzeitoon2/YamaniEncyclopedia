@@ -43,11 +43,10 @@ type TeamPortfolioCardProps = {
   wing: string
   items: PortfolioItem[]
   highlightedDomainId?: string
+  contractIndexMap?: Record<string, number>
 }
 
-
-
-const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamPortfolioCardProps) => {
+const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
   const [tooltip, setTooltip] = useState<{ item: PortfolioItem, rect: DOMRect } | null>(null)
@@ -216,9 +215,16 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
               <div className="mt-2 space-y-2 border-t border-site-border pt-2">
                 {tooltip.item.contracts.filter(c => c.type === 'INBOUND').map((contract) => (
                   <div key={contract.id} className="bg-site-secondary/10 p-2 rounded text-[10px] border border-site-border/50">
-                     <div className="font-bold mb-1 text-site-text flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
-                        {t('temporaryShare')}
+                     <div className="font-bold mb-1 text-site-text flex items-center justify-between gap-1">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
+                          {t('temporaryShare')}
+                        </div>
+                        {contractIndexMap && contractIndexMap[contract.id] && (
+                          <span className="text-site-muted font-mono bg-site-bg px-1 rounded border border-site-border/30 text-[9px]">
+                            #{contractIndexMap[contract.id]}
+                          </span>
+                        )}
                      </div>
                      <div className="flex flex-col mt-1 bg-red-500/5 p-1.5 rounded border border-red-500/10">
                         <span className="text-site-muted mb-0.5">{t('obligation')}:</span>

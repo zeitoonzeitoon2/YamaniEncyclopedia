@@ -37,11 +37,25 @@ export default function DomainPortfolio() {
   const [loading, setLoading] = useState(true)
   const [showLegend, setShowLegend] = useState(false)
   const [highlightedAssetId, setHighlightedAssetId] = useState<string>('')
+  const [contractIndexMap, setContractIndexMap] = useState<Record<string, number>>({})
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       
+      // Fetch investments for ID mapping
+      const invRes = await fetch('/api/admin/domains/investments?status=PENDING,ACTIVE')
+      if (invRes.ok) {
+        const invData = await invRes.json()
+        const investments = invData.investments || []
+        investments.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        const map: Record<string, number> = {}
+        investments.forEach((inv: any, index: number) => {
+          map[inv.id] = index + 1
+        })
+        setContractIndexMap(map)
+      }
+
       // Fetch all domains for the dropdown
       const domainsRes = await fetch('/api/admin/domains')
       const domainsData = await domainsRes.json()
@@ -252,6 +266,7 @@ export default function DomainPortfolio() {
                       wing={wing}
                       items={items}
                       highlightedDomainId={highlightedAssetId}
+                      contractIndexMap={contractIndexMap}
                     />
                   </div>
                 )
