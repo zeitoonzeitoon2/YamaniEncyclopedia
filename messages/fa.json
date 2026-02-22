@@ -140,6 +140,8 @@
       "history": "تاریخچه (تکمیل شده / بازگشت شده)",
       "statusCompleted": "تکمیل شده",
       "statusReturned": "بازگشت شده",
+      "startDate": "تاریخ شروع",
+      "loadMore": "مشاهده بیشتر",
       "toast": {
         "createSuccess": "پیشنهاد با موفقیت ثبت شد",
         "createError": "خطا در ثبت پیشنهاد"
