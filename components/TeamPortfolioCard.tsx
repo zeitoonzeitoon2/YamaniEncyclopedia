@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowRight, ArrowLeft, MoreHorizontal } from 'lucide-react'
 
@@ -39,6 +39,7 @@ type TeamPortfolioCardProps = {
 const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
+  const [tooltip, setTooltip] = useState<{ item: PortfolioItem, rect: DOMRect } | null>(null)
 
   // Filter items that have significant holdings (> 0.1%)
   const holdings = items.filter(item => item.stats.permanent > 0.1 || item.stats.effective > 0.1)
@@ -57,7 +58,7 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
   // Or just show value clearly.
 
   return (
-    <div className="card bg-site-secondary/10 border border-site-border overflow-hidden flex flex-col h-full">
+    <div className="card bg-site-secondary/10 border border-site-border overflow-hidden flex flex-col h-full relative">
       <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-between items-center">
         <div>
           <h3 className="font-bold text-base text-site-text truncate max-w-[150px]" title={teamName}>{teamName}</h3>
@@ -71,7 +72,7 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
         </button>
       </div>
       
-      <div className="p-3 flex-1 flex items-end gap-1.5 overflow-x-auto min-h-[160px]">
+      <div className="p-3 flex-1 flex items-end gap-1.5 overflow-x-auto min-h-[160px] pb-6">
         {holdings.length === 0 ? (
           <div className="w-full text-center text-site-muted text-xs py-10">
             {t('noHoldings')}
@@ -102,31 +103,13 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
             const barFilter = isHighlighted ? 'none' : 'grayscale(100%)'
 
             return (
-              <div key={`${item.target.id}-${item.target.wing}`} className="flex flex-col items-center gap-1 min-w-[50px] group relative" style={{ opacity: barOpacity, filter: barFilter }}>
-                {/* Tooltip on hover */}
-                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-site-bg border border-site-border p-2 rounded shadow-lg text-xs z-10 w-48 pointer-events-none">
-                  <div className="font-bold mb-1">
-                    {item.target.name}
-                    <span className="text-[10px] ml-1 opacity-75">
-                      ({item.target.wing === 'RIGHT' ? tWings('right') : tWings('left')})
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('holdingsTable.permanent')}:</span>
-                    <span>{permVal.toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-warm-primary">
-                    <span>{t('holdingsTable.effective')}:</span>
-                    <span>{item.stats.effective.toFixed(1)}%</span>
-                  </div>
-                  {tempVal > 0 && (
-                     <div className="flex justify-between text-yellow-400">
-                       <span>{t('holdingsTable.lent')}:</span> {/* Using "lent" label for Temporary as per user intent? Or maybe "Temporary"? User said "Temporary ownership" */}
-                       <span>{tempVal.toFixed(1)}%</span>
-                     </div>
-                  )}
-                </div>
-
+              <div 
+                key={`${item.target.id}-${item.target.wing}`} 
+                className="flex flex-col items-center gap-1 min-w-[50px] group relative cursor-help" 
+                style={{ opacity: barOpacity, filter: barFilter }}
+                onMouseEnter={(e) => setTooltip({ item, rect: e.currentTarget.getBoundingClientRect() })}
+                onMouseLeave={() => setTooltip(null)}
+              >
                 {/* Percentage Label */}
                 <div className="flex items-end justify-center w-14 gap-[1px] mb-1">
                   {permVal > 0 && (
@@ -181,6 +164,40 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
           })
         )}
       </div>
+
+      {tooltip && (
+        <div 
+          className="fixed z-[9999] bg-site-bg border border-site-border p-3 rounded-lg shadow-xl text-xs w-52 pointer-events-none"
+          style={{ 
+            left: tooltip.rect.left + tooltip.rect.width / 2, 
+            top: tooltip.rect.top - 10,
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          <div className="font-bold mb-2 text-site-text border-b border-site-border pb-1 flex justify-between items-center">
+            <span className="truncate max-w-[120px]">{tooltip.item.target.name}</span>
+            <span className={`text-[10px] ${tooltip.item.target.wing === 'RIGHT' ? 'text-blue-500' : 'text-red-500'}`}>
+              ({tooltip.item.target.wing === 'RIGHT' ? tWings('right') : tWings('left')})
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-site-muted">{t('holdingsTable.permanent')}:</span>
+              <span className="font-medium text-site-text">{(tooltip.item.stats.permanent || 0).toFixed(1)}%</span>
+            </div>
+            <div className="flex justify-between items-center font-bold text-warm-primary bg-warm-primary/5 px-1.5 py-0.5 rounded">
+              <span>{t('holdingsTable.effective')}:</span>
+              <span>{tooltip.item.stats.effective.toFixed(1)}%</span>
+            </div>
+            {(tooltip.item.stats.temporary || 0) > 0 && (
+              <div className="flex justify-between items-center text-yellow-600 dark:text-yellow-400">
+                <span>{t('holdingsTable.lent')}:</span>
+                <span>{(tooltip.item.stats.temporary || 0).toFixed(1)}%</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
