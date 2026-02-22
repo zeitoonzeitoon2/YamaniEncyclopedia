@@ -19,6 +19,7 @@ type PortfolioItem = {
   stats: {
     permanent: number
     effective: number
+    temporary?: number // Added this field
     myPower: number
     lent: number
     borrowed: number
@@ -83,9 +84,17 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
               ? baseColor.replace('45%', '35%') 
               : baseColor
 
-            // Height based on percentage (max 100%)
-            // Let's cap at 100
-            const height = Math.min(item.stats.effective, 100)
+            // Calculate heights for Permanent and Temporary bars
+            // We use item.stats.permanent (DB value) OR calculate from effective?
+            // route.ts now sends item.stats.permanent (from breakdown) and item.stats.temporary (from breakdown)
+            // Let's rely on those.
+            
+            const permVal = item.stats.permanent || 0
+            const tempVal = item.stats.temporary || 0
+            
+            // Heights capped at 100
+            const permHeight = Math.min(permVal, 100)
+            const tempHeight = Math.min(tempVal, 100)
             
             // Highlight logic
             const isHighlighted = !highlightedDomainId || item.target.id === highlightedDomainId
@@ -104,22 +113,16 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                   </div>
                   <div className="flex justify-between">
                     <span>{t('holdingsTable.permanent')}:</span>
-                    <span>{item.stats.permanent.toFixed(1)}%</span>
+                    <span>{permVal.toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between font-bold text-warm-primary">
                     <span>{t('holdingsTable.effective')}:</span>
                     <span>{item.stats.effective.toFixed(1)}%</span>
                   </div>
-                  {item.stats.lent > 0 && (
-                     <div className="flex justify-between text-red-400">
-                       <span>{t('holdingsTable.lent')}:</span>
-                       <span>{item.stats.lent.toFixed(1)}%</span>
-                     </div>
-                  )}
-                  {item.stats.borrowed > 0 && (
-                     <div className="flex justify-between text-green-400">
-                       <span>{t('holdingsTable.borrowed')}:</span>
-                       <span>{item.stats.borrowed.toFixed(1)}%</span>
+                  {tempVal > 0 && (
+                     <div className="flex justify-between text-yellow-400">
+                       <span>{t('holdingsTable.lent')}:</span> {/* Using "lent" label for Temporary as per user intent? Or maybe "Temporary"? User said "Temporary ownership" */}
+                       <span>{tempVal.toFixed(1)}%</span>
                      </div>
                   )}
                 </div>
@@ -129,17 +132,29 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                   {item.stats.effective.toFixed(0)}%
                 </span>
                 
-                {/* Bar */}
-                <div 
-                  className="w-12 rounded-t-lg transition-all hover:brightness-110 relative"
-                  style={{ 
-                    height: `${Math.max(height * 2, 4)}px`, // Scale up a bit for visibility, min 4px
-                    backgroundColor: color 
-                  }}
-                >
-                  {/* Pattern/Overlay for borrowed/lent? */}
-                  {item.stats.borrowed > 0 && (
-                    <div className="absolute inset-0 bg-green-500/20 animate-pulse" />
+                {/* Bar Container */}
+                <div className="flex items-end justify-center gap-[1px] w-12">
+                  {/* Permanent Bar */}
+                  {permVal > 0 && (
+                    <div 
+                      className={`rounded-t-lg transition-all hover:brightness-110 relative ${tempVal > 0 ? 'w-1/2' : 'w-full'}`}
+                      style={{ 
+                        height: `${Math.max(permHeight * 2, 4)}px`, 
+                        backgroundColor: color 
+                      }}
+                    />
+                  )}
+                  
+                  {/* Temporary Bar */}
+                  {tempVal > 0 && (
+                    <div 
+                      className={`rounded-t-lg transition-all hover:brightness-110 relative ${permVal > 0 ? 'w-1/2' : 'w-full'}`}
+                      style={{ 
+                        height: `${Math.max(tempHeight * 2, 4)}px`, 
+                        backgroundColor: color,
+                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)'
+                      }}
+                    />
                   )}
                 </div>
                 

@@ -100,6 +100,11 @@ export async function GET(req: NextRequest) {
       ownerWing: string
       percentage: number
       source: 'PERMANENT' | 'INVESTMENT' | 'SELF'
+      // Keep track of breakdown directly in ShareInfo to avoid loss during merge
+      breakdown: {
+        permanent: number
+        temporary: number
+      }
     }
 
     const sharesByTarget = new Map<string, ShareInfo[]>()
@@ -111,6 +116,8 @@ export async function GET(req: NextRequest) {
       const existing = list.find(s => s.ownerId === info.ownerId && s.ownerWing === info.ownerWing)
       if (existing) {
         existing.percentage += info.percentage
+        existing.breakdown.permanent += info.breakdown.permanent
+        existing.breakdown.temporary += info.breakdown.temporary
       } else {
         list.push(info)
       }
@@ -122,33 +129,32 @@ export async function GET(req: NextRequest) {
         ownerId: s.ownerDomainId,
         ownerWing: s.ownerWing,
         percentage: s.percentage,
-        source: 'PERMANENT'
+        source: 'PERMANENT',
+        breakdown: { permanent: s.percentage, temporary: 0 }
       })
     })
 
     // B. Investment Shares
     allInvestments.forEach(inv => {
-      // Case 1: Target <- Proposer (Return)
+      // Case 1: Target <- Proposer (Return) - Treated as Permanent Acquisition (Profit)
       if ((inv.status === 'COMPLETED' || inv.status === 'RETURNED') && inv.percentageReturn > 0) {
         addShare(`${inv.targetDomainId}:${inv.targetWing}`, {
           ownerId: inv.proposerDomainId,
           ownerWing: inv.proposerWing,
           percentage: inv.percentageReturn,
-          source: 'INVESTMENT'
+          source: 'INVESTMENT',
+          breakdown: { permanent: inv.percentageReturn, temporary: 0 }
         })
       }
       // Case 2: Proposer -> Target (Invested) -> Target owns Proposer
-      // Wait, getDomainVotingShares logic:
-      // if inv.proposerDomainId === domainId (Target is Proposer)
-      // We are calculating shares OF Proposer.
-      // Active Investment: Proposer gives power to Target.
+      // Active Investment: Target holds Proposer's power temporarily
       if (inv.status === 'ACTIVE' && inv.percentageInvested > 0) {
-        // Share OF Proposer owned by Target
         addShare(`${inv.proposerDomainId}:${inv.proposerWing}`, {
           ownerId: inv.targetDomainId,
           ownerWing: inv.targetWing,
           percentage: inv.percentageInvested,
-          source: 'INVESTMENT'
+          source: 'INVESTMENT',
+          breakdown: { permanent: 0, temporary: inv.percentageInvested }
         })
       }
     })
@@ -176,19 +182,44 @@ export async function GET(req: NextRequest) {
       
       // Only RIGHT wing starts with 100% ownership.
       // LEFT wing starts with 0%, so it should not have a "Self Share" unless explicitly given.
-      if (tWing === 'RIGHT' && correctSelfPercent > 0) {
-        newList.push({
-          ownerId: tId,
-          ownerWing: tWing, // Self share should belong to the same wing
-          percentage: correctSelfPercent,
-          source: 'SELF'
-        })
+      // However, if LEFT wing has unassigned shares (remainder), they belong to the RIGHT wing initially.
+      if (correctSelfPercent > 0) {
+        if (tWing === 'RIGHT') {
+          newList.push({
+            ownerId: tId,
+            ownerWing: 'RIGHT', // Self share
+            percentage: correctSelfPercent,
+            source: 'SELF',
+            breakdown: { permanent: correctSelfPercent, temporary: 0 }
+          })
+        } else if (tWing === 'LEFT') {
+          // Check if Right Wing already has shares
+          const rightOwnerIndex = newList.findIndex(s => s.ownerId === tId && s.ownerWing === 'RIGHT')
+          
+          if (rightOwnerIndex >= 0) {
+            // Add remainder to existing Right Wing share
+            newList[rightOwnerIndex].percentage += correctSelfPercent
+            newList[rightOwnerIndex].breakdown.permanent += correctSelfPercent
+            // If existing was purely investment, maybe source should change? 
+            // But we keep original source as primary or maybe update if needed.
+            // For simplicity, we just add the percentage.
+          } else {
+            // Create new share for Right Wing
+            newList.push({
+              ownerId: tId,
+              ownerWing: 'RIGHT',
+              percentage: correctSelfPercent,
+              source: 'PERMANENT', // Implicit ownership
+              breakdown: { permanent: correctSelfPercent, temporary: 0 }
+            })
+          }
+        }
       }
       sharesByTarget.set(targetKey, newList)
     })
 
     // 4. Invert to get Portfolio: Owner -> [Targets]
-    const portfolioByOwner = new Map<string, { targetKey: string, percentage: number }[]>()
+    const portfolioByOwner = new Map<string, { targetKey: string, percentage: number, breakdown: { permanent: number, temporary: number } }[]>()
     
     sharesByTarget.forEach((shares, targetKey) => {
       shares.forEach(share => {
@@ -196,7 +227,8 @@ export async function GET(req: NextRequest) {
         if (!portfolioByOwner.has(ownerKey)) portfolioByOwner.set(ownerKey, [])
         portfolioByOwner.get(ownerKey)!.push({
           targetKey: targetKey,
-          percentage: share.percentage
+          percentage: share.percentage,
+          breakdown: share.breakdown
         })
       })
     })
@@ -258,6 +290,8 @@ export async function GET(req: NextRequest) {
         // 1. Effective Share
         const holding = effectiveHoldings.find(h => h.targetKey === targetKey)
         const effectiveShare = holding ? holding.percentage : 0
+        const effectivePermanent = holding ? holding.breakdown.permanent : 0
+        const effectiveTemporary = holding ? holding.breakdown.temporary : 0
 
         // 2. My Power
         let myPower = 0
@@ -266,40 +300,27 @@ export async function GET(req: NextRequest) {
         }
 
         // 3. Breakdown
-        // Permanent
-        const permShare = allShares.find(s => 
-          s.ownerDomainId === team.domainId && s.ownerWing === team.wing &&
-          s.domainId === targetId && s.domainWing === targetWing
-        )
-        const permanent = permShare ? permShare.percentage : 0
-
+        // Permanent (from DB directly, might differ from effectivePermanent if self-share logic varies)
+        // But we trust effectivePermanent now as it includes Self + DB Permanent.
+        
         // Lent (Outbound Active Investment)
         const lentInv = investmentsAsProposer.find(i => i.targetDomainId === targetId && i.targetWing === targetWing)
         const lent = lentInv ? lentInv.percentageInvested : 0
         const claims = lentInv ? lentInv.percentageReturn : 0 // Future return
 
         // Borrowed (Inbound Active Investment)
-        // Wait, "Borrowed" usually means we received power.
-        // If Target invested in Us (Team), then Team "Borrowed" power from Target.
-        // So we look for Investment where Proposer=Target, Target=Team.
         const borrowedInv = investmentsAsTarget.find(i => i.proposerDomainId === targetId && i.proposerWing === targetWing)
         const borrowed = borrowedInv ? borrowedInv.percentageInvested : 0
         const obligations = borrowedInv ? borrowedInv.percentageReturn : 0
 
-        // Self Logic adjustment
-        // If looking at Self, "Lent" means "Invested in Others".
-        // But here we are looking at specific Target.
-        // If Target == Self, Lent/Borrowed should be 0 unless we have self-investment loops (unlikely).
-        // The previous logic summed up ALL lent/borrowed for Self view.
-        // Let's stick to pairwise view.
-
-        if (effectiveShare > 0 || permanent > 0 || lent > 0 || borrowed > 0) {
+        if (effectiveShare > 0 || lent > 0 || borrowed > 0) {
           portfolio.push({
             team: { id: team.domainId, name: team.domainName, wing: team.wing },
             target: { id: targetDomain.id, name: targetDomain.name, wing: targetWing },
             stats: {
-              permanent,
+              permanent: effectivePermanent, // Use our calculated breakdown
               effective: effectiveShare,
+              temporary: effectiveTemporary, // New field
               myPower,
               lent,
               borrowed,
