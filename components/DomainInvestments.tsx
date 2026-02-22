@@ -63,6 +63,7 @@ export default function DomainInvestments() {
   const [submitting, setSubmitting] = useState(false)
   const [votingId, setVotingId] = useState<string | null>(null)
   const [historyLimit, setHistoryLimit] = useState(10)
+  const [showHistory, setShowHistory] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -570,11 +571,21 @@ export default function DomainInvestments() {
 
       {/* History (Completed/Returned) */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
-          <Clock size={20} className="text-site-muted" />
-          {t('investment.history')}
-        </h3>
-        <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
+              <Clock size={20} className="text-site-muted" />
+              {t('investment.history')}
+            </h3>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="px-4 py-2 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-colors border border-site-border"
+            >
+              {showHistory ? t('investment.hideHistory') : t('investment.showHistory')}
+            </button>
+          </div>
+          
+          {showHistory && (
+          <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
             <table className="w-full text-sm text-right">
               <thead className="bg-site-secondary/50 text-site-muted text-xs border-b border-site-border">
                 <tr>
@@ -642,7 +653,9 @@ export default function DomainInvestments() {
                 </button>
               </div>
             )}
-          </div>
+  </div>
+          )}
+        </div>
       </div>
     </div>
   )
