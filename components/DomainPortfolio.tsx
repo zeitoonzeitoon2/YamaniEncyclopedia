@@ -123,26 +123,47 @@ export default function DomainPortfolio() {
   const portfolioByTeam = useMemo(() => {
     const grouped = new Map<string, PortfolioItem[]>()
     
-    // Ensure all myTeams are initialized even if empty portfolio (optional, but good for completeness)
-    // If selectedTeamKey is set, we only care about that team.
-    // If not, we care about all myTeams.
-    const teamsToShow = selectedTeamKey ? (selectedTeam ? [selectedTeam] : []) : myTeams
+    // Determine which teams to initialize
+    let teamsToInit: { id: string; name: string; wing: string }[] = []
 
-    teamsToShow.forEach(team => {
+    if (selectedTeamKey) {
+      // If a specific team is selected
+      if (selectedTeam) {
+        teamsToInit = [selectedTeam]
+      } else {
+        // If selected via ID but not in myTeams (e.g. from All Domains list)
+        const [dId, dWing] = selectedTeamKey.split(':')
+        const dName = allDomains.find(d => d.id === dId)?.name || ''
+        if (dId && dWing) {
+          teamsToInit = [{ id: dId, name: dName, wing: dWing }]
+        }
+      }
+    } else {
+      // If "All Teams" is selected, we want to show ALL domains (Right & Left)
+      // merging myTeams is not enough if we want to show EVERYTHING available in the system.
+      // So we generate list from allDomains.
+      teamsToInit = allDomains.flatMap(d => [
+        { id: d.id, name: d.name, wing: 'RIGHT' },
+        { id: d.id, name: d.name, wing: 'LEFT' }
+      ])
+    }
+
+    // Initialize map entries
+    teamsToInit.forEach(team => {
       grouped.set(`${team.id}:${team.wing}`, [])
     })
 
+    // Populate with actual data
     filteredPortfolio.forEach(item => {
       const key = `${item.team.id}:${item.team.wing}`
       if (!grouped.has(key)) {
-        // If portfolio contains items for teams not in myTeams (e.g. if we fetched by ID but not in myTeams list?), add it
         grouped.set(key, [])
       }
       grouped.get(key)?.push(item)
     })
     
     return grouped
-  }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam])
+  }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam, allDomains])
 
   const uniqueTargets = useMemo(() => {
     const targets = new Map<string, string>()
