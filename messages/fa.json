@@ -237,6 +237,7 @@
           "members": "تعداد اعضا",
           "contractType_OUTBOUND": "واگذاری (سرمایه‌گذاری)",
           "contractType_INBOUND": "دریافتی (بازگشت سرمایه)",
+          "permanent": "مالکیت دائم",
           "holdingsTable": {
             "target": "حوزه هدف",
             "permanent": "مالکیت دائم",

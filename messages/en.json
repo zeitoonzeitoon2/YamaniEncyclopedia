@@ -306,6 +306,7 @@
         "members": "Members",
         "contractType_OUTBOUND": "Giving (Investment)",
         "contractType_INBOUND": "Receiving (Return)",
+        "permanent": "Permanent Ownership",
         "holdingsTable": {
           "target": "Target Domain",
           "permanent": "Permanent Ownership",

@@ -282,6 +282,7 @@
         "members": "عدد الأعضاء",
         "contractType_OUTBOUND": "التنازل (استثمار)",
         "contractType_INBOUND": "الاستلام (عائد الاستثمار)",
+        "permanent": "الأسهم الدائمة",
         "holdingsTable": {
           "target": "المجال المستهدف",
           "permanent": "الأسهم الدائمة",

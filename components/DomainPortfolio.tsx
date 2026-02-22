@@ -275,7 +275,7 @@ export default function DomainPortfolio() {
         <div className="text-center py-20">{t('loading')}...</div>
       ) : (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 gap-6 mb-8">
               {Array.from(portfolioByDomain.entries()).map(([domainId, { right, left, name }]) => {
                 return (
                   <div key={domainId} className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col">
