@@ -321,6 +321,7 @@ export default function DomainPortfolio() {
                           highlightedDomainId={highlightedAssetId}
                           contractIndexMap={contractIndexMap}
                           embedded={true}
+                          getDomainColor={getDomainColor}
                         />
                       </div>
                       {/* Left Wing */}
@@ -332,6 +333,7 @@ export default function DomainPortfolio() {
                           highlightedDomainId={highlightedAssetId}
                           contractIndexMap={contractIndexMap}
                           embedded={true}
+                          getDomainColor={getDomainColor}
                         />
                       </div>
                     </div>

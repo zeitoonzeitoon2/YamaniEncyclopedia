@@ -80,9 +80,10 @@ type TeamPortfolioCardProps = {
   highlightedDomainId?: string
   contractIndexMap?: Record<string, number>
   embedded?: boolean
+  getDomainColor?: (id: string) => string
 }
 
-const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap, embedded = false }: TeamPortfolioCardProps) => {
+const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap, embedded = false, getDomainColor }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
   const [tooltip, setTooltip] = useState<{ item: PortfolioItem, rect: DOMRect } | null>(null)
@@ -128,10 +129,10 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contrac
           </div>
         ) : (
           holdings.map((item) => {
-            const baseColor = stringToColor(item.target.id)
+            const baseColor = getDomainColor ? getDomainColor(item.target.id) : stringToColor(item.target.id)
             // Darker shade for LEFT wing to distinguish visual duplicates
             const color = item.target.wing === 'LEFT' 
-              ? baseColor.replace('45%', '35%') 
+              ? baseColor // Use exact color for consistency, or modify if needed
               : baseColor
 
             // Calculate heights for Permanent and Temporary bars
