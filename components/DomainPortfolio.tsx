@@ -298,7 +298,11 @@ export default function DomainPortfolio() {
                 const domainColor = getDomainColor(domainId)
                 const textColor = getContrastColor(domainColor)
                 return (
-                  <div key={domainId} className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col">
+                  <div 
+                    key={domainId} 
+                    id={`domain-card-${domainId}`}
+                    className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24"
+                  >
                     <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center">
                       <div 
                         className="px-4 py-1.5 rounded-md font-bold shadow-sm text-center"

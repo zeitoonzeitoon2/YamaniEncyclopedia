@@ -155,10 +155,16 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contrac
             return (
               <div 
                 key={`${item.target.id}-${item.target.wing}`} 
-                className="flex flex-col items-center gap-1 min-w-[50px] group relative cursor-help" 
+                className="flex flex-col items-center gap-1 min-w-[50px] group relative cursor-pointer" 
                 style={{ opacity: barOpacity, filter: barFilter }}
                 onMouseEnter={(e) => setTooltip({ item, rect: e.currentTarget.getBoundingClientRect() })}
                 onMouseLeave={() => setTooltip(null)}
+                onClick={() => {
+                  const element = document.getElementById(`domain-card-${item.target.id}`)
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                }}
               >
                 {/* Percentage Label */}
                 <div className="flex items-end justify-center w-14 gap-[1px] mb-1">
