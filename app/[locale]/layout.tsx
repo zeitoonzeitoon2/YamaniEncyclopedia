@@ -56,7 +56,7 @@ export default async function RootLayout({
       <body className="min-h-screen bg-site-bg font-sans antialiased overflow-x-hidden">
         <Providers>
           <Header />
-          <main className="relative z-0">
+          <main className="relative z-0 container mx-auto px-4 py-6">
             {children}
           </main>
         </Providers>
