@@ -228,18 +228,16 @@ export default function DomainInvestments() {
     }
   }, [t, fetchData])
 
-  if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  const sortedInvestments = useMemo(() => {
+    return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  }, [investments])
 
-  const getContractNumber = (id: string) => {
-    // Sort all investments by createdAt ASC to determine number
-    const sorted = [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    const index = sorted.findIndex(i => i.id === id)
+  const shortId = (id: string) => {
+    const index = sortedInvestments.findIndex(i => i.id === id)
     return index + 1
   }
 
-  const shortId = (id: string) => {
-    return getContractNumber(id)
-  }
+  if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
 
   return (
     <div className="space-y-8">
