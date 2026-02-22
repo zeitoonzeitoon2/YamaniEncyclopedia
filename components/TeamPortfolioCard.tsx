@@ -35,6 +35,7 @@ export type PortfolioItem = {
     obligations: number
   }
   contracts: Contract[]
+  votingRights?: string[]
 }
 
 type TeamPortfolioCardProps = {
@@ -202,16 +203,18 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
           <div className="space-y-1.5">
             {/* Voting Power Indicator */}
             <div className="border-site-border pt-1">
-               {tooltip.item.stats.effective > 0 ? (
-                 <div className="flex items-start gap-1 text-green-600 dark:text-green-400">
-                   <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                   <span className="leading-tight">
-                     {t('grantsVotingPower', { 
-                       wing: tooltip.item.target.wing === 'RIGHT' ? tWings('right') : tWings('left'),
-                       name: tooltip.item.target.name 
-                     })}
-                   </span>
-                 </div>
+               {tooltip.item.votingRights && tooltip.item.votingRights.length > 0 ? (
+                 tooltip.item.votingRights.map((vWing, idx) => (
+                   <div key={idx} className="flex items-start gap-1 text-green-600 dark:text-green-400">
+                     <CheckCircle size={14} className="mt-0.5 shrink-0" />
+                     <span className="leading-tight">
+                       {t('grantsVotingPower', { 
+                         wing: vWing === 'RIGHT' ? tWings('right') : tWings('left'),
+                         name: tooltip.item.target.name 
+                       })}
+                     </span>
+                   </div>
+                 ))
                ) : (
                  <div className="text-site-muted text-[10px]">{t('noVotingPower')}</div>
                )}

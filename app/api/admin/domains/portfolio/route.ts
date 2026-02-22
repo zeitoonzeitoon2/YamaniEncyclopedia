@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
         select: { domainId: true, wing: true, role: true }
       }),
       prisma.domain.findMany({
-        select: { id: true, name: true, slug: true }
+        select: { id: true, name: true, slug: true, parentId: true }
       })
     ])
 
@@ -299,9 +299,37 @@ export async function GET(req: NextRequest) {
           if (lentInv) relatedContracts.push({ ...lentInv, type: 'OUTBOUND' })
           if (borrowedInv) relatedContracts.push({ ...borrowedInv, type: 'INBOUND' })
 
+          // Calculate Voting Rights
+          const votingRights: string[] = []
+          const teamDomain = domainsMap.get(team.domainId)
+          
+          // A. Right Wing Election of Target
+          // If Target has parent, voters are Parent Right & Parent Left
+          if (targetDomain.parentId) {
+            if (team.domainId === targetDomain.parentId) {
+               votingRights.push('RIGHT')
+            }
+          } else {
+            // If Target is Root, voter is Self Right
+            if (team.domainId === targetDomain.id && team.wing === 'RIGHT') {
+               votingRights.push('RIGHT')
+            }
+          }
+
+          // B. Left Wing Election of Target
+          // Voters are Self Right
+          if (team.domainId === targetDomain.id && team.wing === 'RIGHT') {
+             votingRights.push('LEFT')
+          }
+          // And Children Right (Team is Child of Target)
+          if (teamDomain && teamDomain.parentId === targetDomain.id && team.wing === 'RIGHT') {
+             votingRights.push('LEFT')
+          }
+
           portfolio.push({
             team: { id: team.domainId, name: team.domainName, wing: team.wing },
             target: { id: targetDomain.id, name: targetDomain.name, wing: targetWing },
+            votingRights,
             stats: {
               permanent: effectivePermanent, // Use our calculated breakdown
               effective: effectiveShare,
