@@ -2,6 +2,30 @@ import React, { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowRight, ArrowLeft, MoreHorizontal, CheckCircle } from 'lucide-react'
 
+// 20 Distinct Colors Palette for high contrast and differentiation
+const COLOR_PALETTE = [
+  '#e6194b', // Red
+  '#3cb44b', // Green
+  '#ffe119', // Yellow
+  '#4363d8', // Blue
+  '#f58231', // Orange
+  '#911eb4', // Purple
+  '#46f0f0', // Cyan
+  '#f032e6', // Magenta
+  '#bcf60c', // Lime
+  '#fabebe', // Pink
+  '#008080', // Teal
+  '#e6beff', // Lavender
+  '#9a6324', // Brown
+  '#fffac8', // Beige
+  '#800000', // Maroon
+  '#aaffc3', // Mint
+  '#808000', // Olive
+  '#ffd8b1', // Apricot
+  '#000075', // Navy
+  '#808080', // Gray
+]
+
 // Helper to generate consistent color
 export const stringToColor = (str: string) => {
   let hash = 0
@@ -9,8 +33,10 @@ export const stringToColor = (str: string) => {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
     hash = Math.imul(hash, 2654435761) // Knuth's multiplicative hash to mix bits
   }
-  const h = Math.abs(hash % 360)
-  return `hsl(${h}, 65%, 45%)`
+  
+  // Use positive modulo to pick from palette
+  const index = Math.abs(hash) % COLOR_PALETTE.length
+  return COLOR_PALETTE[index]
 }
 
 export type Contract = {
