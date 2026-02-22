@@ -1064,6 +1064,7 @@
     "linkWithOrdinal": "الرابط {ordinal}",
     "flashcardSaveError": "خطأ في حفظ البيانات",
     "flashcardSavedSuccess": "تم حفظ البيانات بنجاح",
+    "firstLink": "الرابط الأول",
     "ordinals": {
       "first": "الأول",
       "second": "الثاني",

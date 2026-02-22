@@ -1148,6 +1148,7 @@
     "linkWithOrdinal": "لینک {ordinal}",
     "flashcardSaveError": "خطا در ذخیره داده‌ها",
     "flashcardSavedSuccess": "داده‌ها با موفقیت ذخیره شدند",
+    "firstLink": "لینک اول",
     "ordinals": {
       "first": "اول",
       "second": "دوم",

@@ -1088,6 +1088,7 @@
     "linkWithOrdinal": "Link {ordinal}",
     "flashcardSaveError": "Error saving data",
     "flashcardSavedSuccess": "Data saved successfully",
+    "firstLink": "First Link",
     "ordinals": {
       "first": "First",
       "second": "Second",
