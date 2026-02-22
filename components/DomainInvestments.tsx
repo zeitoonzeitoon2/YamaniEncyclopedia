@@ -229,15 +229,18 @@ export default function DomainInvestments() {
   }, [t, fetchData])
 
   const sortedInvestments = useMemo(() => {
+    if (!investments) return []
     return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   }, [investments])
 
-  const shortId = (id: string) => {
+  const shortId = useCallback((id: string) => {
     const index = sortedInvestments.findIndex(i => i.id === id)
     return index + 1
-  }
+  }, [sortedInvestments])
 
-  if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  if (loading) {
+    return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  }
 
   return (
     <div className="space-y-8">
