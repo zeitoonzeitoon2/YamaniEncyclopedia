@@ -231,12 +231,12 @@ export default function DomainInvestments() {
   const sortedInvestments = useMemo(() => {
     if (!investments) return []
     return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-  }, [investments])
+  }, [investments]);
 
   const shortId = useCallback((id: string) => {
     const index = sortedInvestments.findIndex(i => i.id === id)
     return index + 1
-  }, [sortedInvestments])
+  }, [sortedInvestments]);
 
   if (loading) {
     return (
