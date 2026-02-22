@@ -13,15 +13,15 @@ export const stringToColor = (str: string) => {
   return `hsl(${h}, 65%, 45%)`
 }
 
-type Contract = {
+export type Contract = {
   id: string
   type: 'INBOUND' | 'OUTBOUND'
   percentageInvested: number
   percentageReturn: number
-  endDate?: Date
+  endDate?: string | null
 }
 
-type PortfolioItem = {
+export type PortfolioItem = {
   team: { id: string; name: string; wing: string }
   target: { id: string; name: string; wing: string }
   stats: {

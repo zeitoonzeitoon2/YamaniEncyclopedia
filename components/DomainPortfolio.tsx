@@ -4,28 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { ChevronDown, Info } from 'lucide-react'
-import TeamPortfolioCard, { stringToColor } from './TeamPortfolioCard'
-
-type PortfolioItem = {
-  team: { id: string; name: string; wing: string }
-  target: { id: string; name: string; wing: string }
-  stats: {
-    permanent: number
-    effective: number
-    myPower: number
-    lent: number
-    borrowed: number
-    claims: number
-    obligations: number
-  }
-  contracts: {
-    id: string
-    type: 'OUTBOUND' | 'INBOUND'
-    percentageInvested: number
-    percentageReturn: number
-    endDate: string | null
-  }[]
-}
+import TeamPortfolioCard, { stringToColor, PortfolioItem } from './TeamPortfolioCard'
 
 type MyTeam = {
   id: string
