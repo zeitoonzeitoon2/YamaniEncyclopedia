@@ -65,6 +65,16 @@ export default function DomainInvestments() {
   const [historyLimit, setHistoryLimit] = useState(10)
   const [showHistory, setShowHistory] = useState(false)
 
+  const sortedInvestments = useMemo(() => {
+    if (!investments) return []
+    return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  }, [investments])
+
+  const shortId = useCallback((id: string) => {
+    const index = sortedInvestments.findIndex(i => i.id === id)
+    return index + 1
+  }, [sortedInvestments])
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -227,16 +237,6 @@ export default function DomainInvestments() {
       setSubmitting(false)
     }
   }, [t, fetchData])
-
-  const sortedInvestments = useMemo(() => {
-    if (!investments) return []
-    return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-  }, [investments]);
-
-  const shortId = useCallback((id: string) => {
-    const index = sortedInvestments.findIndex(i => i.id === id)
-    return index + 1
-  }, [sortedInvestments]);
 
   if (loading) {
     return (
