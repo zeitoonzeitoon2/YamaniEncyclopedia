@@ -228,6 +228,8 @@ export default function DomainInvestments() {
 
   if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
 
+  const shortId = (id: string) => id.substring(0, 8).toUpperCase()
+
   return (
     <div className="space-y-8">
       {/* Propose Form */}
@@ -480,6 +482,7 @@ export default function DomainInvestments() {
           <table className="w-full text-sm text-right">
             <thead className="bg-site-secondary/50 text-site-muted text-xs border-b border-site-border">
               <tr>
+                <th className="px-4 py-3 font-medium text-center">#</th>
                 <th className="px-4 py-3 font-medium">{t('investment.proposer')}</th>
                 <th className="px-4 py-3 font-medium">{t('investment.target')}</th>
                 <th className="px-4 py-3 font-medium text-center">{t('investment.tableGive')}</th>
@@ -493,10 +496,13 @@ export default function DomainInvestments() {
             </thead>
             <tbody className="divide-y divide-site-border/50">
               {investments.filter(i => i.status === 'ACTIVE').length === 0 ? (
-                <tr><td colSpan={session?.user?.role === 'ADMIN' ? 7 : 6} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
+                <tr><td colSpan={session?.user?.role === 'ADMIN' ? 8 : 7} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
               ) : (
                 investments.filter(i => i.status === 'ACTIVE').map(inv => (
                   <tr key={inv.id} className="hover:bg-site-secondary/30 transition-colors">
+                    <td className="px-4 py-4 text-center font-mono text-xs text-site-muted select-all">
+                      {shortId(inv.id)}
+                    </td>
                     <td className="px-4 py-4 font-medium text-site-text">
                       <div>{inv.proposerDomain.name}</div>
                       <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</div>
@@ -546,6 +552,64 @@ export default function DomainInvestments() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* History (Completed/Returned) */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
+          <Clock size={20} className="text-site-muted" />
+          {t('investment.history')}
+        </h3>
+        <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
+          <table className="w-full text-sm text-right">
+            <thead className="bg-site-secondary/50 text-site-muted text-xs border-b border-site-border">
+              <tr>
+                <th className="px-4 py-3 font-medium text-center">#</th>
+                <th className="px-4 py-3 font-medium">{t('investment.proposer')}</th>
+                <th className="px-4 py-3 font-medium">{t('investment.target')}</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.tableGive')}</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.tableReceive')}</th>
+                <th className="px-4 py-3 font-medium">{t('investment.endDate')}</th>
+                <th className="px-4 py-3 font-medium text-center">{t('investment.status')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-site-border/50">
+              {investments.filter(i => ['COMPLETED', 'RETURNED'].includes(i.status)).length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
+              ) : (
+                investments.filter(i => ['COMPLETED', 'RETURNED'].includes(i.status)).map(inv => (
+                  <tr key={inv.id} className="hover:bg-site-secondary/20 transition-colors opacity-75 hover:opacity-100">
+                    <td className="px-4 py-4 text-center font-mono text-xs text-site-muted select-all">
+                      {shortId(inv.id)}
+                    </td>
+                    <td className="px-4 py-4 font-medium text-site-text">
+                      <div>{inv.proposerDomain.name}</div>
+                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</div>
+                    </td>
+                    <td className="px-4 py-4 font-medium text-site-text">
+                      <div>{inv.targetDomain.name}</div>
+                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</div>
+                    </td>
+                    <td className="px-4 py-4 text-center text-site-muted">{inv.percentageInvested}%</td>
+                    <td className="px-4 py-4 text-center text-site-muted">{inv.percentageReturn}%</td>
+                    <td className="px-4 py-4 text-xs text-site-muted">
+                      {inv.endDate ? new Date(inv.endDate).toLocaleDateString('en-GB') : '-'}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
+                        inv.status === 'COMPLETED' 
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                          : 'bg-site-secondary text-site-muted border-site-border'
+                      }`}>
+                        {inv.status === 'COMPLETED' ? t('investment.statusCompleted') : t('investment.statusReturned')}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

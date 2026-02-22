@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
-import { PieChart, TrendingUp, Users, Award, ChevronDown, ChevronRight, Activity, FileText, LayoutGrid, Network, BarChart3, Info } from 'lucide-react'
+import { ChevronDown, Info } from 'lucide-react'
 import TeamPortfolioCard, { stringToColor } from './TeamPortfolioCard'
 
 type PortfolioItem = {
@@ -56,8 +56,6 @@ export default function DomainPortfolio() {
   const [selectedTeamKey, setSelectedTeamKey] = useState<string>('')
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards')
   const [showLegend, setShowLegend] = useState(false)
   const [highlightedAssetId, setHighlightedAssetId] = useState<string>('')
 
@@ -101,13 +99,6 @@ export default function DomainPortfolio() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
-
-  const toggleRow = (key: string) => {
-    const newSet = new Set(expandedRows)
-    if (newSet.has(key)) newSet.delete(key)
-    else newSet.add(key)
-    setExpandedRows(newSet)
-  }
 
   const selectedTeam = myTeams.find(t => `${t.id}:${t.wing}` === selectedTeamKey)
   // If selectedTeamKey is set, filter. If not, show all.
