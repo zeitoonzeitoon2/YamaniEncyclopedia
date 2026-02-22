@@ -77,7 +77,12 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
           </div>
         ) : (
           holdings.map((item) => {
-            const color = stringToColor(item.target.id)
+            const baseColor = stringToColor(item.target.id)
+            // Darker shade for LEFT wing to distinguish visual duplicates
+            const color = item.target.wing === 'LEFT' 
+              ? baseColor.replace('45%', '35%') 
+              : baseColor
+
             // Height based on percentage (max 100%)
             // Let's cap at 100
             const height = Math.min(item.stats.effective, 100)
@@ -88,10 +93,15 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
             const barFilter = isHighlighted ? 'none' : 'grayscale(100%)'
 
             return (
-              <div key={item.target.id} className="flex flex-col items-center gap-1 min-w-[50px] group relative" style={{ opacity: barOpacity, filter: barFilter }}>
+              <div key={`${item.target.id}-${item.target.wing}`} className="flex flex-col items-center gap-1 min-w-[50px] group relative" style={{ opacity: barOpacity, filter: barFilter }}>
                 {/* Tooltip on hover */}
                 <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-site-bg border border-site-border p-2 rounded shadow-lg text-xs z-10 w-48 pointer-events-none">
-                  <div className="font-bold mb-1">{item.target.name}</div>
+                  <div className="font-bold mb-1">
+                    {item.target.name}
+                    <span className="text-[10px] ml-1 opacity-75">
+                      ({item.target.wing === 'RIGHT' ? tWings('right') : tWings('left')})
+                    </span>
+                  </div>
                   <div className="flex justify-between">
                     <span>{t('holdingsTable.permanent')}:</span>
                     <span>{item.stats.permanent.toFixed(1)}%</span>
@@ -134,9 +144,14 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                 </div>
                 
                 {/* Domain Name */}
-                <span className="text-xs text-site-muted truncate w-16 text-center" title={item.target.name}>
-                  {item.target.name}
-                </span>
+                <div className="flex flex-col items-center w-16">
+                  <span className="text-xs text-site-muted truncate w-full text-center" title={item.target.name}>
+                    {item.target.name}
+                  </span>
+                  <span className={`text-[9px] ${item.target.wing === 'RIGHT' ? 'text-blue-500/70' : 'text-red-500/70'}`}>
+                    {item.target.wing === 'RIGHT' ? tWings('right') : tWings('left')}
+                  </span>
+                </div>
               </div>
             )
           })

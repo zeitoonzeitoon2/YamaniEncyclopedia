@@ -159,22 +159,29 @@ export async function GET(req: NextRequest) {
     const allTargetKeys = new Set(sharesByTarget.keys())
     teamsToAnalyze.forEach(t => allTargetKeys.add(`${t.domainId}:${t.wing}`))
     
-    // Also add all domains from allDomains to be safe? 
-    // Ideally yes, but let's stick to relevant ones to save memory if needed.
-    // For "All Teams" view, teamsToAnalyze covers everything.
-
     allTargetKeys.forEach(targetKey => {
       const list = sharesByTarget.get(targetKey) || []
-      const totalExternal = list.reduce((sum, s) => sum + s.percentage, 0)
-      if (totalExternal < 100) {
-        const [tId, tWing] = targetKey.split(':')
-        addShare(targetKey, {
+      const [tId, tWing] = targetKey.split(':')
+      
+      // Separate Self from Others to recalculate correct Self Share
+      // This handles cases where Permanent Share (100%) + Investment (20%) resulted in >100%
+      // and fixes the issue where Self Share defaulted to RIGHT wing causing duplicates for LEFT wing teams
+      const others = list.filter(s => !(s.ownerId === tId && s.ownerWing === tWing))
+      
+      const totalExternal = others.reduce((sum, s) => sum + s.percentage, 0)
+      const correctSelfPercent = Math.max(0, 100 - totalExternal)
+      
+      // Reconstruct the list with corrected Self Share
+      const newList = [...others]
+      if (correctSelfPercent > 0) {
+        newList.push({
           ownerId: tId,
-          ownerWing: 'RIGHT', // Self-share always defaults to RIGHT wing
-          percentage: 100 - totalExternal,
+          ownerWing: tWing, // Self share should belong to the same wing
+          percentage: correctSelfPercent,
           source: 'SELF'
         })
       }
+      sharesByTarget.set(targetKey, newList)
     })
 
     // 4. Invert to get Portfolio: Owner -> [Targets]
