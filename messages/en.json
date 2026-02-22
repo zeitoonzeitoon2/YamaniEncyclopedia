@@ -311,7 +311,7 @@
           "target": "Target Domain",
           "permanent": "Permanent Ownership",
           "lent": "Lent (Loaned)",
-          "borrowed": "Borrowed (Loaned)",
+          "borrowed": "Loan",
           "active": "Active Changes",
           "effective": "Effective Power",
           "claims": "Future Claims",
@@ -321,7 +321,7 @@
         },
         "grantsVotingPower": "Grants voting rights in {name} {wing}",
         "noVotingPower": "No voting rights",
-        "temporaryShare": "Temporary Share (Borrowed)",
+        "temporaryShare": "Temporary Share",
         "contractId": "Contract Code",
         "obligation": "Profit Payment Obligation",
         "profitShare": "of own shares"

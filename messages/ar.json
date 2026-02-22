@@ -287,7 +287,7 @@
           "target": "المجال المستهدف",
           "permanent": "الأسهم الدائمة",
           "lent": "المعارة (قرض)",
-          "borrowed": "المقترضة (قرض)",
+          "borrowed": "قرض",
           "active": "التغييرات النشطة",
           "effective": "القوة الفعالة للفريق",
           "claims": "المطالبات المستقبلية",
@@ -297,7 +297,7 @@
         },
         "grantsVotingPower": "يمنح حقوق التصويت في {wing} {name}",
         "noVotingPower": "لا توجد حقوق تصويت",
-        "temporaryShare": "حصة مؤقتة (مقترضة)",
+        "temporaryShare": "حصة مؤقتة",
         "contractId": "رمز العقد",
         "obligation": "التزام دفع الأرباح",
         "profitShare": "من الأسهم الخاصة"
