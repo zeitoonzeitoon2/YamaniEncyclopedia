@@ -170,7 +170,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, sourceDomainId, t, fetchData])
+  }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, sourceDomainId, t, fetchData]);
 
   const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
     try {
@@ -192,7 +192,7 @@ export default function DomainInvestments() {
     } finally {
       setVotingId(null)
     }
-  }, [t, fetchData])
+  }, [t, fetchData]);
 
   const handleSettle = useCallback(async () => {
     try {
@@ -212,7 +212,7 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [fetchData, t])
+  }, [fetchData, t]);
 
   const handleForceTerminate = useCallback(async (id: string) => {
     if (!confirm(t('investment.confirmTerminate'))) return
@@ -236,11 +236,13 @@ export default function DomainInvestments() {
     } finally {
       setSubmitting(false)
     }
-  }, [t, fetchData])
+  }, [t, fetchData]);
 
-  return loading ? (
-    <div className="p-8 text-center text-site-muted animate-pulse">...</div>
-  ) : (
+  if (loading) {
+    return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  }
+
+  return (
     <div className="space-y-8">
       {/* Propose Form */}
       <div className="card border-warm-primary/20 bg-site-secondary/20">
@@ -359,7 +361,6 @@ export default function DomainInvestments() {
           {t('investment.parentChildOnly')}
         </p>
       </div>
-
       {/* Pending Proposals */}
       {investments.filter(i => i.status === 'PENDING').length > 0 && (
         <div className="space-y-4">
@@ -381,9 +382,9 @@ export default function DomainInvestments() {
                         })}
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-site-muted">
-                        <span>{t(`wings.${inv.proposerWing.toLowerCase()}`)}</span>
+                        <span>{t('wings.' + inv.proposerWing.toLowerCase())}</span>
                         <ArrowUpRight size={12} className="text-warm-primary" />
-                        <span>{t(`wings.${inv.targetWing.toLowerCase()}`)}</span>
+                        <span>{t('wings.' + inv.targetWing.toLowerCase())}</span>
                       </div>
                     </div>
                     <span className="text-[10px] bg-site-bg px-2 py-0.5 rounded-full border border-site-border text-site-muted whitespace-nowrap">
@@ -412,14 +413,14 @@ export default function DomainInvestments() {
                       disabled={!!votingId}
                       className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-colors"
                     >
-                      {votingId === `${inv.id}:APPROVE` ? '...' : t('investment.returnBtn')}
+                      {votingId === inv.id + ':APPROVE' ? '...' : t('investment.returnBtn')}
                     </button>
                     <button 
                       onClick={() => handleVote(inv.id, 'REJECT')}
                       disabled={!!votingId}
                       className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-colors"
                     >
-                      {votingId === `${inv.id}:REJECT` ? '...' : t('reject')}
+                      {votingId === inv.id + ':REJECT' ? '...' : t('reject')}
                     </button>
                   </div>
                 </div>
@@ -432,17 +433,17 @@ export default function DomainInvestments() {
                     {/* Proposer Stats */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] text-site-muted">
-                        <span>{inv.proposerDomain.name} ({t(`wings.${inv.proposerWing.toLowerCase()}`)})</span>
+                        <span>{inv.proposerDomain.name} ({t('wings.' + inv.proposerWing.toLowerCase())})</span>
                         <span>{inv.stats.proposer.approved}/{inv.stats.proposer.total}</span>
                       </div>
                       <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
                         <div 
                           className="bg-green-500" 
-                          style={{ width: `${(inv.stats.proposer.approved / inv.stats.proposer.total) * 100}%` }}
+                          style={{ width: (inv.stats.proposer.approved / inv.stats.proposer.total) * 100 + '%' }}
                         />
                         <div 
                           className="bg-red-500" 
-                          style={{ width: `${(inv.stats.proposer.rejected / inv.stats.proposer.total) * 100}%` }}
+                          style={{ width: (inv.stats.proposer.rejected / inv.stats.proposer.total) * 100 + '%' }}
                         />
                       </div>
                       <div className="flex justify-between text-[10px] text-site-muted/70">
@@ -456,17 +457,17 @@ export default function DomainInvestments() {
                     {/* Target Stats */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] text-site-muted">
-                        <span>{inv.targetDomain.name} ({t(`wings.${inv.targetWing.toLowerCase()}`)})</span>
+                        <span>{inv.targetDomain.name} ({t('wings.' + inv.targetWing.toLowerCase())})</span>
                         <span>{inv.stats.target.approved}/{inv.stats.target.total}</span>
                       </div>
                       <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
                         <div 
                           className="bg-green-500" 
-                          style={{ width: `${(inv.stats.target.approved / inv.stats.target.total) * 100}%` }}
+                          style={{ width: (inv.stats.target.approved / inv.stats.target.total) * 100 + '%' }}
                         />
                         <div 
                           className="bg-red-500" 
-                          style={{ width: `${(inv.stats.target.rejected / inv.stats.target.total) * 100}%` }}
+                          style={{ width: (inv.stats.target.rejected / inv.stats.target.total) * 100 + '%' }}
                         />
                       </div>
                       <div className="flex justify-between text-[10px] text-site-muted/70">
@@ -516,11 +517,11 @@ export default function DomainInvestments() {
                     </td>
                     <td className="px-4 py-4 font-medium text-site-text">
                       <div>{inv.proposerDomain.name}</div>
-                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</div>
+                      <div className="text-xs text-site-muted font-normal">{t('wings.' + inv.proposerWing.toLowerCase())}</div>
                     </td>
                     <td className="px-4 py-4 font-medium text-site-text">
                       <div>{inv.targetDomain.name}</div>
-                      <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</div>
+                      <div className="text-xs text-site-muted font-normal">{t('wings.' + inv.targetWing.toLowerCase())}</div>
                     </td>
                     <td className="px-4 py-4 text-center text-site-muted font-bold text-orange-400">{inv.percentageInvested}%</td>
                     <td className="px-4 py-4 text-center text-site-muted font-bold text-emerald-400">{inv.percentageReturn}%</td>
@@ -613,11 +614,11 @@ export default function DomainInvestments() {
                       </td>
                       <td className="px-4 py-4 font-medium text-site-text">
                         <div>{inv.proposerDomain.name}</div>
-                        <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.proposerWing.toLowerCase()}`)}</div>
+                        <div className="text-xs text-site-muted font-normal">{t('wings.' + inv.proposerWing.toLowerCase())}</div>
                       </td>
                       <td className="px-4 py-4 font-medium text-site-text">
                         <div>{inv.targetDomain.name}</div>
-                        <div className="text-xs text-site-muted font-normal">{t(`wings.${inv.targetWing.toLowerCase()}`)}</div>
+                        <div className="text-xs text-site-muted font-normal">{t('wings.' + inv.targetWing.toLowerCase())}</div>
                       </td>
                       <td className="px-4 py-4 text-center text-site-muted">{inv.percentageInvested}%</td>
                       <td className="px-4 py-4 text-center text-site-muted">{inv.percentageReturn}%</td>
@@ -655,7 +656,8 @@ export default function DomainInvestments() {
   </div>
           )}
         </div>
-      </div>
+
     </div>
   )
+
 }
