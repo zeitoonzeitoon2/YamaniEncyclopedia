@@ -81,15 +81,22 @@ type TeamPortfolioCardProps = {
   contractIndexMap?: Record<string, number>
   embedded?: boolean
   getDomainColor?: (id: string) => string
+  onlyShowTargetId?: string
 }
 
-const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap, embedded = false, getDomainColor }: TeamPortfolioCardProps) => {
+const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap, embedded = false, getDomainColor, onlyShowTargetId }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
   const [tooltip, setTooltip] = useState<{ item: PortfolioItem, rect: DOMRect } | null>(null)
 
   // Filter items that have significant holdings (> 0.1%)
-  const holdings = items.filter(item => item.stats.permanent > 0.1 || item.stats.effective > 0.1)
+  const holdings = items.filter(item => {
+    const isSignificant = item.stats.permanent > 0.1 || item.stats.effective > 0.1
+    if (onlyShowTargetId) {
+      return isSignificant && item.target.id === onlyShowTargetId
+    }
+    return isSignificant
+  })
 
   // Sort by effective power desc
   holdings.sort((a, b) => b.stats.effective - a.stats.effective)
@@ -148,9 +155,10 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contrac
             const tempHeight = Math.min(tempVal, 100)
             
             // Highlight logic
+            // If onlyShowTargetId is set, we don't dim anything because everything visible is the target
             const isHighlighted = !highlightedDomainId || item.target.id === highlightedDomainId
-            const barOpacity = isHighlighted ? 1 : 0.2
-            const barFilter = isHighlighted ? 'none' : 'grayscale(100%)'
+            const barOpacity = onlyShowTargetId ? 1 : (isHighlighted ? 1 : 0.2)
+            const barFilter = onlyShowTargetId ? 'none' : (isHighlighted ? 'none' : 'grayscale(100%)')
 
             return (
               <div 

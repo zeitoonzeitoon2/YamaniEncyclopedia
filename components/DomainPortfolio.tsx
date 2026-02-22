@@ -175,6 +175,22 @@ export default function DomainPortfolio() {
     return grouped
   }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam, allDomains])
 
+  // Filter displayed teams based on highlightedAssetId
+  const displayedTeams = useMemo(() => {
+    const entries = Array.from(portfolioByDomain.entries())
+    
+    if (!highlightedAssetId) {
+      return entries
+    }
+
+    // If an asset is selected, only show teams that hold that asset
+    return entries.filter(([_, { right, left }]) => {
+      const hasInRight = right.some(p => p.target.id === highlightedAssetId && (p.stats.permanent > 0.1 || p.stats.effective > 0.1))
+      const hasInLeft = left.some(p => p.target.id === highlightedAssetId && (p.stats.permanent > 0.1 || p.stats.effective > 0.1))
+      return hasInRight || hasInLeft
+    })
+  }, [portfolioByDomain, highlightedAssetId])
+
   const uniqueTargets = useMemo(() => {
     const targets = new Map<string, string>()
     filteredPortfolio.forEach(p => {
@@ -293,8 +309,8 @@ export default function DomainPortfolio() {
         <div className="text-center py-20">{t('loading')}...</div>
       ) : (
         <>
-            <div className="grid grid-cols-1 gap-6 mb-8">
-              {Array.from(portfolioByDomain.entries()).map(([domainId, { right, left, name }]) => {
+            <div className={`grid gap-6 mb-8 ${highlightedAssetId ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
+              {displayedTeams.map(([domainId, { right, left, name }]) => {
                 const domainColor = getDomainColor(domainId)
                 const textColor = getContrastColor(domainColor)
                 return (
@@ -326,6 +342,7 @@ export default function DomainPortfolio() {
                           contractIndexMap={contractIndexMap}
                           embedded={true}
                           getDomainColor={getDomainColor}
+                          onlyShowTargetId={highlightedAssetId}
                         />
                       </div>
                       {/* Left Wing */}
@@ -338,13 +355,14 @@ export default function DomainPortfolio() {
                           contractIndexMap={contractIndexMap}
                           embedded={true}
                           getDomainColor={getDomainColor}
+                          onlyShowTargetId={highlightedAssetId}
                         />
                       </div>
                     </div>
                   </div>
                 )
               })}
-              {portfolioByDomain.size === 0 && (
+              {displayedTeams.length === 0 && (
                 <div className="col-span-full text-center py-10 text-site-muted">
                   {t('noHoldings')}
                 </div>
