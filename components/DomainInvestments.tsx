@@ -239,7 +239,9 @@ export default function DomainInvestments() {
   }, [sortedInvestments])
 
   if (loading) {
-    return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+    return (
+      <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+    )
   }
 
   return (
