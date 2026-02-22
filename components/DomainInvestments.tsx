@@ -238,13 +238,9 @@ export default function DomainInvestments() {
     }
   }, [t, fetchData])
 
-  if (loading) {
-    return (
-      <div className="p-8 text-center text-site-muted animate-pulse">...</div>
-    )
-  }
-
-  return (
+  return loading ? (
+    <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  ) : (
     <div className="space-y-8">
       {/* Propose Form */}
       <div className="card border-warm-primary/20 bg-site-secondary/20">
