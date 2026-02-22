@@ -173,7 +173,10 @@ export async function GET(req: NextRequest) {
       
       // Reconstruct the list with corrected Self Share
       const newList = [...others]
-      if (correctSelfPercent > 0) {
+      
+      // Only RIGHT wing starts with 100% ownership.
+      // LEFT wing starts with 0%, so it should not have a "Self Share" unless explicitly given.
+      if (tWing === 'RIGHT' && correctSelfPercent > 0) {
         newList.push({
           ownerId: tId,
           ownerWing: tWing, // Self share should belong to the same wing
