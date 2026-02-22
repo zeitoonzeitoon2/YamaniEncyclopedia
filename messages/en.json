@@ -707,6 +707,15 @@
     "closeButton": "Close",
     "hint": "💡 A URL (slug) will be automatically generated from the title, and the article will be immediately linked to the data card."
   },
+  "visualEditor": {
+    "placeholder": "Start writing...",
+    "addAyah": "Add Ayah",
+    "addQuote": "Add Quote",
+    "active": "Visual editor is active",
+    "boldShortcut": "Ctrl+B: Bold",
+    "italicShortcut": "Ctrl+I: Italic",
+    "orderedListShortcut": "Shift+Ctrl+7: Numbered list"
+  },
   "enhancedDiagramComparison": {
     "errorFetchingOriginal": "Error fetching original article",
     "proposedArticleNotFound": "Proposed article not found or not published",

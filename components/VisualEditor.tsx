@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
+import { useTranslations } from 'next-intl'
 import { 
   Bold, 
   Italic, 
@@ -63,6 +64,7 @@ const MenuButton = ({
 MenuButton.displayName = 'MenuButton'
 
 const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, onChange, placeholder }, ref) => {
+  const t = useTranslations('visualEditor')
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -79,7 +81,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
         },
       }),
       Placeholder.configure({
-        placeholder: placeholder || 'شروع به نوشتن کنید...',
+        placeholder: placeholder || t('placeholder'),
       }),
       Markdown.configure({
         html: true,
@@ -98,7 +100,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
     },
     editorProps: {
       attributes: {
-        class: 'article-content-body focus:outline-none min-h-[300px] p-4 text-site-text',
+        class: 'article-content-body focus:outline-none min-h-full p-4 text-site-text',
         dir: 'rtl',
       },
     },
@@ -132,7 +134,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
   }
 
   return (
-    <div className="flex flex-col border border-gray-600 rounded-lg overflow-hidden bg-site-bg">
+    <div className="flex flex-col border border-gray-600 rounded-lg overflow-hidden bg-site-bg h-full">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-600 bg-site-secondary">
         <MenuButton 
@@ -206,7 +208,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
           onClick={() => {
             editor.chain().focus().insertContent('> !ayah \n').run()
           }}
-          title="افزودن آیه"
+          title={t('addAyah')}
         >
           <BookOpen size={18} />
         </MenuButton>
@@ -214,7 +216,7 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
           onClick={() => {
             editor.chain().focus().insertContent('> !quote: \n').run()
           }}
-          title="افزودن نقل‌قول"
+          title={t('addQuote')}
         >
           <Library size={18} />
         </MenuButton>
@@ -250,11 +252,11 @@ const VisualEditor = forwardRef<VisualEditorRef, VisualEditorProps>(({ content, 
       
       {/* Help Footer */}
       <div className="p-2 border-t border-gray-600 bg-stone-900/50 flex justify-between items-center text-[10px] text-gray-500">
-        <span>ویرایشگر دیداری فعال است</span>
+        <span>{t('active')}</span>
         <div className="flex gap-2">
-          <span>Ctrl+B: ضخیم</span>
-          <span>Ctrl+I: کج</span>
-          <span>Shift+Ctrl+7: لیست عددی</span>
+          <span>{t('boldShortcut')}</span>
+          <span>{t('italicShortcut')}</span>
+          <span>{t('orderedListShortcut')}</span>
         </div>
       </div>
     </div>

@@ -266,7 +266,7 @@ export default function QuickArticleModal({
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+      <div className="bg-site-secondary rounded-lg shadow-xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 flex-shrink-0">
           <h2 className="text-xl font-bold text-site-text">
             {editMode ? t('modalTitleEdit') : t('modalTitleCreate')}
@@ -281,7 +281,7 @@ export default function QuickArticleModal({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 overflow-y-auto flex-1">
           <form onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col">
             {/* Article title */}
             <div className="flex-shrink-0">
