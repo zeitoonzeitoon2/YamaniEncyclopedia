@@ -164,7 +164,7 @@
     "validationError": "يرجى ملء الحقول الإلزامية (المميزة بـ *)."
   },
   "admin": {
-    "leftWing": "الفريق الأيسر",
+     "leftWing": "الفريق الأيسر",
     "rightWing": "الفريق الأيمن",
     "roleExpert": "خبير",
     "voting": {
@@ -263,6 +263,44 @@
       "nominateMemberTitle": "ترشيح عضو",
       "searchPlaceholder": "بحث...",
       "clear": "مسح",
+      "portfolio": {
+        "title": "المحفظة وحقوق التصويت",
+        "selectTeam": "اختر الفريق (المجال والجناح الخاص بك)",
+        "selectAsset": "اختر الأصل (للتمييز)",
+        "allMyTeamsLabel": "جميع الفرق",
+        "allDomains": "جميع المجالات",
+        "allAssets": "جميع الأصول",
+        "loading": "جارٍ التحميل...",
+        "myRole": "دوري",
+        "noHoldings": "لا يمتلك هذا الفريق أي أسهم أو حقوق تصويت في مجالات أخرى حتى الآن.",
+        "legendTitle": "دليل الألوان",
+        "visualMap": "الخريطة البصرية",
+        "viewTable": "عرض الجدول",
+        "viewVisual": "عرض المخطط",
+        "teamSummary": "ملخص الفريق",
+        "totalPower": "إجمالي قوة التصويت للفريق",
+        "members": "عدد الأعضاء",
+        "contractType_OUTBOUND": "التنازل (استثمار)",
+        "contractType_INBOUND": "الاستلام (عائد الاستثمار)",
+        "holdingsTable": {
+          "target": "المجال المستهدف",
+          "permanent": "الأسهم الدائمة",
+          "lent": "المعارة (قرض)",
+          "borrowed": "المقترضة (قرض)",
+          "active": "التغييرات النشطة",
+          "effective": "القوة الفعالة للفريق",
+          "claims": "المطالبات المستقبلية",
+          "obligations": "الالتزامات المستقبلية",
+          "myPower": "قوة تصويتي",
+          "contracts": "العقود"
+        },
+        "grantsVotingPower": "يمنح حقوق التصويت في {wing} {name}",
+        "noVotingPower": "لا توجد حقوق تصويت",
+        "temporaryShare": "حصة مؤقتة (مقترضة)",
+        "contractId": "رمز العقد",
+        "obligation": "التزام دفع الأرباح",
+        "profitShare": "من الأسهم الخاصة"
+      },
       "strategicExchanges": "التبادلات الاستراتيجية",
       "investment": {
         "title": "الاستثمار",
@@ -302,7 +340,8 @@
         "toast": {
           "createSuccess": "تم تسجيل المقترح بنجاح",
           "createError": "خطأ في تسجيل المقترح"
-        }
+        },
+        "actions": "الإجراءات"
       },
     "sendNomination": "إرسال الترشيح",
     "electionRound": "دورة انتخابية",

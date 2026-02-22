@@ -287,6 +287,44 @@
       "nominateMemberTitle": "Nominate member",
       "searchPlaceholder": "Search...",
       "clear": "Clear",
+      "portfolio": {
+        "title": "Power Portfolio",
+        "selectTeam": "Select Team (Domain)",
+        "selectAsset": "Select Asset (Highlight)",
+        "allMyTeamsLabel": "All Teams",
+        "allDomains": "All Domains",
+        "allAssets": "All Assets",
+        "loading": "Loading...",
+        "myRole": "My Role",
+        "noHoldings": "No assets or obligations yet.",
+        "legendTitle": "Legend",
+        "visualMap": "Visual Power Map",
+        "viewTable": "Table View",
+        "viewVisual": "Chart View",
+        "teamSummary": "Team Summary",
+        "totalPower": "Total Voting Power",
+        "members": "Members",
+        "contractType_OUTBOUND": "Giving (Investment)",
+        "contractType_INBOUND": "Receiving (Return)",
+        "holdingsTable": {
+          "target": "Target Domain",
+          "permanent": "Permanent Ownership",
+          "lent": "Lent (Loaned)",
+          "borrowed": "Borrowed (Loaned)",
+          "active": "Active Changes",
+          "effective": "Effective Power",
+          "claims": "Future Claims",
+          "obligations": "Future Obligations",
+          "myPower": "My Power Share",
+          "contracts": "Active Contracts"
+        },
+        "grantsVotingPower": "Grants voting rights in {name} {wing}",
+        "noVotingPower": "No voting rights",
+        "temporaryShare": "Temporary Share (Borrowed)",
+        "contractId": "Contract Code",
+        "obligation": "Profit Payment Obligation",
+        "profitShare": "of own shares"
+      },
       "investment": {
         "title": "Investment",
         "propose": "Propose Investment",
@@ -325,7 +363,8 @@
         "toast": {
           "createSuccess": "Proposal registered successfully",
           "createError": "Error registering proposal"
-        }
+        },
+        "actions": "Actions"
       },
       "strategicExchanges": "Strategic Voting Share Exchanges",
       "sendNomination": "Send nomination",

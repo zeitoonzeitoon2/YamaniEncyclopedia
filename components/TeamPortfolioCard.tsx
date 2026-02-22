@@ -45,16 +45,7 @@ type TeamPortfolioCardProps = {
   highlightedDomainId?: string
 }
 
-// Helper to generate a stable short numeric ID from a string
-const getShortNumericId = (str: string) => {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString().substring(0, 6)
-}
+
 
 const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
@@ -228,12 +219,6 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                      <div className="font-bold mb-1 text-site-text flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
                         {t('temporaryShare')}
-                     </div>
-                     <div className="flex justify-between items-center mb-1">
-                       <span className="text-site-muted">{t('contractId')}:</span>
-                       <span className="font-mono bg-site-bg px-1 rounded border border-site-border/50 text-[9px]">
-                         {getShortNumericId(contract.id)}
-                       </span>
                      </div>
                      <div className="flex flex-col mt-1 bg-red-500/5 p-1.5 rounded border border-red-500/10">
                         <span className="text-site-muted mb-0.5">{t('obligation')}:</span>
