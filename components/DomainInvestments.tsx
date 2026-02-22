@@ -282,12 +282,12 @@ export default function DomainInvestments() {
               <select 
                 value={selectedMyDomainId} 
                 onChange={e => setSelectedMyDomainId(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pr-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
               >
                 <option value="">{t('investment.title')}...</option>
                 {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
             </div>
           </div>
           <div className="space-y-1">
@@ -296,12 +296,12 @@ export default function DomainInvestments() {
               <select 
                 value={proposerWing} 
                 onChange={e => setProposerWing(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pr-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
               >
                 <option value="RIGHT">{t('rightWing')}</option>
                 <option value="LEFT">{t('leftWing')}</option>
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
             </div>
           </div>
           <div className="space-y-1">
@@ -310,7 +310,7 @@ export default function DomainInvestments() {
               <select 
                 value={sourceDomainId} 
                 onChange={e => setSourceDomainId(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pr-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
               >
                 <option value={selectedMyDomainId}>{t('investment.ownShares', { name: allDomains.find(d => d.id === selectedMyDomainId)?.name || '' })}</option>
                 {availableAssets.map(asset => (
@@ -319,7 +319,7 @@ export default function DomainInvestments() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
             </div>
           </div>
           <div className="space-y-1">
@@ -328,12 +328,12 @@ export default function DomainInvestments() {
               <select 
                 value={selectedTargetDomainId} 
                 onChange={e => setSelectedTargetDomainId(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pr-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
               >
                 <option value="">{t('investment.target')}...</option>
                 {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
             </div>
           </div>
           <div className="space-y-1">
@@ -342,12 +342,12 @@ export default function DomainInvestments() {
               <select 
                 value={targetWing} 
                 onChange={e => setTargetWing(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pr-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
               >
                 <option value="RIGHT">{t('rightWing')}</option>
                 <option value="LEFT">{t('leftWing')}</option>
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
             </div>
           </div>
           <div className="space-y-1">
