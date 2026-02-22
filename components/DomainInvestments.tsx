@@ -63,6 +63,17 @@ export default function DomainInvestments() {
   const [submitting, setSubmitting] = useState(false)
   const [votingId, setVotingId] = useState<string | null>(null)
   const [historyLimit, setHistoryLimit] = useState(10)
+  const [showHistory, setShowHistory] = useState(false)
+
+  const sortedInvestments = useMemo(() => {
+    if (!investments) return []
+    return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  }, [investments])
+
+  const shortId = useCallback((id: string) => {
+    const index = sortedInvestments.findIndex(i => i.id === id)
+    return index + 1
+  }, [sortedInvestments])
 
   const fetchData = useCallback(async () => {
     try {
@@ -227,20 +238,9 @@ export default function DomainInvestments() {
     }
   }, [t, fetchData])
 
-  if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
-
-  const getContractNumber = (id: string) => {
-    // Sort all investments by createdAt ASC to determine number
-    const sorted = [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    const index = sorted.findIndex(i => i.id === id)
-    return index + 1
-  }
-
-  const shortId = (id: string) => {
-    return getContractNumber(id)
-  }
-
-  return (
+  return loading ? (
+    <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+  ) : (
     <div className="space-y-8">
       {/* Propose Form */}
       <div className="card border-warm-primary/20 bg-site-secondary/20">
@@ -570,11 +570,21 @@ export default function DomainInvestments() {
 
       {/* History (Completed/Returned) */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
-          <Clock size={20} className="text-site-muted" />
-          {t('investment.history')}
-        </h3>
-        <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
+              <Clock size={20} className="text-site-muted" />
+              {t('investment.history')}
+            </h3>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="px-4 py-2 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-colors border border-site-border"
+            >
+              {showHistory ? t('investment.hideHistory') : t('investment.showHistory')}
+            </button>
+          </div>
+          
+          {showHistory && (
+          <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
             <table className="w-full text-sm text-right">
               <thead className="bg-site-secondary/50 text-site-muted text-xs border-b border-site-border">
                 <tr>
@@ -642,7 +652,9 @@ export default function DomainInvestments() {
                 </button>
               </div>
             )}
-          </div>
+  </div>
+          )}
+        </div>
       </div>
     </div>
   )
