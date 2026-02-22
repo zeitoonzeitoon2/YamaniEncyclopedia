@@ -308,6 +308,11 @@ export default function QuickArticleModal({
                   {t('urlPreview', { slug: previewSlug(formData.title) })}
                 </p>
               )}
+              <div className="mt-2 p-2 bg-blue-900/20 rounded border border-blue-700/40">
+                <p className="text-xs text-blue-300 break-words">
+                  {t('hint')}
+                </p>
+              </div>
             </div>
 
             {/* Article summary */}
@@ -403,12 +408,6 @@ export default function QuickArticleModal({
               </button>
             </div>
           </form>
-
-          <div className="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700/40">
-            <p className="text-xs text-blue-300 break-words">
-              {t('hint')}
-            </p>
-          </div>
         </div>
       </div>
     </div>
