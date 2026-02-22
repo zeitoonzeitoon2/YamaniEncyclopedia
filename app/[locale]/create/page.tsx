@@ -310,14 +310,15 @@ function CreatePost() {
 
   if (isSummaryOpen) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl my-8">
-          <div className="px-6 py-4 border-b border-gray-700/50">
-            <h2 className="text-xl font-bold text-site-text heading">{tArg('title')}</h2>
-          </div>
-          <div className="p-6 space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-site-text mb-2">{tArg('typeLabel')} ({tArg('optional')})</label>
+      <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-2xl my-8 relative">
+            <div className="px-6 py-4 border-b border-gray-700/50">
+              <h2 className="text-xl font-bold text-site-text heading">{tArg('title')}</h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-site-text mb-2">{tArg('typeLabel')} ({tArg('optional')})</label>
               <div className="flex flex-wrap gap-2">
                 {['fact', 'logic', 'structure', 'style'].map((type) => (
                   <button
@@ -386,6 +387,7 @@ function CreatePost() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     )
   }
