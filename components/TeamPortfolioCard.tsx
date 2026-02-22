@@ -128,12 +128,21 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                 </div>
 
                 {/* Percentage Label */}
-                <span className="text-xs font-bold text-site-text mb-1">
-                  {item.stats.effective.toFixed(0)}%
-                </span>
+                <div className="flex items-end justify-center w-14 gap-[1px] mb-1">
+                  {permVal > 0 && (
+                    <span className={`font-bold text-center ${tempVal > 0 ? 'w-1/2 text-[10px]' : 'w-full text-xs'} text-site-text`}>
+                      {permVal.toFixed(0)}%
+                    </span>
+                  )}
+                  {tempVal > 0 && (
+                    <span className={`font-bold text-center ${permVal > 0 ? 'w-1/2 text-[10px]' : 'w-full text-xs'} text-site-muted`}>
+                      {tempVal.toFixed(0)}%
+                    </span>
+                  )}
+                </div>
                 
                 {/* Bar Container */}
-                <div className="flex items-end justify-center gap-[1px] w-12">
+                <div className="flex items-end justify-center gap-[1px] w-14">
                   {/* Permanent Bar */}
                   {permVal > 0 && (
                     <div 
