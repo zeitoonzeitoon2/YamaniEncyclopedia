@@ -44,6 +44,17 @@ type TeamPortfolioCardProps = {
   highlightedDomainId?: string
 }
 
+// Helper to generate a stable short numeric ID from a string
+const getShortNumericId = (str: string) => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString().substring(0, 6)
+}
+
 const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
@@ -189,27 +200,17 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
             </span>
           </div>
           <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-site-muted">{t('holdingsTable.permanent')}:</span>
-              <span className="font-medium text-site-text">{(tooltip.item.stats.permanent || 0).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between items-center font-bold text-warm-primary bg-warm-primary/5 px-1.5 py-0.5 rounded">
-              <span>{t('holdingsTable.effective')}:</span>
-              <span>{tooltip.item.stats.effective.toFixed(1)}%</span>
-            </div>
-            {(tooltip.item.stats.temporary || 0) > 0 && (
-              <div className="flex justify-between items-center text-yellow-600 dark:text-yellow-400">
-                <span>{t('temporaryShare')}:</span>
-                <span>{(tooltip.item.stats.temporary || 0).toFixed(1)}%</span>
-              </div>
-            )}
-            
             {/* Voting Power Indicator */}
-            <div className="border-t border-site-border mt-2 pt-2">
+            <div className="border-site-border pt-1">
                {tooltip.item.stats.effective > 0 ? (
                  <div className="flex items-start gap-1 text-green-600 dark:text-green-400">
                    <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                   <span className="leading-tight">{t('grantsVotingPower', { name: tooltip.item.target.name })}</span>
+                   <span className="leading-tight">
+                     {t('grantsVotingPower', { 
+                       wing: tooltip.item.target.wing === 'RIGHT' ? tWings('right') : tWings('left'),
+                       name: tooltip.item.target.name 
+                     })}
+                   </span>
                  </div>
                ) : (
                  <div className="text-site-muted text-[10px]">{t('noVotingPower')}</div>
@@ -227,7 +228,9 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
                      </div>
                      <div className="flex justify-between items-center mb-1">
                        <span className="text-site-muted">{t('contractId')}:</span>
-                       <span className="font-mono bg-site-bg px-1 rounded border border-site-border/50 text-[9px]">{contract.id.substring(0, 8)}...</span>
+                       <span className="font-mono bg-site-bg px-1 rounded border border-site-border/50 text-[9px]">
+                         {getShortNumericId(contract.id)}
+                       </span>
                      </div>
                      <div className="flex flex-col mt-1 bg-red-500/5 p-1.5 rounded border border-red-500/10">
                         <span className="text-site-muted mb-0.5">{t('obligation')}:</span>
