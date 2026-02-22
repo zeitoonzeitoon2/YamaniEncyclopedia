@@ -274,11 +274,11 @@ export default function DomainPortfolio() {
             <div className="flex items-center gap-4 text-xs text-site-muted">
               <div className="flex items-center gap-2">
                  <div className="w-4 h-8 bg-gray-500 rounded-t"></div>
-                 <span>{t('permanent')} ({t('holdingsTable.permanent')})</span>
+                 <span>{t('permanent')}</span>
               </div>
               <div className="flex items-center gap-2">
                  <div className="w-4 h-8 bg-gray-500 rounded-t" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)' }}></div>
-                 <span>{t('temporaryShare')} ({t('holdingsTable.borrowed')})</span>
+                 <span>{t('temporaryShare')}</span>
               </div>
             </div>
 
