@@ -248,6 +248,17 @@ mark {
     @apply bg-site-card border border-site-border text-site-text rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
   }
   
+  /* Hide default select arrow */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+
   .input {
     @apply bg-warm-cream border border-gray-400 text-gray-800 rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
   }
