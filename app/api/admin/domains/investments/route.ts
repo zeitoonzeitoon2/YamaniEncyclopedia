@@ -199,10 +199,15 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')
+    const statusParam = searchParams.get('status')
 
     const where: any = {}
     if (domainId) {
       where.OR = [{ proposerDomainId: domainId }, { targetDomainId: domainId }]
+    }
+    
+    if (statusParam) {
+      where.status = { in: statusParam.split(',') }
     }
 
     const investments = await prisma.domainInvestment.findMany({

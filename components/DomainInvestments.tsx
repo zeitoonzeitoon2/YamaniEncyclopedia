@@ -59,7 +59,9 @@ export default function DomainInvestments() {
   const [sourceDomainId, setSourceDomainId] = useState('')
   
   const [investments, setInvestments] = useState<Investment[]>([])
+  const [historyInvestments, setHistoryInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [votingId, setVotingId] = useState<string | null>(null)
   const [historyLimit, setHistoryLimit] = useState(10)
@@ -85,7 +87,7 @@ export default function DomainInvestments() {
         setAllDomains(domains)
       }
 
-      const invRes = await fetch('/api/admin/domains/investments')
+      const invRes = await fetch('/api/admin/domains/investments?status=PENDING,ACTIVE')
       const invData = await invRes.json()
       if (invRes.ok) {
         setInvestments(invData.investments || [])
@@ -96,6 +98,29 @@ export default function DomainInvestments() {
       setLoading(false)
     }
   }, [])
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      setLoadingHistory(true)
+      const invRes = await fetch('/api/admin/domains/investments?status=COMPLETED,RETURNED,REJECTED')
+      const invData = await invRes.json()
+      if (invRes.ok) {
+        setHistoryInvestments(invData.investments || [])
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error(t('investment.historyLoadError') || 'Error loading history')
+    } finally {
+      setLoadingHistory(false)
+    }
+  }, [t])
+
+  const handleShowHistory = () => {
+    if (!showHistory && historyInvestments.length === 0) {
+      fetchHistory()
+    }
+    setShowHistory(!showHistory)
+  }
 
   useEffect(() => {
     fetchData()
@@ -570,22 +595,23 @@ export default function DomainInvestments() {
       </div>
 
       {/* History (Completed/Returned) */}
-      <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-site-text flex items-center gap-2">
-              <Clock size={20} className="text-site-muted" />
-              {t('investment.history')}
-            </h3>
+      <div className="space-y-4 pt-8 border-t border-site-border">
+          <div className="flex justify-center">
             <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="px-4 py-2 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-colors border border-site-border"
+              onClick={handleShowHistory}
+              className="px-6 py-2.5 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-colors border border-site-border flex items-center gap-2"
             >
+              <Clock size={18} className="text-site-muted" />
               {showHistory ? t('investment.hideHistory') : t('investment.showHistory')}
             </button>
           </div>
           
           {showHistory && (
           <div className="overflow-hidden rounded-xl border border-site-border bg-site-secondary/10">
+            {loadingHistory ? (
+                <div className="p-8 text-center text-site-muted animate-pulse">...</div>
+            ) : (
+            <>
             <table className="w-full text-sm text-right">
               <thead className="bg-site-secondary/50 text-site-muted text-xs border-b border-site-border">
                 <tr>
@@ -600,17 +626,16 @@ export default function DomainInvestments() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-site-border/50">
-                {investments.filter(i => ['COMPLETED', 'RETURNED'].includes(i.status)).length === 0 ? (
+                {historyInvestments.length === 0 ? (
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
                 ) : (
-                  investments
-                    .filter(i => ['COMPLETED', 'RETURNED'].includes(i.status))
+                  historyInvestments
                     .sort((a, b) => new Date(b.endDate || b.createdAt).getTime() - new Date(a.endDate || a.createdAt).getTime())
                     .slice(0, historyLimit)
-                    .map(inv => (
+                    .map((inv, index) => (
                     <tr key={inv.id} className="hover:bg-site-secondary/20 transition-colors opacity-75 hover:opacity-100">
                       <td className="px-4 py-4 text-center font-mono text-xs text-site-muted select-all">
-                        {shortId(inv.id)}
+                        {index + 1}
                       </td>
                       <td className="px-4 py-4 font-medium text-site-text">
                         <div>{inv.proposerDomain.name}</div>
@@ -643,7 +668,7 @@ export default function DomainInvestments() {
               </tbody>
             </table>
             
-            {investments.filter(i => ['COMPLETED', 'RETURNED'].includes(i.status)).length > historyLimit && (
+            {historyInvestments.length > historyLimit && (
               <div className="p-4 flex justify-center border-t border-site-border">
                 <button 
                   onClick={() => setHistoryLimit(prev => prev + 10)}
@@ -652,6 +677,8 @@ export default function DomainInvestments() {
                   {t('investment.loadMore')}
                 </button>
               </div>
+            )}
+            </>
             )}
   </div>
           )}
