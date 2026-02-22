@@ -279,8 +279,16 @@ export default function DomainPortfolio() {
               {Array.from(portfolioByDomain.entries()).map(([domainId, { right, left, name }]) => {
                 return (
                   <div key={domainId} className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col">
-                    <div className="p-3 border-b border-site-border bg-site-secondary/20 font-bold text-center text-site-text">
-                      {name}
+                    <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center">
+                      <div 
+                        className="px-4 py-1.5 rounded-md font-bold text-white shadow-sm text-center"
+                        style={{ 
+                          backgroundColor: stringToColor(domainId),
+                          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {name}
+                      </div>
                     </div>
                     <div className="flex-1 grid grid-cols-2 divide-x divide-site-border divide-x-reverse h-full">
                       {/* Right Wing */}
