@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
-import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar, XCircle } from 'lucide-react'
+import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar, XCircle, ChevronDown } from 'lucide-react'
 
 type Domain = {
   id: string
@@ -278,62 +278,77 @@ export default function DomainInvestments() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.proposer')}</label>
-            <select 
-              value={selectedMyDomainId} 
-              onChange={e => setSelectedMyDomainId(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
-            >
-              <option value="">{t('investment.title')}...</option>
-              {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <div className="relative">
+              <select 
+                value={selectedMyDomainId} 
+                onChange={e => setSelectedMyDomainId(e.target.value)}
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+              >
+                <option value="">{t('investment.title')}...</option>
+                {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('wingLabel')}</label>
-            <select 
-              value={proposerWing} 
-              onChange={e => setProposerWing(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
-            >
-              <option value="RIGHT">{t('rightWing')}</option>
-              <option value="LEFT">{t('leftWing')}</option>
-            </select>
+            <div className="relative">
+              <select 
+                value={proposerWing} 
+                onChange={e => setProposerWing(e.target.value)}
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+              >
+                <option value="RIGHT">{t('rightWing')}</option>
+                <option value="LEFT">{t('leftWing')}</option>
+              </select>
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.sourceOfFunds')}</label>
-            <select 
-              value={sourceDomainId} 
-              onChange={e => setSourceDomainId(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
-            >
-              <option value={selectedMyDomainId}>{t('investment.ownShares', { name: allDomains.find(d => d.id === selectedMyDomainId)?.name || '' })}</option>
-              {availableAssets.map(asset => (
-                <option key={asset.id} value={asset.id}>
-                  {t('investment.assetItem', { name: asset.name, balance: asset.balance.toFixed(2) })}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select 
+                value={sourceDomainId} 
+                onChange={e => setSourceDomainId(e.target.value)}
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+              >
+                <option value={selectedMyDomainId}>{t('investment.ownShares', { name: allDomains.find(d => d.id === selectedMyDomainId)?.name || '' })}</option>
+                {availableAssets.map(asset => (
+                  <option key={asset.id} value={asset.id}>
+                    {t('investment.assetItem', { name: asset.name, balance: asset.balance.toFixed(2) })}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.target')}</label>
-            <select 
-              value={selectedTargetDomainId} 
-              onChange={e => setSelectedTargetDomainId(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
-            >
-              <option value="">{t('investment.target')}...</option>
-              {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <div className="relative">
+              <select 
+                value={selectedTargetDomainId} 
+                onChange={e => setSelectedTargetDomainId(e.target.value)}
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+              >
+                <option value="">{t('investment.target')}...</option>
+                {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('wingLabel')}</label>
-            <select 
-              value={targetWing} 
-              onChange={e => setTargetWing(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none"
-            >
-              <option value="RIGHT">{t('rightWing')}</option>
-              <option value="LEFT">{t('leftWing')}</option>
-            </select>
+            <div className="relative">
+              <select 
+                value={targetWing} 
+                onChange={e => setTargetWing(e.target.value)}
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+              >
+                <option value="RIGHT">{t('rightWing')}</option>
+                <option value="LEFT">{t('leftWing')}</option>
+              </select>
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.give')}</label>
