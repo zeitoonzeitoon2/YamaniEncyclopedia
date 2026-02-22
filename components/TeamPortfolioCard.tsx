@@ -26,16 +26,23 @@ const COLOR_PALETTE = [
   '#808080', // Gray
 ]
 
-// Helper to generate consistent color
+// Helper to determine text color based on background luminance
+export const getContrastColor = (hexColor: string) => {
+  const r = parseInt(hexColor.substring(1, 3), 16)
+  const g = parseInt(hexColor.substring(3, 5), 16)
+  const b = parseInt(hexColor.substring(5, 7), 16)
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
+  return (yiq >= 128) ? '#000000' : '#ffffff'
+}
+
+// Helper to generate consistent color using FNV-1a hash for better distribution
 export const stringToColor = (str: string) => {
-  let hash = 0
+  let hash = 2166136261 // FNV_OFFSET_BASIS_32
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    hash = Math.imul(hash, 2654435761) // Knuth's multiplicative hash to mix bits
+    hash ^= str.charCodeAt(i)
+    hash = Math.imul(hash, 16777619) // FNV_PRIME_32
   }
-  
-  // Use positive modulo to pick from palette
-  const index = Math.abs(hash) % COLOR_PALETTE.length
+  const index = (hash >>> 0) % COLOR_PALETTE.length
   return COLOR_PALETTE[index]
 }
 
