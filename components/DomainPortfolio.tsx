@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
 import { ChevronDown, Info } from 'lucide-react'
-import TeamPortfolioCard, { stringToColor, getContrastColor, PortfolioItem } from './TeamPortfolioCard'
+import TeamPortfolioCard, { stringToColor, getContrastColor, PortfolioItem, COLOR_PALETTE } from './TeamPortfolioCard'
 
 type MyTeam = {
   id: string
@@ -38,6 +38,24 @@ export default function DomainPortfolio() {
   const [showLegend, setShowLegend] = useState(false)
   const [highlightedAssetId, setHighlightedAssetId] = useState<string>('')
   const [contractIndexMap, setContractIndexMap] = useState<Record<string, number>>({})
+
+  // Determine domain colors based on their index in allDomains
+  // This ensures a deterministic, non-hash-based color assignment
+  const domainColorMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (allDomains.length > 0) {
+      allDomains.forEach((d, index) => {
+        // Use the index modulo palette length to cycle through colors
+        map.set(d.id, COLOR_PALETTE[index % COLOR_PALETTE.length])
+      })
+    }
+    return map
+  }, [allDomains])
+
+  // Helper to get color for a domain ID
+  const getDomainColor = (id: string) => {
+    return domainColorMap.get(id) || stringToColor(id)
+  }
 
   const fetchData = useCallback(async () => {
     try {
@@ -243,7 +261,7 @@ export default function DomainPortfolio() {
               <div key={target.id} className="flex items-center gap-2 bg-site-bg/50 px-2 py-1 rounded border border-site-border/50">
                 <div 
                   className="w-3 h-3 rounded-full shrink-0" 
-                  style={{ backgroundColor: stringToColor(target.id) }}
+                  style={{ backgroundColor: getDomainColor(target.id) }}
                 />
                 <span className="text-xs">{target.name}</span>
               </div>
@@ -277,7 +295,7 @@ export default function DomainPortfolio() {
         <>
             <div className="grid grid-cols-1 gap-6 mb-8">
               {Array.from(portfolioByDomain.entries()).map(([domainId, { right, left, name }]) => {
-                const domainColor = stringToColor(domainId)
+                const domainColor = getDomainColor(domainId)
                 const textColor = getContrastColor(domainColor)
                 return (
                   <div key={domainId} className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col">

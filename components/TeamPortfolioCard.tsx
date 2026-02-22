@@ -2,28 +2,29 @@ import React, { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowRight, ArrowLeft, MoreHorizontal, CheckCircle } from 'lucide-react'
 
-// 20 Distinct Colors Palette for high contrast and differentiation
-const COLOR_PALETTE = [
-  '#e6194b', // Red
-  '#3cb44b', // Green
-  '#ffe119', // Yellow
-  '#4363d8', // Blue
-  '#f58231', // Orange
-  '#911eb4', // Purple
-  '#46f0f0', // Cyan
-  '#f032e6', // Magenta
-  '#bcf60c', // Lime
-  '#fabebe', // Pink
-  '#008080', // Teal
-  '#e6beff', // Lavender
-  '#9a6324', // Brown
-  '#fffac8', // Beige
-  '#800000', // Maroon
-  '#aaffc3', // Mint
-  '#808000', // Olive
-  '#ffd8b1', // Apricot
-  '#000075', // Navy
-  '#808080', // Gray
+// 20 Distinct Colors Palette (Kelly's Max Contrast + Distinct additions)
+// Hand-picked to ensure maximum differentiation between adjacent items
+export const COLOR_PALETTE = [
+  '#FFB300', // Vivid Yellow
+  '#803E75', // Strong Purple
+  '#FF6800', // Vivid Orange
+  '#A6BDD7', // Very Light Blue
+  '#C10020', // Vivid Red
+  '#CEA262', // Grayish Yellow
+  '#817066', // Medium Gray
+  '#007D34', // Vivid Green
+  '#F6768E', // Strong Purplish Pink
+  '#00538A', // Strong Blue
+  '#FF7A5C', // Strong Yellowish Pink
+  '#53377A', // Strong Violet
+  '#FF8E00', // Vivid Orange Yellow
+  '#B32851', // Strong Purplish Red
+  '#F4C800', // Vivid Greenish Yellow
+  '#7F180D', // Strong Reddish Brown
+  '#93AA00', // Vivid Yellowish Green
+  '#593315', // Deep Yellowish Brown
+  '#F13A13', // Vivid Reddish Orange
+  '#232C16', // Dark Olive Green
 ]
 
 // Helper to determine text color based on background luminance
@@ -36,6 +37,7 @@ export const getContrastColor = (hexColor: string) => {
 }
 
 // Helper to generate consistent color using FNV-1a hash for better distribution
+// Deprecated for domains: Use index-based lookup instead where possible
 export const stringToColor = (str: string) => {
   let hash = 2166136261 // FNV_OFFSET_BASIS_32
   for (let i = 0; i < str.length; i++) {
