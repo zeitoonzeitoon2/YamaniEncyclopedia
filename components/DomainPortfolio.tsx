@@ -103,9 +103,9 @@ export default function DomainPortfolio() {
   const selectedDomainName = selectedTeam?.name || allDomains.find(d => d.id === selectedTeamKey.split(':')[0])?.name || ''
   const selectedWingStr = selectedTeam?.wing || selectedTeamKey.split(':')[1] || ''
 
-  // Group portfolio by team for Card View
-  const portfolioByTeam = useMemo(() => {
-    const grouped = new Map<string, PortfolioItem[]>()
+  // Group portfolio by Domain for Card View (grouping Right and Left wings)
+  const portfolioByDomain = useMemo(() => {
+    const grouped = new Map<string, { right: PortfolioItem[], left: PortfolioItem[], name: string }>()
     
     // Determine which teams to initialize
     let teamsToInit: { id: string; name: string; wing: string }[] = []
@@ -123,9 +123,8 @@ export default function DomainPortfolio() {
         }
       }
     } else {
-      // If "All Teams" is selected, we want to show ALL domains (Right & Left)
-      // merging myTeams is not enough if we want to show EVERYTHING available in the system.
-      // So we generate list from allDomains.
+      // If "All Teams" is selected, we want to show ALL domains
+      // Initialize with all domains, creating entries for both wings if not filtered
       teamsToInit = allDomains.flatMap(d => [
         { id: d.id, name: d.name, wing: 'RIGHT' },
         { id: d.id, name: d.name, wing: 'LEFT' }
@@ -134,16 +133,25 @@ export default function DomainPortfolio() {
 
     // Initialize map entries
     teamsToInit.forEach(team => {
-      grouped.set(`${team.id}:${team.wing}`, [])
+      if (!grouped.has(team.id)) {
+        grouped.set(team.id, { right: [], left: [], name: team.name })
+      }
     })
 
     // Populate with actual data
     filteredPortfolio.forEach(item => {
-      const key = `${item.team.id}:${item.team.wing}`
-      if (!grouped.has(key)) {
-        grouped.set(key, [])
+      const domainId = item.team.id
+      if (!grouped.has(domainId)) {
+        // Fallback name if not initialized
+        grouped.set(domainId, { right: [], left: [], name: item.team.name })
       }
-      grouped.get(key)?.push(item)
+      
+      const entry = grouped.get(domainId)!
+      if (item.team.wing === 'RIGHT') {
+        entry.right.push(item)
+      } else {
+        entry.left.push(item)
+      }
     })
     
     return grouped
@@ -229,7 +237,8 @@ export default function DomainPortfolio() {
             <Info size={16} />
             {t('legendTitle')}
           </h3>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Legend for colors */}
             {uniqueTargets.map(target => (
               <div key={target.id} className="flex items-center gap-2 bg-site-bg/50 px-2 py-1 rounded border border-site-border/50">
                 <div 
@@ -239,6 +248,22 @@ export default function DomainPortfolio() {
                 <span className="text-xs">{target.name}</span>
               </div>
             ))}
+            
+            {/* Divider */}
+            {uniqueTargets.length > 0 && <div className="w-px h-6 bg-site-border mx-2" />}
+
+            {/* Legend for bar styles */}
+            <div className="flex items-center gap-4 text-xs text-site-muted">
+              <div className="flex items-center gap-2">
+                 <div className="w-4 h-8 bg-gray-500 rounded-t"></div>
+                 <span>{t('permanent')} ({t('holdingsTable.permanent')})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                 <div className="w-4 h-8 bg-gray-500 rounded-t" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)' }}></div>
+                 <span>{t('temporaryShare')} ({t('holdingsTable.borrowed')})</span>
+              </div>
+            </div>
+
             {uniqueTargets.length === 0 && (
               <span className="text-xs text-site-muted">{t('noHoldings')}</span>
             )}
@@ -250,28 +275,41 @@ export default function DomainPortfolio() {
         <div className="text-center py-20">{t('loading')}...</div>
       ) : (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 mb-8">
-              {Array.from(portfolioByTeam.entries()).map(([key, items]) => {
-                const [id, wing] = key.split(':')
-                // Try to find name in myTeams or items or allDomains
-                const teamName = myTeams.find(t => t.id === id && t.wing === wing)?.name 
-                  || items[0]?.team.name 
-                  || allDomains.find(d => d.id === id)?.name 
-                  || 'Unknown Team'
-                
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+              {Array.from(portfolioByDomain.entries()).map(([domainId, { right, left, name }]) => {
                 return (
-                  <div key={key} className="h-full">
-                    <TeamPortfolioCard 
-                      teamName={teamName}
-                      wing={wing}
-                      items={items}
-                      highlightedDomainId={highlightedAssetId}
-                      contractIndexMap={contractIndexMap}
-                    />
+                  <div key={domainId} className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col">
+                    <div className="p-3 border-b border-site-border bg-site-secondary/20 font-bold text-center text-site-text">
+                      {name}
+                    </div>
+                    <div className="flex-1 grid grid-cols-2 divide-x divide-site-border divide-x-reverse h-full">
+                      {/* Right Wing */}
+                      <div className="h-full min-h-[220px]">
+                        <TeamPortfolioCard 
+                          teamName={name}
+                          wing="RIGHT"
+                          items={right}
+                          highlightedDomainId={highlightedAssetId}
+                          contractIndexMap={contractIndexMap}
+                          embedded={true}
+                        />
+                      </div>
+                      {/* Left Wing */}
+                      <div className="h-full min-h-[220px]">
+                        <TeamPortfolioCard 
+                          teamName={name}
+                          wing="LEFT"
+                          items={left}
+                          highlightedDomainId={highlightedAssetId}
+                          contractIndexMap={contractIndexMap}
+                          embedded={true}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )
               })}
-              {portfolioByTeam.size === 0 && (
+              {portfolioByDomain.size === 0 && (
                 <div className="col-span-full text-center py-10 text-site-muted">
                   {t('noHoldings')}
                 </div>

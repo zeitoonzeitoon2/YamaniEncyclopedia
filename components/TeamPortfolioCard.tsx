@@ -70,9 +70,10 @@ type TeamPortfolioCardProps = {
   items: PortfolioItem[]
   highlightedDomainId?: string
   contractIndexMap?: Record<string, number>
+  embedded?: boolean
 }
 
-const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap }: TeamPortfolioCardProps) => {
+const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contractIndexMap, embedded = false }: TeamPortfolioCardProps) => {
   const t = useTranslations('admin.dashboard.portfolio')
   const tWings = useTranslations('admin.dashboard.wings')
   const [tooltip, setTooltip] = useState<{ item: PortfolioItem, rect: DOMRect } | null>(null)
@@ -94,18 +95,21 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contrac
   // Or just show value clearly.
 
   return (
-    <div className="card bg-site-secondary/10 border border-site-border overflow-hidden flex flex-col h-full relative">
-      <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-between items-center">
-        <div>
-          <h3 className="font-bold text-base text-site-text truncate max-w-[150px]" title={teamName}>{teamName}</h3>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full ${wing === 'RIGHT' ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
-            {wing === 'RIGHT' ? tWings('right') : tWings('left')}
-          </span>
-        </div>
-        {/* Placeholder for actions */}
-        <button className="text-site-muted hover:text-site-text">
-          <MoreHorizontal size={16} />
-        </button>
+    <div className={`card ${embedded ? 'border-0 bg-transparent shadow-none h-full' : 'bg-site-secondary/10 border border-site-border'} overflow-hidden flex flex-col relative`}>
+      <div className={`p-3 border-b border-site-border ${embedded ? 'bg-transparent text-center' : 'bg-site-secondary/20 flex justify-between items-center'}`}>
+        {!embedded && (
+          <div>
+            <h3 className="font-bold text-base text-site-text truncate max-w-[150px]" title={teamName}>{teamName}</h3>
+          </div>
+        )}
+        <span className={`text-[10px] px-2 py-0.5 rounded-full ${wing === 'RIGHT' ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'} ${embedded ? 'mx-auto block w-fit' : ''}`}>
+          {wing === 'RIGHT' ? tWings('right') : tWings('left')}
+        </span>
+        {!embedded && (
+          <button className="text-site-muted hover:text-site-text">
+            <MoreHorizontal size={16} />
+          </button>
+        )}
       </div>
       
       <div className="p-3 flex-1 flex items-end gap-1.5 overflow-x-auto min-h-[160px] pb-6">
