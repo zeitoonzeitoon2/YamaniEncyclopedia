@@ -245,7 +245,13 @@
             "obligations": "تعهدات آتی",
             "myPower": "سهم قدرت من",
             "contracts": "قراردادهای فعال"
-          }
+          },
+          "grantsVotingPower": "این سهام حق رأی در {name} را ایجاد می‌کند",
+          "noVotingPower": "بدون حق رأی",
+          "temporaryShare": "سهام موقت (قرض گرفته شده)",
+          "contractId": "شناسه قرارداد",
+          "obligation": "تعهد پرداخت سود",
+          "profitShare": "از سهام خود"
         },
       "uploadSelectFileFirst": "لطفاً ابتدا یک فایل انتخاب کنید",
       "uploadFailed": "آپلود ناموفق بود",

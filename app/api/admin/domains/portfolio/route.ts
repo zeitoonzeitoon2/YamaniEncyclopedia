@@ -294,6 +294,11 @@ export async function GET(req: NextRequest) {
         const obligations = borrowedInv ? borrowedInv.percentageReturn : 0
 
         if (effectiveShare > 0 || lent > 0 || borrowed > 0) {
+          // Collect relevant contracts
+          const relatedContracts = []
+          if (lentInv) relatedContracts.push({ ...lentInv, type: 'OUTBOUND' })
+          if (borrowedInv) relatedContracts.push({ ...borrowedInv, type: 'INBOUND' })
+
           portfolio.push({
             team: { id: team.domainId, name: team.domainName, wing: team.wing },
             target: { id: targetDomain.id, name: targetDomain.name, wing: targetWing },
@@ -306,7 +311,14 @@ export async function GET(req: NextRequest) {
               borrowed,
               claims,
               obligations
-            }
+            },
+            contracts: relatedContracts.map(c => ({
+              id: c.id,
+              type: c.type,
+              percentageInvested: c.percentageInvested,
+              percentageReturn: c.percentageReturn,
+              endDate: c.endDate
+            }))
           })
         }
       }

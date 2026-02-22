@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowRight, ArrowLeft, MoreHorizontal } from 'lucide-react'
+import { ArrowRight, ArrowLeft, MoreHorizontal, CheckCircle } from 'lucide-react'
 
 // Helper to generate consistent color
 export const stringToColor = (str: string) => {
@@ -11,6 +11,14 @@ export const stringToColor = (str: string) => {
   }
   const h = Math.abs(hash % 360)
   return `hsl(${h}, 65%, 45%)`
+}
+
+type Contract = {
+  id: string
+  type: 'INBOUND' | 'OUTBOUND'
+  percentageInvested: number
+  percentageReturn: number
+  endDate?: Date
 }
 
 type PortfolioItem = {
@@ -26,7 +34,7 @@ type PortfolioItem = {
     claims: number
     obligations: number
   }
-  contracts: any[]
+  contracts: Contract[]
 }
 
 type TeamPortfolioCardProps = {
@@ -191,8 +199,44 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId }: TeamP
             </div>
             {(tooltip.item.stats.temporary || 0) > 0 && (
               <div className="flex justify-between items-center text-yellow-600 dark:text-yellow-400">
-                <span>{t('holdingsTable.lent')}:</span>
+                <span>{t('temporaryShare')}:</span>
                 <span>{(tooltip.item.stats.temporary || 0).toFixed(1)}%</span>
+              </div>
+            )}
+            
+            {/* Voting Power Indicator */}
+            <div className="border-t border-site-border mt-2 pt-2">
+               {tooltip.item.stats.effective > 0 ? (
+                 <div className="flex items-start gap-1 text-green-600 dark:text-green-400">
+                   <CheckCircle size={14} className="mt-0.5 shrink-0" />
+                   <span className="leading-tight">{t('grantsVotingPower', { name: tooltip.item.target.name })}</span>
+                 </div>
+               ) : (
+                 <div className="text-site-muted text-[10px]">{t('noVotingPower')}</div>
+               )}
+            </div>
+
+            {/* Temporary Share Contracts Details */}
+            {tooltip.item.contracts && tooltip.item.contracts.length > 0 && tooltip.item.contracts.some(c => c.type === 'INBOUND') && (
+              <div className="mt-2 space-y-2 border-t border-site-border pt-2">
+                {tooltip.item.contracts.filter(c => c.type === 'INBOUND').map((contract) => (
+                  <div key={contract.id} className="bg-site-secondary/10 p-2 rounded text-[10px] border border-site-border/50">
+                     <div className="font-bold mb-1 text-site-text flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
+                        {t('temporaryShare')}
+                     </div>
+                     <div className="flex justify-between items-center mb-1">
+                       <span className="text-site-muted">{t('contractId')}:</span>
+                       <span className="font-mono bg-site-bg px-1 rounded border border-site-border/50 text-[9px]">{contract.id.substring(0, 8)}...</span>
+                     </div>
+                     <div className="flex flex-col mt-1 bg-red-500/5 p-1.5 rounded border border-red-500/10">
+                        <span className="text-site-muted mb-0.5">{t('obligation')}:</span>
+                        <span className="text-red-500 font-medium">
+                          {contract.percentageReturn}% {t('profitShare')}
+                        </span>
+                     </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
