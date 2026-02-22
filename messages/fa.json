@@ -211,6 +211,9 @@
       "voted": "مشارکت"
     },
     "dashboard": {
+      "rightWing": "تیم راست",
+      "leftWing": "تیم چپ",
+      "wingLabel": "جناح",
       "wings": {
         "right": "جناح راست",
         "left": "جناح چپ"
