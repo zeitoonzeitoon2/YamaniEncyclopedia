@@ -192,28 +192,8 @@ export async function GET(req: NextRequest) {
             source: 'SELF',
             breakdown: { permanent: correctSelfPercent, temporary: 0 }
           })
-        } else if (tWing === 'LEFT') {
-          // Check if Right Wing already has shares
-          const rightOwnerIndex = newList.findIndex(s => s.ownerId === tId && s.ownerWing === 'RIGHT')
-          
-          if (rightOwnerIndex >= 0) {
-            // Add remainder to existing Right Wing share
-            newList[rightOwnerIndex].percentage += correctSelfPercent
-            newList[rightOwnerIndex].breakdown.permanent += correctSelfPercent
-            // If existing was purely investment, maybe source should change? 
-            // But we keep original source as primary or maybe update if needed.
-            // For simplicity, we just add the percentage.
-          } else {
-            // Create new share for Right Wing
-            newList.push({
-              ownerId: tId,
-              ownerWing: 'RIGHT',
-              percentage: correctSelfPercent,
-              source: 'PERMANENT', // Implicit ownership
-              breakdown: { permanent: correctSelfPercent, temporary: 0 }
-            })
-          }
         }
+        // LEFT wing: Do NOT assign remainder to anyone. It simply doesn't exist yet.
       }
       sharesByTarget.set(targetKey, newList)
     })
