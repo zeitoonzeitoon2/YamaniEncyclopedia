@@ -319,7 +319,12 @@ export default function DomainPortfolio() {
                     id={`domain-card-${domainId}`}
                     className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24"
                   >
-                    <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center">
+                    <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center relative">
+                      {/* Right Wing Label - Visually on the Right in RTL, Left in LTR */}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold absolute rtl:right-4 ltr:left-4 right-4">
+                        {tWings('right')}
+                      </span>
+
                       <div 
                         className="px-4 py-1.5 rounded-md font-bold shadow-sm text-center"
                         style={{ 
@@ -330,6 +335,11 @@ export default function DomainPortfolio() {
                       >
                         {name}
                       </div>
+
+                      {/* Left Wing Label - Visually on the Left in RTL, Right in LTR */}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 font-bold absolute rtl:left-4 ltr:right-4 left-4">
+                        {tWings('left')}
+                      </span>
                     </div>
                     <div className="flex-1 grid grid-cols-2 divide-x divide-site-border divide-x-reverse h-full">
                       {/* Right Wing */}
@@ -343,6 +353,7 @@ export default function DomainPortfolio() {
                           embedded={true}
                           getDomainColor={getDomainColor}
                           onlyShowTargetId={highlightedAssetId}
+                          hideWingLabel={true}
                         />
                       </div>
                       {/* Left Wing */}
@@ -356,6 +367,7 @@ export default function DomainPortfolio() {
                           embedded={true}
                           getDomainColor={getDomainColor}
                           onlyShowTargetId={highlightedAssetId}
+                          hideWingLabel={true}
                         />
                       </div>
                     </div>
