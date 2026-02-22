@@ -178,7 +178,7 @@ export default function DomainPortfolio() {
             <label className="block text-sm font-medium mb-2">{t('selectTeam')}</label>
             <div className="relative">
               <select
-                className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
+                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none"
                 value={selectedTeamKey}
                 onChange={(e) => setSelectedTeamKey(e.target.value)}
               >
@@ -205,7 +205,7 @@ export default function DomainPortfolio() {
             <label className="block text-sm font-medium mb-2">{t('selectAsset')}</label>
             <div className="relative">
               <select
-                className="w-full bg-site-bg border border-site-border rounded p-2 appearance-none"
+                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none"
                 value={highlightedAssetId}
                 onChange={(e) => setHighlightedAssetId(e.target.value)}
               >

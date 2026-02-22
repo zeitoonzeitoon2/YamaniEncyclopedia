@@ -240,7 +240,7 @@ mark {
 
   /* کارت‌ها */
   .card {
-    @apply bg-site-card border border-site-border rounded-lg shadow-xl;
+    @apply bg-site-card border border-site-border rounded-lg shadow-xl p-6;
   }
 
   /* فیلدهای ورودی */

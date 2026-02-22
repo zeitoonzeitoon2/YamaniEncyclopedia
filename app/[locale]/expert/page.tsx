@@ -1167,7 +1167,7 @@ export default function ExpertDashboard() {
                           <>
                             {/* Legend: Color Guide */}
                             <div className="mb-4">
-                              <div className="bg-site-card border border-gray-700 rounded-lg p-3 text-sm text-site-text">
+                              <div className="bg-site-card border border-gray-700 rounded-lg p-5 text-sm text-site-text">
                                 <div className="font-semibold mb-2 heading">{t('legend.title')}</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {/* Nodes legend */}
