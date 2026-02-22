@@ -127,6 +127,11 @@
       "settleExpired": "تسویه موارد منقضی",
       "settleSuccess": "{count} سرمایه‌گذاری تسویه شد",
       "settleError": "خطا در تسویه سرمایه‌گذاری‌ها",
+      "actions": "عملیات",
+      "forceTerminate": "پایان اجباری (مدیر)",
+      "confirmTerminate": "آیا مطمئن هستید که می‌خواهید این سرمایه‌گذاری را به اجبار پایان دهید؟",
+      "terminateSuccess": "سرمایه‌گذاری با موفقیت پایان یافت",
+      "terminateError": "خطا در پایان دادن به سرمایه‌گذاری",
       "toast": {
         "createSuccess": "پیشنهاد با موفقیت ثبت شد",
         "createError": "خطا در ثبت پیشنهاد"

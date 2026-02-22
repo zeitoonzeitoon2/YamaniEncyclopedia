@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
-import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar } from 'lucide-react'
+import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar, XCircle } from 'lucide-react'
 
 type Domain = {
   id: string
@@ -201,6 +201,30 @@ export default function DomainInvestments() {
       setSubmitting(false)
     }
   }, [fetchData, t])
+
+  const handleForceTerminate = useCallback(async (id: string) => {
+    if (!confirm(t('investment.confirmTerminate'))) return
+
+    try {
+      setSubmitting(true)
+      const res = await fetch('/api/admin/domains/investments/force-terminate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ investmentId: id })
+      })
+      if (res.ok) {
+        toast.success(t('investment.terminateSuccess'))
+        fetchData()
+      } else {
+        const d = await res.json()
+        toast.error(d.error || t('investment.terminateError'))
+      }
+    } catch (e) {
+      toast.error(t('investment.terminateError'))
+    } finally {
+      setSubmitting(false)
+    }
+  }, [t, fetchData])
 
   if (loading) return <div className="p-8 text-center text-site-muted animate-pulse">...</div>
 
@@ -462,11 +486,14 @@ export default function DomainInvestments() {
                 <th className="px-4 py-3 font-medium text-center">{t('investment.tableReceive')}</th>
                 <th className="px-4 py-3 font-medium">{t('investment.endDate')}</th>
                 <th className="px-4 py-3 font-medium text-center">{t('investment.status')}</th>
+                {session?.user?.role === 'ADMIN' && (
+                  <th className="px-4 py-3 font-medium text-center">{t('investment.actions')}</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-site-border/50">
               {investments.filter(i => i.status === 'ACTIVE').length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
+                <tr><td colSpan={session?.user?.role === 'ADMIN' ? 7 : 6} className="px-4 py-8 text-center text-site-muted italic">{t('investment.noItems')}</td></tr>
               ) : (
                 investments.filter(i => i.status === 'ACTIVE').map(inv => (
                   <tr key={inv.id} className="hover:bg-site-secondary/30 transition-colors">
@@ -488,6 +515,18 @@ export default function DomainInvestments() {
                         <Check size={10} /> {t('investment.statusActive')}
                       </span>
                     </td>
+                    {session?.user?.role === 'ADMIN' && (
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          onClick={() => handleForceTerminate(inv.id)}
+                          disabled={submitting}
+                          className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          title={t('investment.forceTerminate')}
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

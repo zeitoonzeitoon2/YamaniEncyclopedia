@@ -349,3 +349,10 @@ export async function settleExpiredInvestments() {
   })
   return { count: result.count }
 }
+
+export async function forceTerminateInvestment(investmentId: string) {
+  return await prisma.domainInvestment.update({
+    where: { id: investmentId },
+    data: { status: 'COMPLETED' }
+  })
+}
