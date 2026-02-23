@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         originalPostId: true,
         domainId: true,
         relatedDomainIds: true,
-        votes: { select: { score: true, adminId: true } },
+        votes: { select: { score: true, adminId: true, domainId: true } },
         originalPost: { select: { id: true, version: true } },
       },
     })
