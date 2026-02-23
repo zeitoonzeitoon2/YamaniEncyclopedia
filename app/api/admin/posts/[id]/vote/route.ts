@@ -42,9 +42,10 @@ export async function POST(
     // ایجاد یا به‌روزرسانی رای
     const vote = await prisma.vote.upsert({
       where: {
-        postId_adminId: {
+        postId_adminId_domainId: {
           postId: params.id,
-          adminId: session.user.id
+          adminId: session.user.id,
+          domainId: post.domainId || null
         }
       },
       update: {
@@ -53,6 +54,7 @@ export async function POST(
       create: {
         postId: params.id,
         adminId: session.user.id,
+        domainId: post.domainId || null,
         score
       }
     })

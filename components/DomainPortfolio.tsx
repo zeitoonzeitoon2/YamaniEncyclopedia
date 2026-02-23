@@ -173,7 +173,7 @@ export default function DomainPortfolio() {
     })
     
     return grouped
-  }, [filteredPortfolio, myTeams, selectedTeamKey, selectedTeam, allDomains])
+  }, [filteredPortfolio, selectedTeamKey, selectedTeam, allDomains])
 
   // Filter displayed teams based on highlightedAssetId
   const displayedTeams = useMemo(() => {
