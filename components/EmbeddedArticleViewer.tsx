@@ -15,17 +15,19 @@ export default function EmbeddedArticleViewer({
   proposedArticleLink, 
   articlesData,
   postContent,
+  proposedContent: initialProposedContent,
   onClose 
 }: {
   originalArticleLink?: string
   proposedArticleLink?: string
   articlesData?: string
   postContent?: string
+  proposedContent?: string
   onClose: () => void
 }) {
   const t = useTranslations('embeddedArticleViewer')
   const [originalContent, setOriginalContent] = React.useState<string>(t('loading'))
-  const [proposedContent, setProposedContent] = React.useState<string>(t('loading'))
+  const [proposedContent, setProposedContent] = React.useState<string>(initialProposedContent || t('loading'))
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -53,14 +55,16 @@ export default function EmbeddedArticleViewer({
         }
 
         // 2. Load proposed content
-        // If it's a slug, fetch from API; if it's raw content, use it directly
-        if (proposedArticleLink) {
+        if (initialProposedContent) {
+          setProposedContent(initialProposedContent)
+        } else if (proposedArticleLink) {
           // Check if proposedArticleLink looks like a slug (no spaces, relatively short)
           const isSlug = !proposedArticleLink.includes(' ') && proposedArticleLink.length < 100
           
           if (isSlug) {
             try {
-              const res = await fetch(`/api/articles/get-by-slug?slug=${proposedArticleLink}`)
+              // Try fetching as article first
+              const res = await fetch(`/api/articles/${proposedArticleLink}`)
               if (res.ok) {
                 const data = await res.json()
                 setProposedContent(data.content || '')
