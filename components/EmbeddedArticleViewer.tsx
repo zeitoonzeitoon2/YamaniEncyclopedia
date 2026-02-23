@@ -102,14 +102,14 @@ export default function EmbeddedArticleViewer({
       <div className="relative w-full max-w-7xl h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-site-border bg-site-card">
+          <h2 className="text-xl font-bold text-site-text flex items-center gap-2">
+            <span className="w-2 h-6 bg-site-accent rounded-full"></span>
             {t('title')}
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400"
+            className="p-2 rounded-full hover:bg-site-bg transition-colors text-site-muted hover:text-site-text"
             title={t('close')}
           >
             <X size={24} />
@@ -117,12 +117,12 @@ export default function EmbeddedArticleViewer({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+        <div className="flex-1 overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-site-border">
           
           {/* Left Side: Current Article */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <div className="px-6 py-3 bg-slate-100/50 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-800">
-              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="flex-1 flex flex-col min-w-0 bg-site-bg">
+            <div className="px-6 py-3 bg-site-card border-b border-site-border">
+              <span className="text-sm font-semibold text-site-muted uppercase tracking-wider">
                 {t('currentArticle')}
               </span>
             </div>
@@ -134,9 +134,9 @@ export default function EmbeddedArticleViewer({
           </div>
 
           {/* Right Side: Proposed Article */}
-          <div className="flex-1 flex flex-col min-w-0 bg-blue-50/20 dark:bg-blue-900/10">
-            <div className="px-6 py-3 bg-blue-100/30 dark:bg-blue-900/20 border-b border-slate-200 dark:border-slate-800">
-              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+          <div className="flex-1 flex flex-col min-w-0 bg-amber-500/5">
+            <div className="px-6 py-3 bg-amber-500/10 border-b border-site-border">
+              <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                 {t('proposedArticle')}
               </span>
             </div>
@@ -151,10 +151,10 @@ export default function EmbeddedArticleViewer({
 
         {/* Footer info (optional) */}
         {loading && (
-          <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-site-bg/80 flex items-center justify-center z-10">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-slate-600 dark:text-slate-300 font-medium">{t('loading')}</p>
+              <div className="w-10 h-10 border-4 border-site-accent border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-site-text font-medium">{t('loading')}</p>
             </div>
           </div>
         )}

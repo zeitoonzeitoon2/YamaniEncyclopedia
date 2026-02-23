@@ -114,7 +114,7 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
           {post.relatedDomains.map((domain) => (
             <span 
               key={domain.id} 
-              className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+              className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
             >
               {domain.name}
             </span>

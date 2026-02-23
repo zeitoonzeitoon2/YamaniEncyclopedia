@@ -290,7 +290,7 @@ export default function EnhancedDiagramComparison({
           <h4 className="font-bold text-lg text-site-text mb-4">{t('proposedArticles')}</h4>
           <div className="grid gap-4 mb-6">
             {parsedArticlesData.drafts.map((draft) => (
-              <div key={draft.id} className="card border border-gray-600">
+              <div key={draft.id} className="card border border-site-border">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h5 className="font-semibold text-site-text">{draft.title}</h5>
@@ -303,7 +303,7 @@ export default function EnhancedDiagramComparison({
                       </p>
                     )}
                     {draft.originalArticleSlug && (
-                      <p className="text-xs text-blue-400 mt-1">
+                      <p className="text-xs text-site-accent mt-1">
                         {t('editArticleLabel')} {draft.originalArticleSlug}
                       </p>
                     )}
