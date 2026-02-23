@@ -44,22 +44,31 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // ایجاد یا به‌روزرسانی رای
-    const vote = await prisma.vote.upsert({
+    // جایگزینی upsert با findFirst + create/update برای جلوگیری از خطای تایپ unique constraint
+    const existingVote = await prisma.vote.findFirst({
       where: {
-        postId_adminId: {
-          postId: params.id,
-          adminId: session.user.id
-        }
-      },
-      update: {
-        score
-      },
-      create: {
         postId: params.id,
         adminId: session.user.id,
-        score
+        domainId: post.domainId || null
       }
     })
+
+    let vote
+    if (existingVote) {
+      vote = await prisma.vote.update({
+        where: { id: existingVote.id },
+        data: { score }
+      })
+    } else {
+      vote = await prisma.vote.create({
+        data: {
+          postId: params.id,
+          adminId: session.user.id,
+          domainId: post.domainId || null,
+          score
+        }
+      })
+    }
 
     return NextResponse.json({ success: true, vote })
   } catch (error) {

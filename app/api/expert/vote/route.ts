@@ -84,17 +84,32 @@ export async function POST(request: NextRequest) {
       finalScore = score * multiplier
     }
 
-    const vote = await prisma.vote.upsert({
+    const voteDomainId = domainId || post.domainId || null
+
+    const existingVote = await prisma.vote.findFirst({
       where: {
-        postId_adminId_domainId: {
+        postId,
+        adminId: user.id,
+        domainId: voteDomainId
+      }
+    })
+
+    let vote
+    if (existingVote) {
+      vote = await prisma.vote.update({
+        where: { id: existingVote.id },
+        data: { score: finalScore }
+      })
+    } else {
+      vote = await prisma.vote.create({
+        data: {
           postId,
           adminId: user.id,
-          domainId: domainId || post.domainId // Use provided domainId or fallback to post's primary
+          domainId: voteDomainId,
+          score: finalScore
         }
-      },
-      update: { score: finalScore },
-      create: { postId, adminId: user.id, domainId: domainId || post.domainId, score: finalScore }
-    })
+      })
+    }
 
     return NextResponse.json({ success: true, vote })
   } catch (error) {
