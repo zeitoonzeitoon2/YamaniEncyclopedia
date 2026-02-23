@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
 
     let isApproved = false
     let failureMessage = ''
+    let totalScore = 0
+    let threshold = 0
 
     if (allDomains.size > 0) {
        // Multi-domain Weighted Logic
@@ -128,15 +130,19 @@ export async function POST(request: NextRequest) {
 
        if (allDomainsApproved) {
           isApproved = true
+          // For multi-domain, we can set a representative score or just leave as 0
+          // Setting 100/100 to indicate success in logs/response if needed
+          totalScore = 100 
+          threshold = 100
        } else {
           failureMessage = 'عدم حد نصاب در حوزه‌های: ' + domainStatuses.join(', ')
        }
 
     } else {
        // Non-weighted (General) Logic
-       const threshold = Math.ceil(eligibleIds.length / 2)
+       threshold = Math.ceil(eligibleIds.length / 2)
        const participationThreshold = threshold
-       const totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
+       totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
        const participationCount = await prisma.vote.count({
           where: { postId, adminId: { in: eligibleIds } }
        })
