@@ -31,6 +31,20 @@ export default function EmbeddedArticleViewer({
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
+  const processContent = (content: string) => {
+    if (!content) return ''
+    let processed = content
+    
+    // 1. Fix relative paths for files/
+    processed = processed.replace(/\]\(files\//g, '](/files/')
+    
+    // 2. Fix malformed image syntax where text precedes it without space
+    // This helps break out of "unclosed link" contexts or just weird concatenations
+    processed = processed.replace(/(!\[.*?\]\(.*?\))/g, '\n\n$1\n\n')
+    
+    return processed
+  }
+
   React.useEffect(() => {
     async function fetchArticles() {
       setLoading(true)
@@ -135,11 +149,20 @@ export default function EmbeddedArticleViewer({
                     if (src.startsWith('files/')) {
                       src = '/' + src;
                     }
-                    return <img {...props} src={src} className="max-w-full rounded-lg shadow-md my-4" style={{maxWidth: '100%'}} />;
+                    // Ensure the image is rendered with max width and proper styling
+                    return (
+                      <img 
+                        {...props} 
+                        src={src} 
+                        alt={props.alt || 'Article Image'}
+                        className="max-w-full rounded-lg shadow-md my-4 block mx-auto" 
+                        style={{maxWidth: '100%', height: 'auto'}} 
+                      />
+                    );
                   }
                 }}
               >
-                {originalContent}
+                {processContent(originalContent)}
               </ReactMarkdown>
             </div>
           </div>
@@ -160,11 +183,19 @@ export default function EmbeddedArticleViewer({
                     if (src.startsWith('files/')) {
                       src = '/' + src;
                     }
-                    return <img {...props} src={src} className="max-w-full rounded-lg shadow-md my-4" style={{maxWidth: '100%'}} />;
+                    return (
+                      <img 
+                        {...props} 
+                        src={src} 
+                        alt={props.alt || 'Article Image'}
+                        className="max-w-full rounded-lg shadow-md my-4 block mx-auto" 
+                        style={{maxWidth: '100%', height: 'auto'}} 
+                      />
+                    );
                   }
                 }}
               >
-                {proposedContent}
+                {processContent(proposedContent)}
               </ReactMarkdown>
             </div>
           </div>
