@@ -459,34 +459,7 @@ export async function POST(request: NextRequest) {
           totalScore,
           threshold
         })
-      } else {
-        // امتیاز منفی - رد طرح
-        await prisma.post.update({
-          where: { id: postId },
-          data: { status: 'REJECTED' }
-        })
-
-        return NextResponse.json({
-          success: true,
-          published: true,
-          action: 'rejected',
-          message: 'طرح به دلیل رسیدن به حد نصاب منفی رد شد',
-          totalScore,
-          threshold
-        })
       }
-    }
-
-    // هنوز به حد نصاب نرسیده است
-    return NextResponse.json({
-      success: true,
-      published: false,
-      action: 'pending',
-      message: 'طرح هنوز به حد نصاب نرسیده است',
-      totalScore,
-      threshold,
-      needed: threshold - Math.abs(totalScore)
-    })
 
   } catch (error) {
     console.error('Error in auto-publish:', error)
