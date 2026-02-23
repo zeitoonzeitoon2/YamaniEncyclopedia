@@ -374,13 +374,13 @@ export default function DiagramComparison({
       <div className="text-sm text-site-muted">{t('noFlashcard')}</div>
     )
     return (
-      <div className="bg-stone-900/40 border border-amber-700/40 rounded-lg p-3">
-        <div className="font-semibold mb-3 text-amber-100">{title}</div>
+      <div className="bg-site-bg dark:bg-stone-900/40 border border-site-border dark:border-amber-700/40 rounded-lg p-3">
+        <div className="font-semibold mb-3 text-site-text dark:text-amber-100">{title}</div>
 
         {data.flashText && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">{t('flashcardText')}</div>
-            <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
+            <div className="text-xs text-amber-600 dark:text-amber-300 mb-1">{t('flashcardText')}</div>
+            <div className="rounded-md border border-site-border dark:border-amber-700/40 bg-white dark:bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-site-text dark:text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
               {String(data.flashText)}
             </div>
           </div>
@@ -388,19 +388,19 @@ export default function DiagramComparison({
 
         {primaryLink && (
           <div className="mb-3">
-            <div className="text-xs text-amber-300 mb-1">{t('firstLink')}</div>
-            <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
-              <a href={primaryLink} target="_blank" className="text-blue-300 underline break-all">{primaryLink}</a>
+            <div className="text-xs text-amber-600 dark:text-amber-300 mb-1">{t('firstLink')}</div>
+            <div className="rounded-md border border-site-border dark:border-amber-700/40 bg-white dark:bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
+              <a href={primaryLink} target="_blank" className="text-blue-600 dark:text-blue-300 underline break-all">{primaryLink}</a>
               {onCompareArticle ? (
                 <button
                   type="button"
                   onClick={() => onCompareArticle(side, primaryLink)}
-                  className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
+                  className="text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200 text-xs underline whitespace-nowrap"
                 >
                   {t('view')}
                 </button>
               ) : (
-                <a href={primaryLink} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
+                <a href={primaryLink} target="_blank" className="text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
               )}
             </div>
           </div>
@@ -410,7 +410,7 @@ export default function DiagramComparison({
           <div className="mb-1 space-y-2">
             {items.map((it: any, idx: number) => (
               <div key={idx} className="">
-                <div className="text-xs text-amber-300 mb-1">{
+                <div className="text-xs text-amber-600 dark:text-amber-300 mb-1">{
                   it.type === 'link'
                     ? (() => {
                         const base = primaryLink ? 1 : 0
@@ -422,24 +422,24 @@ export default function DiagramComparison({
                     : t('extraText', { index: idx + 1 })
                 }</div>
                 {it.type === 'link' ? (
-                  <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
-                    <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-blue-300 underline break-all">
+                  <div className="rounded-md border border-site-border dark:border-amber-700/40 bg-white dark:bg-stone-800/60 p-2 text-sm flex items-center justify-between gap-2">
+                    <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-blue-600 dark:text-blue-300 underline break-all">
                       {String(it.content || '')}
                     </a>
                     {onCompareArticle ? (
                       <button
                         type="button"
                         onClick={() => onCompareArticle(side, normalizeExtraLink(String(it.content || '')), idx)}
-                        className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap"
+                        className="text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200 text-xs underline whitespace-nowrap"
                       >
                         {t('view')}
                        </button>
                     ) : (
-                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-300 hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
+                      <a href={normalizeExtraLink(String(it.content || ''))} target="_blank" className="text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200 text-xs underline whitespace-nowrap">{t('view')}</a>
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-md border border-amber-700/40 bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
+                  <div className="rounded-md border border-site-border dark:border-amber-700/40 bg-white dark:bg-stone-800/60 p-2 whitespace-pre-wrap text-sm text-site-text dark:text-amber-50 break-words break-all max-h-40 overflow-y-auto overflow-x-hidden">
                     {String(it.content || '')}
                   </div>
                 )}
@@ -449,15 +449,15 @@ export default function DiagramComparison({
         )}
 
         {related && related.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-amber-700/40">
-            <div className="text-xs text-amber-300 mb-1">{t('relatedTo')}</div>
+          <div className="mt-3 pt-3 border-t border-site-border dark:border-amber-700/40">
+            <div className="text-xs text-amber-600 dark:text-amber-300 mb-1">{t('relatedTo')}</div>
             <div className="flex flex-wrap gap-2">
               {related.map((rid) => (
                 <button
                   key={rid}
                   type="button"
                   onClick={() => onSelectNode(rid)}
-                  className="px-2 py-1 rounded border border-amber-700/40 text-amber-200 hover:bg-stone-700/40 text-xs"
+                  className="px-2 py-1 rounded border border-site-border dark:border-amber-700/40 text-site-text dark:text-amber-200 hover:bg-site-bg dark:hover:bg-stone-700/40 text-xs"
                   title={findLabel(rid)}
                 >
                   {findLabel(rid)}
@@ -601,7 +601,7 @@ export default function DiagramComparison({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="h-[420px] rounded-lg border border-gray-700 bg-black/20 p-2">
+      <div className="h-[420px] rounded-lg border border-site-border dark:border-gray-700 bg-site-card dark:bg-black/20 p-2">
         <ReactFlow
           nodes={originalNodesRendered}
           edges={originalWithDiff.edges}
@@ -615,7 +615,7 @@ export default function DiagramComparison({
           <Controls />
         </ReactFlow>
       </div>
-      <div className="h-[420px] rounded-lg border border-gray-700 bg-black/20 p-2">
+      <div className="h-[420px] rounded-lg border border-site-border dark:border-gray-700 bg-site-card dark:bg-black/20 p-2">
         <ReactFlow
           nodes={proposedNodesRendered}
           edges={proposedWithDiff.edges}
@@ -632,7 +632,7 @@ export default function DiagramComparison({
 
       {/* Flashcard display panel */}
       {(activeOriginalNode || activeProposedNode) && (
-        <div className="md:col-span-2 card bg-stone-800/40 border border-amber-700/40 rounded-lg p-4">
+        <div className="md:col-span-2 card bg-site-card dark:bg-stone-800/40 border border-site-border dark:border-amber-700/40 rounded-lg p-4">
           <div className="flex flex-col md:flex-row gap-6 overflow-hidden">
             <div className="flex-1 min-w-0">
               <FlashcardView
@@ -644,7 +644,7 @@ export default function DiagramComparison({
                 onCompareArticle={handleCompareArticle}
               />
             </div>
-            <div className="hidden md:block w-px bg-gray-700" />
+            <div className="hidden md:block w-px bg-site-border dark:bg-gray-700" />
             <div className="flex-1 min-w-0">
               <FlashcardView
                 data={(activeProposedNode as any)?.data}
