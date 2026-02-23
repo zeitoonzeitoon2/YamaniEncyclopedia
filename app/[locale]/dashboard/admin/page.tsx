@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart, ArrowLeftRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart, ArrowLeftRight, ArrowUpDown } from 'lucide-react'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainPortfolio from '@/components/DomainPortfolio'
@@ -167,6 +167,8 @@ export default function AdminDashboard() {
 
   // Layout state: 'default' (2/3 left, 1/3 right), 'tree-expanded' (1/3 left, 2/3 right), 'equal' (1/2 left, 1/2 right)
   const [layoutMode, setLayoutMode] = useState<'default' | 'tree-expanded' | 'equal'>('default')
+  const [heightMode, setHeightMode] = useState<'fixed' | 'auto'>('auto')
+
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [addParentId, setAddParentId] = useState<string | null>(null)
@@ -1153,6 +1155,10 @@ export default function AdminDashboard() {
     })
   }
 
+  const toggleHeight = () => {
+    setHeightMode(current => current === 'fixed' ? 'auto' : 'fixed')
+  }
+
   if (status === 'loading' || (loadingDomains && roots.length === 0)) {
     return (
       <div className="min-h-screen bg-site-bg flex items-center justify-center">
@@ -1285,11 +1291,11 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24">
+          <div className={`card flex flex-col transition-all duration-300 ${heightMode === 'fixed' ? 'h-[calc(100vh-12rem)] sticky top-24' : 'min-h-[calc(100vh-12rem)]'}`}>
             {!selectedDomain ? (
               <div className="text-site-muted h-full flex items-center justify-center">{t('selectDomainPrompt')}</div>
             ) : (
-              <div className="flex-1 overflow-y-auto pr-2 -mr-2 custom-scrollbar space-y-6">
+              <div className={`flex-1 space-y-6 ${heightMode === 'fixed' ? 'overflow-y-auto pr-2 -mr-2 custom-scrollbar' : ''}`}>
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -1301,6 +1307,13 @@ export default function AdminDashboard() {
                           title="تغییر اندازه پنل‌ها"
                         >
                           <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
+                        </button>
+                        <button 
+                          onClick={toggleHeight}
+                          className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
+                          title="تغییر ارتفاع پنل"
+                        >
+                          <ArrowUpDown size={16} className={`text-site-muted hover:text-warm-primary ${heightMode === 'auto' ? 'text-warm-primary' : ''}`} />
                         </button>
                       </div>
                       <div className="text-xs text-site-muted mt-1">
