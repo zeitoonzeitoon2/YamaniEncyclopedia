@@ -5,6 +5,7 @@ import { locales } from '@/i18n'
 import { prisma } from '@/lib/prisma'
 import { Providers } from '../providers'
 import { Header } from '@/components/Header'
+import { DevUserSwitcher } from '@/components/DevUserSwitcher'
 
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale, namespace: 'metadata' })
@@ -59,6 +60,7 @@ export default async function RootLayout({
           <main className="relative z-0 container mx-auto px-4 py-6">
             {children}
           </main>
+          <DevUserSwitcher />
         </Providers>
       </div>
     </NextIntlClientProvider>
