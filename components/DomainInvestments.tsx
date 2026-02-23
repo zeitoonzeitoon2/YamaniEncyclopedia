@@ -219,26 +219,6 @@ export default function DomainInvestments() {
     }
   }, [t, fetchData]);
 
-  const handleSettle = useCallback(async () => {
-    try {
-      setSubmitting(true)
-      const res = await fetch('/api/admin/domains/investments/settle', {
-        method: 'POST'
-      })
-      if (res.ok) {
-        const data = await res.json()
-        toast.success(t('investment.settleSuccess', { count: data.results.length }))
-        fetchData()
-      } else {
-        toast.error(t('investment.settleError'))
-      }
-    } catch (e) {
-      toast.error(t('investment.settleError'))
-    } finally {
-      setSubmitting(false)
-    }
-  }, [fetchData, t]);
-
   const handleForceTerminate = useCallback(async (id: string) => {
     if (!confirm(t('investment.confirmTerminate'))) return
 
@@ -594,19 +574,6 @@ export default function DomainInvestments() {
             </tbody>
           </table>
         </div>
-        
-        {investments.filter(i => i.status === 'ACTIVE').some(i => i.endDate && new Date(i.endDate) <= new Date()) && (
-          <div className="flex justify-center pt-2">
-            <button 
-              onClick={handleSettle}
-              disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-warm-primary text-white text-sm font-bold shadow-lg shadow-warm-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              <Clock size={18} />
-              {t('investment.settleExpired')}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* History (Completed/Returned) */}

@@ -197,6 +197,9 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Auto-settle expired investments whenever the list is fetched
+    await settleExpiredInvestments()
+
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')
     const statusParam = searchParams.get('status')
