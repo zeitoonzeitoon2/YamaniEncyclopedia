@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
        let allDomainsApproved = true
        const domainStatuses: string[] = []
 
-       for (const dId of allDomains) {
+       for (const dId of Array.from(allDomains)) {
           const dThreshold = 100
           const dParticipationThreshold = 50
           let dTotalScore = 0
