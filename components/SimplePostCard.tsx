@@ -22,6 +22,7 @@ interface Post {
   } | null
   totalScore?: number
   unreadComments?: number
+  relatedDomains?: { id: string; name: string }[]
 }
 
 interface SimplePostCardProps {
@@ -107,9 +108,23 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
         </h4>
       </div>
 
+      {/* Domain Tags */}
+      {post.relatedDomains && post.relatedDomains.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {post.relatedDomains.map((domain) => (
+            <span 
+              key={domain.id} 
+              className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+            >
+              {domain.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Status and score */}
       <div className="flex items-center justify-between">
-        <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor()}`}>
+        <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(post.status)}`}>
           {getStatusText(post.status)}
         </span>
 
@@ -125,8 +140,6 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
           </div>
         )}
       </div>
-
-      {/* Type indicator removed */}
     </div>
   )
 }

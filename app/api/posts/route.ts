@@ -264,16 +264,21 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const collected: string[] = []
+        // 1. Collect all domains present in the new content for validation
+        const allDomainsInContent = new Set<string>()
         for (let i = 0; i < nodesArr.length; i++) {
           const n = nodesArr[i]
           const didRaw = n?.data?.domainId
           const did = typeof didRaw === 'string' ? didRaw.trim() : ''
-          if (did) collected.push(did)
+          if (did) allDomainsInContent.add(did)
         }
 
-        const unique = Array.from(new Set(collected))
-        const candidates = Array.from(new Set([...(postDomainId ? [postDomainId] : []), ...unique]))
+        // 2. Prepare candidates for validation: all content domains + affected domains + requested domain
+        const candidates = Array.from(new Set([
+          ...Array.from(allDomainsInContent),
+          ...Array.from(affectedDomainIds),
+          ...(postDomainId ? [postDomainId] : [])
+        ]))
 
         if (candidates.length > 0) {
           const existing = await prisma.domain.findMany({
@@ -281,9 +286,16 @@ export async function POST(request: NextRequest) {
             select: { id: true },
           })
           const validSet = new Set(existing.map((d) => d.id))
-          relatedDomainIds = unique.filter((id) => validSet.has(id))
+          
+          // 3. Set relatedDomainIds to AFFECTED domains that are valid
+          // If this is a new post (no originalPostId), affectedDomainIds already contains all domains
+          // If this is an edit, affectedDomainIds contains only changed domains
+          relatedDomainIds = Array.from(affectedDomainIds).filter((id) => validSet.has(id))
+          
+          // 4. Set postDomainId
           postDomainId = (postDomainId && validSet.has(postDomainId)) ? postDomainId : (relatedDomainIds[0] || null)
 
+          // 5. Clean up invalid domains from nodes
           for (let i = 0; i < nodesArr.length; i++) {
             const n = nodesArr[i]
             const didRaw = n?.data?.domainId

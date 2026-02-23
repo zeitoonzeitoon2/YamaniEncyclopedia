@@ -579,7 +579,8 @@
       "participationThreshold": "حد نصاب مشارکت: {value}",
       "totalScoreLabel": "مجموع امتیاز:",
       "participantsLabel": "مشارکت‌کنندگان: {value}",
-      "empty": "لطفاً یک طرح را از لیست انتخاب کنید."
+      "empty": "لطفاً یک طرح را از لیست انتخاب کنید.",
+      "voteForDomain": "رای‌دهی در حوزه {domain}"
     },
     "diagram": {
       "changeSummary": "خلاصه تغییرات",

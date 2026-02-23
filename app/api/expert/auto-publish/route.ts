@@ -83,68 +83,81 @@ export async function POST(request: NextRequest) {
     const eligibleSet = new Set<string>([...superUsers.map((u) => u.id), ...experts.map((e) => e.userId)])
     const eligibleIds = Array.from(eligibleSet)
 
-    let totalScore = 0
-    let threshold = 0
-    let participationCount = 0
-    let participationThreshold = 0
-    let isWeighted = false
-    let participationWeight = 0
-
-    if (post.domainId) {
-      isWeighted = true
-      threshold = 100 // 50% of max weighted score (200)
-      participationThreshold = 50 // 50% of total voting power
-
-      for (const v of post.votes) {
-        if (eligibleSet.has(v.adminId)) {
-          // Use DIRECT mode for auto-publishing posts (Scenario 1)
-          const weight = await calculateUserVotingWeight(v.adminId, post.domainId, 'DIRECT')
-          totalScore += v.score * weight
-          participationWeight += weight
-          participationCount++
-        }
-      }
-    } else {
-      threshold = Math.ceil(eligibleIds.length / 2)
-      participationThreshold = threshold
-      totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
-      participationCount = await prisma.vote.count({
-        where: { postId, adminId: { in: eligibleIds } }
-      })
+    // Determine all affected domains
+    const allDomains = new Set<string>()
+    if (post.domainId) allDomains.add(post.domainId)
+    if (post.relatedDomainIds && Array.isArray(post.relatedDomainIds)) {
+      post.relatedDomainIds.forEach(id => allDomains.add(id))
     }
 
-    // بررسی رسیدن به حد نصاب مشارکت
-    if (isWeighted) {
-      if (participationWeight < participationThreshold) {
+    let isApproved = false
+    let failureMessage = ''
+
+    if (allDomains.size > 0) {
+       // Multi-domain Weighted Logic
+       let allDomainsApproved = true
+       const domainStatuses: string[] = []
+
+       for (const dId of allDomains) {
+          const dThreshold = 100
+          const dParticipationThreshold = 50
+          let dTotalScore = 0
+          let dParticipationWeight = 0
+          
+          // Filter votes for this domain
+          const domainVotes = post.votes.filter(v => 
+             v.domainId === dId || (v.domainId === null && dId === post.domainId)
+          )
+
+          for (const v of domainVotes) {
+             const weight = await calculateUserVotingWeight(v.adminId, dId, 'DIRECT')
+             if (weight > 0) {
+                 dTotalScore += v.score * weight
+                 dParticipationWeight += weight
+             }
+          }
+
+          const participationOK = dParticipationWeight >= dParticipationThreshold
+          const scoreOK = dTotalScore >= dThreshold
+          
+          if (!participationOK || !scoreOK) {
+             allDomainsApproved = false
+             domainStatuses.push(`Domain ${dId}: (Score ${dTotalScore}/${dThreshold}, Part ${dParticipationWeight}/${dParticipationThreshold})`)
+          }
+       }
+
+       if (allDomainsApproved) {
+          isApproved = true
+       } else {
+          failureMessage = 'عدم حد نصاب در حوزه‌های: ' + domainStatuses.join(', ')
+       }
+
+    } else {
+       // Non-weighted (General) Logic
+       const threshold = Math.ceil(eligibleIds.length / 2)
+       const participationThreshold = threshold
+       const totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
+       const participationCount = await prisma.vote.count({
+          where: { postId, adminId: { in: eligibleIds } }
+       })
+
+       if (participationCount >= participationThreshold && totalScore >= threshold) {
+          isApproved = true
+       } else {
+          failureMessage = 'مشارکت یا امتیاز به حد نصاب نرسیده است'
+       }
+    }
+
+    if (!isApproved) {
         return NextResponse.json({
           success: true,
           published: false,
           action: 'pending',
-          message: 'مشارکت (وزنی) به حد نصاب نرسیده است',
-          totalScore,
-          threshold,
-          participation: { weight: participationWeight, required: participationThreshold },
-          needed: Math.max(0, participationThreshold - participationWeight)
+          message: failureMessage
         })
-      }
-    } else {
-      if (participationCount < participationThreshold) {
-        return NextResponse.json({
-          success: true,
-          published: false,
-          action: 'pending',
-          message: 'مشارکت به حد نصاب نرسیده است',
-          totalScore,
-          threshold,
-          participation: { count: participationCount, required: participationThreshold },
-          needed: Math.max(0, participationThreshold - participationCount)
-        })
-      }
     }
 
-    // بررسی رسیدن به حد نصاب امتیازها
-    if (Math.abs(totalScore) >= threshold) {
-      if (totalScore >= threshold) {
+    if (isApproved) {
         // امتیاز مثبت - تایید طرح
         let rebaseToId: string | null = null
         if (post.originalPostId) {

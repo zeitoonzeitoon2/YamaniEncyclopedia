@@ -347,9 +347,10 @@ model Vote {
   post      Post     @relation(fields: [postId], references: [id])
   adminId   String
   admin     User     @relation(fields: [adminId], references: [id])
+  domainId  String?
   createdAt DateTime @default(now())
 
-  @@unique([postId, adminId])
+  @@unique([postId, adminId, domainId])
   @@index([postId])
   @@index([adminId])
   @@index([createdAt])

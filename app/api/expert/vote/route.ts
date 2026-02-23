@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
-    const { postId, score } = await request.json()
+    const { postId, score, domainId } = await request.json()
 
     if (!postId || ![2, 1, 0, -1, -2].includes(score)) {
       return NextResponse.json({ error: 'داده نامعتبر' }, { status: 400 })
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // بررسی وجود پست
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true, status: true, domainId: true },
+      select: { id: true, status: true, domainId: true, relatedDomainIds: true },
     })
     if (!post) {
       return NextResponse.json({ error: 'پست یافت نشد' }, { status: 404 })
@@ -43,9 +43,17 @@ export async function POST(request: NextRequest) {
     const isGlobalExpert = user.role === 'EXPERT' || user.role === 'ADMIN'
 
     // Check domain expertise and HEAD role
-    if (post.domainId) {
+    const targetDomainId = domainId || post.domainId
+    
+    if (targetDomainId) {
+      // If specific domain vote, user must be expert in that domain OR global expert
+      // Actually, for multi-domain, only experts of that domain should vote?
+      // User said: "if a proposal changes two domains... two separate votes between two separate teams"
+      // So global expert might not have a say unless they are expert in that domain?
+      // Assuming global expert (ADMIN) can always vote.
+      
       const expert = await prisma.domainExpert.findFirst({
-        where: { userId: user.id, domainId: post.domainId },
+        where: { userId: user.id, domainId: targetDomainId },
         select: { id: true, role: true },
       })
       
@@ -78,13 +86,14 @@ export async function POST(request: NextRequest) {
 
     const vote = await prisma.vote.upsert({
       where: {
-        postId_adminId: {
+        postId_adminId_domainId: {
           postId,
-          adminId: user.id
+          adminId: user.id,
+          domainId: domainId || post.domainId // Use provided domainId or fallback to post's primary
         }
       },
       update: { score: finalScore },
-      create: { postId, adminId: user.id, score: finalScore }
+      create: { postId, adminId: user.id, domainId: domainId || post.domainId, score: finalScore }
     })
 
     return NextResponse.json({ success: true, vote })

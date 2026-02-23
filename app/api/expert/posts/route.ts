@@ -91,11 +91,27 @@ export async function GET(request: NextRequest) {
           select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } },
         },
         _count: { select: { comments: true } },
+        domainId: true,
+        relatedDomainIds: true,
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     })
+
+    const allDomainIds = new Set<string>()
+    posts.forEach(p => {
+      if (p.domainId) allDomainIds.add(p.domainId)
+      if (Array.isArray(p.relatedDomainIds)) {
+        p.relatedDomainIds.forEach(id => allDomainIds.add(id))
+      }
+    })
+
+    const domains = await prisma.domain.findMany({
+      where: { id: { in: Array.from(allDomainIds) } },
+      select: { id: true, name: true }
+    })
+    const domainMap = new Map(domains.map(d => [d.id, d.name]))
 
     const postIds = posts.map(p => p.id)
 
@@ -139,12 +155,29 @@ export async function GET(request: NextRequest) {
     const items = posts.map(post => {
       const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
       const cm = commentsMap.get(post.id)
+      
+      const relatedDomains = (post.relatedDomainIds || []).map(id => ({
+        id,
+        name: domainMap.get(id) || id
+      }))
+      if (post.domainId && !post.relatedDomainIds.includes(post.domainId)) {
+        relatedDomains.unshift({ id: post.domainId, name: domainMap.get(post.domainId) || post.domainId })
+      }
+
+      // Filter my votes
+      const myVotes = post.votes.filter(v => v.adminId === user.id).map(v => ({
+        domainId: v.domainId || post.domainId || null,
+        score: v.score
+      }))
+
       return {
         ...post,
         totalScore,
         latestCommentAt: cm?.latestCommentAt || null,
         commentsCount: cm?.commentsCount ?? (post._count?.comments ?? 0),
         unreadComments: unreadCounts[post.id] || 0,
+        relatedDomains,
+        myVotes
       }
     })
 
@@ -155,6 +188,7 @@ export async function GET(request: NextRequest) {
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       hasNext: page * pageSize < totalCount,
+      userExpertDomains: expertDomainIds
     })
   } catch (error) {
     console.error('Error fetching expert posts:', error)

@@ -54,6 +54,8 @@ interface Post {
     rebuttal: string
   } | null
   changeSummary?: string | null
+  relatedDomains?: { id: string; name: string }[]
+  myVotes?: { domainId: string | null; score: number }[]
 }
 
 interface RecentComment {
@@ -86,6 +88,7 @@ export default function ExpertDashboard() {
   const [userQuery, setUserQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isDomainExpert, setIsDomainExpert] = useState(false)
+  const [userExpertDomains, setUserExpertDomains] = useState<string[]>([])
   const isExpertRole = session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN'
   const isVoter = isExpertRole || isDomainExpert
   const isEditor = !isVoter && (session?.user?.role === 'EDITOR' || session?.user?.role === 'USER')
@@ -385,6 +388,10 @@ export default function ExpertDashboard() {
           const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []
           setPosts(prev => append ? [...prev, ...items] : items)
           setHasNext(!!data?.hasNext)
+          if (data.userExpertDomains) {
+            setUserExpertDomains(data.userExpertDomains)
+            // setIsDomainExpert(data.userExpertDomains.length > 0) // Already handled by logic but good to sync
+          }
         } else {
           toast.error(t('toast.loadError'))
         }
@@ -592,19 +599,24 @@ export default function ExpertDashboard() {
   const approvedCount = posts.filter(p => p.status === 'APPROVED').length
   const rejectedCount = posts.filter(p => p.status === 'REJECTED').length
 
-  const handleVote = async (postId: string, score: number) => {
+  const handleVote = async (postId: string, score: number, domainId?: string) => {
     try {
       const response = await fetch('/api/expert/vote', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ postId, score }),
+        body: JSON.stringify({ postId, score, domainId }),
       })
 
       if (response.ok) {
         toast.success(t('toast.voteSuccess'))
-        setCurrentUserVote(score)
+        if (!domainId) {
+          setCurrentUserVote(score)
+        } else {
+           // For multi-domain, we rely on refetching or local state update logic which is complex
+           // But since we refetch posts, it should be fine.
+        }
         
         // Check for automatic publishing
         const autoPublishResponse = await fetch('/api/expert/auto-publish', {
@@ -1062,11 +1074,37 @@ export default function ExpertDashboard() {
                           {t('details.voteStopped')}
                         </div>
                       ) : (
-                        <VotingSlider
-                          currentVote={currentUserVote}
-                          onVote={(score) => handleVote(selectedPost.id, score)}
-                          disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
-                        />
+                        <>
+                          {selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0 ? (
+                            <div className="space-y-4">
+                              {selectedPost.relatedDomains.map(domain => {
+                                const canVote = isExpertRole || userExpertDomains.includes(domain.id)
+                                if (!canVote) return null
+                                
+                                const myVote = selectedPost.myVotes?.find(v => v.domainId === domain.id)?.score
+                                return (
+                                  <div key={domain.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/40">
+                                    <div className="text-sm font-medium mb-3 text-site-text flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                      {t('details.voteForDomain', { domain: domain.name })}
+                                    </div>
+                                    <VotingSlider
+                                      currentVote={myVote || 0}
+                                      onVote={(score) => handleVote(selectedPost.id, score, domain.id)}
+                                      disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
+                                    />
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <VotingSlider
+                              currentVote={currentUserVote}
+                              onVote={(score) => handleVote(selectedPost.id, score)}
+                              disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
+                            />
+                          )}
+                        </>
                       )}
                     </div>
                   )}
