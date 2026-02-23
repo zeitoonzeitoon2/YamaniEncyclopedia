@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
           select: { id: true, type: true, version: true },
         },
         votes: {
-          select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } },
+          select: { id: true, score: true, adminId: true, domainId: true, admin: { select: { name: true, role: true } } },
         },
         _count: { select: { comments: true } },
         domainId: true,
