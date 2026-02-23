@@ -39,8 +39,8 @@ export function SimplePostCard({ post, isSelected = false, onClick }: SimplePost
     ? new Date(post.createdAt)
     : post.createdAt
 
-  const getStatusColor = () => {
-    switch (post.status) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200'
       case 'APPROVED':
