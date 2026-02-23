@@ -207,7 +207,7 @@ const TeamPortfolioCard = ({ teamName, wing, items, highlightedDomainId, contrac
                   {/* Temporary Bar */}
                   {tempVal > 0 && (
                     <div 
-                      className={`rounded-t-lg transition-all hover:brightness-110 relative ${permVal > 0 ? 'w-1/2' : 'w-full'}`}
+                      className={`rounded-t-lg transition-all duration-200 hover:brightness-110 hover:shadow-sm relative ${permVal > 0 ? 'w-1/2' : 'w-full'}`}
                       style={{ 
                         height: `${Math.max(tempHeight * 2, 4)}px`, 
                         backgroundColor: color,

@@ -159,11 +159,11 @@ export function AdminPostCard({ post, onStatusChange, currentAdminId }: AdminPos
                 key={score}
                 onClick={() => handleVote(score)}
                 disabled={isVoting}
-                className={`px-3 py-2 rounded-lg transition-colors ${
+                className={`px-3 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   currentVote === score
-                    ? 'bg-warm-primary text-white'
-                    : 'bg-site-bg hover:bg-gray-700 text-site-text'
-                } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? 'bg-warm-primary text-white shadow-md'
+                    : 'bg-site-bg hover:bg-gray-700 text-site-text hover:text-white'
+                } ${isVoting ? 'opacity-50 cursor-not-allowed transform-none shadow-none' : ''}`}
               >
                 {score > 0 ? `+${score}` : score}
               </button>

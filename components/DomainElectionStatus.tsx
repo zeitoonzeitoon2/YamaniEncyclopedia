@@ -54,9 +54,9 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
   if (!status || !status.shares || status.shares.length === 0) return null
 
   return (
-    <div className="mt-6 p-5 rounded-2xl border border-site-border bg-gradient-to-br from-site-secondary/10 to-site-bg shadow-sm">
+    <div className="mt-6 p-5 rounded-2xl border border-site-border bg-gradient-to-br from-site-secondary/10 to-site-bg shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-1">
       <h3 
-        className="text-base font-bold text-site-text flex items-center gap-2 border-b border-site-border/50 pb-2 cursor-pointer hover:opacity-80 transition-opacity"
+        className="text-base font-bold text-site-text flex items-center gap-2 border-b border-site-border/50 pb-2 cursor-pointer transition-all duration-200 hover:opacity-80 hover:translate-x-1"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <Vote className="text-warm-primary" size={20} />
@@ -77,7 +77,7 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
               : 0
             
             return (
-              <div key={`${share.ownerDomainId}-${share.ownerWing}`} className="bg-site-bg p-3 rounded-xl border border-site-border/60 hover:border-warm-primary/30 transition-colors">
+              <div key={`${share.ownerDomainId}-${share.ownerWing}`} className="bg-site-bg p-3 rounded-xl border border-site-border/60 transition-all duration-200 hover:border-warm-primary/50 hover:shadow-sm hover:-translate-y-0.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-site-text flex items-center gap-1">

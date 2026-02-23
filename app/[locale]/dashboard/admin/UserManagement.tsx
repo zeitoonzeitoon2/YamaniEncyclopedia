@@ -80,7 +80,7 @@ export default function UserManagement({}: Props) {
             placeholder={t('search.placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 rounded-lg bg-site-bg border border-site-border text-site-text focus:outline-none focus:border-warm-primary text-sm w-64"
+            className="pl-10 pr-4 py-2 rounded-lg bg-site-bg border border-site-border text-site-text focus:outline-none focus:border-warm-primary text-sm w-64 transition-all duration-200 hover:border-warm-primary/50 focus:shadow-sm"
           />
           <Search className="absolute left-3 top-2.5 text-site-muted" size={16} />
         </div>
@@ -103,7 +103,7 @@ export default function UserManagement({}: Props) {
               {filteredUsers.map(user => {
                 const roleInfo = getGlobalRole(user)
                 return (
-                  <tr key={user.id} className="group hover:bg-site-card/50 transition-colors">
+                  <tr key={user.id} className="group hover:bg-site-card/50 transition-all duration-200 hover:shadow-sm hover:-translate-y-0.5 border-b border-site-border last:border-0">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-warm-primary/10 flex items-center justify-center text-warm-primary">
@@ -124,7 +124,7 @@ export default function UserManagement({}: Props) {
                         {user.domainExperts.map(de => (
                           <div 
                             key={de.id} 
-                            className="flex flex-col gap-0.5 px-2 py-1 rounded bg-site-secondary/20 border border-site-border text-[10px]"
+                            className="flex flex-col gap-0.5 px-2 py-1 rounded bg-site-secondary/20 border border-site-border text-[10px] transition-all duration-200 hover:bg-site-secondary/30 hover:scale-105"
                           >
                             <div className="flex items-center gap-1 justify-between">
                               <span className="font-bold text-site-text">{de.domain.name}</span>

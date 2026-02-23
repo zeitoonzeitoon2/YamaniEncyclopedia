@@ -213,7 +213,7 @@ export default function DomainPortfolio() {
             <label className="block text-sm font-medium mb-2">{t('selectTeam')}</label>
             <div className="relative">
               <select
-                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none"
+                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none transition-all duration-200 hover:border-site-text/50 focus:shadow-sm hover:border-warm-primary/50"
                 value={selectedTeamKey}
                 onChange={(e) => setSelectedTeamKey(e.target.value)}
               >
@@ -240,7 +240,7 @@ export default function DomainPortfolio() {
             <label className="block text-sm font-medium mb-2">{t('selectAsset')}</label>
             <div className="relative">
               <select
-                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none"
+                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none transition-all duration-200 hover:border-warm-primary/50"
                 value={highlightedAssetId}
                 onChange={(e) => setHighlightedAssetId(e.target.value)}
               >
@@ -257,7 +257,7 @@ export default function DomainPortfolio() {
         <div className="flex items-end gap-2">
            <button
              onClick={() => setShowLegend(!showLegend)}
-             className={`p-2 rounded border ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
+             className={`p-2 rounded border transition-all duration-200 hover:scale-110 hover:shadow-sm ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
              title={t('legendTitle')}
            >
              <Info size={20} />
@@ -274,7 +274,7 @@ export default function DomainPortfolio() {
           <div className="flex flex-wrap gap-4 items-center">
             {/* Legend for colors */}
             {uniqueTargets.map(target => (
-              <div key={target.id} className="flex items-center gap-2 bg-site-bg/50 px-2 py-1 rounded border border-site-border/50">
+              <div key={target.id} className="flex items-center gap-2 bg-site-bg/50 px-2 py-1 rounded border border-site-border/50 transition-all duration-200 hover:bg-site-bg hover:border-site-border hover:shadow-sm">
                 <div 
                   className="w-3 h-3 rounded-full shrink-0" 
                   style={{ backgroundColor: getDomainColor(target.id) }}
@@ -317,7 +317,7 @@ export default function DomainPortfolio() {
                   <div 
                     key={domainId} 
                     id={`domain-card-${domainId}`}
-                    className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24"
+                    className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
                   >
                     <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center relative">
                       {/* Right Wing Label - Visually on the Right in RTL, Left in LTR */}

@@ -231,16 +231,16 @@ mark {
 @layer components {
   /* دکمه‌های اصلی */
   .btn-primary {
-    @apply bg-warm-primary text-white hover:bg-warm-accent transition-colors shadow-lg rounded-xl px-6 py-3 font-medium;
+    @apply bg-warm-primary text-white hover:bg-warm-accent transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 rounded-xl px-6 py-3 font-medium;
   }
 
   .btn-secondary {
-    @apply bg-warm-secondary text-white hover:bg-warm-primary border border-warm-secondary transition-colors rounded-xl px-6 py-3 font-medium shadow-md;
+    @apply bg-warm-secondary text-white hover:bg-warm-primary border border-warm-secondary transition-all duration-200 rounded-xl px-6 py-3 font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5;
   }
 
   /* کارت‌ها */
   .card {
-    @apply bg-site-card border border-site-border rounded-lg shadow-xl p-6;
+    @apply bg-site-card border border-site-border rounded-lg shadow-xl p-6 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1;
   }
 
   /* فیلدهای ورودی */

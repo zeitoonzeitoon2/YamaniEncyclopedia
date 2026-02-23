@@ -253,7 +253,7 @@ export default function DomainInvestments() {
               <select 
                 value={selectedMyDomainId} 
                 onChange={e => setSelectedMyDomainId(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none transition-all duration-200 hover:border-warm-primary/50"
               >
                 <option value="">{t('investment.title')}...</option>
                 {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -267,7 +267,7 @@ export default function DomainInvestments() {
               <select 
                 value={proposerWing} 
                 onChange={e => setProposerWing(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none"
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none transition-all duration-200 hover:border-warm-primary/50"
               >
                 <option value="RIGHT">{t('rightWing')}</option>
                 <option value="LEFT">{t('leftWing')}</option>
@@ -340,7 +340,7 @@ export default function DomainInvestments() {
                 type="number" 
                 value={returnPercent} 
                 onChange={e => setReturnPercent(Number(e.target.value))}
-                className="w-full p-2.5 pl-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none"
+                className="w-full p-2.5 pl-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none transition-all duration-200 hover:border-warm-primary/50"
               />
               <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted" />
             </div>
@@ -353,7 +353,7 @@ export default function DomainInvestments() {
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full p-2.5 pl-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none"
+                className="w-full p-2.5 pl-8 rounded-lg border border-site-border bg-site-bg text-site-text text-sm outline-none transition-all duration-200 hover:border-warm-primary/50"
               />
               <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted" />
             </div>
@@ -362,7 +362,7 @@ export default function DomainInvestments() {
             <button 
               onClick={handlePropose}
               disabled={submitting}
-              className="w-full btn-primary h-[42px] flex items-center justify-center gap-2"
+              className="w-full btn-primary h-[42px] flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               {submitting ? '...' : <><TrendingUp size={18}/> {t('investment.propose')}</>}
             </button>
@@ -381,7 +381,7 @@ export default function DomainInvestments() {
           </h3>
           <div className="grid grid-cols-1 gap-4">
             {investments.filter(i => i.status === 'PENDING').map(inv => (
-              <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 flex flex-col md:flex-row gap-4">
+              <div key={inv.id} className="p-4 rounded-xl border border-site-border bg-site-secondary/30 flex flex-col md:flex-row gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
                 {/* Left Side: Contract Details */}
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center justify-between">
@@ -422,14 +422,14 @@ export default function DomainInvestments() {
                     <button 
                       onClick={() => handleVote(inv.id, 'APPROVE')}
                       disabled={!!votingId}
-                      className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-colors"
+                      className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                     >
                       {votingId === inv.id + ':APPROVE' ? '...' : t('investment.returnBtn')}
                     </button>
                     <button 
                       onClick={() => handleVote(inv.id, 'REJECT')}
                       disabled={!!votingId}
-                      className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-colors"
+                      className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                     >
                       {votingId === inv.id + ':REJECT' ? '...' : t('reject')}
                     </button>
@@ -552,7 +552,7 @@ export default function DomainInvestments() {
                         <button
                           onClick={() => handleForceTerminate(inv.id)}
                           disabled={submitting}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all duration-200 hover:scale-110 hover:shadow-sm"
                           title={t('investment.forceTerminate')}
                         >
                           <XCircle size={18} />
@@ -572,7 +572,7 @@ export default function DomainInvestments() {
           <div className="flex justify-center">
             <button
               onClick={handleShowHistory}
-              className="px-6 py-2.5 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-colors border border-site-border flex items-center gap-2"
+              className="px-6 py-2.5 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-all duration-200 border border-site-border flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-md"
             >
               <Clock size={18} className="text-site-muted" />
               {showHistory ? t('investment.hideHistory') : t('investment.showHistory')}
@@ -645,7 +645,7 @@ export default function DomainInvestments() {
               <div className="p-4 flex justify-center border-t border-site-border">
                 <button 
                   onClick={() => setHistoryLimit(prev => prev + 10)}
-                  className="px-4 py-2 text-sm text-site-muted hover:text-site-text bg-site-secondary/30 hover:bg-site-secondary/50 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm text-site-muted hover:text-site-text bg-site-secondary/30 hover:bg-site-secondary/50 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   {t('investment.loadMore')}
                 </button>

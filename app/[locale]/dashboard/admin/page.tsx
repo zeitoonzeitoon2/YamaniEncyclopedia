@@ -1069,8 +1069,8 @@ export default function AdminDashboard() {
     return (
       <div>
         <div
-          className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 transition-colors ${
-            isSelected ? 'bg-warm-primary/20 border border-warm-primary/30' : 'hover:bg-site-card/50'
+          className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 transition-all duration-200 ${
+            isSelected ? 'bg-warm-primary/20 border border-warm-primary/30 shadow-sm' : 'hover:bg-site-card/50 hover:shadow-sm hover:translate-x-1'
           }`}
           style={{ paddingRight: `${depth * 14 + 8}px` }}
         >
@@ -1109,7 +1109,7 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => openAddModal(node)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text text-xs transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text text-xs transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                 title={t('addChildDomain')}
               >
                 <Plus size={14} />
@@ -1167,7 +1167,7 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold text-site-text mb-8 text-center heading">{t('title')}</h1>
 
         {session?.user?.role === 'ADMIN' && (
-          <div className="card mb-8">
+          <div className="card mb-8 transition-shadow duration-300 hover:shadow-lg">
             <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('siteSettingsTitle')}</h2>
             <p className="text-site-muted text-sm mb-3">{t('headerImageHint')}</p>
             {headerUrl && (
@@ -1195,14 +1195,14 @@ export default function AdminDashboard() {
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
               <input type="file" accept="image/*" onChange={handleFileChange} className="text-site-text" />
-              <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
+              <button onClick={handleUpload} disabled={uploading || !selectedFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 {uploading ? t('uploading') : t('uploadHeaderButton')}
               </button>
             </div>
           </div>
         )}
         {session?.user?.role === 'ADMIN' && (
-          <div className="card mb-8">
+          <div className="card mb-8 transition-shadow duration-300 hover:shadow-lg">
             <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('logoSettingsTitle')}</h2>
             <p className="text-site-muted text-sm mb-3">{t('logoHint')}</p>
             {logoUrl && (
@@ -1234,7 +1234,7 @@ export default function AdminDashboard() {
             )}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
               <input type="file" accept="image/*" onChange={handleLogoFileChange} className="text-site-text" />
-              <button onClick={handleLogoUpload} disabled={logoUploading || !logoFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50">
+              <button onClick={handleLogoUpload} disabled={logoUploading || !logoFile} className="px-4 py-2 bg-warm-primary text-black rounded disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 {logoUploading ? t('uploading') : t('uploadLogoButton')}
               </button>
             </div>
@@ -1242,13 +1242,13 @@ export default function AdminDashboard() {
         )}
 
         <div className={`grid grid-cols-1 ${getLayoutClasses()} gap-6 transition-all duration-300 ease-in-out`}>
-          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24">
+          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24 transition-shadow duration-300 hover:shadow-lg">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
                 <button 
                   onClick={toggleLayout}
-                  className="p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                  className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
                   title="تغییر اندازه پنل‌ها"
                 >
                   <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
@@ -1258,14 +1258,14 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={expandAll}
-                  className="px-2 py-1 text-[10px] rounded border border-warm-primary/30 text-warm-primary hover:bg-warm-primary/10 transition-colors"
+                  className="px-2 py-1 text-[10px] rounded border border-warm-primary/30 text-warm-primary hover:bg-warm-primary/10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   {t('expandAll')}
                 </button>
                 <button
                   type="button"
                   onClick={collapseAll}
-                  className="px-2 py-1 text-[10px] rounded border border-gray-500/30 text-site-muted hover:bg-gray-500/10 transition-colors"
+                  className="px-2 py-1 text-[10px] rounded border border-gray-500/30 text-site-muted hover:bg-gray-500/10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   {t('collapseAll')}
                 </button>
@@ -1297,7 +1297,7 @@ export default function AdminDashboard() {
                         <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
                         <button 
                           onClick={toggleLayout}
-                          className="p-1 hover:bg-site-secondary/50 rounded transition-colors"
+                          className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
                           title="تغییر اندازه پنل‌ها"
                         >
                           <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
@@ -1320,7 +1320,7 @@ export default function AdminDashboard() {
                             setRenameName(selectedDomain.name)
                             setRenameModalOpen(true)
                           }}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-site-text hover:bg-site-secondary/50 border border-site-border"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-site-text hover:bg-site-secondary/50 border border-site-border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                           title={t('renameDomainTitle')}
                         >
                           <Pencil size={16} />
@@ -1331,7 +1331,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => setDeleteModalOpen(true)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                           title={t('deleteDomain')}
                           disabled={selectedDomain.slug === 'philosophy'}
                         >
@@ -1357,9 +1357,9 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('members')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                         activeTab === 'members'
-                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
@@ -1371,9 +1371,9 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('courses')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                         activeTab === 'courses'
-                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
@@ -1385,9 +1385,9 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('researchers')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                         activeTab === 'researchers'
-                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
@@ -1399,9 +1399,9 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('proposals')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                         activeTab === 'proposals'
-                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
+                          ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
                       }`}
                     >
@@ -1449,7 +1449,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => startScheduledElection(activeRounds['RIGHT']!.id)}
                                           disabled={startingScheduledKey !== null}
-                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50"
+                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                         >
                                           {startingScheduledKey === activeRounds['RIGHT']!.id ? '...' : 'Start Now'}
                                         </button>
@@ -1460,7 +1460,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => extendElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
                                           disabled={extendingRoundKey !== null}
-                                          className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
+                                          className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                         >
                                           {extendingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('extendElection')}
                                         </button>
@@ -1469,7 +1469,7 @@ export default function AdminDashboard() {
                                             type="button"
                                             onClick={() => forceFinalizeElectionRound(activeRounds['RIGHT']!.id, 'RIGHT')}
                                             disabled={finalizingRoundKey !== null}
-                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                           >
                                             {finalizingRoundKey === activeRounds['RIGHT']!.id ? '...' : t('forceEndElection')}
                                           </button>
@@ -1485,7 +1485,7 @@ export default function AdminDashboard() {
                                   type="button"
                                   onClick={() => startElectionRound('RIGHT')}
                                   disabled={startingRoundKey !== null}
-                                  className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50"
+                                  className="text-[10px] px-2 py-1 rounded border border-warm-primary/50 text-warm-primary hover:bg-warm-primary/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                 >
                                   {startingRoundKey === 'RIGHT' ? '...' : t('startElectionRound')}
                                 </button>
@@ -1506,7 +1506,7 @@ export default function AdminDashboard() {
                                 const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
                                 const key = `${selectedDomain.id}:${ex.user.id}`
                                 return (
-                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-warm-primary/30">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -1555,7 +1555,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => startScheduledElection(activeRounds['LEFT']!.id)}
                                           disabled={startingScheduledKey !== null}
-                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50"
+                                          className="text-[10px] px-2 py-1 rounded border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                         >
                                           {startingScheduledKey === activeRounds['LEFT']!.id ? '...' : 'Start Now'}
                                         </button>
@@ -1566,7 +1566,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => extendElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
                                           disabled={extendingRoundKey !== null}
-                                          className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
+                                          className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                         >
                                           {extendingRoundKey === activeRounds['LEFT']!.id ? '...' : t('extendElection')}
                                         </button>
@@ -1575,7 +1575,7 @@ export default function AdminDashboard() {
                                             type="button"
                                             onClick={() => forceFinalizeElectionRound(activeRounds['LEFT']!.id, 'LEFT')}
                                             disabled={finalizingRoundKey !== null}
-                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                                            className="text-[10px] px-2 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                           >
                                             {finalizingRoundKey === activeRounds['LEFT']!.id ? '...' : t('forceEndElection')}
                                           </button>
@@ -1591,7 +1591,7 @@ export default function AdminDashboard() {
                                   type="button"
                                   onClick={() => startElectionRound('LEFT')}
                                   disabled={startingRoundKey !== null}
-                                  className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50"
+                                  className="text-[10px] px-2 py-1 rounded border border-gray-500/50 text-gray-400 hover:bg-gray-500/10 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                 >
                                   {startingRoundKey === 'LEFT' ? '...' : t('startElectionRound')}
                                 </button>
@@ -1612,7 +1612,7 @@ export default function AdminDashboard() {
                                 const badge = getRoleBadge(ex.role, { head: t('roleHead'), expert: t('roleExpert') })
                                 const key = `${selectedDomain.id}:${ex.user.id}`
                                 return (
-                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30">
+                                  <div key={ex.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-site-border bg-site-secondary/30 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-warm-primary/30">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
@@ -1697,7 +1697,7 @@ export default function AdminDashboard() {
                                             type="button"
                                             onClick={() => voteOnCandidacy(c.id, score)}
                                             disabled={votingKey !== null}
-                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
+                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border transition-all duration-200 hover:scale-110 hover:shadow-sm ${
                                               myScore === score
                                                 ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                                                 : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -1743,7 +1743,7 @@ export default function AdminDashboard() {
                                     setUserQuery('')
                                     setUserResults([])
                                   }}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 text-site-muted hover:text-site-text transition-colors"
+                                className="absolute left-2 top-1/2 -translate-y-1/2 text-site-muted hover:text-site-text transition-all duration-200 hover:scale-110"
                                   aria-label={t('clear')}
                                 >
                                   <X size={16} />
@@ -1760,7 +1760,7 @@ export default function AdminDashboard() {
                                         setSelectedUser(u)
                                         setUserResults([])
                                       }}
-                                      className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2"
+                                      className="w-full text-right px-3 py-2 hover:bg-site-card/60 flex items-center justify-between gap-2 transition-all duration-200"
                                       title={`${u.name || t('noName')} (${u.email || ''})`}
                                     >
                                       <div className="min-w-0 flex-1 text-right">
@@ -1795,7 +1795,7 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={nominateMember}
                               disabled={nominating || !selectedUser || !activeRounds[nominateWing]}
-                              className="btn-primary disabled:opacity-50"
+                              className="btn-primary disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                             >
                               {nominating ? '...' : t('sendNomination')}
                             </button>
@@ -1869,7 +1869,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'APPROVE')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
                                         myVote === 'APPROVE'
                                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -1881,7 +1881,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'REJECT')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                                      className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
                                         myVote === 'REJECT'
                                           ? 'border-red-600/60 bg-red-600/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -1932,7 +1932,7 @@ export default function AdminDashboard() {
                                           type="button"
                                           onClick={() => voteOnResearchPrerequisite(p.id, 'APPROVE')}
                                           disabled={researchVotingKey !== null}
-                                          className={`text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50`}
+                                          className={`text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50`}
                                         >
                                           {researchVotingKey === `${p.id}:APPROVE` ? '...' : t('approve')}
                                         </button>
@@ -1964,7 +1964,7 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={proposeResearchPrerequisite}
                               disabled={proposingResearch || !selectedResearchCourseId}
-                              className="btn-primary w-full"
+                              className="btn-primary w-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                             >
                               {proposingResearch ? '...' : t('propose')}
                             </button>
@@ -1994,13 +1994,13 @@ export default function AdminDashboard() {
                                     <div className="flex items-center gap-2 shrink-0">
                                       <Link
                                         href={`/dashboard/admin/courses/${course.id}`}
-                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
+                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                       >
                                         {t('manageChapters')}
                                       </Link>
                                       <Link
                                         href={selectedDomain ? `/academy#domain-${selectedDomain.slug}` : '/academy'}
-                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
+                                        className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                       >
                                         {t('viewInAcademy')}
                                       </Link>
@@ -2067,7 +2067,7 @@ export default function AdminDashboard() {
                                       <div className="flex items-center gap-2 shrink-0">
                                         <Link
                                           href={`/dashboard/admin/courses/${course.id}`}
-                                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
+                                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                         >
                                           {t('manageChapters')}
                                         </Link>
@@ -2077,7 +2077,7 @@ export default function AdminDashboard() {
                                               type="button"
                                               onClick={() => voteOnCourse(course.id, 'APPROVE')}
                                               disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                                              className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
                                                 myVote === 'APPROVE'
                                                   ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                                                   : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -2089,7 +2089,7 @@ export default function AdminDashboard() {
                                               type="button"
                                               onClick={() => voteOnCourse(course.id, 'REJECT')}
                                               disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                                              className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
                                                 myVote === 'REJECT'
                                                   ? 'border-red-600/60 bg-red-600/20 text-site-text'
                                                   : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -2144,7 +2144,7 @@ export default function AdminDashboard() {
                                               : prev.syllabus.filter((_, i) => i !== index),
                                           }))
                                         }
-                                        className="text-gray-400 hover:text-gray-200"
+                                        className="text-gray-400 hover:text-gray-200 transition-all duration-200 hover:scale-110"
                                         title={t('remove')}
                                         aria-label={t('remove')}
                                       >
@@ -2189,7 +2189,7 @@ export default function AdminDashboard() {
                                       syllabus: [...prev.syllabus, { title: '', description: '' }],
                                     }))
                                   }
-                                  className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
+                                  className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                 >
                                   {t('addChapter')}
                                 </button>
@@ -2201,7 +2201,7 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={proposeCourse}
                               disabled={proposingCourse}
-                              className="btn-primary disabled:opacity-50"
+                              className="btn-primary disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                             >
                               {proposingCourse ? '...' : t('sendProposal')}
                             </button>
@@ -2226,13 +2226,13 @@ export default function AdminDashboard() {
             <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto">
                <button 
                  onClick={() => setActiveStrategicTab('investments')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow' : 'text-site-muted hover:text-site-text'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 hover:-translate-y-0.5 ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('investment.title')}
                </button>
                <button 
                  onClick={() => setActiveStrategicTab('portfolio')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow' : 'text-site-muted hover:text-site-text'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 hover:-translate-y-0.5 ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('portfolio.title')}
                </button>
@@ -2294,10 +2294,10 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setAddModalOpen(false)} className="btn-secondary">
+                <button type="button" onClick={() => setAddModalOpen(false)} className="btn-secondary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                   {t('cancel')}
                 </button>
-                <button type="button" onClick={createDomain} disabled={creating} className="btn-primary disabled:opacity-50">
+                <button type="button" onClick={createDomain} disabled={creating} className="btn-primary disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                   {creating ? '...' : t('create')}
                 </button>
               </div>
@@ -2337,10 +2337,10 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary">
+                <button type="button" onClick={() => setDeleteModalOpen(false)} className="btn-secondary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                   {t('cancel')}
                 </button>
-                <button type="button" onClick={deleteDomain} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+                <button type="button" onClick={deleteDomain} disabled={deleting} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                   {deleting ? '...' : t('delete')}
                 </button>
               </div>
@@ -2380,14 +2380,14 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setRenameModalOpen(false)} className="btn-secondary">
+                <button type="button" onClick={() => setRenameModalOpen(false)} className="btn-secondary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                   {t('cancel')}
                 </button>
                 <button 
                   type="button" 
                   onClick={submitRenameProposal} 
                   disabled={loadingProposals || !renameName.trim() || renameName === selectedDomain.name} 
-                  className="btn-primary disabled:opacity-50"
+                  className="btn-primary disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                 >
                   {loadingProposals ? '...' : t('submitProposal')}
                 </button>

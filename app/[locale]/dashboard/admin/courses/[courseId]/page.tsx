@@ -738,7 +738,7 @@ export default function AdminCourseChaptersPage() {
                   <button
                     type="button"
                     onClick={() => resetFormForNew(chapterGroups.length)}
-                    className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors"
+                    className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                   >
                     {t('newChapter')}
                   </button>
@@ -804,7 +804,7 @@ export default function AdminCourseChaptersPage() {
                                       <button
                                         type="button"
                                         onClick={() => handleDelete(chapter.id)}
-                                        className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200"
+                                        className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200 transition-all duration-200 hover:scale-105 hover:bg-red-600/10"
                                       >
                                         {t('delete')}
                                       </button>
@@ -929,7 +929,7 @@ export default function AdminCourseChaptersPage() {
                           type="button"
                           onClick={() => setQuestionnaireOpen(true)}
                           disabled={!selectedId}
-                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-colors disabled:opacity-50"
+                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50"
                         >
                           مشاهده و مدیریت
                         </button>
