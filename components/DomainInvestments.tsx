@@ -23,6 +23,7 @@ type Investment = {
   percentageReturn: number
   durationYears: number
   status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'RETURNED' | 'REJECTED'
+  contractNumber?: number
   proposerDomain: Domain
   targetDomain: Domain
   startDate?: string
@@ -66,16 +67,6 @@ export default function DomainInvestments() {
   const [votingId, setVotingId] = useState<string | null>(null)
   const [historyLimit, setHistoryLimit] = useState(10)
   const [showHistory, setShowHistory] = useState(false)
-
-  const sortedInvestments = useMemo(() => {
-    if (!investments) return []
-    return [...investments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-  }, [investments])
-
-  const shortId = useCallback((id: string) => {
-    const index = sortedInvestments.findIndex(i => i.id === id)
-    return index + 1
-  }, [sortedInvestments])
 
   const fetchData = useCallback(async () => {
     try {
@@ -533,7 +524,7 @@ export default function DomainInvestments() {
                 investments.filter(i => i.status === 'ACTIVE').map(inv => (
                   <tr key={inv.id} className="hover:bg-site-secondary/20 transition-colors">
                     <td className="px-4 py-4 text-center font-mono text-xs text-site-muted select-all">
-                      {shortId(inv.id)}
+                      {inv.contractNumber || '-'}
                     </td>
                     <td className="px-4 py-4 font-medium text-site-text">
                       <div>{inv.proposerDomain.name}</div>
@@ -617,7 +608,7 @@ export default function DomainInvestments() {
                     .map((inv, index) => (
                     <tr key={inv.id} className="hover:bg-site-secondary/20 transition-colors opacity-75 hover:opacity-100">
                       <td className="px-4 py-4 text-center font-mono text-xs text-site-muted select-all">
-                        {index + 1}
+                        {inv.contractNumber || '-'}
                       </td>
                       <td className="px-4 py-4 font-medium text-site-text">
                         <div>{inv.proposerDomain.name}</div>

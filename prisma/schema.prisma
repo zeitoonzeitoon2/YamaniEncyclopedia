@@ -655,6 +655,7 @@ model DomainInvestment {
   percentageReturn      Float
   
   durationYears     Int      @default(1)
+  contractNumber    Int      @default(autoincrement())
   status            String   @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, COMPLETED, RETURNED
   
   startDate         DateTime?
