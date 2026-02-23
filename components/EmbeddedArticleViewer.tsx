@@ -99,7 +99,7 @@ export default function EmbeddedArticleViewer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8">
-      <div className="relative w-full max-w-7xl h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+      <div className="relative w-full max-w-7xl h-[90vh] bg-site-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-site-border">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-site-border bg-site-card">
@@ -127,21 +127,43 @@ export default function EmbeddedArticleViewer({
               </span>
             </div>
             <div className="flex-1 overflow-y-auto p-6 prose dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({node, ...props}) => {
+                    let src = props.src || '';
+                    if (src.startsWith('files/')) {
+                      src = '/' + src;
+                    }
+                    return <img {...props} src={src} className="max-w-full rounded-lg shadow-md my-4" style={{maxWidth: '100%'}} />;
+                  }
+                }}
+              >
                 {originalContent}
               </ReactMarkdown>
             </div>
           </div>
 
           {/* Right Side: Proposed Article */}
-          <div className="flex-1 flex flex-col min-w-0 bg-amber-500/5">
+          <div className="flex-1 flex flex-col min-w-0 bg-site-bg/50">
             <div className="px-6 py-3 bg-amber-500/10 border-b border-site-border">
               <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                 {t('proposedArticle')}
               </span>
             </div>
             <div className="flex-1 overflow-y-auto p-6 prose dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({node, ...props}) => {
+                    let src = props.src || '';
+                    if (src.startsWith('files/')) {
+                      src = '/' + src;
+                    }
+                    return <img {...props} src={src} className="max-w-full rounded-lg shadow-md my-4" style={{maxWidth: '100%'}} />;
+                  }
+                }}
+              >
                 {proposedContent}
               </ReactMarkdown>
             </div>
