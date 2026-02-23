@@ -327,6 +327,7 @@ export default function EnhancedDiagramComparison({
           originalArticleLink={selectedDraft?.originalArticleSlug}
           proposedArticleLink={selectedDraft?.slug || selectedDraft?.id}
           articlesData={articlesData}
+          proposedContent={selectedDraft?.content}
           postContent={JSON.stringify(proposedData)}
           onClose={() => setShowArticleComparison(false)}
         />

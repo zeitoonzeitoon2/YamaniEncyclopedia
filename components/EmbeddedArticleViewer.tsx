@@ -37,7 +37,7 @@ export default function EmbeddedArticleViewer({
         // 1. Load original content if it exists
         if (originalArticleLink) {
           try {
-            const res = await fetch(`/api/articles/get-by-slug?slug=${originalArticleLink}`)
+            const res = await fetch(`/api/articles/${originalArticleLink}`)
             if (res.ok) {
               const data = await res.json()
               setOriginalContent(data.content || '')
@@ -91,7 +91,7 @@ export default function EmbeddedArticleViewer({
     }
 
     fetchArticles()
-  }, [originalArticleLink, proposedArticleLink, postContent, t])
+  }, [originalArticleLink, proposedArticleLink, postContent, initialProposedContent, t])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8">
