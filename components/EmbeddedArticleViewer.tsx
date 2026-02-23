@@ -35,12 +35,22 @@ export default function EmbeddedArticleViewer({
     if (!content) return ''
     let processed = content
     
-    // 1. Fix relative paths for files/
+    // 1. Remove garbage prefixes from Supabase/storage URLs ending in -]image
+    // Example: https://.../public-]image![alt](...)
+    processed = processed.replace(/https?:\/\/[^\s]+?-\]image/g, '')
+
+    // 2. Fix relative paths for files/
     processed = processed.replace(/\]\(files\//g, '](/files/')
     
-    // 2. Fix malformed image syntax where text precedes it without space
+    // 3. Fix malformed image syntax where text precedes it without space
     // This helps break out of "unclosed link" contexts or just weird concatenations
     processed = processed.replace(/(!\[.*?\]\(.*?\))/g, '\n\n$1\n\n')
+
+    // 4. Ensure image tags are closed properly if they end at the string end
+    // (e.g. ![alt](url without closing paren)
+    if (/!\[.*?\]\(.*?[^)]$/.test(processed)) {
+      processed += ')'
+    }
     
     return processed
   }
