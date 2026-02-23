@@ -39,25 +39,31 @@ export async function POST(
       return NextResponse.json({ error: 'پست یافت نشد' }, { status: 404 })
     }
 
-    // ایجاد یا به‌روزرسانی رای
-    const vote = await prisma.vote.upsert({
+    // ایجاد یا به‌روزرسانی رای (بدون استفاده از upsert به دلیل مشکل تایپ با فیلد اختیاری)
+    const existingVote = await prisma.vote.findFirst({
       where: {
-        postId_adminId_domainId: {
-          postId: params.id,
-          adminId: session.user.id,
-          domainId: post.domainId || null
-        }
-      },
-      update: {
-        score
-      },
-      create: {
         postId: params.id,
         adminId: session.user.id,
-        domainId: post.domainId || null,
-        score
+        domainId: post.domainId || null
       }
     })
+
+    let vote
+    if (existingVote) {
+      vote = await prisma.vote.update({
+        where: { id: existingVote.id },
+        data: { score }
+      })
+    } else {
+      vote = await prisma.vote.create({
+        data: {
+          postId: params.id,
+          adminId: session.user.id,
+          domainId: post.domainId || null,
+          score
+        }
+      })
+    }
 
     return NextResponse.json({ success: true, vote })
   } catch (error) {
