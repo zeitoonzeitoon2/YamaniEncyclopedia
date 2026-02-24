@@ -2129,16 +2129,16 @@ export default function AdminDashboard() {
               <ArrowRightLeft className="text-warm-primary" />
               {t('strategicExchanges')}
             </h2>
-            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto pointer-events-auto relative z-30" style={{ isolation: 'isolate' }}>
+            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto pointer-events-auto relative z-[1000]" style={{ isolation: 'isolate' }}>
                <button 
                  onClick={() => setActiveStrategicTab('investments')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto relative z-40 ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto relative z-[1001] ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('investment.title')}
                </button>
                <button 
                  onClick={() => setActiveStrategicTab('portfolio')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto relative z-40 ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto relative z-[1002] ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('portfolio.title')}
                </button>
