@@ -242,9 +242,26 @@ export async function calculateUserVotingWeight(
   
   for (const exp of userExperts) {
     const expWing = (exp.wing || '').toUpperCase()
+    // For Content/Proposal Voting, we usually care about the share of the domain itself (Self-Governance)
+    // or shares explicitly owned by the expert's domain.
+    // If the expert belongs to the Domain itself (e.g. Domain A Expert voting on Domain A proposal),
+    // they wield a portion of Domain A's self-share.
+    // If the expert belongs to Domain B (Parent), and Domain B owns share in Domain A,
+    // they wield a portion of Domain B's share in Domain A.
+    
     const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
+    
     if (share) {
-      maxWeight = Math.max(maxWeight, share.percentage)
+      // Find number of experts in this wing to distribute the weight
+      const expertsCount = await prisma.domainExpert.count({
+        where: {
+          domainId: exp.domainId,
+          wing: exp.wing
+        }
+      })
+      
+      const weight = expertsCount > 0 ? (share.percentage / expertsCount) : 0
+      maxWeight = Math.max(maxWeight, weight)
     }
   }
   
