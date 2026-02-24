@@ -31,6 +31,24 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // NEW: Calculate Profit/Loss from Investments
+    const investments = await prisma.domainInvestment.findMany({
+      where: {
+        proposerDomainId: domainId,
+        proposerWing: wing,
+        status: { in: ['COMPLETED', 'RETURNED'] }
+      }
+    })
+    
+    const totalInvested = investments.reduce((sum, inv) => sum + inv.percentageInvested, 0)
+    const totalReturned = investments.reduce((sum, inv) => sum + inv.percentageReturn, 0)
+    const profitPercentage = totalReturned - totalInvested
+
+    // NEW: Calculate Total Experts for the Domain itself
+    const domainExpertsCount = await prisma.domainExpert.count({
+      where: { domainId, wing }
+    })
+
     // 2. Get Voting Shares using the helper
     // NOTE: This helper returns ALL shares (who owns what).
     // We must FILTER this list to show only ELIGIBLE VOTERS for the current election.
