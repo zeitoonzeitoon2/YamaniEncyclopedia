@@ -46,7 +46,14 @@ export async function POST(
       const isExpert = await prisma.domainExpert.findFirst({
         where: { domainId: votingDomainId, userId: session.user.id }
       })
+      
       if (!isExpert && session.user.role !== 'ADMIN') {
+        console.warn('Vote rejected: User is not expert of voting domain', {
+            userId: session.user.id,
+            votingDomainId,
+            proposalId,
+            userRole: session.user.role
+        })
         return NextResponse.json({ error: 'Only voting domain experts can vote' }, { status: 403 })
       }
     }

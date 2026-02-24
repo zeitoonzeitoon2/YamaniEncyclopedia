@@ -198,7 +198,7 @@ export default function AdminDashboard() {
   const [votingOnProposalKey, setVotingOnProposalKey] = useState<string | null>(null)
 
   const canVoteOnProposal = useCallback((p: any) => {
-    if (!session?.user) return false
+    if (!session?.user?.id) return false
     if (session.user.role === 'ADMIN') return true
     
     let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
@@ -210,11 +210,40 @@ export default function AdminDashboard() {
 
     if (!votingDomainId) return false // Root domain create/delete handled by admin only
     
-    const votingDomain = findDomainById(roots, votingDomainId)
-    if (!votingDomain) return false
+    // Try to find voting domain in roots first to ensure we have the latest data
+    let votingDomain = findDomainById(roots, votingDomainId)
     
-    return votingDomain.experts.some((ex: any) => ex.user.id === session.user.id)
-  }, [session?.user, roots])
+    // Fallback to selectedDomain if it matches and roots lookup failed (unlikely but safe)
+    if (!votingDomain && selectedDomain?.id === votingDomainId) {
+        votingDomain = selectedDomain
+    }
+
+    if (!votingDomain) {
+      console.warn('Voting domain not found for proposal:', {
+          proposalId: p.id,
+          type: p.type,
+          votingDomainId,
+          rootsCount: roots.length
+      })
+      return false
+    }
+    
+    const userId = session.user.id
+    const isExpert = votingDomain.experts?.some((ex: any) => ex.user?.id === userId)
+    
+    if (!isExpert) {
+         // Debug logging to help diagnose why user is not considered expert
+         const userExperts = votingDomain.experts?.filter((ex: any) => ex.user?.id === userId)
+         console.log('User is not expert of voting domain:', {
+             votingDomainName: votingDomain.name,
+             votingDomainId,
+             userId,
+             expertsCount: votingDomain.experts?.length,
+             userFoundInExperts: !!userExperts?.length
+         })
+    }
+    return isExpert
+  }, [session?.user?.id, session?.user?.role, roots, selectedDomain])
 
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
