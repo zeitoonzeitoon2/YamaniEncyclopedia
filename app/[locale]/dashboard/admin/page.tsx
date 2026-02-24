@@ -2132,13 +2132,13 @@ export default function AdminDashboard() {
             <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto">
                <button 
                  onClick={() => setActiveStrategicTab('investments')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 hover:-translate-y-0.5 ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'} z-10`}
                >
                  {t('investment.title')}
                </button>
                <button 
                  onClick={() => setActiveStrategicTab('portfolio')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 hover:-translate-y-0.5 ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'} z-10`}
                >
                  {t('portfolio.title')}
                </button>
