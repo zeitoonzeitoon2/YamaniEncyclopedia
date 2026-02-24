@@ -6,7 +6,8 @@ import { useSession } from 'next-auth/react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
-import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart, ArrowLeftRight, ArrowUpDown } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, ArrowRightLeft, Pencil, PieChart } from 'lucide-react'
+import OrgChartTree from '@/components/OrgChartTree'
 import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainPortfolio from '@/components/DomainPortfolio'
@@ -166,8 +167,7 @@ export default function AdminDashboard() {
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
 
   // Layout state: 'default' (2/3 left, 1/3 right), 'tree-expanded' (1/3 left, 2/3 right), 'equal' (1/2 left, 1/2 right)
-  const [layoutMode, setLayoutMode] = useState<'default' | 'tree-expanded' | 'equal'>('default')
-  const [heightMode, setHeightMode] = useState<'fixed' | 'auto'>('auto')
+
 
 
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -1064,100 +1064,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const DomainRow = ({ node, depth }: { node: DomainNode; depth: number }) => {
-    const isExpanded = !!expanded[node.id]
-    const hasChildren = node.children.length > 0
-    const isSelected = selectedDomainId === node.id
-    return (
-      <div>
-        <div
-          className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 transition-all duration-200 ${
-            isSelected ? 'bg-warm-primary/20 border border-warm-primary/30 shadow-sm' : 'hover:bg-site-card/50 hover:shadow-sm hover:translate-x-1'
-          }`}
-          style={{ paddingRight: `${depth * 14 + 8}px` }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              type="button"
-              onClick={() => (hasChildren ? toggleExpanded(node.id) : setSelectedDomainId(node.id))}
-              className="text-site-muted hover:text-site-text"
-              aria-label={hasChildren ? (isExpanded ? t('collapse') : t('expand')) : t('select')}
-            >
-              {hasChildren ? (
-                isExpanded ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )
-              ) : (
-                <span className="inline-block w-4" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDomainId(node.id)}
-              className="text-site-text font-medium truncate text-right"
-              title={node.name}
-            >
-              {node.name}
-            </button>
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-site-muted border border-site-border rounded-full px-2 py-0.5">
-              {t('postsCount', { count: node.counts.posts })}
-            </span>
-            {(session?.user?.role === 'ADMIN' || node.experts.some(ex => ex.user.id === session?.user?.id)) && (
-              <button
-                type="button"
-                onClick={() => openAddModal(node)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text text-xs transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                title={t('addChildDomain')}
-              >
-                <Plus size={14} />
-                <span className="hidden sm:inline">{t('add')}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {hasChildren && isExpanded && (
-          <div className="mt-1 space-y-1">
-            {node.children.map((c) => (
-              <DomainRow key={c.id} node={c} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  const getLayoutClasses = () => {
-    switch (layoutMode) {
-      case 'tree-expanded':
-        // Tree is big (Right in RTL)
-        // RTL: Col 1 (Right/Tree) = 2fr, Col 2 (Left/Details) = 1fr
-        return 'lg:grid-cols-[2fr_1fr]'
-      case 'equal':
-        return 'lg:grid-cols-2'
-      default:
-        // Tree is small (Right in RTL)
-        // RTL: Col 1 (Right/Tree) = 1fr, Col 2 (Left/Details) = 2fr
-        return 'lg:grid-cols-[1fr_2fr]'
-    }
-  }
-
-  const toggleLayout = () => {
-    setLayoutMode(current => {
-      if (current === 'default') return 'equal'
-      if (current === 'equal') return 'tree-expanded'
-      return 'default'
-    })
-  }
-
-  const toggleHeight = () => {
-    setHeightMode(current => current === 'fixed' ? 'auto' : 'fixed')
-  }
 
   if (status === 'loading' || (loadingDomains && roots.length === 0)) {
     return (
@@ -1247,74 +1154,30 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className={`grid grid-cols-1 ${getLayoutClasses()} gap-6 transition-all duration-300 ease-in-out`}>
-          <div className="card flex flex-col h-[calc(100vh-12rem)] sticky top-24 transition-shadow duration-300 hover:shadow-lg">
-            <div className="flex items-center justify-between mb-4 shrink-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
-                <button 
-                  onClick={toggleLayout}
-                  className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
-                  title="تغییر اندازه پنل‌ها"
-                >
-                  <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={expandAll}
-                  className="px-2 py-1 text-[10px] rounded border border-warm-primary/30 text-warm-primary hover:bg-warm-primary/10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-                >
-                  {t('expandAll')}
-                </button>
-                <button
-                  type="button"
-                  onClick={collapseAll}
-                  className="px-2 py-1 text-[10px] rounded border border-gray-500/30 text-site-muted hover:bg-gray-500/10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-                >
-                  {t('collapseAll')}
-                </button>
-              </div>
+        <div className="flex flex-col gap-8 transition-all duration-300 ease-in-out">
+          {/* Org Chart Tree */}
+          <div className="card w-full overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+            <div className="flex items-center justify-between mb-4 px-4 pt-4">
+              <h2 className="text-xl font-bold text-site-text heading">{t('domainsTree')}</h2>
             </div>
-            
-            <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
-              {roots.length === 0 ? (
-                <div className="text-site-muted">{t('noDomainsYet')}</div>
-              ) : (
-                <div className="space-y-2">
-                  {roots.map((r) => (
-                    <DomainRow key={r.id} node={r} depth={0} />
-                  ))}
-                </div>
-              )}
-            </div>
+            <OrgChartTree 
+              nodes={roots} 
+              selectedId={selectedDomainId} 
+              onSelect={(node) => setSelectedDomainId(node.id)}
+              onAddChild={(node) => openAddModal(node)}
+            />
           </div>
 
-          <div className={`card flex flex-col transition-all duration-300 ${heightMode === 'fixed' ? 'h-[calc(100vh-12rem)] sticky top-24' : 'min-h-[calc(100vh-12rem)]'}`}>
+          <div className="card flex flex-col min-h-[500px]">
             {!selectedDomain ? (
-              <div className="text-site-muted h-full flex items-center justify-center">{t('selectDomainPrompt')}</div>
+              <div className="text-site-muted h-full flex items-center justify-center py-20">{t('selectDomainPrompt')}</div>
             ) : (
-              <div className={`flex-1 space-y-6 ${heightMode === 'fixed' ? 'overflow-y-auto pr-2 -mr-2 custom-scrollbar' : ''}`}>
+              <div className="flex-1 space-y-6">
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-xl font-bold text-site-text heading">{selectedDomain.name}</h2>
-                        <button 
-                          onClick={toggleLayout}
-                          className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
-                          title="تغییر اندازه پنل‌ها"
-                        >
-                          <ArrowLeftRight size={16} className="text-site-muted hover:text-warm-primary" />
-                        </button>
-                        <button 
-                          onClick={toggleHeight}
-                          className="p-1 hover:bg-site-secondary/50 rounded transition-all duration-200 hover:scale-110"
-                          title="تغییر ارتفاع پنل"
-                        >
-                          <ArrowUpDown size={16} className={`text-site-muted hover:text-warm-primary ${heightMode === 'auto' ? 'text-warm-primary' : ''}`} />
-                        </button>
                       </div>
                       <div className="text-xs text-site-muted mt-1">
                         {t('slugLabel')}: {selectedDomain.slug}
