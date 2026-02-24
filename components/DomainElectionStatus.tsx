@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { PieChart, Users, Percent, Vote, ChevronDown, ChevronUp } from 'lucide-react'
+import { PieChart, Users, Percent, Vote, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react'
 
 type ElectionShare = {
   ownerDomainId: string
@@ -17,6 +17,8 @@ type ElectionStatus = {
   status: string
   roundId: string
   shares: ElectionShare[]
+  profitPercentage?: number
+  domainExpertsCount?: number
 }
 
 export default function DomainElectionStatus({ domainId, wing }: { domainId: string, wing: string }) {
@@ -71,6 +73,27 @@ export default function DomainElectionStatus({ domainId, wing }: { domainId: str
       
       {isExpanded && (
         <div className="space-y-3 mt-4 animate-in slide-in-from-top-2 fade-in duration-200">
+          
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-site-bg p-3 rounded-xl border border-site-border/60 flex flex-col items-center justify-center">
+              <div className="text-xs text-site-muted mb-1">{tAdmin('expertsCount') || 'تعداد کارشناسان'}</div>
+              <div className="text-lg font-bold text-site-text flex items-center gap-1">
+                <Users size={16} className="text-site-muted" />
+                {status.domainExpertsCount || 0}
+              </div>
+            </div>
+            
+            <div className="bg-site-bg p-3 rounded-xl border border-site-border/60 flex flex-col items-center justify-center">
+              <div className="text-xs text-site-muted mb-1">سود/زیان</div>
+              <div className={`text-lg font-bold flex items-center gap-1 ${
+                (status.profitPercentage || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}>
+                <TrendingUp size={16} className={(status.profitPercentage || 0) >= 0 ? 'text-green-500' : 'text-red-500'} />
+                {status.profitPercentage || 0}%
+              </div>
+            </div>
+          </div>
+
           {status.shares.map((share) => {
             const turnoutPercent = share.totalExperts > 0 
               ? Math.round((share.votedExperts / share.totalExperts) * 100) 

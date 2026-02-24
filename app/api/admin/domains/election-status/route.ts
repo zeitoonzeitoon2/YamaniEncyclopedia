@@ -142,7 +142,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: activeRound ? 'ACTIVE' : 'IDLE',
       roundId: activeRound?.id || null,
-      shares: results
+      shares: results,
+      profitPercentage,
+      domainExpertsCount
     })
 
   } catch (error) {
