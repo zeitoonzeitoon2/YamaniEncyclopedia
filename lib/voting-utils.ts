@@ -94,20 +94,36 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
     const remainingShare = 100 - totalExternalShare
     const domain = await prisma.domain.findUnique({ 
       where: { id: domainId }, 
-      select: { id: true, name: true } 
+      select: { id: true, name: true, parent: { select: { id: true, name: true } } } 
     })
     
     if (domain) {
-      const existingSelf = aggregatedShares.find(s => s.ownerDomainId === domain.id && s.ownerWing === 'RIGHT')
-      if (existingSelf) {
-        existingSelf.percentage += remainingShare
+      // If Sub-domain, default remainder goes to Parent (Right Wing)
+      if (domain.parent) {
+        const existingParent = aggregatedShares.find(s => s.ownerDomainId === domain.parent!.id && s.ownerWing === 'RIGHT')
+        if (existingParent) {
+          existingParent.percentage += remainingShare
+        } else {
+          aggregatedShares.push({
+            ownerDomainId: domain.parent.id,
+            ownerWing: 'RIGHT',
+            percentage: remainingShare,
+            ownerDomain: domain.parent
+          })
+        }
       } else {
-        aggregatedShares.push({
-          ownerDomainId: domain.id,
-          ownerWing: 'RIGHT', // Default 100% to Right Team
-          percentage: remainingShare,
-          ownerDomain: domain
-        })
+        // If Root domain, default remainder goes to Self (Right Wing)
+        const existingSelf = aggregatedShares.find(s => s.ownerDomainId === domain.id && s.ownerWing === 'RIGHT')
+        if (existingSelf) {
+          existingSelf.percentage += remainingShare
+        } else {
+          aggregatedShares.push({
+            ownerDomainId: domain.id,
+            ownerWing: 'RIGHT', // Default 100% to Right Team
+            percentage: remainingShare,
+            ownerDomain: domain
+          })
+        }
       }
     }
   }

@@ -91,15 +91,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter shares to include ONLY eligible groups
-    // CRITICAL FIX: Match both ID and Wing!
-    // Also need to handle 'LEFT' vs 'left' case sensitivity if needed (though usually normalized)
-    const eligibleShares = shares.filter(s => 
-      eligibleGroups.some(g => 
-        g.domainId === s.ownerDomainId && 
-        (g.wing || '').toUpperCase() === (s.ownerWing || '').toUpperCase()
-      )
-    )
+    const getDomainNameById = (id: string) => {
+      if (id === domain.id) return domain.name
+      if (domain.parent && id === domain.parent.id) return domain.parent.name
+      const childMatch = domain.children?.find(c => c.id === id)
+      return childMatch?.name || ''
+    }
+
+    const shareByKey = new Map<string, typeof shares[number]>()
+    for (const share of shares) {
+      shareByKey.set(`${share.ownerDomainId}:${(share.ownerWing || '').toUpperCase()}`, share)
+    }
+
+    const eligibleShares = eligibleGroups.map(group => {
+      const key = `${group.domainId}:${(group.wing || '').toUpperCase()}`
+      const existing = shareByKey.get(key)
+      if (existing) return existing
+      return {
+        ownerDomainId: group.domainId,
+        ownerWing: group.wing,
+        percentage: 0,
+        ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
+      }
+    })
 
     // Calculate Total Eligible Percentage for Relative Weighting
     let totalEligiblePercentage = eligibleShares.reduce((sum, s) => sum + s.percentage, 0)
