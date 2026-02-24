@@ -572,7 +572,7 @@ export default function DomainInvestments() {
           <div className="flex justify-center">
             <button
               onClick={handleShowHistory}
-              className="px-6 py-2.5 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-all duration-200 border border-site-border flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-md"
+              className="px-6 py-2.5 text-sm font-medium text-site-text bg-site-secondary/20 hover:bg-site-secondary/30 rounded-lg transition-all duration-200 border border-site-border flex items-center gap-2 hover:shadow-md pointer-events-auto"
             >
               <Clock size={18} className="text-site-muted" />
               {showHistory ? t('investment.hideHistory') : t('investment.showHistory')}
@@ -645,7 +645,7 @@ export default function DomainInvestments() {
               <div className="p-4 flex justify-center border-t border-site-border">
                 <button 
                   onClick={() => setHistoryLimit(prev => prev + 10)}
-                  className="px-4 py-2 text-sm text-site-muted hover:text-site-text bg-site-secondary/30 hover:bg-site-secondary/50 rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                  className="px-4 py-2 text-sm text-site-muted hover:text-site-text bg-site-secondary/30 hover:bg-site-secondary/50 rounded-lg transition-all duration-200 hover:shadow-sm pointer-events-auto"
                 >
                   {t('investment.loadMore')}
                 </button>

@@ -1701,7 +1701,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={nominateMember}
                                       disabled={nominating || !selectedUser || !activeRounds[nominateWing]}
-                                      className="btn-primary disabled:opacity-50 pointer-events-auto"
+                                      className="btn-primary disabled:opacity-50 pointer-events-auto z-10"
                                     >
                               {nominating ? '...' : t('sendNomination')}
                             </button>
@@ -1775,7 +1775,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'APPROVE')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
+                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm z-10 ${
                                         myVote === 'APPROVE'
                                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -1787,7 +1787,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'REJECT')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
+                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm z-10 ${
                                         myVote === 'REJECT'
                                           ? 'border-red-600/60 bg-red-600/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -2107,7 +2107,7 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={proposeCourse}
                               disabled={proposingCourse}
-                              className="btn-primary disabled:opacity-50 pointer-events-auto"
+                              className="btn-primary disabled:opacity-50 pointer-events-auto z-10"
                             >
                               {proposingCourse ? '...' : t('sendProposal')}
                             </button>

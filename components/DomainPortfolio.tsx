@@ -317,7 +317,7 @@ export default function DomainPortfolio() {
                   <div 
                     key={domainId} 
                     id={`domain-card-${domainId}`}
-                    className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24 transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                    className="border border-site-border bg-site-secondary/5 rounded-lg overflow-hidden flex flex-col scroll-mt-24 transition-all duration-200 hover:shadow-lg"
                   >
                     <div className="p-3 border-b border-site-border bg-site-secondary/20 flex justify-center items-center relative">
                       {/* Right Wing Label - Visually on the Right in RTL, Left in LTR */}
