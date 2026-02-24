@@ -47,14 +47,17 @@ export async function POST(
         where: { domainId: votingDomainId, userId: session.user.id }
       })
       
-      if (!isExpert && session.user.role !== 'ADMIN') {
-        console.warn('Vote rejected: User is not expert of voting domain', {
+      // Also check if the expert is in the RIGHT wing. Only RIGHT wing experts can vote on proposals.
+      if ((!isExpert || isExpert.wing !== 'RIGHT') && session.user.role !== 'ADMIN') {
+        console.warn('Vote rejected: User is not RIGHT wing expert of voting domain', {
             userId: session.user.id,
             votingDomainId,
             proposalId,
-            userRole: session.user.role
+            userRole: session.user.role,
+            isExpert: !!isExpert,
+            expertWing: isExpert?.wing
         })
-        return NextResponse.json({ error: 'Only voting domain experts can vote' }, { status: 403 })
+        return NextResponse.json({ error: 'Only RIGHT wing experts can vote on domain proposals' }, { status: 403 })
       }
     }
 

@@ -236,9 +236,9 @@ export default function AdminDashboard() {
     }
     
     const userId = session.user.id
-    const isExpert = votingDomain.experts?.some((ex: any) => ex.user?.id === userId)
+    const expert = votingDomain.experts?.find((ex: any) => ex.user?.id === userId)
     
-    if (!isExpert) {
+    if (!expert) {
          // Debug logging to help diagnose why user is not considered expert
          const userExperts = votingDomain.experts?.filter((ex: any) => ex.user?.id === userId)
          console.log('User is not expert of voting domain:', {
@@ -248,8 +248,11 @@ export default function AdminDashboard() {
              expertsCount: votingDomain.experts?.length,
              userFoundInExperts: !!userExperts?.length
          })
+         return false
     }
-    return isExpert
+
+    // Only RIGHT wing experts can vote on proposals
+    return expert.wing === 'RIGHT'
   }, [session?.user?.id, session?.user?.role, roots, selectedDomain])
 
   const [loadingCourses, setLoadingCourses] = useState(false)
