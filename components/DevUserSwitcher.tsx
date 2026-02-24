@@ -51,8 +51,8 @@ export function DevUserSwitcher() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 font-sans">
-      <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+    <div className="fixed bottom-4 left-4 z-50 font-sans pointer-events-none">
+      <div className={`transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 mb-4 max-w-sm max-h-[80vh] overflow-y-auto">
           <h3 className="text-sm font-bold mb-3 text-gray-900 dark:text-gray-100 flex justify-between items-center">
             <span>Switch User (Dev Tool)</span>
@@ -94,7 +94,7 @@ export function DevUserSwitcher() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-gray-900 hover:bg-gray-800 text-white rounded-full p-3 shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2"
+        className="bg-gray-900 hover:bg-gray-800 text-white rounded-full p-3 shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 pointer-events-auto"
         title="Quick Switch User"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
