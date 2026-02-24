@@ -257,7 +257,7 @@ export default function DomainPortfolio() {
         <div className="flex items-end gap-2">
            <button
              onClick={() => setShowLegend(!showLegend)}
-             className={`p-2 rounded border transition-all duration-200 hover:shadow-sm pointer-events-auto ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
+             className={`relative z-20 p-2 rounded border transition-all duration-200 hover:shadow-sm pointer-events-auto ${showLegend ? 'bg-site-secondary text-site-text border-site-border' : 'border-transparent text-site-muted hover:text-site-text'}`}
              title={t('legendTitle')}
            >
              <Info size={20} />

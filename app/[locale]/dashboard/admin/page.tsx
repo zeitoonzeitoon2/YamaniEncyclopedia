@@ -1701,7 +1701,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={nominateMember}
                                       disabled={nominating || !selectedUser || !activeRounds[nominateWing]}
-                                      className="btn-primary disabled:opacity-50 pointer-events-auto z-10"
+                                      className="btn-primary disabled:opacity-50 pointer-events-auto relative z-20"
                                     >
                               {nominating ? '...' : t('sendNomination')}
                             </button>
@@ -1775,7 +1775,7 @@ export default function AdminDashboard() {
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'APPROVE')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm z-10 ${
+                                      className={`relative z-20 text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
                                         myVote === 'APPROVE'
                                           ? 'border-warm-primary bg-warm-primary/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -1783,11 +1783,11 @@ export default function AdminDashboard() {
                                     >
                                       {votingOnProposalKey === `${p.id}:APPROVE` ? '...' : t('approve')}
                                     </button>
-                                    <button
+                                     <button
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'REJECT')}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm z-10 ${
+                                      className={`relative z-20 text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
                                         myVote === 'REJECT'
                                           ? 'border-red-600/60 bg-red-600/20 text-site-text'
                                           : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
@@ -2107,7 +2107,7 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={proposeCourse}
                               disabled={proposingCourse}
-                              className="btn-primary disabled:opacity-50 pointer-events-auto z-10"
+                              className="btn-primary disabled:opacity-50 pointer-events-auto relative z-20"
                             >
                               {proposingCourse ? '...' : t('sendProposal')}
                             </button>
@@ -2129,7 +2129,7 @@ export default function AdminDashboard() {
               <ArrowRightLeft className="text-warm-primary" />
               {t('strategicExchanges')}
             </h2>
-            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto">
+            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto relative z-20">
                <button 
                  onClick={() => setActiveStrategicTab('investments')}
                  className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'} z-10`}

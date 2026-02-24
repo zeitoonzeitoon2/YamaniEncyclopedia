@@ -362,7 +362,7 @@ export default function DomainInvestments() {
             <button 
               onClick={handlePropose}
               disabled={submitting}
-              className="w-full btn-primary h-[42px] flex items-center justify-center gap-2 pointer-events-auto"
+              className="relative z-20 w-full btn-primary h-[42px] flex items-center justify-center gap-2 pointer-events-auto"
             >
               {submitting ? '...' : <><TrendingUp size={18}/> {t('investment.propose')}</>}
             </button>
@@ -422,14 +422,14 @@ export default function DomainInvestments() {
                     <button 
                       onClick={() => handleVote(inv.id, 'APPROVE')}
                       disabled={!!votingId}
-                      className="flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
+                      className="relative z-20 flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
                     >
                       {votingId === inv.id + ':APPROVE' ? '...' : t('investment.returnBtn')}
                     </button>
                     <button 
                       onClick={() => handleVote(inv.id, 'REJECT')}
                       disabled={!!votingId}
-                      className="flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
+                      className="relative z-20 flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
                     >
                       {votingId === inv.id + ':REJECT' ? '...' : t('reject')}
                     </button>
