@@ -197,6 +197,13 @@ export default function AdminDashboard() {
   const [domainProposals, setDomainProposals] = useState<DomainProposal[]>([])
   const [votingOnProposalKey, setVotingOnProposalKey] = useState<string | null>(null)
 
+  const [activeStrategicTab, setActiveStrategicTab] = useState<'investments' | 'portfolio'>('investments')
+
+  const selectedDomain = useMemo(() => {
+    if (!selectedDomainId) return null
+    return findDomainById(roots, selectedDomainId)
+  }, [roots, selectedDomainId])
+
   const canVoteOnProposal = useCallback((p: any) => {
     if (!session?.user?.id) return false
     if (session.user.role === 'ADMIN') return true
@@ -269,12 +276,6 @@ export default function AdminDashboard() {
   const [startingScheduledKey, setStartingScheduledKey] = useState<string | null>(null)
   const [renameModalOpen, setRenameModalOpen] = useState(false)
   const [renameName, setRenameName] = useState('')
-  const [activeStrategicTab, setActiveStrategicTab] = useState<'investments' | 'portfolio'>('investments')
-
-  const selectedDomain = useMemo(() => {
-    if (!selectedDomainId) return null
-    return findDomainById(roots, selectedDomainId)
-  }, [roots, selectedDomainId])
 
   const canManageSelectedDomainMembers = useMemo(() => {
     const userId = session?.user?.id
