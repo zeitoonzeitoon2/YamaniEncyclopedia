@@ -2124,8 +2124,8 @@ export default function AdminDashboard() {
         
         {/* بخش مبادلات استراتژیک سهام رای */}
         <div className="mt-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2 gap-4 relative z-30" style={{ isolation: 'isolate' }}>
-            <h2 className="text-2xl font-bold text-site-text flex items-center gap-3 heading">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2 gap-4 relative z-30 pointer-events-none" style={{ isolation: 'isolate' }}>
+            <h2 className="text-2xl font-bold text-site-text flex items-center gap-3 heading pointer-events-none">
               <ArrowRightLeft className="text-warm-primary" />
               {t('strategicExchanges')}
             </h2>
