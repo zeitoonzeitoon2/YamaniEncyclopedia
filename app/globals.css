@@ -1,92 +1,286 @@
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none !important;
+  min-height: 300px;
+  font-family: 'Vazir', 'Noto Sans Arabic', 'Tahoma', sans-serif;
+}
 
-/* Org Chart Tree Styles */
-.org-tree ul {
-  padding-top: 20px; 
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: right;
+  color: #6b7280;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Base blockquote style in editor */
+.ProseMirror blockquote {
+  border-right: 4px solid #E67E22;
+  padding: 20px 40px;
+  margin: 1.5rem 0;
+  background: var(--site-card);
+  border-radius: 8px;
+  font-family: 'Amiri', serif;
+  font-size: 22px;
+  line-height: 1.8;
   position: relative;
-  display: flex;
-  justify-content: center;
 }
 
-.org-tree li {
-  list-style-type: none;
+.ProseMirror blockquote::before {
+  content: '“';
+  position: absolute;
+  left: 12px;
+  top: 6px;
+  font-size: 48px;
+  color: #E67E22;
+  opacity: .25;
+  line-height: 1;
+}
+
+/* Targeted styles for !ayah and !quote in editor */
+.ProseMirror blockquote p {
+  margin: 0;
+}
+
+.ProseMirror blockquote:has(p:first-child:contains('!ayah')) {
+  color: var(--site-text);
+  text-align: center;
+  font-family: 'Neirizi', 'Scheherazade New', serif;
+  font-size: 36px;
+  line-height: 2.4;
+}
+
+.ProseMirror blockquote:has(p:first-child:contains('!quote')) {
+  color: var(--site-text);
+  font-family: 'Sahel', 'Vazir', sans-serif;
+  font-size: 24px;
+  line-height: 1.7;
+}
+
+.ProseMirror h2 { font-size: 1.75rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: rgb(var(--site-accent)); }
+.ProseMirror h3 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: rgb(var(--site-accent)); }
+.ProseMirror h4 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: rgb(var(--site-accent)); }
+.ProseMirror ul { list-style-type: disc; padding-right: 1.5rem; }
+.ProseMirror ol { list-style-type: decimal; padding-right: 1.5rem; }
+
+/* --- End Tiptap Styles --- */
+
+/* Persian Fonts */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Reem+Kufi:wght@400;700&family=Markazi+Text:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/neirizi-font@v1.0.0-alpha.1/dist/font-face.css');
+/* IRANYekan, Dana and Sahel fonts will be loaded via Next.js font optimization */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light Mode (Warm Creamy Theme) */
+  --site-bg: 252 248 242;      /* Creamy Off-White #fcf8f2 */
+  --site-card: 255 255 255;    /* Pure White for cards */
+  --site-border: 225 210 190;  /* Warm Sand Border */
+  --site-text: 45 40 35;       /* Deep Charcoal Brown */
+  --site-muted: 110 100 90;    /* Muted Warm Brown */
+  --site-secondary: 245 235 220; /* Soft Sand */
+  --site-accent: 180 83 9;     /* Deep Amber/Orange */
+}
+
+[class~="dark"] {
+  /* Dark Mode (Warm Dark Theme) */
+  --site-bg: 20 18 16;         /* Very Dark Warm Brown #141210 */
+  --site-card: 32 28 24;       /* Dark Chocolate Card #201c18 */
+  --site-border: 60 50 40;     /* Muted Bronze Border */
+  --site-text: 240 230 215;    /* Soft Creamy White text */
+  --site-muted: 150 140 130;   /* Muted Grayish Sand */
+  --site-secondary: 45 40 35;  /* Dark Sand */
+  --site-accent: 245 158 11;   /* Bright Warm Amber */
+}
+
+body {
+  @apply bg-site-bg text-site-text font-sans transition-colors duration-200;
+}
+
+/* Custom Highlight (Marker) Styling */
+mark {
+  background-color: rgba(230, 126, 34, 0.3); /* Transparent Orange */
+  color: inherit; /* Adapt to text color */
+  border-radius: 4px;
+  padding: 0 0.3em; /* Reduced vertical padding */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Article content base sizing for readability */
+.article-content-body { font-size: calc(var(--article-scale,1) * 20px); text-align: justify; }
+.article-content-body h3, .article-content-body h4, .article-content-body details > summary { text-align: right; }
+
+/* Blockquote (quote) default styling */
+.article-content-body blockquote {
+  box-sizing: border-box;
+  max-width: 100%;
+  display: block;
+  background: var(--site-card);
+  border-right: 4px solid #E67E22;
+  padding: 20px 40px 20px 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  line-height: 1.8;
+  direction: rtl;
+  text-align: justify;
+  font-family: 'Amiri', serif;
+  font-size: 22px;
   position: relative;
-  padding: 20px 5px 0 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  overflow: hidden;
+  text-indent: 0;
+  quotes: none;
+}
+.article-content-body blockquote p:first-child::before,
+.article-content-body blockquote p:first-child::after { content: none !important; }
+.article-content-body blockquote p:first-of-type::before,
+.article-content-body blockquote p:first-of-type::after { content: none !important; }
+.article-content-body blockquote:not(.q-quote)::before,
+.article-content-body blockquote:not(.q-quote)::after { content: none !important; }
+
+/* Reset default typography quotes that break RTL text */
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: none !important;
 }
 
-/* We will connect the elements to form the tree */
-.org-tree li::before, .org-tree li::after {
-  content: '';
-  position: absolute; top: 0; right: 50%;
-  border-top: 1px solid var(--site-border);
-  width: 50%; height: 20px;
-}
-.org-tree li::after {
-  right: auto; left: 50%;
-  border-left: 1px solid var(--site-border);
+/* FIX: Force paragraph inside blockquote to respect the border */
+.article-content-body blockquote p {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  text-indent: 0 !important;
+  display: block !important;
 }
 
-/* Remove connectors from the only child */
-.org-tree li:only-child::after, .org-tree li:only-child::before {
-  display: none;
-}
-.org-tree li:only-child { padding-top: 0;}
-
-/* Remove space from the top of single children */
-.org-tree li:first-child::before, .org-tree li:last-child::after {
-  border: 0 none;
-}
-/* Adding back the vertical connector to the last nodes */
-.org-tree li:last-child::before {
-  border-right: 1px solid var(--site-border);
-  border-radius: 0 5px 0 0;
-  -webkit-border-radius: 0 5px 0 0;
-  -moz-border-radius: 0 5px 0 0;
-}
-.org-tree li:first-child::after {
-  border-radius: 5px 0 0 0;
-  -webkit-border-radius: 5px 0 0 0;
-  -moz-border-radius: 5px 0 0 0;
+/* Ensure the blockquote itself has padding from the border */
+.article-content-body blockquote {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 1.5rem !important;
+  border-right-width: 4px !important;
 }
 
-/* Time to add downward connectors from parents */
-.org-tree ul ul::before {
-  content: '';
-  position: absolute; top: 0; left: 50%;
-  border-left: 1px solid var(--site-border);
-  width: 0; height: 20px;
+.article-content-body blockquote.q-quote::before {
+  content: '“';
+  position: absolute;
+  left: 12px;
+  top: 6px;
+  font-size: 48px;
+  color: #E67E22;
+  opacity: .25;
+  line-height: 1;
+  pointer-events: none;
+}
+.article-content-body blockquote .q-footer { margin-top: 8px; text-align: right; font-size: 12px; color: var(--site-muted); }
+
+/* Quranic ayah style */
+.article-content-body blockquote.q-ayah {
+  box-sizing: border-box;
+  max-width: 100%;
+  display: block;
+  background: var(--site-card);
+  border-right: 4px solid #E67E22;
+  padding: 20px 40px;
+  border-radius: 8px;
+  line-height: 2.4;
+  direction: rtl;
+  text-align: center;
+  font-family: 'Neirizi', 'Scheherazade New', serif;
+  font-size: 36px;
+  color: var(--site-text);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Org Chart Card Styles */
-.org-tree li .node-card {
-  border: 1px solid var(--site-border);
-  padding: 5px 10px;
-  text-decoration: none;
-  color: #666;
-  font-family: arial, verdana, tahoma;
-  font-size: 11px;
-  display: inline-block;
+/* Stylish quote style */
+.article-content-body blockquote.q-quote {
+  font-family: 'Sahel', 'Vazir', sans-serif;
+  font-size: 24px;
+  line-height: 1.7;
+  color: var(--site-text);
+  border-right-color: #E67E22;
+}
+
+/* Custom header colors for article body */
+.article-content-body h2, 
+.article-content-body h3, 
+.article-content-body h4,
+.article-content-body details > summary a {
+  color: rgb(var(--site-accent));
+}
+
+/* Specific colors for dark mode if we want creamy white for quotes/ayahs */
+[class~="dark"] .article-content-body blockquote.q-ayah,
+[class~="dark"] .article-content-body blockquote.q-quote {
+  color: #fff9f0; /* Slightly creamy white */
+}
+
+/* Light mode overrides for quotes/ayahs to be dark/standard text */
+:root .article-content-body blockquote.q-ayah,
+:root .article-content-body blockquote.q-quote {
+  color: var(--site-text);
+}
+
+@layer components {
+  /* دکمه‌های اصلی */
+  .btn-primary {
+    @apply bg-warm-primary text-white hover:bg-warm-accent transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 rounded-xl px-6 py-3 font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-warm-secondary text-white hover:bg-warm-primary border border-warm-secondary transition-all duration-200 rounded-xl px-6 py-3 font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  /* کارت‌ها */
+  .card {
+    @apply bg-site-card border border-site-border rounded-lg shadow-xl p-6 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1;
+  }
+
+  /* فیلدهای ورودی */
+  .input-field {
+    @apply bg-site-card border border-site-border text-site-text rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
+  }
   
-  border-radius: 5px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
+  /* Hide default select arrow */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+
+  .input {
+    @apply bg-warm-cream border border-gray-400 text-gray-800 rounded-lg px-3 py-2 focus:border-warm-primary focus:outline-none focus:ring-1 focus:ring-warm-primary;
+  }
   
-  transition: all 0.5s;
-  -webkit-transition: all 0.5s;
-  -moz-transition: all 0.5s;
-}
+  .heading {
+    @apply font-ibm-plex-arabic text-warm-accent;
+  }
+  
+  .text-persian {
+    @apply font-iran-sans;
+  }
 
-.org-tree li .node-card:hover, .org-tree li .node-card:hover+ul li .node-card {
-  background: var(--site-secondary-bg); 
-  color: #000; 
-  border: 1px solid var(--warm-primary);
-}
+  /* دکمه‌های جدید */
+  .btn-success {
+    @apply bg-warm-success text-white hover:bg-green-600 transition-colors shadow-lg;
+  }
 
-.org-tree li .node-card:hover+ul li::after, 
-.org-tree li .node-card:hover+ul li::before, 
-.org-tree li .node-card:hover+ul::before, 
-.org-tree li .node-card:hover+ul ul::before {
-  border-color:  var(--warm-primary);
+  .btn-warning {
+    @apply bg-warm-warning text-white hover:bg-yellow-600 transition-colors shadow-lg;
+  }
+
+  .btn-error {
+    @apply bg-warm-error text-white hover:bg-red-700 transition-colors shadow-lg;
+  }
 }
