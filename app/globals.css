@@ -284,3 +284,75 @@ mark {
     @apply bg-warm-error text-white hover:bg-red-700 transition-colors shadow-lg;
   }
 }
+
+/* Org Chart Tree Styles */
+.org-tree ul {
+  padding-top: 20px; 
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.org-tree li {
+  list-style-type: none;
+  position: relative;
+  padding: 20px 5px 0 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* We will connect the elements to form the tree */
+.org-tree li::before, .org-tree li::after {
+  content: '';
+  position: absolute; top: 0; right: 50%;
+  border-top: 1px solid rgb(var(--site-border));
+  width: 50%; height: 20px;
+}
+.org-tree li::after {
+  right: auto; left: 50%;
+  border-left: 1px solid rgb(var(--site-border));
+}
+
+/* Remove connectors from the only child */
+.org-tree li:only-child::after, .org-tree li:only-child::before {
+  display: none;
+}
+.org-tree li:only-child { padding-top: 0;}
+
+/* Remove space from the top of single children */
+.org-tree li:first-child::before, .org-tree li:last-child::after {
+  border: 0 none;
+}
+/* Adding back the vertical connector to the last nodes */
+.org-tree li:last-child::before {
+  border-right: 1px solid rgb(var(--site-border));
+  border-radius: 0 5px 0 0;
+  -webkit-border-radius: 0 5px 0 0;
+  -moz-border-radius: 0 5px 0 0;
+}
+.org-tree li:first-child::after {
+  border-radius: 5px 0 0 0;
+  -webkit-border-radius: 5px 0 0 0;
+  -moz-border-radius: 5px 0 0 0;
+}
+
+/* Time to add downward connectors from parents */
+.org-tree ul ul::before {
+  content: '';
+  position: absolute; top: 0; left: 50%;
+  border-left: 1px solid rgb(var(--site-border));
+  width: 0; height: 20px;
+}
+
+/* Org Chart Hover Effects */
+.org-tree li .node-card:hover, .org-tree li .node-card:hover+ul li .node-card {
+  @apply bg-site-secondary text-site-text border-warm-primary;
+}
+
+.org-tree li .node-card:hover+ul li::after, 
+.org-tree li .node-card:hover+ul li::before, 
+.org-tree li .node-card:hover+ul::before, 
+.org-tree li .node-card:hover+ul ul::before {
+  @apply border-warm-primary;
+}
