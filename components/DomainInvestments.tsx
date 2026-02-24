@@ -249,16 +249,16 @@ export default function DomainInvestments() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className="text-xs text-site-muted px-1">{t('investment.proposer')}</label>
-            <div className="relative">
+            <div className="relative z-20 pointer-events-auto">
               <select 
                 value={selectedMyDomainId} 
                 onChange={e => setSelectedMyDomainId(e.target.value)}
-                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none transition-all duration-200 hover:border-warm-primary/50"
+                className="w-full p-2.5 pl-10 rounded-lg border border-site-border bg-site-bg text-site-text text-sm focus:ring-2 focus:ring-warm-primary outline-none appearance-none transition-all duration-200 hover:border-warm-primary/50 relative z-20 pointer-events-auto"
               >
                 <option value="">{t('investment.title')}...</option>
                 {allDomains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none" size={16} />
+              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-site-muted pointer-events-none z-30" size={16} />
             </div>
           </div>
           <div className="space-y-1">

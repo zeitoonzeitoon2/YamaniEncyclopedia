@@ -1237,7 +1237,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => setDeleteModalOpen(true)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 dark:text-red-300 dark:border-red-700/60 dark:hover:bg-red-900/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md pointer-events-auto relative z-20"
                           title={t('deleteDomain')}
                           disabled={selectedDomain.slug === 'philosophy'}
                         >
@@ -1263,7 +1263,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('members')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md pointer-events-auto z-20 ${
                         activeTab === 'members'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
@@ -1277,7 +1277,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('courses')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md pointer-events-auto z-20 ${
                         activeTab === 'courses'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
@@ -1291,7 +1291,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('researchers')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md pointer-events-auto z-20 ${
                         activeTab === 'researchers'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
@@ -1305,7 +1305,7 @@ export default function AdminDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('proposals')}
-                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md ${
+                      className={`relative px-3 py-2 rounded-lg text-sm border transition-all duration-200 hover:shadow-md pointer-events-auto z-20 ${
                         activeTab === 'proposals'
                           ? 'border-warm-primary bg-warm-primary/20 text-site-text shadow-sm'
                           : 'border-site-border bg-site-secondary/30 text-site-muted hover:text-site-text hover:bg-site-secondary/50'
@@ -1783,7 +1783,7 @@ export default function AdminDashboard() {
                                     >
                                       {votingOnProposalKey === `${p.id}:APPROVE` ? '...' : t('approve')}
                                     </button>
-                                     <button
+                                    <button
                                       type="button"
                                       onClick={() => voteOnProposal(p.id, 'REJECT')}
                                       disabled={votingOnProposalKey !== null}

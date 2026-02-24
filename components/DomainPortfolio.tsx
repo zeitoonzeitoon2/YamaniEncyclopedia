@@ -238,9 +238,9 @@ export default function DomainPortfolio() {
 
           <div>
             <label className="block text-sm font-medium mb-2">{t('selectAsset')}</label>
-            <div className="relative">
+            <div className="relative z-20 pointer-events-auto">
               <select
-                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none transition-all duration-200 hover:border-warm-primary/50"
+                className="w-full bg-site-bg border border-site-border rounded p-2 pl-10 appearance-none transition-all duration-200 hover:border-warm-primary/50 relative z-20 pointer-events-auto"
                 value={highlightedAssetId}
                 onChange={(e) => setHighlightedAssetId(e.target.value)}
               >
@@ -249,7 +249,7 @@ export default function DomainPortfolio() {
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none" />
+              <ChevronDown className="absolute left-2 top-3 w-4 h-4 pointer-events-none z-30" />
             </div>
           </div>
         </div>
