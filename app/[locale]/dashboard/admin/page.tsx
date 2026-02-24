@@ -1752,6 +1752,17 @@ export default function AdminDashboard() {
                                     <div className="text-xs text-site-muted mt-1">
                                       {t('proposerLabel')}: {p.proposer.name || p.proposer.email}
                                     </div>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-site-muted">
+                                      <span className="border border-site-border rounded-full px-2 py-0.5 bg-site-bg">
+                                        {t('eligibleVoters', { count: selectedDomain?.experts?.length || 0 })}
+                                      </span>
+                                      <span className="border border-green-200 dark:border-green-800 rounded-full px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400">
+                                        {t('approvals', { count: p.votes.filter(v => v.vote === 'APPROVE').length })}
+                                      </span>
+                                      <span className="border border-red-200 dark:border-red-800 rounded-full px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400">
+                                        {t('rejections', { count: p.votes.filter(v => v.vote === 'REJECT').length })}
+                                      </span>
+                                    </div>
                                     {p.description && (
                                       <div className="text-sm text-site-text mt-2 italic">
                                         {p.description}

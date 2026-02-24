@@ -339,6 +339,7 @@
       "memberFallback": "عضو",
       "candidateLabel": "نامزد",
       "proposerLabel": "پیشنهاددهنده",
+      "eligibleVoters": "واجدین شرایط: {count}",
       "approvals": "موافق: {count}",
       "rejections": "مخالف: {count}",
       "yourVote": "رأی شما: {vote}",

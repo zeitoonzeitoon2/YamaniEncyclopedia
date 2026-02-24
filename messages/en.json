@@ -279,6 +279,7 @@
       "memberFallback": "Member",
       "candidateLabel": "Candidate",
       "proposerLabel": "Proposer",
+      "eligibleVoters": "Eligible Voters: {count}",
       "approvals": "Approvals: {count}",
       "rejections": "Rejections: {count}",
       "yourVote": "Your vote: {vote}",
