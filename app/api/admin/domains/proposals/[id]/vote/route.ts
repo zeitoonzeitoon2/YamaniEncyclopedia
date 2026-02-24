@@ -84,7 +84,7 @@ export async function POST(
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
 
     if (approvals > threshold) nextStatus = 'APPROVED'
-    else if (rejections >= threshold) nextStatus = 'REJECTED'
+    else if (rejections > threshold) nextStatus = 'REJECTED'
 
     if (nextStatus !== 'PENDING') {
       await prisma.$transaction(async (tx) => {
