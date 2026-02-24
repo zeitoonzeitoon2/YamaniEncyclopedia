@@ -211,8 +211,8 @@ export default function AdminDashboard() {
     let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
 
     // Special case for RENAME on root domain: voting happens in the domain itself
-    if (!votingDomainId && p.type === 'RENAME' && p.targetDomainId) {
-      votingDomainId = p.targetDomainId
+    if (!votingDomainId && p.type === 'RENAME') {
+      votingDomainId = p.targetDomainId || p.targetDomain?.id
     }
 
     if (!votingDomainId) return false // Root domain create/delete handled by admin only
