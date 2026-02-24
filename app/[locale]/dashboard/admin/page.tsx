@@ -2124,21 +2124,21 @@ export default function AdminDashboard() {
         
         {/* بخش مبادلات استراتژیک سهام رای */}
         <div className="mt-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2 gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2 gap-4 pointer-events-none">
             <h2 className="text-2xl font-bold text-site-text flex items-center gap-3 heading">
               <ArrowRightLeft className="text-warm-primary" />
               {t('strategicExchanges')}
             </h2>
-            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto relative z-20">
+            <div className="flex bg-site-secondary/50 p-1 rounded-lg self-start md:self-auto pointer-events-auto">
                <button 
                  onClick={() => setActiveStrategicTab('investments')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'} z-10`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'investments' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('investment.title')}
                </button>
                <button 
                  onClick={() => setActiveStrategicTab('portfolio')}
-                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'} z-10`}
+                 className={`px-4 py-1.5 text-sm rounded-md transition-all duration-200 pointer-events-auto ${activeStrategicTab === 'portfolio' ? 'bg-warm-primary text-white shadow-md' : 'text-site-muted hover:text-site-text hover:shadow-sm'}`}
                >
                  {t('portfolio.title')}
                </button>
