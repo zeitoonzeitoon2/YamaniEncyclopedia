@@ -48,7 +48,7 @@ export async function POST(
       })
       
       // Also check if the expert is in the RIGHT wing. Only RIGHT wing experts can vote on proposals.
-      if ((!isExpert || isExpert.wing !== 'RIGHT') && session.user.role !== 'ADMIN') {
+      if (!isExpert || isExpert.wing !== 'RIGHT') {
         console.warn('Vote rejected: User is not RIGHT wing expert of voting domain', {
             userId: session.user.id,
             votingDomainId,

@@ -206,7 +206,6 @@ export default function AdminDashboard() {
 
   const canVoteOnProposal = useCallback((p: any) => {
     if (!session?.user?.id) return false
-    if (session.user.role === 'ADMIN') return true
     
     let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
 
