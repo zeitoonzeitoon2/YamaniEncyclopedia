@@ -19,6 +19,7 @@ interface Post {
   id: string
   version?: number | null
   revisionNumber?: number | null
+  domainId?: string | null
   content: string
   articlesData?: string | null  // JSON string for article data
   type: string
