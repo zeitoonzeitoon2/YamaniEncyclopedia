@@ -221,7 +221,7 @@ export default function AdminDashboard() {
     if (!session?.user?.id) return false
     
     let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
-
+ 
     // Special case for RENAME on root domain: voting happens in the domain itself
     if (!votingDomainId && p.type === 'RENAME') {
       votingDomainId = p.targetDomainId || p.targetDomain?.id
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
     
     if (!expert) return false
     return true
-  }, [session?.user?.id, session?.user?.role, roots, selectedDomain])
+  }, [session?.user?.id, roots, selectedDomain])
 
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [domainCourses, setDomainCourses] = useState<DomainCourse[]>([])
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
     if (!userId) return false
     if (!selectedDomain) return false
     return selectedDomain.experts.some((ex) => ex.user.id === userId)
-  }, [selectedDomain, session?.user?.id, session?.user?.role])
+  }, [selectedDomain, session?.user?.id])
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
     if (!canVote) return 0
     return researchPrerequisites.filter(r => 
       r.status === 'PENDING' && 
-      !r.votes?.some(v => v.voterUserId === session.user.id)
+      !r.votes?.some(v => v.voterId === session.user.id)
     ).length
   }, [session?.user, researchPrerequisites, canVoteOnSelectedDomainCourses])
 
