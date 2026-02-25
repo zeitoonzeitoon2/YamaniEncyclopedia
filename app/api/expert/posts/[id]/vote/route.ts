@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getInternalVotingWeight } from '@/lib/voting-utils'
 
 interface RouteParams {
   params: { id: string }
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { id: session.user.id }
     })
 
-    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
+    if (!user) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
@@ -43,6 +44,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'نظرسنجی این طرح متوقف شده است' }, { status: 400 })
     }
 
+    if (!post.domainId) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+    }
+
+    const expert = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: post.domainId },
+      select: { role: true, wing: true }
+    })
+
+    if (!expert) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+    }
+
+    const multiplier = getInternalVotingWeight(expert.role, expert.wing)
+    const scaledMultiplier = Math.round(multiplier * 2)
+    const weightedScore = Math.round(score * scaledMultiplier)
+
     // ایجاد یا به‌روزرسانی رای
     // جایگزینی upsert با findFirst + create/update برای جلوگیری از خطای تایپ unique constraint
     const existingVote = await prisma.vote.findFirst({
@@ -57,7 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (existingVote) {
       vote = await prisma.vote.update({
         where: { id: existingVote.id },
-        data: { score }
+        data: { score: weightedScore }
       })
     } else {
       vote = await prisma.vote.create({
@@ -65,7 +83,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           postId: params.id,
           adminId: session.user.id,
           domainId: post.domainId || null,
-          score
+          score: weightedScore
         }
       })
     }
@@ -89,7 +107,23 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id: session.user.id }
     })
 
-    if (!user || (user.role !== 'EXPERT' && user.role !== 'ADMIN')) {
+    if (!user) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!post?.domainId) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+    }
+
+    const expert = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: post.domainId }
+    })
+
+    if (!expert) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 

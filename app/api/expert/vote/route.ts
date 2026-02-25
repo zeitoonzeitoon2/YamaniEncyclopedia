@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getInternalVotingWeight } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,35 +41,23 @@ export async function POST(request: NextRequest) {
     }
 
     let multiplier = 1
-    const isGlobalExpert = user.role === 'EXPERT' || user.role === 'ADMIN'
-
-    // Check domain expertise and HEAD role
     const targetDomainId = domainId || post.domainId
-    
-    if (targetDomainId) {
-      // If specific domain vote, user must be expert in that domain OR global expert
-      // Actually, for multi-domain, only experts of that domain should vote?
-      // User said: "if a proposal changes two domains... two separate votes between two separate teams"
-      // So global expert might not have a say unless they are expert in that domain?
-      // Assuming global expert (ADMIN) can always vote.
-      
-      const expert = await prisma.domainExpert.findFirst({
-        where: { userId: user.id, domainId: targetDomainId },
-        select: { id: true, role: true },
-      })
-      
-      if (expert) {
-        if (expert.role === 'HEAD') {
-          multiplier = 2
-        }
-      } else if (!isGlobalExpert) {
-        // Not a global expert/admin and not a domain expert
-        return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
-      }
-    } else if (!isGlobalExpert) {
-      // No domain, and not global expert
+    if (!targetDomainId) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
+
+    const expert = await prisma.domainExpert.findFirst({
+      where: { userId: user.id, domainId: targetDomainId },
+      select: { role: true, wing: true }
+    })
+
+    if (!expert) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
+    }
+
+    multiplier = getInternalVotingWeight(expert.role, expert.wing)
+    const scaledMultiplier = Math.round(multiplier * 2)
+    const weightedScore = Math.round(score * scaledMultiplier)
 
     // Calculate final score based on direction and multiplier
     // Preserve 0 as 0
@@ -98,7 +87,7 @@ export async function POST(request: NextRequest) {
     if (existingVote) {
       vote = await prisma.vote.update({
         where: { id: existingVote.id },
-        data: { score: finalScore }
+        data: { score: weightedScore }
       })
     } else {
       vote = await prisma.vote.create({
@@ -106,7 +95,7 @@ export async function POST(request: NextRequest) {
           postId,
           adminId: user.id,
           domainId: voteDomainId,
-          score: finalScore
+          score: weightedScore,
         }
       })
     }

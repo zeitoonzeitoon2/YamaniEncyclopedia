@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,10 +42,25 @@ export async function GET(request: NextRequest) {
       throw new Error(`Prisma query failed: ${prismaError instanceof Error ? prismaError.message : String(prismaError)}`)
     }
 
-    // Debugging: Log the count of proposals found
-    console.log(`Fetched ${proposals.length} proposals for domainId: ${domainId}`)
+    const enriched = await Promise.all(proposals.map(async (p) => {
+      let votingDomainId: string | null = null
+      if (p.type === 'CREATE') votingDomainId = p.parentId
+      else votingDomainId = p.targetDomain?.parentId || null
+      if (!votingDomainId && p.type === 'RENAME' && p.targetDomainId) {
+        votingDomainId = p.targetDomainId
+      }
 
-    return NextResponse.json({ proposals })
+      if (!votingDomainId) {
+        return { ...p, voting: null }
+      }
+
+      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const metrics = await getInternalVotingMetrics(votingDomainId, votes)
+      const { approvals, rejections } = await calculateVotingResult(votes, votingDomainId, 'DIRECT')
+      return { ...p, voting: { ...metrics, approvals, rejections } }
+    }))
+
+    return NextResponse.json({ proposals: enriched })
   } catch (error) {
     console.error('Error fetching domain proposals:', error)
     return NextResponse.json({ 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getInternalVotingWeight } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,17 +48,18 @@ export async function POST(request: NextRequest) {
     if (post.domainId) {
       const expert = await prisma.domainExpert.findFirst({
         where: { userId: user.id, domainId: post.domainId },
-        select: { role: true }
+        select: { role: true, wing: true }
       })
-      if (expert?.role === 'HEAD') {
-        multiplier = 2
+      if (!expert) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
+      multiplier = getInternalVotingWeight(expert.role, expert.wing)
+    } else {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    let finalScore = score
-    if (score !== 0) {
-      finalScore = score * multiplier
-    }
+    const scaledMultiplier = Math.round(multiplier * 2)
+    const finalScore = Math.round(score * scaledMultiplier)
 
     console.log('Vote attempt:', { postId, score, finalScore, adminId: user.id, postExists: !!post })
 

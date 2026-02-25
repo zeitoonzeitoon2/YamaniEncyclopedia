@@ -44,9 +44,8 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
 
     // Check if user has any voting power in the course domain (direct only)
     const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId, 'DIRECT')
-    const isAdmin = session.user.role === 'ADMIN'
 
-    if (weight === 0 && !isAdmin) {
+    if (weight === 0) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
 
     if (approvals > threshold) {
       nextStatus = 'APPROVED'
-    } else if (rejections >= threshold) {
+    } else if (rejections > threshold) {
       nextStatus = 'REJECTED'
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getInternalVotingWeight } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +47,16 @@ export async function POST(request: NextRequest) {
     })
 
     const domainId = poll?.comment?.post?.domainId || poll?.comment?.chapter?.course?.domainId
+    if (!domainId) {
+      return NextResponse.json({ error: 'Domain not found' }, { status: 400 })
+    }
+
+    const expert = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId }
+    })
+    if (!expert) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const votes = await prisma.commentPollVote.findMany({ 
       where: { pollId }, 
@@ -56,25 +67,23 @@ export async function POST(request: NextRequest) {
     
     let voterRoles: Record<string, string> = {}
     
-    if (domainId) {
-       const voterIds = votes.map(v => v.voterId)
-       const experts = await prisma.domainExpert.findMany({
-         where: { domainId, userId: { in: voterIds } },
-         select: { userId: true, role: true }
-       })
-       for (const e of experts) {
-         voterRoles[e.userId] = e.role
-       }
+    const voterIds = votes.map(v => v.voterId)
+    const experts = await prisma.domainExpert.findMany({
+      where: { domainId, userId: { in: voterIds } },
+      select: { userId: true, role: true, wing: true }
+    })
+    for (const e of experts) {
+      voterRoles[e.userId] = `${e.role}:${e.wing}`
     }
 
     const counts: Record<string, number> = {}
     for (const v of votes) {
        let weight = 1
-       if (domainId) {
-         // Apply weight only if domain context exists
-         const role = voterRoles[v.voterId]
-         if (role === 'HEAD') weight = 2
-       }
+      const key = voterRoles[v.voterId]
+      if (key) {
+        const [role, wing] = key.split(':')
+        weight = getInternalVotingWeight(role, wing)
+      }
        counts[v.optionId] = (counts[v.optionId] || 0) + weight
     }
 

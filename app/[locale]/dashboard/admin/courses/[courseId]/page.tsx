@@ -12,10 +12,18 @@ import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
 import CoursePrerequisitesManager from '@/components/CoursePrerequisitesManager'
 import ChapterQuestionnaireModal from '@/components/ChapterQuestionnaireModal'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 
 type ChapterVote = {
   voterId: string
   vote: string
+}
+
+type VotingMetrics = {
+  eligibleCount: number
+  totalRights: number
+  votedCount: number
+  rightsUsedPercent: number
 }
 
 type ChapterAuthor = {
@@ -43,6 +51,7 @@ type CourseChapter = {
   updatedAt: string
   author: ChapterAuthor
   votes: ChapterVote[]
+  voting?: VotingMetrics
   progress: any[]
   questions: ChapterQuestion[]
 }
@@ -55,6 +64,7 @@ type ChapterQuestion = {
   author: { id: string; name: string | null; email: string | null }
   options: QuestionOption[]
   votes: { voterId: string; vote: string }[]
+  voting?: VotingMetrics
   createdAt: string
 }
 
@@ -860,6 +870,22 @@ export default function AdminCourseChaptersPage() {
                           {votingKey === `${chapter.id}:REJECT` ? '...' : t('reject')}
                         </button>
                       </div>
+                      {chapter.voting && (
+                        <div className="mt-2">
+                          <VotingStatusSummary
+                            eligibleCount={chapter.voting.eligibleCount}
+                            totalRights={chapter.voting.totalRights}
+                            votedCount={chapter.voting.votedCount}
+                            rightsUsedPercent={chapter.voting.rightsUsedPercent}
+                            labels={{
+                              eligible: t('votingEligibleLabel'),
+                              totalRights: t('votingRightsLabel'),
+                              voted: t('votingVotedLabel'),
+                              rightsUsed: t('votingRightsUsedLabel')
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

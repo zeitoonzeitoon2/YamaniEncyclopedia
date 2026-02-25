@@ -131,12 +131,32 @@ export async function getDomainVotingShares(domainId: string, wing: 'RIGHT' | 'L
   return aggregatedShares
 }
 
+export function getInternalVotingWeight(role: string, wing: string) {
+  const w = (wing || '').toUpperCase()
+  const r = (role || '').toUpperCase()
+  if (w === 'RIGHT') return r === 'HEAD' ? 2 : 1
+  return r === 'HEAD' ? 1 : 0.5
+}
+
 export async function calculateUserVotingWeight(
   userId: string, 
   domainId: string, 
   mode: string = 'STANDARD',
   options?: { targetWing?: string }
 ): Promise<number> {
+  if (mode === 'DIRECT' || mode === 'INTERNAL') {
+    const experts = await prisma.domainExpert.findMany({
+      where: { domainId },
+      select: { userId: true, role: true, wing: true }
+    })
+    if (experts.length === 0) return 0
+    const totalWeight = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+    const me = experts.find(e => e.userId === userId)
+    if (!me) return 0
+    const myWeight = getInternalVotingWeight(me.role, me.wing)
+    return totalWeight > 0 ? (myWeight / totalWeight) * 100 : 0
+  }
+
   // 1. CANDIDACY MODE (Voting for a Candidate)
   if (mode === 'CANDIDACY') {
      const targetWing = (options?.targetWing || 'RIGHT').toUpperCase()
@@ -307,8 +327,7 @@ export async function calculateVotingResult(
         if (user?.role === 'ADMIN') weight = 100
       }
     } else {
-      // If mode is DIRECT, we assume it means weighted voting (STRATEGIC)
-      const weightMode = mode === 'DIRECT' ? 'STRATEGIC' : mode
+      const weightMode = mode
       const voterId = vote.voterId || vote.userId || vote.adminId
       if (voterId) {
         weight = await calculateUserVotingWeight(voterId, domainId, weightMode)
@@ -321,6 +340,29 @@ export async function calculateVotingResult(
   }
 
   return { approvals, rejections }
+}
+
+export async function getInternalVotingMetrics(
+  domainId: string,
+  votes: Array<{ voterId: string; vote: 'APPROVE' | 'REJECT' }>
+): Promise<{
+  eligibleCount: number
+  totalRights: number
+  votedCount: number
+  rightsUsedPercent: number
+}> {
+  const experts = await prisma.domainExpert.findMany({
+    where: { domainId },
+    select: { userId: true, role: true, wing: true }
+  })
+  const totalRights = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+  const eligibleCount = experts.length
+  const votedSet = new Set(votes.map(v => v.voterId))
+  const votedExperts = experts.filter(e => votedSet.has(e.userId))
+  const votedCount = votedExperts.length
+  const usedRights = votedExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+  const rightsUsedPercent = totalRights > 0 ? (usedRights / totalRights) * 100 : 0
+  return { eligibleCount, totalRights, votedCount, rightsUsedPercent }
 }
 
 export async function getEffectiveShare(

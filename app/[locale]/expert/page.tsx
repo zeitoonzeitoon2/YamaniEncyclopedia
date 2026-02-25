@@ -10,6 +10,7 @@ import EnhancedDiagramComparison from '@/components/EnhancedDiagramComparison'
 import TreeDiagramEditor from '@/components/TreeDiagramEditor'
 import VotingSlider from '@/components/VotingSlider'
 import { SimplePostCard } from '@/components/SimplePostCard'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 import toast from 'react-hot-toast'
 import { getPostDisplayId } from '@/lib/postDisplay'
 import { useLocale, useTranslations } from 'next-intl'
@@ -56,6 +57,7 @@ interface Post {
   changeSummary?: string | null
   relatedDomains?: { id: string; name: string }[]
   myVotes?: { domainId: string | null; score: number }[]
+  votingByDomain?: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }>
 }
 
 interface RecentComment {
@@ -89,8 +91,16 @@ export default function ExpertDashboard() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isDomainExpert, setIsDomainExpert] = useState(false)
   const [userExpertDomains, setUserExpertDomains] = useState<string[]>([])
-  const isExpertRole = session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN'
-  const isVoter = isExpertRole || isDomainExpert
+  const isExpertRole = session?.user?.role === 'EXPERT'
+  const canVoteOnSelectedPost = useMemo(() => {
+    if (!selectedPost) return false
+    if (selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0) {
+      return selectedPost.relatedDomains.some(d => userExpertDomains.includes(d.id))
+    }
+    if (selectedPost.domainId) return userExpertDomains.includes(selectedPost.domainId)
+    return false
+  }, [selectedPost, userExpertDomains])
+  const isVoter = canVoteOnSelectedPost
   const isEditor = !isVoter && (session?.user?.role === 'EDITOR' || session?.user?.role === 'USER')
   
   console.log('ExpertDashboard render - posts:', posts.length, 'selectedPost:', selectedPost?.id)
@@ -1078,7 +1088,7 @@ export default function ExpertDashboard() {
                           {selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0 ? (
                             <div className="space-y-4">
                               {selectedPost.relatedDomains.map(domain => {
-                                const canVote = isExpertRole || userExpertDomains.includes(domain.id)
+                                const canVote = userExpertDomains.includes(domain.id)
                                 if (!canVote) return null
                                 
                                 const myVote = selectedPost.myVotes?.find(v => v.domainId === domain.id)?.score
@@ -1093,16 +1103,50 @@ export default function ExpertDashboard() {
                                       onVote={(score) => handleVote(selectedPost.id, score, domain.id)}
                                       disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
                                     />
+                                    {selectedPost.votingByDomain?.[domain.id] && (
+                                      <div className="mt-3">
+                                        <VotingStatusSummary
+                                          eligibleCount={selectedPost.votingByDomain[domain.id].eligibleCount}
+                                          totalRights={selectedPost.votingByDomain[domain.id].totalRights}
+                                          votedCount={selectedPost.votingByDomain[domain.id].votedCount}
+                                          rightsUsedPercent={selectedPost.votingByDomain[domain.id].rightsUsedPercent}
+                                          labels={{
+                                            eligible: t('votingEligibleLabel'),
+                                            totalRights: t('votingRightsLabel'),
+                                            voted: t('votingVotedLabel'),
+                                            rightsUsed: t('votingRightsUsedLabel')
+                                          }}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 )
                               })}
                             </div>
                           ) : (
-                            <VotingSlider
-                              currentVote={currentUserVote}
-                              onVote={(score) => handleVote(selectedPost.id, score)}
-                              disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
-                            />
+                            <>
+                              <VotingSlider
+                                currentVote={currentUserVote}
+                                onVote={(score) => handleVote(selectedPost.id, score)}
+                                disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
+                              />
+                              {selectedPost.domainId && selectedPost.votingByDomain?.[selectedPost.domainId] && (
+                                <div className="mt-3">
+                                  <VotingStatusSummary
+                                    eligibleCount={selectedPost.votingByDomain[selectedPost.domainId].eligibleCount}
+                                    totalRights={selectedPost.votingByDomain[selectedPost.domainId].totalRights}
+                                    votedCount={selectedPost.votingByDomain[selectedPost.domainId].votedCount}
+                                    rightsUsedPercent={selectedPost.votingByDomain[selectedPost.domainId].rightsUsedPercent}
+                                    labels={{
+                                      eligible: t('votingEligibleLabel'),
+                                      totalRights: t('votingRightsLabel'),
+                                      voted: t('votingVotedLabel'),
+                                      rightsUsed: t('votingRightsUsedLabel')
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </>
                       )}

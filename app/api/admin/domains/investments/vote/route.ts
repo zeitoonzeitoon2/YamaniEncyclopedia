@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getEffectiveShare, getAvailableVotingPower } from '@/lib/voting-utils'
+import { calculateVotingResult, getAvailableVotingPower } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,24 +33,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Investment is no longer pending' }, { status: 400 })
     }
 
-    // Check strict membership (Wing-specific)
-    // Even ADMINS are restricted to their actual domain/wing membership for voting.
-    const proposerStrict = await prisma.domainExpert.findFirst({
-        where: { userId: session.user.id, domainId: investment.proposerDomainId, wing: investment.proposerWing }
+    const proposerMember = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: investment.proposerDomainId }
     })
-    
-    const targetStrict = await prisma.domainExpert.findFirst({
-        where: { userId: session.user.id, domainId: investment.targetDomainId, wing: investment.targetWing }
+    const targetMember = await prisma.domainExpert.findFirst({
+      where: { userId: session.user.id, domainId: investment.targetDomainId }
     })
 
     const affectedDomains = []
-    if (proposerStrict) affectedDomains.push(investment.proposerDomainId)
-    if (targetStrict) affectedDomains.push(investment.targetDomainId)
-    
+    if (proposerMember) affectedDomains.push(investment.proposerDomainId)
+    if (targetMember) affectedDomains.push(investment.targetDomainId)
+
     if (affectedDomains.length === 0) {
-        // If user has no valid membership in the affected wings, they cannot vote.
-        // This applies to everyone, including Global Admins.
-        return NextResponse.json({ error: 'You are not an expert in the affected wing of the domain' }, { status: 403 })
+      return NextResponse.json({ error: 'Only affected domain experts can vote' }, { status: 403 })
     }
 
     // Record votes
@@ -76,54 +71,25 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Check for consensus
-    const getVoteCounts = async (domainId: string, investmentId: string, wing: string) => {
-      const experts = await prisma.domainExpert.findMany({ 
-        where: { 
-          domainId,
-          wing: wing
-        } 
-      })
-      
-      const votes = await prisma.domainInvestmentVote.findMany({
-        where: { investmentId, domainId }
-      })
-      
-      const expertIds = new Set(experts.map(e => e.userId))
-      
-      let approvedPoints = 0
-      let rejectedPoints = 0
-      let totalPoints = experts.length
+    const proposerVotes = await prisma.domainInvestmentVote.findMany({
+      where: { investmentId, domainId: investment.proposerDomainId }
+    })
+    const targetVotes = await prisma.domainInvestmentVote.findMany({
+      where: { investmentId, domainId: investment.targetDomainId }
+    })
 
-      // If no experts exist, and user is admin, their vote should count as 1/1
-      // But only if they actually voted
-      if (experts.length === 0) {
-        const adminVotes = votes.filter(v => v.voterId === session.user.id) // Assuming current user is the admin
-        if (adminVotes.length > 0) {
-           totalPoints = 1
-           if (adminVotes[0].vote === 'APPROVE') approvedPoints = 1
-           if (adminVotes[0].vote === 'REJECT') rejectedPoints = 1
-        }
-        return { totalPoints, approvedPoints, rejectedPoints }
-      }
-      
-      for (const v of votes) {
-        if (expertIds.has(v.voterId)) {
-          if (v.vote === 'APPROVE') approvedPoints += 1
-          else if (v.vote === 'REJECT') rejectedPoints += 1
-        }
-      }
-      
-      return { totalPoints, approvedPoints, rejectedPoints }
-    }
+    const proposerResult = await calculateVotingResult(
+      proposerVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+      investment.proposerDomainId,
+      'DIRECT'
+    )
+    const targetResult = await calculateVotingResult(
+      targetVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+      investment.targetDomainId,
+      'DIRECT'
+    )
 
-    const proposerStats = await getVoteCounts(investment.proposerDomainId, investmentId, investment.proposerWing)
-    const targetStats = await getVoteCounts(investment.targetDomainId, investmentId, investment.targetWing)
-
-    const proposerThreshold = Math.floor(proposerStats.totalPoints / 2) + 1
-    const targetThreshold = Math.floor(targetStats.totalPoints / 2) + 1
-
-    if (proposerStats.rejectedPoints >= proposerThreshold || targetStats.rejectedPoints >= targetThreshold) {
+    if (proposerResult.rejections > 50 || targetResult.rejections > 50) {
       await prisma.domainInvestment.update({
         where: { id: investmentId },
         data: { status: 'REJECTED' }
@@ -131,7 +97,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'REJECTED' })
     }
 
-    if (proposerStats.approvedPoints >= proposerThreshold && targetStats.approvedPoints >= targetThreshold) {
+    if (proposerResult.approvals > 50 && targetResult.approvals > 50) {
       // Validate share availability before activation
       // 1. Check if Proposer Wing has enough shares to give (percentageInvested)
       const proposerAvailable = await getAvailableVotingPower(

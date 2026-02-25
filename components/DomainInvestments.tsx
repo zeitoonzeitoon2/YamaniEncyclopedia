@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar, XCircle, ChevronDown } from 'lucide-react'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 
 type Domain = {
   id: string
@@ -30,8 +31,8 @@ type Investment = {
   endDate?: string
   createdAt: string
   stats?: {
-    proposer: { total: number; approved: number; rejected: number }
-    target: { total: number; approved: number; rejected: number }
+    proposer: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; approvals: number; rejections: number }
+    target: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; approvals: number; rejections: number }
   }
 }
 
@@ -438,53 +439,45 @@ export default function DomainInvestments() {
 
                 {/* Right Side: Voting Stats */}
                 {inv.stats && (
-                  <div className="w-full md:w-64 flex flex-col gap-2 border-t md:border-t-0 md:border-r border-site-border/30 pt-4 md:pt-0 md:pr-4 md:mr-4 order-first md:order-last bg-site-bg/20 p-3 rounded-lg">
+                  <div className="w-full md:w-64 flex flex-col gap-3 border-t md:border-t-0 md:border-r border-site-border/30 pt-4 md:pt-0 md:pr-4 md:mr-4 order-first md:order-last bg-site-bg/20 p-3 rounded-lg">
                     <div className="text-xs font-bold text-site-muted mb-1">{t('portfolio.title')}</div>
-                    
-                    {/* Proposer Stats */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-site-muted">
-                        <span>{inv.proposerDomain.name} ({t('wings.' + inv.proposerWing.toLowerCase())})</span>
-                        <span>{inv.stats.proposer.approved}/{inv.stats.proposer.total}</span>
+
+                    <div className="space-y-2">
+                      <div className="text-[10px] text-site-muted">
+                        {inv.proposerDomain.name}
                       </div>
-                      <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
-                        <div 
-                          className="bg-green-500" 
-                          style={{ width: (inv.stats.proposer.approved / inv.stats.proposer.total) * 100 + '%' }}
-                        />
-                        <div 
-                          className="bg-red-500" 
-                          style={{ width: (inv.stats.proposer.rejected / inv.stats.proposer.total) * 100 + '%' }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-site-muted/70">
-                        <span>{inv.stats.proposer.total} members</span>
-                        <span>{inv.stats.proposer.approved + inv.stats.proposer.rejected} voted</span>
-                      </div>
+                      <VotingStatusSummary
+                        eligibleCount={inv.stats.proposer.eligibleCount}
+                        totalRights={inv.stats.proposer.totalRights}
+                        votedCount={inv.stats.proposer.votedCount}
+                        rightsUsedPercent={inv.stats.proposer.rightsUsedPercent}
+                        labels={{
+                          eligible: t('votingEligibleLabel'),
+                          totalRights: t('votingRightsLabel'),
+                          voted: t('votingVotedLabel'),
+                          rightsUsed: t('votingRightsUsedLabel')
+                        }}
+                      />
                     </div>
 
                     <div className="h-px bg-site-border/30 my-1" />
 
-                    {/* Target Stats */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] text-site-muted">
-                        <span>{inv.targetDomain.name} ({t('wings.' + inv.targetWing.toLowerCase())})</span>
-                        <span>{inv.stats.target.approved}/{inv.stats.target.total}</span>
+                    <div className="space-y-2">
+                      <div className="text-[10px] text-site-muted">
+                        {inv.targetDomain.name}
                       </div>
-                      <div className="h-1.5 bg-site-bg rounded-full overflow-hidden flex">
-                        <div 
-                          className="bg-green-500" 
-                          style={{ width: (inv.stats.target.approved / inv.stats.target.total) * 100 + '%' }}
-                        />
-                        <div 
-                          className="bg-red-500" 
-                          style={{ width: (inv.stats.target.rejected / inv.stats.target.total) * 100 + '%' }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-site-muted/70">
-                        <span>{inv.stats.target.total} members</span>
-                        <span>{inv.stats.target.approved + inv.stats.target.rejected} voted</span>
-                      </div>
+                      <VotingStatusSummary
+                        eligibleCount={inv.stats.target.eligibleCount}
+                        totalRights={inv.stats.target.totalRights}
+                        votedCount={inv.stats.target.votedCount}
+                        rightsUsedPercent={inv.stats.target.rightsUsedPercent}
+                        labels={{
+                          eligible: t('votingEligibleLabel'),
+                          totalRights: t('votingRightsLabel'),
+                          voted: t('votingVotedLabel'),
+                          rightsUsed: t('votingRightsUsedLabel')
+                        }}
+                      />
                     </div>
                   </div>
                 )}

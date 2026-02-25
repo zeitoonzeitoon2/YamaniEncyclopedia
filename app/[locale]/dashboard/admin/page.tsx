@@ -12,6 +12,7 @@ import UserManagement from './UserManagement'
 import DomainInvestments from '@/components/DomainInvestments'
 import DomainPortfolio from '@/components/DomainPortfolio'
 import DomainElectionStatus from '@/components/DomainElectionStatus'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 
 
 type DomainUser = {
@@ -79,6 +80,7 @@ type DomainCourse = {
   createdAt: string
   proposerUser: DomainUser | null
   votes: CourseVote[]
+  voting?: VotingMetrics
 }
 
 type DomainProposalVote = {
@@ -98,6 +100,7 @@ type DomainProposal = {
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   proposer: { name: string | null; email: string | null }
   votes: DomainProposalVote[]
+  voting?: VotingMetrics | null
   createdAt: string
 }
 
@@ -139,12 +142,22 @@ type DomainPrerequisite = {
   course: { id: string; title: string }
   proposer: { name: string | null }
   _count: { votes: number }
-  votes?: { voterUserId: string; vote: string }[]
+  votes?: { voterId: string; vote: string }[]
+  voting?: VotingMetrics
 }
 
 type UserVotingRights = {
   RIGHT: { canVote: boolean; weight: number }
   LEFT: { canVote: boolean; weight: number }
+}
+
+type VotingMetrics = {
+  eligibleCount: number
+  totalRights: number
+  votedCount: number
+  rightsUsedPercent: number
+  approvals?: number
+  rejections?: number
 }
 
 export default function AdminDashboard() {
@@ -224,34 +237,13 @@ export default function AdminDashboard() {
         votingDomain = selectedDomain
     }
 
-    if (!votingDomain) {
-      console.warn('Voting domain not found for proposal:', {
-          proposalId: p.id,
-          type: p.type,
-          votingDomainId,
-          rootsCount: roots.length
-      })
-      return false
-    }
+    if (!votingDomain) return false
     
     const userId = session.user.id
     const expert = votingDomain.experts?.find((ex: any) => ex.user?.id === userId)
     
-    if (!expert) {
-         // Debug logging to help diagnose why user is not considered expert
-         const userExperts = votingDomain.experts?.filter((ex: any) => ex.user?.id === userId)
-         console.log('User is not expert of voting domain:', {
-             votingDomainName: votingDomain.name,
-             votingDomainId,
-             userId,
-             expertsCount: votingDomain.experts?.length,
-             userFoundInExperts: !!userExperts?.length
-         })
-         return false
-    }
-
-    // Only RIGHT wing experts can vote on proposals
-    return expert.wing === 'RIGHT'
+    if (!expert) return false
+    return true
   }, [session?.user?.id, session?.user?.role, roots, selectedDomain])
 
   const [loadingCourses, setLoadingCourses] = useState(false)
@@ -325,10 +317,8 @@ export default function AdminDashboard() {
 
   const canVoteOnSelectedDomainCourses = useMemo(() => {
     const userId = session?.user?.id
-    const userRole = session?.user?.role
     if (!userId) return false
     if (!selectedDomain) return false
-    if (userRole === 'ADMIN') return true
     return selectedDomain.experts.some((ex) => ex.user.id === userId)
   }, [selectedDomain, session?.user?.id, session?.user?.role])
 
@@ -1756,7 +1746,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-site-muted">
                                       <span className="border border-site-border rounded-full px-2 py-0.5 bg-site-bg">
-                                        {t('eligibleVoters', { count: selectedDomain?.experts?.length || 0 })}
+                                        {t('eligibleVoters', { count: p.voting?.eligibleCount || 0 })}
                                       </span>
                                       <span className="border border-green-200 dark:border-green-800 rounded-full px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400">
                                         {t('approvals', { count: p.votes.filter(v => v.vote === 'APPROVE').length })}
@@ -1765,6 +1755,22 @@ export default function AdminDashboard() {
                                         {t('rejections', { count: p.votes.filter(v => v.vote === 'REJECT').length })}
                                       </span>
                                     </div>
+                                    {p.voting && (
+                                      <div className="mt-2">
+                                        <VotingStatusSummary
+                                          eligibleCount={p.voting.eligibleCount}
+                                          totalRights={p.voting.totalRights}
+                                          votedCount={p.voting.votedCount}
+                                          rightsUsedPercent={p.voting.rightsUsedPercent}
+                                          labels={{
+                                            eligible: t('votingEligibleLabel'),
+                                            totalRights: t('votingRightsLabel'),
+                                            voted: t('votingVotedLabel'),
+                                            rightsUsed: t('votingRightsUsedLabel')
+                                          }}
+                                        />
+                                      </div>
+                                    )}
                                     {p.description && (
                                       <div className="text-sm text-site-text mt-2 italic">
                                         {p.description}
@@ -1834,16 +1840,31 @@ export default function AdminDashboard() {
                             <div className="text-site-muted text-sm">{t('noResearchPrerequisites')}</div>
                           ) : (
                             researchPrerequisites.map((p) => {
-                              const approvals = p._count.votes // Note: Simplified as we don't fetch all votes details in GET
-                              const myVote = p.votes?.find(v => v.voterUserId === session?.user?.id)?.vote || null
+                              const myVote = p.votes?.find(v => v.voterId === session?.user?.id)?.vote || null
                               return (
                                 <div key={p.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="text-site-text font-medium truncate">{p.course.title}</div>
                                       <div className="text-xs text-site-muted mt-1">
-                                        {t('proposerLabel')}: {p.proposer.name || '—'} • {p.status === 'APPROVED' ? <span className="text-green-400">{t('approvedStatus')}</span> : <span className="text-yellow-400">{t('pendingStatus')}</span>}
+                                        {t('proposerLabel')}: {p.proposer.name || '—'} • {p.status === 'APPROVED' ? <span className="text-green-400">{t('approvedStatus')}</span> : p.status === 'REJECTED' ? <span className="text-red-400">{t('rejectedStatus')}</span> : <span className="text-yellow-400">{t('pendingStatus')}</span>}
                                       </div>
+                                      {p.voting && (
+                                        <div className="mt-2">
+                                          <VotingStatusSummary
+                                            eligibleCount={p.voting.eligibleCount}
+                                            totalRights={p.voting.totalRights}
+                                            votedCount={p.voting.votedCount}
+                                            rightsUsedPercent={p.voting.rightsUsedPercent}
+                                            labels={{
+                                              eligible: t('votingEligibleLabel'),
+                                              totalRights: t('votingRightsLabel'),
+                                              voted: t('votingVotedLabel'),
+                                              rightsUsed: t('votingRightsUsedLabel')
+                                            }}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
                                     {canVoteOnSelectedDomainCourses && p.status === 'PENDING' && (
                                       <div className="flex items-center gap-2 shrink-0">
@@ -1858,6 +1879,11 @@ export default function AdminDashboard() {
                                       </div>
                                     )}
                                   </div>
+                                  {myVote && (
+                                    <div className="mt-2 text-[10px] text-site-muted">
+                                      {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
+                                    </div>
+                                  )}
                                 </div>
                               )
                             })
@@ -1982,6 +2008,22 @@ export default function AdminDashboard() {
                                             </span>
                                           )}
                                         </div>
+                                        {course.voting && (
+                                          <div className="mt-2">
+                                            <VotingStatusSummary
+                                              eligibleCount={course.voting.eligibleCount}
+                                              totalRights={course.voting.totalRights}
+                                              votedCount={course.voting.votedCount}
+                                              rightsUsedPercent={course.voting.rightsUsedPercent}
+                                              labels={{
+                                                eligible: t('votingEligibleLabel'),
+                                                totalRights: t('votingRightsLabel'),
+                                                voted: t('votingVotedLabel'),
+                                                rightsUsed: t('votingRightsUsedLabel')
+                                              }}
+                                            />
+                                          </div>
+                                        )}
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
                                         <Link

@@ -8,9 +8,7 @@ const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
 
 async function canVoteOnCourse(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
-  const role = (user?.role || '').trim()
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
-  if (role === 'ADMIN') return { ok: true as const, userId }
 
   // Check if user has any voting power in this domain (direct only)
   const weight = await calculateUserVotingWeight(userId, domainId, 'DIRECT')
@@ -65,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     if (approvals > threshold) {
       nextStatus = 'APPROVED'
-    } else if (rejections >= threshold) {
+    } else if (rejections > threshold) {
       nextStatus = 'REJECTED'
     }
 

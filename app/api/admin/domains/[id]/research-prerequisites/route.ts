@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -39,6 +40,9 @@ export async function GET(
         proposer: {
           select: { name: true }
         },
+        votes: {
+          select: { voterId: true, vote: true }
+        },
         _count: {
           select: { votes: true }
         }
@@ -46,7 +50,14 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ prerequisites })
+    const enriched = await Promise.all(prerequisites.map(async (p) => {
+      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const voting = await getInternalVotingMetrics(params.id, votes)
+      const { approvals, rejections } = await calculateVotingResult(votes, params.id, 'DIRECT')
+      return { ...p, voting: { ...voting, approvals, rejections } }
+    }))
+
+    return NextResponse.json({ prerequisites: enriched })
   } catch (error) {
     console.error('Error fetching research prerequisites:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

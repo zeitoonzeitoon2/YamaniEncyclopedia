@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Modal } from '@/components/Modal'
 import { useTranslations } from 'next-intl'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 import toast from 'react-hot-toast'
 import { FaPlus, FaTrash } from 'react-icons/fa'
 
@@ -19,6 +20,14 @@ type Question = {
   author: { name: string | null }
   options: QuestionOption[]
   votes: { voterId: string; vote: string }[]
+  voting?: VotingMetrics
+}
+
+type VotingMetrics = {
+  eligibleCount: number
+  totalRights: number
+  votedCount: number
+  rightsUsedPercent: number
 }
 
 interface ChapterQuestionnaireModalProps {
@@ -41,6 +50,7 @@ export default function ChapterQuestionnaireModal({
   onDraftNeeded
 }: ChapterQuestionnaireModalProps) {
   const t = useTranslations('admin')
+  const tDashboard = useTranslations('admin.dashboard')
   const [isAdding, setIsAdding] = useState(false)
   const [newQuestion, setNewQuestion] = useState('')
   const [newOptions, setNewOptions] = useState<QuestionOption[]>([
@@ -220,6 +230,20 @@ export default function ChapterQuestionnaireModal({
                       <span className="text-[10px] text-site-muted">توسط {q.author.name || 'نامشخص'}</span>
                     </div>
                     <p className="text-sm font-medium text-site-text">{q.question}</p>
+                    {q.voting && (
+                      <VotingStatusSummary
+                        eligibleCount={q.voting.eligibleCount}
+                        totalRights={q.voting.totalRights}
+                        votedCount={q.voting.votedCount}
+                        rightsUsedPercent={q.voting.rightsUsedPercent}
+                        labels={{
+                          eligible: tDashboard('votingEligibleLabel'),
+                          totalRights: tDashboard('votingRightsLabel'),
+                          voted: tDashboard('votingVotedLabel'),
+                          rightsUsed: tDashboard('votingRightsUsedLabel')
+                        }}
+                      />
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {q.options.map((opt, idx) => (
                         <div key={idx} className={`text-xs p-2 rounded border ${opt.isCorrect ? 'border-green-600/50 bg-green-600/10 text-green-200' : 'border-gray-800 bg-site-bg text-site-muted'}`}>

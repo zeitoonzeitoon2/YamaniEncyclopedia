@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateVotingResult } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,16 +45,14 @@ export async function POST(req: NextRequest) {
 
     // Determine which domain the user is voting for
     const proposerMembership = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: proposal.proposerDomainId, role: { in: ['HEAD', 'EXPERT'] } }
+      where: { userId: session.user.id, domainId: proposal.proposerDomainId }
     })
 
     const targetMembership = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: proposal.targetDomainId, role: { in: ['HEAD', 'EXPERT'] } }
+      where: { userId: session.user.id, domainId: proposal.targetDomainId }
     })
 
-    const isGlobalAdmin = session.user.role === 'ADMIN' || session.user.role === 'EXPERT'
-
-    if (!proposerMembership && !targetMembership && !isGlobalAdmin) {
+    if (!proposerMembership && !targetMembership) {
       return NextResponse.json({ error: 'You are not an expert in either affected domain' }, { status: 403 })
     }
 
@@ -61,8 +60,8 @@ export async function POST(req: NextRequest) {
     // For simplicity, if they are in both, they vote for both or we require them to specify.
     // Let's assume they vote for all domains they are part of.
     const affectedDomains = []
-    if (proposerMembership || isGlobalAdmin) affectedDomains.push(proposal.proposerDomainId)
-    if (targetMembership || isGlobalAdmin) affectedDomains.push(proposal.targetDomainId)
+    if (proposerMembership) affectedDomains.push(proposal.proposerDomainId)
+    if (targetMembership) affectedDomains.push(proposal.targetDomainId)
 
     // Record votes
     for (const dId of affectedDomains) {
@@ -85,43 +84,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for consensus
-    const getWeightedCounts = async (domainId: string, proposalId: string) => {
-      const experts = await prisma.domainExpert.findMany({ where: { domainId } })
-      const totalPoints = experts.reduce((sum, e) => sum + (e.role === 'HEAD' ? 2 : 1), 0)
-      
-      const votes = await prisma.domainExchangeVote.findMany({
-        where: { proposalId, domainId }
-      })
-      
-      const expertMap = new Map(experts.map(e => [e.userId, e.role]))
-      
-      let approvedPoints = 0
-      let rejectedPoints = 0
-      
-      for (const v of votes) {
-        const role = expertMap.get(v.voterId)
-        if (role) {
-          const points = role === 'HEAD' ? 2 : 1
-          if (v.vote === 'APPROVE') approvedPoints += points
-          else if (v.vote === 'REJECT') rejectedPoints += points
-        }
-      }
-      
-      return { totalPoints, approvedPoints, rejectedPoints }
-    }
+    const proposerVotes = await prisma.domainExchangeVote.findMany({
+      where: { proposalId, domainId: proposal.proposerDomainId }
+    })
+    const targetVotes = await prisma.domainExchangeVote.findMany({
+      where: { proposalId, domainId: proposal.targetDomainId }
+    })
 
-    const proposerStats = await getWeightedCounts(proposal.proposerDomainId, proposalId)
-    const targetStats = await getWeightedCounts(proposal.targetDomainId, proposalId)
-    
-    // Majority check (more than 50%)
-    const proposerThreshold = proposerStats.totalPoints <= 2 ? 1 : Math.floor(proposerStats.totalPoints / 2) + 1
-    const targetThreshold = targetStats.totalPoints <= 2 ? 1 : Math.floor(targetStats.totalPoints / 2) + 1
+    const proposerResult = await calculateVotingResult(
+      proposerVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+      proposal.proposerDomainId,
+      'DIRECT'
+    )
+    const targetResult = await calculateVotingResult(
+      targetVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+      proposal.targetDomainId,
+      'DIRECT'
+    )
 
-    const proposerApproved = proposerStats.approvedPoints >= proposerThreshold
-    const targetApproved = targetStats.approvedPoints >= targetThreshold
-
-    // If either side rejects by majority, proposal fails
-    if (proposerStats.rejectedPoints >= proposerThreshold || targetStats.rejectedPoints >= targetThreshold) {
+    if (proposerResult.rejections > 50 || targetResult.rejections > 50) {
       await prisma.domainExchangeProposal.update({
         where: { id: proposalId },
         data: { status: 'REJECTED' }
@@ -129,7 +110,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'REJECTED' })
     }
 
-    if (proposerApproved && targetApproved) {
+    if (proposerResult.approvals > 50 && targetResult.approvals > 50) {
       // EXECUTE EXCHANGE
       await prisma.$transaction(async (tx) => {
         // 1. Proposer domain gives shares to Target domain
@@ -228,7 +209,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'EXECUTED' })
     }
 
-    return NextResponse.json({ status: 'PENDING', proposerApproved, targetApproved })
+    return NextResponse.json({ status: 'PENDING' })
   } catch (error) {
     console.error('Error voting on exchange proposal:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

@@ -36,7 +36,7 @@ export async function POST(
       where: { userId, domainId, role: { in: ['HEAD', 'EXPERT'] } },
     })
 
-    if (session.user.role !== 'ADMIN' && !membership) {
+    if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

@@ -18,9 +18,8 @@ export async function POST(
 
     // Check if user has any voting power in this domain (direct only)
     const weight = await calculateUserVotingWeight(session.user.id, domainId, 'DIRECT')
-    const isAdmin = session.user.role === 'ADMIN'
 
-    if (weight === 0 && !isAdmin) {
+    if (weight === 0) {
       return NextResponse.json({ error: 'Only experts can vote on research prerequisites' }, { status: 403 })
     }
 
@@ -54,12 +53,12 @@ export async function POST(
     const { approvals, rejections } = await calculateVotingResult(allVotes, domainId, 'DIRECT')
 
     const threshold = 50
-    if (approvals > threshold || isAdmin) {
+    if (approvals > threshold) {
       await prisma.domainPrerequisite.update({
         where: { id: prerequisiteId },
         data: { status: 'APPROVED' }
       })
-    } else if (rejections >= threshold) {
+    } else if (rejections > threshold) {
       await prisma.domainPrerequisite.update({
         where: { id: prerequisiteId },
         data: { status: 'REJECTED' }

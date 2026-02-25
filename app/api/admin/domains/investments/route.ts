@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { settleExpiredInvestments } from '@/lib/voting-utils'
+import { calculateVotingResult, getInternalVotingMetrics, settleExpiredInvestments } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -233,53 +233,29 @@ export async function GET(req: NextRequest) {
     })
 
     const enrichedInvestments = await Promise.all(investments.map(async (inv) => {
-      // Fetch experts to validate votes
-      const proposerExperts = await prisma.domainExpert.findMany({
-        where: {
-          domainId: inv.proposerDomainId,
-          wing: inv.proposerWing
-        },
-        select: { userId: true }
-      })
-      const proposerExpertIds = new Set(proposerExperts.map(e => e.userId))
+      const proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
+      const targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
 
-      const targetExperts = await prisma.domainExpert.findMany({
-        where: {
-          domainId: inv.targetDomainId,
-          wing: inv.targetWing
-        },
-        select: { userId: true }
-      })
-      const targetExpertIds = new Set(targetExperts.map(e => e.userId))
+      const proposerMapped = proposerVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const targetMapped = targetVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
 
-      const proposerTotal = proposerExperts.length
-      const targetTotal = targetExperts.length
-
-      // Filter votes: Only count votes from current experts
-      // This applies to everyone, including Admins.
-      
-      let proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
-      if (proposerTotal > 0) {
-        proposerVotes = proposerVotes.filter(v => proposerExpertIds.has(v.voterId))
-      }
-
-      let targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
-      if (targetTotal > 0) {
-        targetVotes = targetVotes.filter(v => targetExpertIds.has(v.voterId))
-      }
+      const proposerMetrics = await getInternalVotingMetrics(inv.proposerDomainId, proposerMapped)
+      const targetMetrics = await getInternalVotingMetrics(inv.targetDomainId, targetMapped)
+      const proposerResult = await calculateVotingResult(proposerMapped, inv.proposerDomainId, 'DIRECT')
+      const targetResult = await calculateVotingResult(targetMapped, inv.targetDomainId, 'DIRECT')
 
       return {
         ...inv,
         stats: {
           proposer: {
-            total: proposerTotal,
-            approved: proposerVotes.filter(v => v.vote === 'APPROVE').length,
-            rejected: proposerVotes.filter(v => v.vote === 'REJECT').length
+            ...proposerMetrics,
+            approvals: proposerResult.approvals,
+            rejections: proposerResult.rejections
           },
           target: {
-            total: targetTotal,
-            approved: targetVotes.filter(v => v.vote === 'APPROVE').length,
-            rejected: targetVotes.filter(v => v.vote === 'REJECT').length
+            ...targetMetrics,
+            approvals: targetResult.approvals,
+            rejections: targetResult.rejections
           }
         }
       }

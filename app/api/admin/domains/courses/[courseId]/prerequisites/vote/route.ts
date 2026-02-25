@@ -26,10 +26,9 @@ export async function POST(
 
     // Check if user has any voting power in the course domain (direct only)
     const weight = await calculateUserVotingWeight(session.user.id, course.domainId, 'DIRECT')
-    const isAdmin = session.user.role === 'ADMIN'
 
-    if (weight === 0 && !isAdmin) {
-      return NextResponse.json({ error: 'Only admins and experts with voting power can vote' }, { status: 403 })
+    if (weight === 0) {
+      return NextResponse.json({ error: 'Only experts with voting power can vote' }, { status: 403 })
     }
 
     const { prerequisiteId, vote } = await request.json()
@@ -88,7 +87,7 @@ export async function POST(
       } else {
         nextStatus = 'APPROVED'
       }
-    } else if (rejections >= threshold) {
+    } else if (rejections > threshold) {
       nextStatus = 'REJECTED'
     }
 

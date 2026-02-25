@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 import { Prisma } from '@prisma/client'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const items = posts.map(post => {
+    const items = await Promise.all(posts.map(async (post) => {
       const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
       const cm = commentsMap.get(post.id)
       
@@ -170,6 +171,13 @@ export async function GET(request: NextRequest) {
         score: v.score
       }))
 
+      const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }> = {}
+      for (const d of relatedDomains) {
+        const domainVotes = post.votes.filter(v => v.domainId === d.id || (!v.domainId && d.id === post.domainId))
+        const mappedVotes = domainVotes.map(v => ({ voterId: v.adminId, vote: 'APPROVE' as const }))
+        votingByDomain[d.id] = await getInternalVotingMetrics(d.id, mappedVotes)
+      }
+
       return {
         ...post,
         totalScore,
@@ -177,9 +185,10 @@ export async function GET(request: NextRequest) {
         commentsCount: cm?.commentsCount ?? (post._count?.comments ?? 0),
         unreadComments: unreadCounts[post.id] || 0,
         relatedDomains,
-        myVotes
+        myVotes,
+        votingByDomain
       }
-    })
+    }))
 
     return NextResponse.json({
       items,

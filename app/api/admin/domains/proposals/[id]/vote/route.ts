@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult } from '@/lib/voting-utils'
 import { slugify } from '@/lib/utils'
+import { getInternalVotingWeight } from '@/lib/voting-utils'
 
 export async function POST(
   request: NextRequest,
@@ -42,22 +42,11 @@ export async function POST(
         return NextResponse.json({ error: 'Only admins can vote on root domain creation/deletion' }, { status: 403 })
       }
     } else {
-      // Check if user is expert of voting domain
       const isExpert = await prisma.domainExpert.findFirst({
         where: { domainId: votingDomainId, userId: session.user.id }
       })
-      
-      // Also check if the expert is in the RIGHT wing. Only RIGHT wing experts can vote on proposals.
-      if (!isExpert || isExpert.wing !== 'RIGHT') {
-        console.warn('Vote rejected: User is not RIGHT wing expert of voting domain', {
-            userId: session.user.id,
-            votingDomainId,
-            proposalId,
-            userRole: session.user.role,
-            isExpert: !!isExpert,
-            expertWing: isExpert?.wing
-        })
-        return NextResponse.json({ error: 'Only RIGHT wing experts can vote on domain proposals' }, { status: 403 })
+      if (!isExpert) {
+        return NextResponse.json({ error: 'Only domain experts can vote on proposals' }, { status: 403 })
       }
     }
 
@@ -73,18 +62,52 @@ export async function POST(
       where: { proposalId }
     })
 
-    // Use DIRECT voting on the parent domain
-    const { approvals, rejections } = await calculateVotingResult(
-      allVotes,
-      votingDomainId || '', // If no votingDomainId, calculateVotingResult might fail or return 0
-      'DIRECT'
-    )
+    let approvals = 0
+    let rejections = 0
+    let eligibleCount = 0
+    let totalRights = 0
+    let votedCount = 0
+    let rightsUsedPercent = 0
+
+    if (votingDomainId) {
+      const experts = await prisma.domainExpert.findMany({
+        where: { domainId: votingDomainId },
+        select: { userId: true, role: true, wing: true }
+      })
+      totalRights = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+      eligibleCount = experts.length
+      const votes = allVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votedSet = new Set(votes.map(v => v.voterId))
+      const votedExperts = experts.filter(e => votedSet.has(e.userId))
+      votedCount = votedExperts.length
+      const usedRights = votedExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+      rightsUsedPercent = totalRights > 0 ? (usedRights / totalRights) * 100 : 0
+      const expertMap = new Map(experts.map(e => [e.userId, getInternalVotingWeight(e.role, e.wing)]))
+      for (const v of votes) {
+        const w = expertMap.get(v.voterId) || 0
+        const pct = totalRights > 0 ? (w / totalRights) * 100 : 0
+        if (v.vote === 'APPROVE') approvals += pct
+        else if (v.vote === 'REJECT') rejections += pct
+      }
+    } else {
+      const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } })
+      eligibleCount = admins.length
+      totalRights = admins.length
+      const votes = allVotes.filter(v => admins.some(a => a.id === v.voterId))
+      votedCount = votes.length
+      rightsUsedPercent = totalRights > 0 ? (votedCount / totalRights) * 100 : 0
+      approvals = votes.filter(v => v.vote === 'APPROVE').length / (totalRights || 1) * 100
+      rejections = votes.filter(v => v.vote === 'REJECT').length / (totalRights || 1) * 100
+    }
 
     const threshold = 50
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
 
-    if (approvals > threshold) nextStatus = 'APPROVED'
-    else if (rejections > threshold) nextStatus = 'REJECTED'
+    const approvalsPercent = approvals
+    const rejectionsPercent = rejections
+
+    if (approvalsPercent > threshold) nextStatus = 'APPROVED'
+    else if (rejectionsPercent > threshold) nextStatus = 'REJECTED'
 
     if (nextStatus !== 'PENDING') {
       await prisma.$transaction(async (tx) => {
@@ -170,7 +193,7 @@ export async function POST(
       })
     }
 
-    return NextResponse.json({ success: true, status: nextStatus })
+    return NextResponse.json({ success: true, status: nextStatus, metrics: { eligibleCount, totalRights, votedCount, rightsUsedPercent, approvals, rejections } })
   } catch (error) {
     console.error('Error voting on domain proposal:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

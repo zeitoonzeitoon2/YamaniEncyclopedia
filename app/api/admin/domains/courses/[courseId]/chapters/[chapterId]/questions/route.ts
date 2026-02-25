@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -45,7 +46,14 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ questions })
+    const enriched = await Promise.all(questions.map(async (q) => {
+      const votes = q.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const voting = await getInternalVotingMetrics(course.domainId, votes)
+      const { approvals, rejections } = await calculateVotingResult(votes, course.domainId, 'DIRECT')
+      return { ...q, voting: { ...voting, approvals, rejections } }
+    }))
+
+    return NextResponse.json({ questions: enriched })
   } catch (error) {
     console.error('Error fetching questions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

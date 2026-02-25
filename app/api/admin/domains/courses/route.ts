@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -78,15 +79,21 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const payload = courses.map((c) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      syllabus: c.syllabus,
-      status: c.status,
-      createdAt: c.createdAt,
-      proposerUser: c.proposer,
-      votes: c.votes,
+    const payload = await Promise.all(courses.map(async (c) => {
+      const votes = c.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const voting = await getInternalVotingMetrics(domainId, votes)
+      const { approvals, rejections } = await calculateVotingResult(votes, domainId, 'DIRECT')
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        syllabus: c.syllabus,
+        status: c.status,
+        createdAt: c.createdAt,
+        proposerUser: c.proposer,
+        votes: c.votes,
+        voting: { ...voting, approvals, rejections }
+      }
     }))
 
     return NextResponse.json({ courses: payload })

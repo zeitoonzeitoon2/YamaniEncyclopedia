@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
+import VotingStatusSummary from '@/components/VotingStatusSummary'
 
 type Prerequisite = {
   id: string
@@ -15,6 +16,7 @@ type Prerequisite = {
   prerequisiteCourse?: { id: string; title: string }
   course?: { id: string; title: string }
   _count?: { votes: number }
+  voting?: VotingMetrics
 }
 
 type DomainPrerequisite = {
@@ -25,11 +27,19 @@ type DomainPrerequisite = {
   proposer: { name: string | null }
   domain: { id: string; name: string; slug: string }
   _count?: { votes: number }
+  voting?: VotingMetrics
 }
 
 type Course = {
   id: string
   title: string
+}
+
+type VotingMetrics = {
+  eligibleCount: number
+  totalRights: number
+  votedCount: number
+  rightsUsedPercent: number
 }
 
 export default function CoursePrerequisitesManager({ courseId }: { courseId: string }) {
@@ -157,6 +167,20 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           </span>
         </div>
       </div>
+      {p.voting && (
+        <VotingStatusSummary
+          eligibleCount={p.voting.eligibleCount}
+          totalRights={p.voting.totalRights}
+          votedCount={p.voting.votedCount}
+          rightsUsedPercent={p.voting.rightsUsedPercent}
+          labels={{
+            eligible: tAdmin('votingEligibleLabel'),
+            totalRights: tAdmin('votingRightsLabel'),
+            voted: tAdmin('votingVotedLabel'),
+            rightsUsed: tAdmin('votingRightsUsedLabel')
+          }}
+        />
+      )}
 
       {!showCourse && p.status === 'PENDING' && (
         <div className="flex gap-2 w-full mt-1">
@@ -211,6 +235,20 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           </span>
         </div>
       </div>
+      {p.voting && (
+        <VotingStatusSummary
+          eligibleCount={p.voting.eligibleCount}
+          totalRights={p.voting.totalRights}
+          votedCount={p.voting.votedCount}
+          rightsUsedPercent={p.voting.rightsUsedPercent}
+          labels={{
+            eligible: tAdmin('votingEligibleLabel'),
+            totalRights: tAdmin('votingRightsLabel'),
+            voted: tAdmin('votingVotedLabel'),
+            rightsUsed: tAdmin('votingRightsUsedLabel')
+          }}
+        />
+      )}
     </div>
   )
 
