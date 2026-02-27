@@ -32,8 +32,8 @@ type Investment = {
   endDate?: string
   createdAt: string
   stats?: {
-    proposer: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
-    target: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
+    proposer: { eligibleCount: number; totalRights: number; votedCount: number; usedRights?: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
+    target: { eligibleCount: number; totalRights: number; votedCount: number; usedRights?: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
   }
 }
 
@@ -442,6 +442,7 @@ export default function DomainInvestments() {
                         eligibleCount={inv.stats.proposer.eligibleCount}
                         totalRights={inv.stats.proposer.totalRights}
                         votedCount={inv.stats.proposer.votedCount}
+                        usedRights={inv.stats.proposer.usedRights}
                         rightsUsedPercent={inv.stats.proposer.rightsUsedPercent}
                         totalScore={inv.stats.proposer.totalScore}
                       />
@@ -457,6 +458,7 @@ export default function DomainInvestments() {
                         eligibleCount={inv.stats.target.eligibleCount}
                         totalRights={inv.stats.target.totalRights}
                         votedCount={inv.stats.target.votedCount}
+                        usedRights={inv.stats.target.usedRights}
                         rightsUsedPercent={inv.stats.target.rightsUsedPercent}
                         totalScore={inv.stats.target.totalScore}
                       />

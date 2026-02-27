@@ -7,6 +7,7 @@ type VotingStatusSummaryProps = {
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights?: number
   rightsUsedPercent: number
   totalScore?: number
   labels?: {
@@ -21,16 +22,18 @@ export default function VotingStatusSummary({
   eligibleCount,
   totalRights,
   votedCount,
+  usedRights,
   totalScore,
 }: VotingStatusSummaryProps) {
   const t = useTranslations('votingThresholds')
   const [hoveredItem, setHoveredItem] = useState<'participation' | 'score' | null>(null)
 
+  const currentUsedRights = usedRights ?? votedCount
   const participationThreshold = totalRights / 2
   const scoreThreshold = totalRights / 2
   const fmt = (n: number) => Number.isInteger(n) ? String(n) : n.toFixed(1)
 
-  const participationMet = votedCount >= participationThreshold
+  const participationMet = currentUsedRights >= participationThreshold
   const scoreMet = totalScore !== undefined && totalScore >= scoreThreshold
 
   return (
@@ -49,7 +52,7 @@ export default function VotingStatusSummary({
           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${participationMet ? 'bg-green-500' : 'bg-site-muted/40'}`} />
           <span className="text-site-muted">{t('participationLabel')}</span>
           <span className={`font-semibold mr-auto ${participationMet ? 'text-green-500' : 'text-site-text'}`}>
-            {votedCount}
+            {fmt(currentUsedRights)}
           </span>
           <span className="text-site-muted/60">{t('of')}</span>
           <span className="text-site-muted font-medium">{fmt(participationThreshold)}</span>
@@ -62,7 +65,7 @@ export default function VotingStatusSummary({
               eligible: eligibleCount,
               totalRights: fmt(totalRights),
               threshold: fmt(participationThreshold),
-              current: votedCount,
+              current: fmt(currentUsedRights),
             })}
           </div>
         )}

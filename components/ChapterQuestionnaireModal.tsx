@@ -27,6 +27,7 @@ type VotingMetrics = {
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights?: number
   rightsUsedPercent: number
   totalScore?: number
 }
@@ -236,6 +237,7 @@ export default function ChapterQuestionnaireModal({
                         eligibleCount={q.voting.eligibleCount}
                         totalRights={q.voting.totalRights}
                         votedCount={q.voting.votedCount}
+                        usedRights={q.voting.usedRights}
                         rightsUsedPercent={q.voting.rightsUsedPercent}
                         totalScore={q.voting.totalScore}
                       />

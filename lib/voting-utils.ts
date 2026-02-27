@@ -349,6 +349,7 @@ export async function getInternalVotingMetrics(
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights: number
   rightsUsedPercent: number
   totalScore: number
 }> {
@@ -373,7 +374,7 @@ export async function getInternalVotingMetrics(
     totalScore += s * weight
   }
 
-  return { eligibleCount, totalRights, votedCount, rightsUsedPercent, totalScore }
+  return { eligibleCount, totalRights, votedCount, usedRights, rightsUsedPercent, totalScore }
 }
 
 export async function checkScoreApproval(
@@ -397,7 +398,9 @@ export async function checkScoreApproval(
   const eligibleCount = experts.length
 
   const votedSet = new Set(votes.map(v => v.voterId))
-  const voterCount = experts.filter(e => votedSet.has(e.userId)).length
+  const votedExperts = experts.filter(e => votedSet.has(e.userId))
+  const voterCount = votedExperts.length
+  const usedRights = votedExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
 
   let totalScore = 0
   for (const v of votes) {
@@ -407,10 +410,11 @@ export async function checkScoreApproval(
     totalScore += v.score * weight
   }
 
-  const participationMet = eligibleCount > 0 && voterCount >= eligibleCount / 2
-  const threshold = totalRights / 2
-  const approved = participationMet && totalScore >= threshold
-  const rejected = !options?.noRejection && participationMet && totalScore <= -threshold
+  const participationThreshold = totalRights / 2
+  const participationMet = totalRights > 0 && usedRights >= participationThreshold
+  const scoreThreshold = totalRights / 2
+  const approved = participationMet && totalScore >= scoreThreshold
+  const rejected = !options?.noRejection && participationMet && totalScore <= -scoreThreshold
 
   return { approved, rejected, participationMet, totalScore, totalRights, voterCount, eligibleCount }
 }

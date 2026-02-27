@@ -74,7 +74,8 @@ export async function POST(
       const voterCount = adminVotes.length
       const totalScore = adminVotes.reduce((sum, v) => sum + v.score, 0)
       const totalRights = eligibleCount
-      const participationMet = eligibleCount > 0 && voterCount >= eligibleCount / 2
+      const usedRights = voterCount
+      const participationMet = totalRights > 0 && usedRights >= totalRights / 2
       const threshold = totalRights / 2
       const approved = participationMet && totalScore >= threshold
       const rejected = participationMet && totalScore <= -threshold

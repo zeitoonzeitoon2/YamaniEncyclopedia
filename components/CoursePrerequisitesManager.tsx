@@ -40,6 +40,7 @@ type VotingMetrics = {
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights?: number
   rightsUsedPercent: number
   totalScore?: number
 }
@@ -174,6 +175,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           eligibleCount={p.voting.eligibleCount}
           totalRights={p.voting.totalRights}
           votedCount={p.voting.votedCount}
+          usedRights={p.voting.usedRights}
           rightsUsedPercent={p.voting.rightsUsedPercent}
           totalScore={p.voting.totalScore}
         />
@@ -218,6 +220,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           eligibleCount={p.voting.eligibleCount}
           totalRights={p.voting.totalRights}
           votedCount={p.voting.votedCount}
+          usedRights={p.voting.usedRights}
           rightsUsedPercent={p.voting.rightsUsedPercent}
           totalScore={p.voting.totalScore}
         />

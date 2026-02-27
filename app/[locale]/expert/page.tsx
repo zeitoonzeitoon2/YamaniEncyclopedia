@@ -58,7 +58,7 @@ interface Post {
   changeSummary?: string | null
   relatedDomains?: { id: string; name: string }[]
   myVotes?: { domainId: string | null; score: number }[]
-  votingByDomain?: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number }>
+  votingByDomain?: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; usedRights?: number; rightsUsedPercent: number; totalScore?: number }>
 }
 
 interface RecentComment {
@@ -1111,6 +1111,7 @@ export default function ExpertDashboard() {
                                           eligibleCount={selectedPost.votingByDomain[domain.id].eligibleCount}
                                           totalRights={selectedPost.votingByDomain[domain.id].totalRights}
                                           votedCount={selectedPost.votingByDomain[domain.id].votedCount}
+                                          usedRights={selectedPost.votingByDomain[domain.id].usedRights}
                                           rightsUsedPercent={selectedPost.votingByDomain[domain.id].rightsUsedPercent}
                                           totalScore={selectedPost.votingByDomain[domain.id].totalScore}
                                         />
@@ -1133,6 +1134,7 @@ export default function ExpertDashboard() {
                                     eligibleCount={selectedPost.votingByDomain[selectedPost.domainId].eligibleCount}
                                     totalRights={selectedPost.votingByDomain[selectedPost.domainId].totalRights}
                                     votedCount={selectedPost.votingByDomain[selectedPost.domainId].votedCount}
+                                    usedRights={selectedPost.votingByDomain[selectedPost.domainId].usedRights}
                                     rightsUsedPercent={selectedPost.votingByDomain[selectedPost.domainId].rightsUsedPercent}
                                     totalScore={selectedPost.votingByDomain[selectedPost.domainId].totalScore}
                                   />

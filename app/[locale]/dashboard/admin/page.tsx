@@ -155,6 +155,7 @@ type VotingMetrics = {
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights?: number
   rightsUsedPercent: number
   totalScore?: number
   approvals?: number
@@ -1738,6 +1739,7 @@ export default function AdminDashboard() {
                                           eligibleCount={p.voting.eligibleCount}
                                           totalRights={p.voting.totalRights}
                                           votedCount={p.voting.votedCount}
+                                          usedRights={p.voting.usedRights}
                                           rightsUsedPercent={p.voting.rightsUsedPercent}
                                           totalScore={p.voting.totalScore}
                                         />
@@ -1808,6 +1810,7 @@ export default function AdminDashboard() {
                                             eligibleCount={p.voting.eligibleCount}
                                             totalRights={p.voting.totalRights}
                                             votedCount={p.voting.votedCount}
+                                            usedRights={p.voting.usedRights}
                                             rightsUsedPercent={p.voting.rightsUsedPercent}
                                             totalScore={p.voting.totalScore}
                                           />
@@ -1939,6 +1942,7 @@ export default function AdminDashboard() {
                                               eligibleCount={course.voting.eligibleCount}
                                               totalRights={course.voting.totalRights}
                                               votedCount={course.voting.votedCount}
+                                              usedRights={course.voting.usedRights}
                                               rightsUsedPercent={course.voting.rightsUsedPercent}
                                               totalScore={course.voting.totalScore}
                                             />

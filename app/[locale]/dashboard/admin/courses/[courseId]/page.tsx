@@ -24,6 +24,7 @@ type VotingMetrics = {
   eligibleCount: number
   totalRights: number
   votedCount: number
+  usedRights?: number
   rightsUsedPercent: number
   totalScore?: number
 }
@@ -859,6 +860,7 @@ export default function AdminCourseChaptersPage() {
                             eligibleCount={chapter.voting.eligibleCount}
                             totalRights={chapter.voting.totalRights}
                             votedCount={chapter.voting.votedCount}
+                            usedRights={chapter.voting.usedRights}
                             rightsUsedPercent={chapter.voting.rightsUsedPercent}
                             totalScore={chapter.voting.totalScore}
                           />
