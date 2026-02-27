@@ -32,8 +32,8 @@ type Investment = {
   endDate?: string
   createdAt: string
   stats?: {
-    proposer: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; approvals: number; rejections: number }
-    target: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; approvals: number; rejections: number }
+    proposer: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
+    target: { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number; approvals: number; rejections: number }
   }
 }
 
@@ -443,12 +443,7 @@ export default function DomainInvestments() {
                         totalRights={inv.stats.proposer.totalRights}
                         votedCount={inv.stats.proposer.votedCount}
                         rightsUsedPercent={inv.stats.proposer.rightsUsedPercent}
-                        labels={{
-                          eligible: t('votingEligibleLabel'),
-                          totalRights: t('votingRightsLabel'),
-                          voted: t('votingVotedLabel'),
-                          rightsUsed: t('votingRightsUsedLabel')
-                        }}
+                        totalScore={inv.stats.proposer.totalScore}
                       />
                     </div>
 
@@ -463,12 +458,7 @@ export default function DomainInvestments() {
                         totalRights={inv.stats.target.totalRights}
                         votedCount={inv.stats.target.votedCount}
                         rightsUsedPercent={inv.stats.target.rightsUsedPercent}
-                        labels={{
-                          eligible: t('votingEligibleLabel'),
-                          totalRights: t('votingRightsLabel'),
-                          voted: t('votingVotedLabel'),
-                          rightsUsed: t('votingRightsUsedLabel')
-                        }}
+                        totalScore={inv.stats.target.totalScore}
                       />
                     </div>
                   </div>

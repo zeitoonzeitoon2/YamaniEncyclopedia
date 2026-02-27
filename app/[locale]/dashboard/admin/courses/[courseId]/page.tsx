@@ -25,6 +25,7 @@ type VotingMetrics = {
   totalRights: number
   votedCount: number
   rightsUsedPercent: number
+  totalScore?: number
 }
 
 type ChapterAuthor = {
@@ -859,12 +860,7 @@ export default function AdminCourseChaptersPage() {
                             totalRights={chapter.voting.totalRights}
                             votedCount={chapter.voting.votedCount}
                             rightsUsedPercent={chapter.voting.rightsUsedPercent}
-                            labels={{
-                              eligible: t('votingEligibleLabel'),
-                              totalRights: t('votingRightsLabel'),
-                              voted: t('votingVotedLabel'),
-                              rightsUsed: t('votingRightsUsedLabel')
-                            }}
+                            totalScore={chapter.voting.totalScore}
                           />
                         </div>
                       )}

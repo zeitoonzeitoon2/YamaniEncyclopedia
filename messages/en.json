@@ -831,6 +831,13 @@
     "supportive": "Supportive",
     "stronglySupportive": "Strongly Supportive"
   },
+  "votingThresholds": {
+    "participationLabel": "Participation:",
+    "scoreLabel": "Score:",
+    "of": "of",
+    "participationTooltip": "There are {eligible} eligible voters with a total of {totalRights} voting rights. At least half of these rights ({threshold}) must be exercised for the vote to be valid. Currently, {current} votes have been cast.",
+    "scoreTooltip": "The total voting rights amount to {totalRights}. For approval, the sum of positive and negative scores must reach at least half of the voting rights ({threshold}). The current total score is {current}."
+  },
   "home": {
     "idLabel": "ID:",
     "status": {

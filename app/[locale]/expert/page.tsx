@@ -58,7 +58,7 @@ interface Post {
   changeSummary?: string | null
   relatedDomains?: { id: string; name: string }[]
   myVotes?: { domainId: string | null; score: number }[]
-  votingByDomain?: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }>
+  votingByDomain?: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number; totalScore?: number }>
 }
 
 interface RecentComment {
@@ -1112,12 +1112,7 @@ export default function ExpertDashboard() {
                                           totalRights={selectedPost.votingByDomain[domain.id].totalRights}
                                           votedCount={selectedPost.votingByDomain[domain.id].votedCount}
                                           rightsUsedPercent={selectedPost.votingByDomain[domain.id].rightsUsedPercent}
-                                          labels={{
-                                            eligible: t('votingEligibleLabel'),
-                                            totalRights: t('votingRightsLabel'),
-                                            voted: t('votingVotedLabel'),
-                                            rightsUsed: t('votingRightsUsedLabel')
-                                          }}
+                                          totalScore={selectedPost.votingByDomain[domain.id].totalScore}
                                         />
                                       </div>
                                     )}
@@ -1139,12 +1134,7 @@ export default function ExpertDashboard() {
                                     totalRights={selectedPost.votingByDomain[selectedPost.domainId].totalRights}
                                     votedCount={selectedPost.votingByDomain[selectedPost.domainId].votedCount}
                                     rightsUsedPercent={selectedPost.votingByDomain[selectedPost.domainId].rightsUsedPercent}
-                                    labels={{
-                                      eligible: t('votingEligibleLabel'),
-                                      totalRights: t('votingRightsLabel'),
-                                      voted: t('votingVotedLabel'),
-                                      rightsUsed: t('votingRightsUsedLabel')
-                                    }}
+                                    totalScore={selectedPost.votingByDomain[selectedPost.domainId].totalScore}
                                   />
                                 </div>
                               )}

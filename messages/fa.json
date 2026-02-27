@@ -863,6 +863,13 @@
     "supportive": "موافق",
     "stronglySupportive": "کاملاً موافق"
   },
+  "votingThresholds": {
+    "participationLabel": "آستانهٔ مشارکت:",
+    "scoreLabel": "آستانهٔ امتیاز:",
+    "of": "از",
+    "participationTooltip": "مجموعاً {eligible} نفر واجد شرایط رأی‌دهی هستند که مجموع حقوق رأی ایشان {totalRights} می‌باشد. جهت اعتبار رأی‌گیری، دست‌کم نیمی از این حقوق ({threshold}) می‌بایست مورد استفاده قرار گیرد. تاکنون {current} رأی ثبت شده است.",
+    "scoreTooltip": "مجموع حقوق رأی {totalRights} می‌باشد. برای تأیید، مجموع امتیازات مثبت و منفی می‌بایست حداقل به نصف حقوق رأی ({threshold}) برسد. مجموع امتیازات فعلی {current} است."
+  },
   "home": {
     "idLabel": "شناسه:",
     "status": {

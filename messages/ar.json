@@ -808,6 +808,13 @@
     "supportive": "مؤيد",
     "stronglySupportive": "مؤيد بشدة"
   },
+  "votingThresholds": {
+    "participationLabel": "حدّ المشاركة:",
+    "scoreLabel": "حدّ النقاط:",
+    "of": "من",
+    "participationTooltip": "يوجد {eligible} ناخباً مؤهلاً بإجمالي {totalRights} حقوق تصويت. يجب استخدام نصف هذه الحقوق على الأقل ({threshold}) لصلاحية التصويت. حتى الآن تم تسجيل {current} صوتاً.",
+    "scoreTooltip": "إجمالي حقوق التصويت هو {totalRights}. للموافقة، يجب أن يصل مجموع النقاط الإيجابية والسلبية إلى نصف حقوق التصويت على الأقل ({threshold}). مجموع النقاط الحالي هو {current}."
+  },
   "home": {
     "idLabel": "المعرف:",
     "status": {

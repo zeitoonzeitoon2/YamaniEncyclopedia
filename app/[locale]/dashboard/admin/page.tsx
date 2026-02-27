@@ -156,6 +156,7 @@ type VotingMetrics = {
   totalRights: number
   votedCount: number
   rightsUsedPercent: number
+  totalScore?: number
   approvals?: number
   rejections?: number
 }
@@ -1731,17 +1732,6 @@ export default function AdminDashboard() {
                                     <div className="text-xs text-site-muted mt-1">
                                       {t('proposerLabel')}: {p.proposer.name || p.proposer.email}
                                     </div>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-site-muted">
-                                      <span className="border border-site-border rounded-full px-2 py-0.5 bg-site-bg">
-                                        {t('eligibleVoters', { count: p.voting?.eligibleCount || 0 })}
-                                      </span>
-                                      <span className="border border-green-200 dark:border-green-800 rounded-full px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400">
-                                        +{p.votes.filter((v: any) => v.score > 0).length}
-                                      </span>
-                                      <span className="border border-red-200 dark:border-red-800 rounded-full px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400">
-                                        -{p.votes.filter((v: any) => v.score < 0).length}
-                                      </span>
-                                    </div>
                                     {p.voting && (
                                       <div className="mt-2">
                                         <VotingStatusSummary
@@ -1749,12 +1739,7 @@ export default function AdminDashboard() {
                                           totalRights={p.voting.totalRights}
                                           votedCount={p.voting.votedCount}
                                           rightsUsedPercent={p.voting.rightsUsedPercent}
-                                          labels={{
-                                            eligible: t('votingEligibleLabel'),
-                                            totalRights: t('votingRightsLabel'),
-                                            voted: t('votingVotedLabel'),
-                                            rightsUsed: t('votingRightsUsedLabel')
-                                          }}
+                                          totalScore={p.voting.totalScore}
                                         />
                                       </div>
                                     )}
@@ -1824,12 +1809,7 @@ export default function AdminDashboard() {
                                             totalRights={p.voting.totalRights}
                                             votedCount={p.voting.votedCount}
                                             rightsUsedPercent={p.voting.rightsUsedPercent}
-                                            labels={{
-                                              eligible: t('votingEligibleLabel'),
-                                              totalRights: t('votingRightsLabel'),
-                                              voted: t('votingVotedLabel'),
-                                              rightsUsed: t('votingRightsUsedLabel')
-                                            }}
+                                            totalScore={p.voting.totalScore}
                                           />
                                         </div>
                                       )}
@@ -1928,8 +1908,6 @@ export default function AdminDashboard() {
                             {domainCourses
                               .filter((c) => c.status === 'PENDING')
                               .map((course) => {
-                                const positiveVotes = course.votes.filter((v: any) => v.score > 0).length
-                                const negativeVotes = course.votes.filter((v: any) => v.score < 0).length
                                 const myVote = course.votes.find((v: any) => v.voterId === session?.user?.id)?.score ?? null
                                 return (
                                   <div key={course.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
@@ -1955,19 +1933,6 @@ export default function AdminDashboard() {
                                         <div className="text-xs text-site-muted mt-1">
                                           {t('proposerLabel')}: {course.proposerUser?.email || course.proposerUser?.name || '—'}
                                         </div>
-                                        <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                          <span className="border border-site-border rounded-full px-2 py-0.5">
-                                            +{positiveVotes}
-                                          </span>
-                                          <span className="border border-site-border rounded-full px-2 py-0.5">
-                                            -{negativeVotes}
-                                          </span>
-                                          {myVote !== null && myVote !== undefined && myVote !== 0 && (
-                                            <span className="border border-site-border rounded-full px-2 py-0.5">
-                                              {t('myVote')}: {myVote > 0 ? `+${myVote}` : myVote}
-                                            </span>
-                                          )}
-                                        </div>
                                         {course.voting && (
                                           <div className="mt-2">
                                             <VotingStatusSummary
@@ -1975,12 +1940,7 @@ export default function AdminDashboard() {
                                               totalRights={course.voting.totalRights}
                                               votedCount={course.voting.votedCount}
                                               rightsUsedPercent={course.voting.rightsUsedPercent}
-                                              labels={{
-                                                eligible: t('votingEligibleLabel'),
-                                                totalRights: t('votingRightsLabel'),
-                                                voted: t('votingVotedLabel'),
-                                                rightsUsed: t('votingRightsUsedLabel')
-                                              }}
+                                              totalScore={course.voting.totalScore}
                                             />
                                           </div>
                                         )}

@@ -41,6 +41,7 @@ type VotingMetrics = {
   totalRights: number
   votedCount: number
   rightsUsedPercent: number
+  totalScore?: number
 }
 
 export default function CoursePrerequisitesManager({ courseId }: { courseId: string }) {
@@ -174,12 +175,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           totalRights={p.voting.totalRights}
           votedCount={p.voting.votedCount}
           rightsUsedPercent={p.voting.rightsUsedPercent}
-          labels={{
-            eligible: tAdmin('votingEligibleLabel'),
-            totalRights: tAdmin('votingRightsLabel'),
-            voted: tAdmin('votingVotedLabel'),
-            rightsUsed: tAdmin('votingRightsUsedLabel')
-          }}
+          totalScore={p.voting.totalScore}
         />
       )}
 
@@ -223,12 +219,7 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
           totalRights={p.voting.totalRights}
           votedCount={p.voting.votedCount}
           rightsUsedPercent={p.voting.rightsUsedPercent}
-          labels={{
-            eligible: tAdmin('votingEligibleLabel'),
-            totalRights: tAdmin('votingRightsLabel'),
-            voted: tAdmin('votingVotedLabel'),
-            rightsUsed: tAdmin('votingRightsUsedLabel')
-          }}
+          totalScore={p.voting.totalScore}
         />
       )}
     </div>

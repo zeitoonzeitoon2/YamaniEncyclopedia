@@ -28,6 +28,7 @@ type VotingMetrics = {
   totalRights: number
   votedCount: number
   rightsUsedPercent: number
+  totalScore?: number
 }
 
 interface ChapterQuestionnaireModalProps {
@@ -236,12 +237,7 @@ export default function ChapterQuestionnaireModal({
                         totalRights={q.voting.totalRights}
                         votedCount={q.voting.votedCount}
                         rightsUsedPercent={q.voting.rightsUsedPercent}
-                        labels={{
-                          eligible: tDashboard('votingEligibleLabel'),
-                          totalRights: tDashboard('votingRightsLabel'),
-                          voted: tDashboard('votingVotedLabel'),
-                          rightsUsed: tDashboard('votingRightsUsedLabel')
-                        }}
+                        totalScore={q.voting.totalScore}
                       />
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
