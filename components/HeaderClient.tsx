@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import React from 'react'
 import { Link, usePathname, useRouter } from '@/lib/navigation'
 import Image from 'next/image'
-import { User, LogOut, Edit, Settings, Sun, Moon, Languages, LogIn } from 'lucide-react'
+import { User, LogOut, Edit, Settings, Sun, Moon, Languages, LogIn, Bell, ChevronDown, ChevronUp } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
 import { locales } from '@/i18n'
@@ -23,6 +23,8 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [langMenuOpen, setLangMenuOpen] = React.useState(false)
   const [profileImageError, setProfileImageError] = React.useState(false)
+  const [notifications, setNotifications] = React.useState<{ total: number; items: Array<{ type: string; id: string; title: string; domainName?: string; createdAt: string }> }>({ total: 0, items: [] })
+  const [notifOpen, setNotifOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
   const langMenuRef = React.useRef<HTMLDivElement | null>(null)
   const router = useRouter()
@@ -68,6 +70,23 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
       }
     })()
   }, [status, session?.user?.role])
+
+  React.useEffect(() => {
+    if (status !== 'authenticated') return
+    let cancelled = false
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/notifications', { credentials: 'include' })
+        if (res.ok && !cancelled) {
+          const data = await res.json()
+          setNotifications(data)
+        }
+      } catch { /* silent */ }
+    }
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 60000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [status])
 
   React.useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -203,7 +222,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                     e.stopPropagation();
                     setMenuOpen((prev) => !prev);
                   }}
-                  className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
+                  className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-warm-primary/30 transition-all ml-1"
                 >
                   {session.user?.image && !profileImageError ? (
                     <Image
@@ -219,14 +238,72 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                       <User size={14} />
                     </span>
                   )}
+                  {notifications.total > 0 && (
+                    <span className="absolute -top-1 -end-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold px-1 ring-2 ring-site-bg">
+                      {notifications.total > 99 ? '99+' : notifications.total}
+                    </span>
+                  )}
                 </button>
                 {menuOpen && (
-                  <div className="absolute end-0 mt-2 w-56 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
+                  <div className="absolute end-0 mt-2 w-72 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
                     <div className="px-4 py-3 border-b border-gray-700">
                       <div className="text-site-text text-sm font-semibold truncate">{session.user?.name || session.user?.email || '—'}</div>
                       <div className="text-site-muted text-xs truncate">{session.user?.email || ''}</div>
                     </div>
                     <div className="py-1">
+                      {/* Notifications Section */}
+                      {notifications.total > 0 && (
+                        <div className="border-b border-gray-700/50">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setNotifOpen(prev => !prev)
+                            }}
+                            className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
+                          >
+                            <Bell size={16} className="text-amber-400" />
+                            <span className="flex-1">{t('notifications')}</span>
+                            <span className="min-w-[20px] h-5 flex items-center justify-center rounded-full bg-red-500/90 text-white text-[10px] font-bold px-1.5">
+                              {notifications.total}
+                            </span>
+                            {notifOpen ? <ChevronUp size={14} className="text-site-muted" /> : <ChevronDown size={14} className="text-site-muted" />}
+                          </button>
+                          {notifOpen && (
+                            <div className="max-h-60 overflow-y-auto">
+                              {notifications.items.map((item) => (
+                                <a
+                                  key={`${item.type}-${item.id}`}
+                                  href={getLocalizedHref(
+                                    item.type === 'post' ? `/expert` : '/dashboard/admin'
+                                  )}
+                                  className="block px-4 py-2 hover:bg-site-card/40 border-t border-gray-700/30"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setMenuOpen(false)
+                                  }}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                                    <div className="min-w-0">
+                                      <div className="text-xs text-site-text truncate">{item.title}</div>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-site-border/30 text-site-muted">
+                                          {t(`notifType_${item.type}`)}
+                                        </span>
+                                        {item.domainName && (
+                                          <span className="text-[10px] text-site-muted truncate">{item.domainName}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <a
                         href={getLocalizedHref(`/profile/${session.user?.id}`)}
                         className="w-full text-start px-4 py-2 text-sm text-site-text hover:bg-site-card/60 flex items-center gap-2"
