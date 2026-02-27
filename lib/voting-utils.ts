@@ -465,6 +465,39 @@ export async function getAvailableVotingPower(
   return Math.max(0, 100 - usedPower)
 }
 
+const VOTING_EXPIRY_DAYS = 11
+
+export async function rejectExpiredProposals() {
+  const cutoff = new Date(Date.now() - VOTING_EXPIRY_DAYS * 24 * 60 * 60 * 1000)
+  const where = { status: 'PENDING', createdAt: { lt: cutoff } }
+  const data = { status: 'REJECTED' }
+
+  const [courses, chapters, prerequisites, domainPrereqs, proposals, investments, exchanges, questions] =
+    await Promise.all([
+      prisma.course.updateMany({ where, data }),
+      prisma.courseChapter.updateMany({ where, data }),
+      prisma.coursePrerequisite.updateMany({ where, data }),
+      prisma.domainPrerequisite.updateMany({ where, data }),
+      prisma.domainProposal.updateMany({ where, data }),
+      prisma.domainInvestment.updateMany({ where, data }),
+      prisma.domainExchangeProposal.updateMany({ where, data }),
+      prisma.chapterQuestion.updateMany({ where, data }),
+    ])
+
+  return {
+    courses: courses.count,
+    chapters: chapters.count,
+    prerequisites: prerequisites.count,
+    domainPrerequisites: domainPrereqs.count,
+    proposals: proposals.count,
+    investments: investments.count,
+    exchanges: exchanges.count,
+    questions: questions.count,
+    total: courses.count + chapters.count + prerequisites.count + domainPrereqs.count +
+           proposals.count + investments.count + exchanges.count + questions.count,
+  }
+}
+
 export async function settleExpiredInvestments() {
   const now = new Date()
   const result = await prisma.domainInvestment.updateMany({

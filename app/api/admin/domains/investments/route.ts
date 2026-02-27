@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getInternalVotingMetrics, settleExpiredInvestments } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, settleExpiredInvestments, rejectExpiredProposals } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -200,6 +200,7 @@ export async function GET(req: NextRequest) {
   try {
     // Auto-settle expired investments whenever the list is fetched
     await settleExpiredInvestments()
+    await rejectExpiredProposals()
 
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')

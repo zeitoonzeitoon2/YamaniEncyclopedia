@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, rejectExpiredProposals } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    await rejectExpiredProposals()
 
     const { searchParams } = new URL(request.url)
     const domainId = (searchParams.get('domainId') || '').trim()

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, rejectExpiredProposals } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -35,6 +35,8 @@ export async function GET(
 
     const perm = await canManageDomainCourses(session.user, course.domainId)
     if (!perm.ok) return NextResponse.json({ error: perm.error }, { status: perm.status })
+
+    await rejectExpiredProposals()
 
     const questions = await prisma.chapterQuestion.findMany({
       where: { chapterId },

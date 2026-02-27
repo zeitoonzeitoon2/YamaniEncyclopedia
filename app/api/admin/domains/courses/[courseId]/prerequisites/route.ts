@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { causesCircularDependency } from '@/lib/course-utils'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, rejectExpiredProposals } from '@/lib/voting-utils'
 
 export async function GET(
   request: NextRequest,
@@ -14,6 +14,8 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    await rejectExpiredProposals()
 
     const course = await prisma.course.findUnique({
       where: { id: params.courseId },

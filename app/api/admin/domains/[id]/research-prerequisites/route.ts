@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, rejectExpiredProposals } from '@/lib/voting-utils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -30,6 +30,8 @@ export async function GET(
     if (!canView) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    await rejectExpiredProposals()
 
     const prerequisites = await prisma.domainPrerequisite.findMany({
       where: { domainId: params.id },

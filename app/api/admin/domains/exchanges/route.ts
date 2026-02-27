@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getEffectiveShare } from '@/lib/voting-utils'
+import { getEffectiveShare, rejectExpiredProposals } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -69,6 +69,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    await rejectExpiredProposals()
+
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')
 
