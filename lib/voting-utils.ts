@@ -472,7 +472,7 @@ export async function rejectExpiredProposals() {
   const where = { status: 'PENDING', createdAt: { lt: cutoff } }
   const data = { status: 'REJECTED' }
 
-  const [courses, chapters, prerequisites, domainPrereqs, proposals, investments, exchanges, questions] =
+  const [courses, chapters, prerequisites, domainPrereqs, proposals, investments, questions] =
     await Promise.all([
       prisma.course.updateMany({ where, data }),
       prisma.courseChapter.updateMany({ where, data }),
@@ -480,7 +480,6 @@ export async function rejectExpiredProposals() {
       prisma.domainPrerequisite.updateMany({ where, data }),
       prisma.domainProposal.updateMany({ where, data }),
       prisma.domainInvestment.updateMany({ where, data }),
-      prisma.domainExchangeProposal.updateMany({ where, data }),
       prisma.chapterQuestion.updateMany({ where, data }),
     ])
 
@@ -491,10 +490,9 @@ export async function rejectExpiredProposals() {
     domainPrerequisites: domainPrereqs.count,
     proposals: proposals.count,
     investments: investments.count,
-    exchanges: exchanges.count,
     questions: questions.count,
     total: courses.count + chapters.count + prerequisites.count + domainPrereqs.count +
-           proposals.count + investments.count + exchanges.count + questions.count,
+           proposals.count + investments.count + questions.count,
   }
 }
 
