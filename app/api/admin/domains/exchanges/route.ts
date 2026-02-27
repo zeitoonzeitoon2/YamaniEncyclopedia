@@ -99,8 +99,8 @@ export async function GET(req: NextRequest) {
         prisma.domainExpert.count({ where: { domainId: p.targetDomainId } })
       ])
 
-      const proposerVotes = p.votes.filter(v => v.domainId === p.proposerDomainId && v.vote === 'APPROVE').length
-      const targetVotes = p.votes.filter(v => v.domainId === p.targetDomainId && v.vote === 'APPROVE').length
+      const proposerVotes = p.votes.filter(v => v.domainId === p.proposerDomainId && v.score > 0).length
+      const targetVotes = p.votes.filter(v => v.domainId === p.targetDomainId && v.score > 0).length
 
       return {
         ...p,
