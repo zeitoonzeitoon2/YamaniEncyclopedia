@@ -358,17 +358,18 @@ export default function ExpertDashboard() {
         toast.error(t('toast.loadError'))
         return null
       }
-      const post = await res.json()
-      // Update selectedPost and update item in list
-      setSelectedPost(post)
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...post } : p))
-      return post
+      const detail = await res.json()
+      const existingItem = posts.find(p => p.id === postId)
+      const merged = existingItem ? { ...existingItem, ...detail } : detail
+      setSelectedPost(merged)
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...detail } : p))
+      return merged
     } catch (e) {
       console.error('Failed to fetch post details', e)
       toast.error(t('toast.loadError'))
       return null
     }
-  }, [t])
+  }, [t, posts])
 
   const fetchPosts = useCallback(async (signal?: AbortSignal, append: boolean = false) => {
     try {

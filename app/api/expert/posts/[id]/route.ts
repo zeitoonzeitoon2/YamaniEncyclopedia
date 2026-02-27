@@ -5,7 +5,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
-import { getToken } from 'next-auth/jwt'  // NEW: needed for reading JWT
+import { getToken } from 'next-auth/jwt'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 interface RouteParams {
   params: { id: string }
@@ -38,11 +39,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         createdAt: true,
         changeReason: true,
         changeSummary: true,
-        content: true,            // include heavy field for details view
-        articlesData: true,       // include articles meta if any
+        content: true,
+        articlesData: true,
+        domainId: true,
+        relatedDomainIds: true,
         author: { select: { id: true, name: true, email: true, image: true, role: true } },
-        originalPost: { select: { id: true, content: true, type: true, version: true } }, // include original content
-        votes: { select: { id: true, score: true, adminId: true, admin: { select: { name: true, role: true } } } },
+        originalPost: { select: { id: true, content: true, type: true, version: true } },
+        votes: { select: { id: true, score: true, adminId: true, domainId: true, admin: { select: { name: true, role: true } } } },
         _count: { select: { comments: true } },
       },
     })
@@ -52,7 +55,41 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const totalScore = post.votes ? post.votes.reduce((sum, v) => sum + v.score, 0) : 0
-    return NextResponse.json({ ...post, totalScore })
+
+    const allDomainIds = new Set<string>()
+    if (post.domainId) allDomainIds.add(post.domainId)
+    if (Array.isArray(post.relatedDomainIds)) {
+      post.relatedDomainIds.forEach((id: string) => allDomainIds.add(id))
+    }
+
+    const domains = allDomainIds.size > 0
+      ? await prisma.domain.findMany({
+          where: { id: { in: Array.from(allDomainIds) } },
+          select: { id: true, name: true },
+        })
+      : []
+    const domainMap = new Map(domains.map((d) => [d.id, d.name]))
+
+    const relatedDomains = (post.relatedDomainIds || []).map((id: string) => ({
+      id,
+      name: domainMap.get(id) || id,
+    }))
+    if (post.domainId && !(post.relatedDomainIds || []).includes(post.domainId)) {
+      relatedDomains.unshift({ id: post.domainId, name: domainMap.get(post.domainId) || post.domainId })
+    }
+
+    const myVotes = post.votes
+      .filter((v) => v.adminId === user.id)
+      .map((v) => ({ domainId: v.domainId || post.domainId || null, score: v.score }))
+
+    const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }> = {}
+    for (const d of relatedDomains) {
+      const domainVotes = post.votes.filter((v) => v.domainId === d.id || (!v.domainId && d.id === post.domainId))
+      const mappedVotes = domainVotes.map((v) => ({ voterId: v.adminId, vote: 'APPROVE' as const }))
+      votingByDomain[d.id] = await getInternalVotingMetrics(d.id, mappedVotes)
+    }
+
+    return NextResponse.json({ ...post, totalScore, relatedDomains, myVotes, votingByDomain })
   } catch (error) {
     console.error('Error fetching expert post details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
