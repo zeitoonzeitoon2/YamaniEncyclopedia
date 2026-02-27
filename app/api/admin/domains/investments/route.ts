@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics, settleExpiredInvestments } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, settleExpiredInvestments } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -236,27 +236,17 @@ export async function GET(req: NextRequest) {
       const proposerVotes = inv.votes.filter(v => v.domainId === inv.proposerDomainId)
       const targetVotes = inv.votes.filter(v => v.domainId === inv.targetDomainId)
 
-      const proposerMapped = proposerVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
-      const targetMapped = targetVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const proposerMapped = proposerVotes.map(v => ({ voterId: v.voterId, score: v.score }))
+      const targetMapped = targetVotes.map(v => ({ voterId: v.voterId, score: v.score }))
 
       const proposerMetrics = await getInternalVotingMetrics(inv.proposerDomainId, proposerMapped)
       const targetMetrics = await getInternalVotingMetrics(inv.targetDomainId, targetMapped)
-      const proposerResult = await calculateVotingResult(proposerMapped, inv.proposerDomainId, 'DIRECT')
-      const targetResult = await calculateVotingResult(targetMapped, inv.targetDomainId, 'DIRECT')
 
       return {
         ...inv,
         stats: {
-          proposer: {
-            ...proposerMetrics,
-            approvals: proposerResult.approvals,
-            rejections: proposerResult.rejections
-          },
-          target: {
-            ...targetMetrics,
-            approvals: targetResult.approvals,
-            rejections: targetResult.rejections
-          }
+          proposer: proposerMetrics,
+          target: targetMetrics
         }
       }
     }))

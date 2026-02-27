@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
-import { calculateUserVotingWeight } from '@/lib/voting-utils'
+import { checkScoreApproval } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,77 +40,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const superUserSet = new Set(superUsers.map(u => u.id))
-
+    let isApproved = false
     let totalScore = 0
     let threshold = 0
-    let participationCount = 0
-    let participationThreshold = 0
-    let isWeighted = false
-    let participationWeight = 0
 
     if (post.domainId) {
-      isWeighted = true
-      threshold = 100
-      participationThreshold = 50
-
-      for (const v of post.votes) {
-        // Only count votes from admins/experts OR experts in that domain
-        // For simplicity and alignment with expert route, let's fetch experts too
-        const experts = await prisma.domainExpert.findMany({
-          where: { domainId: post.domainId },
-          select: { userId: true }
-        })
-        const eligibleSet = new Set([...superUsers.map(u => u.id), ...experts.map(e => e.userId)])
-
-        if (eligibleSet.has(v.adminId)) {
-          // Use STRATEGIC mode for auto-publishing posts to account for investments
-          const weight = await calculateUserVotingWeight(v.adminId, post.domainId, 'STRATEGIC')
-          totalScore += v.score * weight
-          participationWeight += weight
-          participationCount++
-        }
-      }
+      const result = await checkScoreApproval(
+        post.domainId,
+        post.votes.map((v: any) => ({ voterId: v.adminId, score: v.score })),
+        { noRejection: true }
+      )
+      isApproved = result.approved
+      totalScore = result.totalScore
+      threshold = result.totalRights / 2
     } else {
       threshold = Math.ceil((adminCount + expertCount) / 2)
-      participationThreshold = threshold
-      totalScore = post.votes.reduce((sum, vote) => sum + vote.score, 0)
-      participationCount = await prisma.vote.count({ where: { postId, admin: { role: { in: ['EXPERT', 'ADMIN'] } } } })
+      totalScore = post.votes.reduce((sum: number, vote: any) => sum + vote.score, 0)
+      const participationCount = await prisma.vote.count({ where: { postId, admin: { role: { in: ['EXPERT', 'ADMIN'] } } } })
+      isApproved = participationCount >= threshold && totalScore >= threshold
     }
 
-    // بررسی رسیدن به حد نصاب مشارکت
-    if (isWeighted) {
-      if (participationWeight < participationThreshold) {
-        return NextResponse.json({
-          success: true,
-          published: false,
-          action: 'pending',
-          message: 'مشارکت (وزنی) به حد نصاب نرسیده است',
-          totalScore,
-          threshold,
-          participation: { weight: participationWeight, required: participationThreshold },
-          needed: Math.max(0, participationThreshold - participationWeight)
-        })
-      }
-    } else {
-      if (participationCount < participationThreshold) {
-        return NextResponse.json({
-          success: true,
-          published: false,
-          action: 'pending',
-          message: 'مشارکت به حد نصاب نرسیده است',
-          totalScore,
-          threshold,
-          participation: { count: participationCount, required: participationThreshold },
-          needed: Math.max(0, participationThreshold - participationCount)
-        })
-      }
+    if (!isApproved) {
+      return NextResponse.json({
+        success: true,
+        published: false,
+        action: 'pending',
+        message: 'مشارکت یا امتیاز به حد نصاب نرسیده است',
+        totalScore,
+        threshold
+      })
     }
 
-    // بررسی رسیدن به حد نصاب امتیازات
-    if (Math.abs(totalScore) >= threshold) {
-      if (totalScore >= threshold) {
-        // تایید طرح
+    if (isApproved) {
         if (post.originalPostId) {
           const [original, approvedSibling] = await prisma.$transaction([
             prisma.post.findUnique({ where: { id: post.originalPostId }, select: { status: true } }),
@@ -198,14 +159,7 @@ export async function POST(request: NextRequest) {
           totalScore,
           threshold
         })
-      } else {
-        // رد طرح
-        await prisma.post.update({ where: { id: postId }, data: { status: 'REJECTED' } })
-        return NextResponse.json({ success: true, action: 'rejected', message: 'طرح به دلیل رسیدن به حد نصاب منفی رد شد', totalScore, threshold })
-      }
     }
-
-    return NextResponse.json({ success: true, action: 'pending', message: 'طرح هنوز به حد نصاب نرسیده است', totalScore, threshold, needed: threshold - Math.abs(totalScore) })
 
   } catch (error) {
     console.error('Error in auto-publish:', error)

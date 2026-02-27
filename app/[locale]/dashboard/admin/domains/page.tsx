@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/lib/navigation'
+import VotingSlider from '@/components/VotingSlider'
 import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { ChevronDown, ChevronRight, Plus, Trash2, UserPlus, X, TrendingUp, PieChart, LayoutTemplate, ArrowRightLeft, ArrowLeftRight } from 'lucide-react'
@@ -733,10 +734,9 @@ export default function AdminDomainsPage() {
                     ) : (
                       <div className="space-y-2">
                         {pendingCandidacies.map((c) => {
-                          const approvals = c.votes.filter((v) => v.vote === 'APPROVE').length
-                          const rejections = c.votes.filter((v) => v.vote === 'REJECT').length
-                          const myVote = c.votes.find((v) => v.voterUserId === session?.user?.id)?.vote || null
-                          const myScore = c.votes.find((v) => v.voterUserId === session?.user?.id)?.score || 0
+                          const positiveVotes = c.votes.filter((v: any) => v.score > 0).length
+                          const negativeVotes = c.votes.filter((v: any) => v.score < 0).length
+                          const myScore = c.votes.find((v: any) => v.voterUserId === session?.user?.id)?.score || 0
                           const wingKey = (c.wing || 'RIGHT').toUpperCase() as 'RIGHT' | 'LEFT'
                           const rights = userVotingRights[wingKey]
                           const canVoteOnThis = rights?.canVote
@@ -756,29 +756,18 @@ export default function AdminDomainsPage() {
                                     {t('candidate')}: {c.candidateUser.email || '—'} • {t('proposer')}: {c.proposerUser.email || c.proposerUser.name || '—'}
                                   </div>
                                   <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
-                                    <span className="border border-site-border rounded-full px-2 py-0.5">{t('approvals')}: {approvals}</span>
-                                    <span className="border border-site-border rounded-full px-2 py-0.5">{t('rejections')}: {rejections}</span>
-                                    {myVote && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myScore}</span>}
+                                    <span className="border border-site-border rounded-full px-2 py-0.5">+{positiveVotes}</span>
+                                    <span className="border border-site-border rounded-full px-2 py-0.5">-{negativeVotes}</span>
+                                    {myScore !== 0 && <span className="border border-site-border rounded-full px-2 py-0.5">{t('myVote')}: {myScore}</span>}
                                   </div>
                                 </div>
                                 {canVoteOnThis && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    {[1, 2, 3].map((score) => (
-                                      <button
-                                        key={score}
-                                        type="button"
-                                        onClick={() => voteOnCandidacy(c.id, score)}
-                                        disabled={votingKey !== null}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
-                                          myScore === score
-                                            ? 'border-warm-primary bg-warm-primary text-site-bg'
-                                            : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                        } disabled:opacity-50`}
-                                        title={`${score}`}
-                                      >
-                                        {votingKey === `${c.id}:${score}` ? '...' : score}
-                                      </button>
-                                    ))}
+                                  <div className="shrink-0 w-48">
+                                    <VotingSlider
+                                      currentVote={myScore || 0}
+                                      onVote={(score) => voteOnCandidacy(c.id, score)}
+                                      disabled={votingKey !== null}
+                                    />
                                   </div>
                                 )}
                               </div>

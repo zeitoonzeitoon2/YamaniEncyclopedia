@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
-
-const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
+import { calculateUserVotingWeight, checkScoreApproval } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest, { params }: { params: { courseId: string } }) {
   try {
@@ -16,13 +14,13 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const chapterId = typeof body.chapterId === 'string' ? body.chapterId.trim() : ''
-    const vote = typeof body.vote === 'string' ? body.vote.trim() as 'APPROVE' | 'REJECT' : ''
+    const score = typeof body.score === 'number' ? body.score : NaN
 
-    if (!chapterId || !vote) {
-      return NextResponse.json({ error: 'chapterId and vote are required' }, { status: 400 })
+    if (!chapterId || Number.isNaN(score)) {
+      return NextResponse.json({ error: 'chapterId and score are required' }, { status: 400 })
     }
-    if (!ALLOWED_VOTES.has(vote)) {
-      return NextResponse.json({ error: 'Invalid vote' }, { status: 400 })
+    if (!Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'Score must be an integer between -2 and 2' }, { status: 400 })
     }
 
     const chapter = await prisma.courseChapter.findUnique({
@@ -42,39 +40,26 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       return NextResponse.json({ error: 'Chapter draft is closed' }, { status: 409 })
     }
 
-    // Check if user has any voting power in the course domain (direct only)
     const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId, 'DIRECT')
-
     if (weight === 0) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     await prisma.chapterVote.upsert({
       where: { chapterId_voterId: { chapterId, voterId: session.user.id } },
-      update: { vote },
-      create: { chapterId, voterId: session.user.id, vote },
+      update: { score },
+      create: { chapterId, voterId: session.user.id, score },
     })
 
-    // Get all votes
-    const allVotes = await prisma.chapterVote.findMany({
-      where: { chapterId }
-    })
-
-    // Calculate result using weights (direct only)
-    const { approvals, rejections } = await calculateVotingResult(
-      allVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+    const allVotes = await prisma.chapterVote.findMany({ where: { chapterId } })
+    const result = await checkScoreApproval(
       chapter.course.domainId,
-      'DIRECT'
+      allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
     )
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    const threshold = 50
-
-    if (approvals > threshold) {
-      nextStatus = 'APPROVED'
-    } else if (rejections > threshold) {
-      nextStatus = 'REJECTED'
-    }
+    if (result.approved) nextStatus = 'APPROVED'
+    else if (result.rejected) nextStatus = 'REJECTED'
 
     if (nextStatus === 'APPROVED') {
       const rootId = chapter.originalChapterId || chapter.id
@@ -94,7 +79,6 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         select: { id: true },
       })
 
-      // Also approve all questions associated with this chapter
       await prisma.chapterQuestion.updateMany({
         where: { chapterId },
         data: { status: 'APPROVED' }
@@ -106,14 +90,13 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         select: { id: true },
       })
 
-      // Also reject all questions associated with this chapter
       await prisma.chapterQuestion.updateMany({
         where: { chapterId },
         data: { status: 'REJECTED' }
       })
     }
 
-    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, threshold } })
+    return NextResponse.json({ success: true, status: nextStatus, result })
   } catch (error) {
     console.error('Error voting chapter:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

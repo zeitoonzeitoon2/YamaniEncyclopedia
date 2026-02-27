@@ -104,8 +104,7 @@ model CandidacyVote {
   candidacy    ExpertCandidacy @relation(fields: [candidacyId], references: [id], onDelete: Cascade)
   voterUserId  String
   voterUser    User            @relation("CandidacyVoteVoter", fields: [voterUserId], references: [id])
-  vote         String          @default("APPROVE")
-  score        Int             @default(0) // 1, 2, or 3
+  score        Int             @default(0)
   createdAt    DateTime        @default(now())
 
   @@id([candidacyId, voterUserId])
@@ -190,7 +189,7 @@ model CourseVote {
   course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   voterId    String
   voter      User   @relation("CourseVoteVoter", fields: [voterId], references: [id])
-  vote       String @default("APPROVE")
+  score      Int    @default(0)
   createdAt  DateTime @default(now())
 
   @@id([courseId, voterId])
@@ -232,7 +231,7 @@ model ChapterVote {
   chapter   CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   voterId   String
   voter     User   @relation("ChapterVoteVoter", fields: [voterId], references: [id])
-  vote      String @default("APPROVE")
+  score     Int    @default(0)
   createdAt DateTime @default(now())
 
   @@id([chapterId, voterId])
@@ -504,7 +503,7 @@ model PrerequisiteVote {
   prerequisite   CoursePrerequisite @relation(fields: [prerequisiteId], references: [id], onDelete: Cascade)
   voterId        String
   voter          User               @relation(fields: [voterId], references: [id])
-  vote           String             @default("APPROVE")
+  score          Int                @default(0)
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])
@@ -536,7 +535,7 @@ model DomainExchangeVote {
   voterId    String
   voter      User                   @relation(fields: [voterId], references: [id])
   domainId   String                 // Which domain the voter is voting for
-  vote       String                 @default("APPROVE") // APPROVE, REJECT
+  score      Int                    @default(0)
   createdAt  DateTime               @default(now())
 
   @@unique([proposalId, voterId, domainId])
@@ -570,7 +569,7 @@ model DomainProposalVote {
   proposal   DomainProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
   voterId    String
   voter      User           @relation(fields: [voterId], references: [id])
-  vote       String         @default("APPROVE") // APPROVE, REJECT
+  score      Int            @default(0)
   createdAt  DateTime       @default(now())
 
   @@id([proposalId, voterId])
@@ -609,7 +608,7 @@ model QuestionVote {
   question    ChapterQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   voterId     String
   voter       User     @relation(fields: [voterId], references: [id])
-  vote        String   @default("APPROVE") // APPROVE, REJECT
+  score       Int      @default(0)
   createdAt   DateTime @default(now())
 
   @@id([questionId, voterId])
@@ -677,7 +676,7 @@ model DomainInvestmentVote {
   investment    DomainInvestment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
   voterId       String
   voter         User             @relation(fields: [voterId], references: [id])
-  vote          String           @default("APPROVE") // APPROVE, REJECT
+  score         Int              @default(0)
   domainId      String           // Which domain the voter is voting for (Proposer or Target)
   createdAt     DateTime         @default(now())
 
@@ -710,7 +709,7 @@ model DomainPrerequisiteVote {
   prerequisite   DomainPrerequisite @relation(fields: [prerequisiteId], references: [id], onDelete: Cascade)
   voterId        String
   voter          User               @relation("domainPrerequisiteVotes", fields: [voterId], references: [id])
-  vote           String             @default("APPROVE")
+  score          Int                @default(0)
   createdAt      DateTime           @default(now())
 
   @@id([prerequisiteId, voterId])

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSession } from 'next-auth/react'
+import VotingSlider from '@/components/VotingSlider'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
@@ -935,19 +936,19 @@ export default function AdminDashboard() {
     fetchProposals(id)
   }, [selectedDomainId, fetchCandidacies, fetchCourses, fetchResearchPrerequisites, fetchAllCourses, fetchActiveRounds, fetchProposals])
 
-  const voteOnProposal = async (proposalId: string, vote: 'APPROVE' | 'REJECT') => {
-    setVotingOnProposalKey(`${proposalId}:${vote}`)
+  const voteOnProposal = async (proposalId: string, score: number) => {
+    setVotingOnProposalKey(proposalId)
     try {
       const res = await fetch(`/api/admin/domains/proposals/${proposalId}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vote })
+        body: JSON.stringify({ score })
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       toast.success(t('voteRecorded'))
       if (selectedDomainId) fetchProposals(selectedDomainId)
-      fetchDomains() // Refresh tree as domain might have been created/deleted
+      fetchDomains()
     } catch (error: any) {
       toast.error(error.message || 'Error voting')
     } finally {
@@ -955,15 +956,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const voteOnCourse = async (courseId: string, vote: 'APPROVE' | 'REJECT') => {
+  const voteOnCourse = async (courseId: string, score: number) => {
     if (!selectedDomain) return
-    const key = `${courseId}:${vote}`
     try {
-      setCourseVotingKey(key)
+      setCourseVotingKey(courseId)
       const res = await fetch('/api/admin/domains/courses/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, vote }),
+        body: JSON.stringify({ courseId, score }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
@@ -1007,15 +1007,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const voteOnResearchPrerequisite = async (prerequisiteId: string, vote: 'APPROVE' | 'REJECT') => {
+  const voteOnResearchPrerequisite = async (prerequisiteId: string, score: number) => {
     if (!selectedDomain) return
-    const key = `${prerequisiteId}:${vote}`
     try {
-      setResearchVotingKey(key)
+      setResearchVotingKey(prerequisiteId)
       const res = await fetch(`/api/admin/domains/${encodeURIComponent(selectedDomain.id)}/research-prerequisites/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prerequisiteId, vote }),
+        body: JSON.stringify({ prerequisiteId, score }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
@@ -1588,23 +1587,12 @@ export default function AdminDashboard() {
                                       </div>
                                     </div>
                                     {isActiveRound && (canVoteOnSelectedDomainCourses || userVotingRights[(c.wing || 'RIGHT').toUpperCase() as 'LEFT' | 'RIGHT']?.canVote) && (
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        {[1, 2, 3].map((score) => (
-                                          <button
-                                            key={score}
-                                            type="button"
-                                            onClick={() => voteOnCandidacy(c.id, score)}
-                                            disabled={votingKey !== null}
-                                            className={`text-xs w-8 h-8 flex items-center justify-center rounded-lg border transition-all duration-200 hover:scale-110 hover:shadow-sm ${
-                                              myScore === score
-                                                ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                                : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                            } disabled:opacity-50`}
-                                            title={t(`score${score}`)}
-                                          >
-                                            {votingKey === `${c.id}:${score}` ? '...' : score}
-                                          </button>
-                                        ))}
+                                      <div className="shrink-0 w-48">
+                                        <VotingSlider
+                                          currentVote={myScore || 0}
+                                          onVote={(score) => voteOnCandidacy(c.id, score)}
+                                          disabled={votingKey !== null}
+                                        />
                                       </div>
                                     )}
                                   </div>
@@ -1711,7 +1699,7 @@ export default function AdminDashboard() {
                       ) : (
                         <div className="space-y-3">
                           {domainProposals.map((p) => {
-                            const myVote = p.votes.find(v => v.voterId === session?.user?.id)?.vote
+                            const myVote = p.votes.find((v: any) => v.voterId === session?.user?.id)?.score ?? null
                             const canVote = canVoteOnProposal(p)
                             return (
                               <div key={p.id} className="p-4 rounded-lg border border-site-border bg-site-secondary/30 space-y-3">
@@ -1749,10 +1737,10 @@ export default function AdminDashboard() {
                                         {t('eligibleVoters', { count: p.voting?.eligibleCount || 0 })}
                                       </span>
                                       <span className="border border-green-200 dark:border-green-800 rounded-full px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400">
-                                        {t('approvals', { count: p.votes.filter(v => v.vote === 'APPROVE').length })}
+                                        +{p.votes.filter((v: any) => v.score > 0).length}
                                       </span>
                                       <span className="border border-red-200 dark:border-red-800 rounded-full px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400">
-                                        {t('rejections', { count: p.votes.filter(v => v.vote === 'REJECT').length })}
+                                        -{p.votes.filter((v: any) => v.score < 0).length}
                                       </span>
                                     </div>
                                     {p.voting && (
@@ -1789,31 +1777,12 @@ export default function AdminDashboard() {
                                 </div>
 
                                 {p.status === 'PENDING' && canVote && (
-                                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-site-border">
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnProposal(p.id, 'APPROVE')}
+                                  <div className="pt-2 border-t border-site-border">
+                                    <VotingSlider
+                                      currentVote={typeof myVote === 'number' ? myVote : 0}
+                                      onVote={(score) => voteOnProposal(p.id, score)}
                                       disabled={votingOnProposalKey !== null}
-                                      className={`relative z-20 text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
-                                        myVote === 'APPROVE'
-                                          ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingOnProposalKey === `${p.id}:APPROVE` ? '...' : t('approve')}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => voteOnProposal(p.id, 'REJECT')}
-                                      disabled={votingOnProposalKey !== null}
-                                      className={`relative z-20 text-xs px-3 py-2 rounded-lg border pointer-events-auto transition-all duration-200 hover:shadow-sm ${
-                                        myVote === 'REJECT'
-                                          ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                          : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                      } disabled:opacity-50`}
-                                    >
-                                      {votingOnProposalKey === `${p.id}:REJECT` ? '...' : t('reject')}
-                                    </button>
+                                    />
                                   </div>
                                 )}
                                 {p.status === 'PENDING' && !canVote && (
@@ -1840,7 +1809,7 @@ export default function AdminDashboard() {
                             <div className="text-site-muted text-sm">{t('noResearchPrerequisites')}</div>
                           ) : (
                             researchPrerequisites.map((p) => {
-                              const myVote = p.votes?.find(v => v.voterId === session?.user?.id)?.vote || null
+                              const myVote = p.votes?.find((v: any) => v.voterId === session?.user?.id)?.score ?? null
                               return (
                                 <div key={p.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                   <div className="flex items-start justify-between gap-3">
@@ -1867,23 +1836,15 @@ export default function AdminDashboard() {
                                       )}
                                     </div>
                                     {canVoteOnSelectedDomainCourses && p.status === 'PENDING' && (
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <button
-                                          type="button"
-                                          onClick={() => voteOnResearchPrerequisite(p.id, 'APPROVE')}
+                                      <div className="shrink-0 w-48">
+                                        <VotingSlider
+                                          currentVote={typeof myVote === 'number' ? myVote : 0}
+                                          onVote={(score) => voteOnResearchPrerequisite(p.id, score)}
                                           disabled={researchVotingKey !== null}
-                                          className={`text-xs px-3 py-2 rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50`}
-                                        >
-                                          {researchVotingKey === `${p.id}:APPROVE` ? '...' : t('approve')}
-                                        </button>
+                                        />
                                       </div>
                                     )}
                                   </div>
-                                  {myVote && (
-                                    <div className="mt-2 text-[10px] text-site-muted">
-                                      {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
-                                    </div>
-                                  )}
                                 </div>
                               )
                             })
@@ -1968,9 +1929,9 @@ export default function AdminDashboard() {
                             {domainCourses
                               .filter((c) => c.status === 'PENDING')
                               .map((course) => {
-                                const approvals = course.votes.filter((v) => v.vote === 'APPROVE').length
-                                const rejections = course.votes.filter((v) => v.vote === 'REJECT').length
-                                const myVote = course.votes.find((v) => v.voterId === session?.user?.id)?.vote || null
+                                const positiveVotes = course.votes.filter((v: any) => v.score > 0).length
+                                const negativeVotes = course.votes.filter((v: any) => v.score < 0).length
+                                const myVote = course.votes.find((v: any) => v.voterId === session?.user?.id)?.score ?? null
                                 return (
                                   <div key={course.id} className="p-3 rounded-lg border border-site-border bg-site-secondary/30">
                                     <div className="flex items-start justify-between gap-3">
@@ -1997,14 +1958,14 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="mt-2 flex items-center gap-2 text-xs text-site-muted">
                                           <span className="border border-site-border rounded-full px-2 py-0.5">
-                                            {t('approvals', { count: approvals })}
+                                            +{positiveVotes}
                                           </span>
                                           <span className="border border-site-border rounded-full px-2 py-0.5">
-                                            {t('rejections', { count: rejections })}
+                                            -{negativeVotes}
                                           </span>
-                                          {myVote && (
+                                          {myVote !== null && myVote !== undefined && myVote !== 0 && (
                                             <span className="border border-site-border rounded-full px-2 py-0.5">
-                                              {t('yourVote', { vote: myVote === 'APPROVE' ? t('approve') : t('reject') })}
+                                              {t('myVote')}: {myVote > 0 ? `+${myVote}` : myVote}
                                             </span>
                                           )}
                                         </div>
@@ -2033,32 +1994,13 @@ export default function AdminDashboard() {
                                           {t('manageChapters')}
                                         </Link>
                                         {canVoteOnSelectedDomainCourses && (
-                                          <>
-                                            <button
-                                              type="button"
-                                              onClick={() => voteOnCourse(course.id, 'APPROVE')}
+                                          <div className="w-48">
+                                            <VotingSlider
+                                              currentVote={typeof myVote === 'number' ? myVote : 0}
+                                              onVote={(score) => voteOnCourse(course.id, score)}
                                               disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
-                                                myVote === 'APPROVE'
-                                                  ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                                                  : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                              } disabled:opacity-50`}
-                                            >
-                                              {courseVotingKey === `${course.id}:APPROVE` ? '...' : t('approve')}
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => voteOnCourse(course.id, 'REJECT')}
-                                              disabled={courseVotingKey !== null}
-                                              className={`text-xs px-3 py-2 rounded-lg border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
-                                                myVote === 'REJECT'
-                                                  ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                                                  : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                                              } disabled:opacity-50`}
-                                            >
-                                              {courseVotingKey === `${course.id}:REJECT` ? '...' : t('reject')}
-                                            </button>
-                                          </>
+                                            />
+                                          </div>
                                         )}
                                       </div>
                                     </div>

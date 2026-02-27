@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getAvailableVotingPower } from '@/lib/voting-utils'
+import { checkScoreApproval, getAvailableVotingPower } from '@/lib/voting-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,10 +11,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { investmentId, vote } = await req.json()
+    const { investmentId, score } = await req.json()
 
-    if (!investmentId || !vote) {
+    if (!investmentId || typeof score !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+    if (!Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'Score must be an integer between -2 and 2' }, { status: 400 })
     }
 
     const investment = await prisma.domainInvestment.findUnique({
@@ -48,11 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only affected domain experts can vote' }, { status: 403 })
     }
 
-    // Record votes
     for (const dId of affectedDomains) {
-      // Determine which wing we are voting for in this domain
-      // ... logic handled by upsert using investmentId + domainId
-
       await prisma.domainInvestmentVote.upsert({
         where: {
           investmentId_voterId_domainId: {
@@ -61,12 +60,12 @@ export async function POST(req: NextRequest) {
             domainId: dId
           }
         },
-        update: { vote },
+        update: { score },
         create: {
           investmentId,
           voterId: session.user.id,
           domainId: dId,
-          vote
+          score
         }
       })
     }
@@ -78,28 +77,24 @@ export async function POST(req: NextRequest) {
       where: { investmentId, domainId: investment.targetDomainId }
     })
 
-    const proposerResult = await calculateVotingResult(
-      proposerVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+    const proposerResult = await checkScoreApproval(
       investment.proposerDomainId,
-      'DIRECT'
+      proposerVotes.map(v => ({ voterId: v.voterId, score: v.score }))
     )
-    const targetResult = await calculateVotingResult(
-      targetVotes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' })),
+    const targetResult = await checkScoreApproval(
       investment.targetDomainId,
-      'DIRECT'
+      targetVotes.map(v => ({ voterId: v.voterId, score: v.score }))
     )
 
-    if (proposerResult.rejections > 50 || targetResult.rejections > 50) {
+    if (proposerResult.rejected || targetResult.rejected) {
       await prisma.domainInvestment.update({
         where: { id: investmentId },
         data: { status: 'REJECTED' }
       })
-      return NextResponse.json({ status: 'REJECTED' })
+      return NextResponse.json({ status: 'REJECTED', proposerResult, targetResult })
     }
 
-    if (proposerResult.approvals > 50 && targetResult.approvals > 50) {
-      // Validate share availability before activation
-      // 1. Check if Proposer Wing has enough shares to give (percentageInvested)
+    if (proposerResult.approved && targetResult.approved) {
       const proposerAvailable = await getAvailableVotingPower(
         investment.proposerDomainId, 
         investment.proposerWing
@@ -111,7 +106,6 @@ export async function POST(req: NextRequest) {
         }, { status: 409 })
       }
 
-      // 2. Check if Target Wing has enough shares to return (percentageReturn)
       const targetAvailable = await getAvailableVotingPower(
         investment.targetDomainId, 
         investment.targetWing
@@ -123,24 +117,15 @@ export async function POST(req: NextRequest) {
         }, { status: 409 })
       }
 
-      // ACTIVATE INVESTMENT
       const startDate = new Date()
-      // We do NOT overwrite endDate here. We respect the endDate set during proposal creation.
-      // const endDate = new Date()
-      // endDate.setFullYear(startDate.getFullYear() + investment.durationYears)
-
       await prisma.domainInvestment.update({
         where: { id: investmentId },
-        data: { 
-          status: 'ACTIVE',
-          startDate,
-          // endDate // Removed to keep original endDate
-        }
+        data: { status: 'ACTIVE', startDate }
       })
-      return NextResponse.json({ status: 'ACTIVE' })
+      return NextResponse.json({ status: 'ACTIVE', proposerResult, targetResult })
     }
 
-    return NextResponse.json({ status: 'PENDING' })
+    return NextResponse.json({ status: 'PENDING', proposerResult, targetResult })
   } catch (error) {
     console.error('Error voting on investment:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }> = {}
       for (const d of relatedDomains) {
         const domainVotes = post.votes.filter(v => v.domainId === d.id || (!v.domainId && d.id === post.domainId))
-        const mappedVotes = domainVotes.map(v => ({ voterId: v.adminId, vote: 'APPROVE' as const }))
+        const mappedVotes = domainVotes.map(v => ({ voterId: v.adminId, score: v.score }))
         votingByDomain[d.id] = await getInternalVotingMetrics(d.id, mappedVotes)
       }
 

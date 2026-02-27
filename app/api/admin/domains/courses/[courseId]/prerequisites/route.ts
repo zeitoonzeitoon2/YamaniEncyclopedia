@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { causesCircularDependency } from '@/lib/course-utils'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 export async function GET(
   request: NextRequest,
@@ -30,7 +30,7 @@ export async function GET(
           select: { name: true }
         },
         votes: {
-          select: { voterId: true, vote: true }
+          select: { voterId: true, score: true }
         },
         _count: {
           select: { votes: true }
@@ -49,7 +49,7 @@ export async function GET(
           select: { name: true }
         },
         votes: {
-          select: { voterId: true, vote: true }
+          select: { voterId: true, score: true }
         },
         _count: {
           select: { votes: true }
@@ -79,17 +79,15 @@ export async function GET(
 
     const enrichedPrereqs = await Promise.all(prerequisites.map(async (p) => {
       if (!domainId) return p
-      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(domainId, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, domainId, 'DIRECT')
-      return { ...p, voting: { ...voting, approvals, rejections } }
+      return { ...p, voting }
     }))
 
     const enrichedDomainPrereqs = await Promise.all(domainPrerequisites.map(async (p) => {
-      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(p.domain.id, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, p.domain.id, 'DIRECT')
-      return { ...p, voting: { ...voting, approvals, rejections } }
+      return { ...p, voting }
     }))
 
     return NextResponse.json({ prerequisites: enrichedPrereqs, domainPrerequisites: enrichedDomainPrereqs, dependents })

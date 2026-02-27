@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 import VotingStatusSummary from '@/components/VotingStatusSummary'
+import VotingSlider from '@/components/VotingSlider'
 
 type Prerequisite = {
   id: string
@@ -116,13 +117,13 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
     }
   }, [selectedCourseId, courseId, selectedType, t, fetchPrerequisites])
 
-  const handleVote = useCallback(async (prerequisiteId: string, vote: 'APPROVE' | 'REJECT') => {
+  const handleVote = useCallback(async (prerequisiteId: string, score: number) => {
     try {
-      setVotingKey(`${prerequisiteId}:${vote}`)
+      setVotingKey(prerequisiteId)
       const res = await fetch(`/api/admin/domains/courses/${courseId}/prerequisites/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prerequisiteId, vote })
+        body: JSON.stringify({ prerequisiteId, score })
       })
       const data = await res.json()
       if (res.ok) {
@@ -183,31 +184,12 @@ export default function CoursePrerequisitesManager({ courseId }: { courseId: str
       )}
 
       {!showCourse && p.status === 'PENDING' && (
-        <div className="flex gap-2 w-full mt-1">
-          <button
-            onClick={() => handleVote(p.id, 'APPROVE')}
+        <div className="w-full mt-1">
+          <VotingSlider
+            currentVote={0}
+            onVote={(score) => handleVote(p.id, score)}
             disabled={!!votingKey}
-            className="flex-1 px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors text-[10px] flex items-center justify-center gap-1"
-          >
-            {votingKey === `${p.id}:APPROVE` ? '...' : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                {t('approve')}
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => handleVote(p.id, 'REJECT')}
-            disabled={!!votingKey}
-            className="flex-1 px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors text-[10px] flex items-center justify-center gap-1"
-          >
-            {votingKey === `${p.id}:REJECT` ? '...' : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                {t('reject')}
-              </>
-            )}
-          </button>
+          />
         </div>
       )}
     </div>

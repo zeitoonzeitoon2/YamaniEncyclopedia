@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -75,14 +75,13 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
         proposer: { select: { id: true, name: true, email: true, role: true } },
-        votes: { select: { voterId: true, vote: true } },
+        votes: { select: { voterId: true, score: true } },
       },
     })
 
     const payload = await Promise.all(courses.map(async (c) => {
-      const votes = c.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = c.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(domainId, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, domainId, 'DIRECT')
       return {
         id: c.id,
         title: c.title,
@@ -92,7 +91,7 @@ export async function GET(request: NextRequest) {
         createdAt: c.createdAt,
         proposerUser: c.proposer,
         votes: c.votes,
-        voting: { ...voting, approvals, rejections }
+        voting
       }
     }))
 

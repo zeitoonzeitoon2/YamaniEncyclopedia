@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 import { Prisma } from '@prisma/client'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
@@ -50,15 +50,14 @@ export async function GET(request: NextRequest, { params }: { params: { courseId
         createdAt: true,
         updatedAt: true,
         author: { select: { id: true, name: true, email: true, role: true } },
-        votes: { select: { voterId: true, vote: true } },
+        votes: { select: { voterId: true, score: true } },
       },
     })
 
     const enriched = await Promise.all(chapters.map(async (c) => {
-      const votes = c.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = c.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(course.domainId, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, course.domainId, 'DIRECT')
-      return { ...c, voting: { ...voting, approvals, rejections } }
+      return { ...c, voting }
     }))
 
     return NextResponse.json({ course, chapters: enriched })

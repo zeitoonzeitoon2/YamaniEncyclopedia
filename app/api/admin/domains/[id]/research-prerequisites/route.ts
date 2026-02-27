@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -41,7 +41,7 @@ export async function GET(
           select: { name: true }
         },
         votes: {
-          select: { voterId: true, vote: true }
+          select: { voterId: true, score: true }
         },
         _count: {
           select: { votes: true }
@@ -51,10 +51,9 @@ export async function GET(
     })
 
     const enriched = await Promise.all(prerequisites.map(async (p) => {
-      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(params.id, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, params.id, 'DIRECT')
-      return { ...p, voting: { ...voting, approvals, rejections } }
+      return { ...p, voting }
     }))
 
     return NextResponse.json({ prerequisites: enriched })

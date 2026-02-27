@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
 import { getPostDisplayId } from '@/lib/postDisplay'
-import { calculateUserVotingWeight } from '@/lib/voting-utils'
+import { checkScoreApproval } from '@/lib/voting-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,11 +83,10 @@ export async function POST(request: NextRequest) {
     const eligibleSet = new Set<string>([...superUsers.map((u) => u.id), ...experts.map((e) => e.userId)])
     const eligibleIds = Array.from(eligibleSet)
 
-    // Determine all affected domains
     const allDomains = new Set<string>()
     if (post.domainId) allDomains.add(post.domainId)
     if (post.relatedDomainIds && Array.isArray(post.relatedDomainIds)) {
-      post.relatedDomainIds.forEach(id => allDomains.add(id))
+      post.relatedDomainIds.forEach((id: string) => allDomains.add(id))
     }
 
     let isApproved = false
@@ -96,58 +95,41 @@ export async function POST(request: NextRequest) {
     let threshold = 0
 
     if (allDomains.size > 0) {
-       // Multi-domain Weighted Logic
        let allDomainsApproved = true
        const domainStatuses: string[] = []
 
        for (const dId of Array.from(allDomains)) {
-          const dThreshold = 100
-          const dParticipationThreshold = 50
-          let dTotalScore = 0
-          let dParticipationWeight = 0
-          
-          // Filter votes for this domain
-          const domainVotes = post.votes.filter(v => 
+          const domainVotes = post.votes.filter((v: any) =>
              v.domainId === dId || (v.domainId === null && dId === post.domainId)
           )
+          const result = await checkScoreApproval(
+            dId,
+            domainVotes.map((v: any) => ({ voterId: v.adminId, score: v.score })),
+            { noRejection: true }
+          )
 
-          for (const v of domainVotes) {
-             const weight = await calculateUserVotingWeight(v.adminId, dId, 'DIRECT')
-             if (weight > 0) {
-                 dTotalScore += v.score * weight
-                 dParticipationWeight += weight
-             }
-          }
-
-          const participationOK = dParticipationWeight >= dParticipationThreshold
-          const scoreOK = dTotalScore >= dThreshold
-          
-          if (!participationOK || !scoreOK) {
+          if (!result.approved) {
              allDomainsApproved = false
-             domainStatuses.push(`Domain ${dId}: (Score ${dTotalScore}/${dThreshold}, Part ${dParticipationWeight}/${dParticipationThreshold})`)
+             domainStatuses.push(`Domain ${dId}: (Score ${result.totalScore}/${result.totalRights / 2}, Participation ${result.voterCount}/${result.eligibleCount})`)
           }
        }
 
        if (allDomainsApproved) {
           isApproved = true
-          // For multi-domain, we can set a representative score or just leave as 0
-          // Setting 100/100 to indicate success in logs/response if needed
-          totalScore = 100 
+          totalScore = 100
           threshold = 100
        } else {
           failureMessage = 'عدم حد نصاب در حوزه‌های: ' + domainStatuses.join(', ')
        }
 
     } else {
-       // Non-weighted (General) Logic
        threshold = Math.ceil(eligibleIds.length / 2)
-       const participationThreshold = threshold
-       totalScore = post.votes.reduce((sum, v) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
+       totalScore = post.votes.reduce((sum: number, v: any) => (eligibleSet.has(v.adminId) ? sum + v.score : sum), 0)
        const participationCount = await prisma.vote.count({
           where: { postId, adminId: { in: eligibleIds } }
        })
 
-       if (participationCount >= participationThreshold && totalScore >= threshold) {
+       if (participationCount >= threshold && totalScore >= threshold) {
           isApproved = true
        } else {
           failureMessage = 'مشارکت یا امتیاز به حد نصاب نرسیده است'

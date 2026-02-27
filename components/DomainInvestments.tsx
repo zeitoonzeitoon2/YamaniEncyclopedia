@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 import { Check, X, TrendingUp, Percent, Clock, ArrowUpRight, ArrowDownLeft, Shield, Calendar, XCircle, ChevronDown } from 'lucide-react'
 import VotingStatusSummary from '@/components/VotingStatusSummary'
+import VotingSlider from '@/components/VotingSlider'
 
 type Domain = {
   id: string
@@ -189,13 +190,13 @@ export default function DomainInvestments() {
     }
   }, [selectedMyDomainId, selectedTargetDomainId, investPercent, returnPercent, endDate, proposerWing, targetWing, sourceDomainId, t, fetchData]);
 
-  const handleVote = useCallback(async (id: string, vote: 'APPROVE' | 'REJECT') => {
+  const handleVote = useCallback(async (id: string, score: number) => {
     try {
-      setVotingId(`${id}:${vote}`)
+      setVotingId(id)
       const res = await fetch('/api/admin/domains/investments/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ investmentId: id, vote })
+        body: JSON.stringify({ investmentId: id, score })
       })
       if (res.ok) {
         toast.success(t('voteRecorded'))
@@ -419,21 +420,12 @@ export default function DomainInvestments() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => handleVote(inv.id, 'APPROVE')}
+                  <div className="relative z-20 pointer-events-auto">
+                    <VotingSlider
+                      currentVote={0}
+                      onVote={(score) => handleVote(inv.id, score)}
                       disabled={!!votingId}
-                      className="relative z-20 flex-1 py-2 rounded-lg bg-warm-primary/20 hover:bg-warm-primary/30 text-warm-primary border border-warm-primary/30 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
-                    >
-                      {votingId === inv.id + ':APPROVE' ? '...' : t('investment.returnBtn')}
-                    </button>
-                    <button 
-                      onClick={() => handleVote(inv.id, 'REJECT')}
-                      disabled={!!votingId}
-                      className="relative z-20 flex-1 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/20 text-xs font-bold transition-all duration-200 hover:shadow-sm pointer-events-auto"
-                    >
-                      {votingId === inv.id + ':REJECT' ? '...' : t('reject')}
-                    </button>
+                    />
                   </div>
                 </div>
 

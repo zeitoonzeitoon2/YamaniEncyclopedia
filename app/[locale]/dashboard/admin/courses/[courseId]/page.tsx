@@ -13,6 +13,7 @@ import { applyArticleTransforms } from '@/lib/footnotes'
 import CoursePrerequisitesManager from '@/components/CoursePrerequisitesManager'
 import ChapterQuestionnaireModal from '@/components/ChapterQuestionnaireModal'
 import VotingStatusSummary from '@/components/VotingStatusSummary'
+import VotingSlider from '@/components/VotingSlider'
 
 type ChapterVote = {
   voterId: string
@@ -442,14 +443,14 @@ export default function AdminCourseChaptersPage() {
     }
   }
 
-  const handleVote = async (chapterId: string, vote: 'APPROVE' | 'REJECT') => {
+  const handleVote = async (chapterId: string, score: number) => {
     if (!courseId) return
     try {
-      setVotingKey(`${chapterId}:${vote}`)
+      setVotingKey(chapterId)
       const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapterId, vote }),
+        body: JSON.stringify({ chapterId, score }),
       })
       const payload = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
       if (!res.ok) {
@@ -844,31 +845,12 @@ export default function AdminCourseChaptersPage() {
                         <div className="text-site-text text-sm">{chapter.title}</div>
                         <div className="text-xs text-site-muted mt-1">{versionLabel(chapter)}</div>
                       </button>
-                      <div className="flex items-center gap-2 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => handleVote(chapter.id, 'APPROVE')}
+                      <div className="mt-2 w-48">
+                        <VotingSlider
+                          currentVote={chapter.votes.find((v: any) => v.voterId === session?.user?.id)?.score || 0}
+                          onVote={(score) => handleVote(chapter.id, score)}
                           disabled={!!votingKey}
-                          className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-                            chapter.votes.some((v) => v.voterId === session?.user?.id && v.vote === 'APPROVE')
-                              ? 'border-warm-primary bg-warm-primary/20 text-site-text'
-                              : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                          } disabled:opacity-50`}
-                        >
-                          {votingKey === `${chapter.id}:APPROVE` ? '...' : t('approve')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleVote(chapter.id, 'REJECT')}
-                          disabled={!!votingKey}
-                          className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-                            chapter.votes.some((v) => v.voterId === session?.user?.id && v.vote === 'REJECT')
-                              ? 'border-red-600/60 bg-red-600/20 text-site-text'
-                              : 'border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text'
-                          } disabled:opacity-50`}
-                        >
-                          {votingKey === `${chapter.id}:REJECT` ? '...' : t('reject')}
-                        </button>
+                        />
                       </div>
                       {chapter.voting && (
                         <div className="mt-2">

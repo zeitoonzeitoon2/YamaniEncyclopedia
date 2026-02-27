@@ -83,8 +83,7 @@ export async function GET(request: NextRequest) {
         proposerUser: { select: { name: true, email: true } },
         votes: { 
           select: { 
-            voterUserId: true, 
-            vote: true, 
+            voterUserId: true,
             score: true,
             voterUser: {
               select: {

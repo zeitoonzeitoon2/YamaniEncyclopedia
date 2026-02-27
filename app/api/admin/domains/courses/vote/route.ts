@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
-
-const ALLOWED_VOTES = new Set(['APPROVE', 'REJECT'])
+import { calculateUserVotingWeight, checkScoreApproval } from '@/lib/voting-utils'
 
 async function canVoteOnCourse(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
   if (!userId) return { ok: false as const, status: 401 as const, error: 'Unauthorized' }
 
-  // Check if user has any voting power in this domain (direct only)
   const weight = await calculateUserVotingWeight(userId, domainId, 'DIRECT')
   
   return weight > 0 ? { ok: true as const, userId } : { ok: false as const, status: 403 as const, error: 'Forbidden' }
@@ -23,13 +20,13 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const courseId = typeof body.courseId === 'string' ? body.courseId.trim() : ''
-    const vote = typeof body.vote === 'string' ? body.vote.trim() : ''
+    const score = typeof body.score === 'number' ? body.score : NaN
 
-    if (!courseId || !vote) {
-      return NextResponse.json({ error: 'courseId and vote are required' }, { status: 400 })
+    if (!courseId || Number.isNaN(score)) {
+      return NextResponse.json({ error: 'courseId and score are required' }, { status: 400 })
     }
-    if (!ALLOWED_VOTES.has(vote)) {
-      return NextResponse.json({ error: 'Invalid vote' }, { status: 400 })
+    if (!Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'Score must be an integer between -2 and 2' }, { status: 400 })
     }
 
     const course = await prisma.course.findUnique({
@@ -46,28 +43,19 @@ export async function POST(request: NextRequest) {
 
     await prisma.courseVote.upsert({
       where: { courseId_voterId: { courseId, voterId: perm.userId } },
-      update: { vote },
-      create: { courseId, voterId: perm.userId, vote },
+      update: { score },
+      create: { courseId, voterId: perm.userId, score },
     })
 
-    // Get all votes for this course
-    const allVotes = await prisma.courseVote.findMany({
-      where: { courseId }
-    })
-
-    // Calculate result using weights (direct only)
-    const { approvals, rejections } = await calculateVotingResult(allVotes, course.domainId, 'DIRECT')
+    const allVotes = await prisma.courseVote.findMany({ where: { courseId } })
+    const result = await checkScoreApproval(
+      course.domainId,
+      allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
+    )
 
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
-    const threshold = 50 // Majority threshold is 50%
-
-    if (approvals > threshold) {
-      nextStatus = 'APPROVED'
-    } else if (rejections > threshold) {
-      nextStatus = 'REJECTED'
-    }
-
-    console.log(`Course ${courseId} vote result (weighted):`, { approvals, rejections, nextStatus })
+    if (result.approved) nextStatus = 'APPROVED'
+    else if (result.rejected) nextStatus = 'REJECTED'
 
     if (nextStatus !== 'PENDING') {
       if (nextStatus === 'APPROVED') {
@@ -119,7 +107,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, status: nextStatus, counts: { approvals, rejections, threshold } })
+    return NextResponse.json({ success: true, status: nextStatus, result })
   } catch (error) {
     console.error('Error voting course:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

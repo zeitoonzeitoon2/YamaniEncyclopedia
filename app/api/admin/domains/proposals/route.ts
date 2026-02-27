@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,10 +54,9 @@ export async function GET(request: NextRequest) {
         return { ...p, voting: null }
       }
 
-      const votes = p.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const metrics = await getInternalVotingMetrics(votingDomainId, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, votingDomainId, 'DIRECT')
-      return { ...p, voting: { ...metrics, approvals, rejections } }
+      return { ...p, voting: metrics }
     }))
 
     return NextResponse.json({ proposals: enriched })

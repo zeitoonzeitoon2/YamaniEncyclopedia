@@ -344,12 +344,13 @@ export async function calculateVotingResult(
 
 export async function getInternalVotingMetrics(
   domainId: string,
-  votes: Array<{ voterId: string; vote: 'APPROVE' | 'REJECT' }>
+  votes: Array<{ voterId: string; vote?: 'APPROVE' | 'REJECT'; score?: number }>
 ): Promise<{
   eligibleCount: number
   totalRights: number
   votedCount: number
   rightsUsedPercent: number
+  totalScore: number
 }> {
   const experts = await prisma.domainExpert.findMany({
     where: { domainId },
@@ -362,7 +363,56 @@ export async function getInternalVotingMetrics(
   const votedCount = votedExperts.length
   const usedRights = votedExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
   const rightsUsedPercent = totalRights > 0 ? (usedRights / totalRights) * 100 : 0
-  return { eligibleCount, totalRights, votedCount, rightsUsedPercent }
+
+  let totalScore = 0
+  for (const v of votes) {
+    const expert = experts.find(e => e.userId === v.voterId)
+    if (!expert) continue
+    const weight = getInternalVotingWeight(expert.role, expert.wing)
+    const s = v.score !== undefined ? v.score : (v.vote === 'APPROVE' ? 1 : v.vote === 'REJECT' ? -1 : 0)
+    totalScore += s * weight
+  }
+
+  return { eligibleCount, totalRights, votedCount, rightsUsedPercent, totalScore }
+}
+
+export async function checkScoreApproval(
+  domainId: string,
+  votes: Array<{ voterId: string; score: number }>,
+  options?: { noRejection?: boolean }
+): Promise<{
+  approved: boolean
+  rejected: boolean
+  participationMet: boolean
+  totalScore: number
+  totalRights: number
+  voterCount: number
+  eligibleCount: number
+}> {
+  const experts = await prisma.domainExpert.findMany({
+    where: { domainId },
+    select: { userId: true, role: true, wing: true }
+  })
+  const totalRights = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+  const eligibleCount = experts.length
+
+  const votedSet = new Set(votes.map(v => v.voterId))
+  const voterCount = experts.filter(e => votedSet.has(e.userId)).length
+
+  let totalScore = 0
+  for (const v of votes) {
+    const expert = experts.find(e => e.userId === v.voterId)
+    if (!expert) continue
+    const weight = getInternalVotingWeight(expert.role, expert.wing)
+    totalScore += v.score * weight
+  }
+
+  const participationMet = eligibleCount > 0 && voterCount >= eligibleCount / 2
+  const threshold = totalRights / 2
+  const approved = participationMet && totalScore >= threshold
+  const rejected = !options?.noRejection && participationMet && totalScore <= -threshold
+
+  return { approved, rejected, participationMet, totalScore, totalRights, voterCount, eligibleCount }
 }
 
 export async function getEffectiveShare(

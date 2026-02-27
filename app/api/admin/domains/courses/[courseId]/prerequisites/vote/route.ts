@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { causesCircularDependency } from '@/lib/course-utils'
-import { calculateUserVotingWeight, calculateVotingResult } from '@/lib/voting-utils'
+import { calculateUserVotingWeight, checkScoreApproval } from '@/lib/voting-utils'
 
 export async function POST(
   request: NextRequest,
@@ -24,16 +24,14 @@ export async function POST(
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
-    // Check if user has any voting power in the course domain (direct only)
     const weight = await calculateUserVotingWeight(session.user.id, course.domainId, 'DIRECT')
-
     if (weight === 0) {
       return NextResponse.json({ error: 'Only experts with voting power can vote' }, { status: 403 })
     }
 
-    const { prerequisiteId, vote } = await request.json()
-    if (!prerequisiteId || !['APPROVE', 'REJECT'].includes(vote)) {
-      return NextResponse.json({ error: 'Invalid vote data' }, { status: 400 })
+    const { prerequisiteId, score } = await request.json()
+    if (!prerequisiteId || typeof score !== 'number' || !Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'Invalid vote data: prerequisiteId and score (-2..+2) required' }, { status: 400 })
     }
 
     const prerequisite = await prisma.coursePrerequisite.findUnique({
@@ -48,7 +46,6 @@ export async function POST(
       return NextResponse.json({ error: 'This prerequisite is no longer pending' }, { status: 400 })
     }
 
-    // Update or create vote
     await prisma.prerequisiteVote.upsert({
       where: {
         prerequisiteId_voterId: {
@@ -56,38 +53,25 @@ export async function POST(
           voterId: session.user.id
         }
       },
-      update: { vote },
+      update: { score },
       create: {
         prerequisiteId,
         voterId: session.user.id,
-        vote
+        score
       }
     })
 
-    // Get all votes
-    const allVotes = await prisma.prerequisiteVote.findMany({
-      where: { prerequisiteId }
-    })
-
-    // Calculate result using weights (direct only)
-    const { approvals, rejections } = await calculateVotingResult(
-      allVotes.map(v => ({ voterId: v.voterId, vote: v.vote })),
+    const allVotes = await prisma.prerequisiteVote.findMany({ where: { prerequisiteId } })
+    const result = await checkScoreApproval(
       course.domainId,
-      'DIRECT'
+      allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
     )
 
-    const threshold = 50
     let nextStatus = 'PENDING'
-
-    if (approvals > threshold) {
-      // Re-check for circular dependency before approving
+    if (result.approved) {
       const isCircular = await causesCircularDependency(prerequisite.courseId, prerequisite.prerequisiteCourseId)
-      if (isCircular) {
-        nextStatus = 'REJECTED' // Reject if it would create a cycle
-      } else {
-        nextStatus = 'APPROVED'
-      }
-    } else if (rejections > threshold) {
+      nextStatus = isCircular ? 'REJECTED' : 'APPROVED'
+    } else if (result.rejected) {
       nextStatus = 'REJECTED'
     }
 
@@ -98,7 +82,7 @@ export async function POST(
       })
     }
 
-    return NextResponse.json({ status: nextStatus, approvals, rejections, threshold })
+    return NextResponse.json({ status: nextStatus, result })
   } catch (error) {
     console.error('Error voting on prerequisite:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

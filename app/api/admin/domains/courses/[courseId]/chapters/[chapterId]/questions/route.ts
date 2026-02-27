@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateVotingResult, getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics } from '@/lib/voting-utils'
 
 async function canManageDomainCourses(user: { id?: string; role?: string } | undefined, domainId: string) {
   const userId = (user?.id || '').trim()
@@ -41,16 +41,15 @@ export async function GET(
       include: {
         options: true,
         author: { select: { id: true, name: true, email: true } },
-        votes: { select: { voterId: true, vote: true } }
+        votes: { select: { voterId: true, score: true } }
       },
       orderBy: { createdAt: 'desc' }
     })
 
     const enriched = await Promise.all(questions.map(async (q) => {
-      const votes = q.votes.map(v => ({ voterId: v.voterId, vote: v.vote as 'APPROVE' | 'REJECT' }))
+      const votes = q.votes.map(v => ({ voterId: v.voterId, score: v.score }))
       const voting = await getInternalVotingMetrics(course.domainId, votes)
-      const { approvals, rejections } = await calculateVotingResult(votes, course.domainId, 'DIRECT')
-      return { ...q, voting: { ...voting, approvals, rejections } }
+      return { ...q, voting }
     }))
 
     return NextResponse.json({ questions: enriched })

@@ -54,7 +54,7 @@ export async function PATCH(
       include: {
         options: true,
         author: { select: { id: true, name: true, email: true } },
-        votes: { select: { voterId: true, vote: true } },
+        votes: { select: { voterId: true, score: true } },
       },
     })
 

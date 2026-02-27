@@ -33,11 +33,10 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const candidacyId = typeof body.candidacyId === 'string' ? body.candidacyId.trim() : ''
-    // Allow score to be 1, 2, or 3. If missing, default to 0 which is invalid.
-    const score = typeof body.score === 'number' ? body.score : 0
+    const score = typeof body.score === 'number' ? body.score : NaN
 
-    if (!candidacyId || score < 1 || score > 3) {
-      return NextResponse.json({ error: 'candidacyId and score (1-3) are required' }, { status: 400 })
+    if (!candidacyId || Number.isNaN(score) || !Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'candidacyId and score (-2..+2) are required' }, { status: 400 })
     }
 
     const candidacy = await prisma.expertCandidacy.findUnique({
@@ -79,24 +78,14 @@ export async function POST(request: NextRequest) {
       })
       
       const oldScore = existingVote?.score || 0
-      
-      // Calculate weighted score difference
-      // Score is 1-3. Weight is percentage (e.g., 20).
-      // Weighted Score = Score * (Weight / 100)
-      // We store totalScore as float in DB? Or scaled integer?
-      // Prisma schema says totalScore is Float usually or Int? 
-      // Let's assume Float. If Int, we might need scaling.
-      // Based on `voting-utils.ts` in GET route: `weightedScore += (vote.score || 0) * (maxShare / 100)`
-      
       const oldWeighted = oldScore * (voterWeight / 100)
       const newWeighted = score * (voterWeight / 100)
       const diff = newWeighted - oldWeighted
 
-      // 2. Upsert vote
       await tx.candidacyVote.upsert({
         where: { candidacyId_voterUserId: { candidacyId, voterUserId } },
-        update: { score, vote: 'APPROVE' }, // Always APPROVE for score-based? Or we can use score to determine?
-        create: { candidacyId, voterUserId, score, vote: 'APPROVE' },
+        update: { score },
+        create: { candidacyId, voterUserId, score },
       })
 
       // 3. Update totalScore in candidacy
