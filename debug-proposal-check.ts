@@ -67,7 +67,7 @@ async function main() {
     }
     
     const myVote = p.votes.find(v => v.voterId === user.id)
-    console.log(`User vote: ${myVote ? myVote.vote : 'None'}`)
+    console.log(`User vote: ${myVote ? myVote.score : 'None'}`)
   }
 }
 
