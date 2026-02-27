@@ -32,7 +32,6 @@ type DomainExpert = {
 
 type CandidacyVote = {
   voterUserId: string
-  vote: string
   score: number
 }
 
@@ -64,7 +63,7 @@ type ExpertCandidacy = {
 
 type CourseVote = {
   voterId: string
-  vote: string
+  score: number
 }
 
 type SyllabusItem = {
@@ -86,7 +85,7 @@ type DomainCourse = {
 
 type DomainProposalVote = {
   voterId: string
-  vote: string
+  score: number
 }
 
 type DomainProposal = {
@@ -143,7 +142,7 @@ type DomainPrerequisite = {
   course: { id: string; title: string }
   proposer: { name: string | null }
   _count: { votes: number }
-  votes?: { voterId: string; vote: string }[]
+  votes?: { voterId: string; score: number }[]
   voting?: VotingMetrics
 }
 

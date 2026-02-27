@@ -19,7 +19,7 @@ type Question = {
   status: string
   author: { name: string | null }
   options: QuestionOption[]
-  votes: { voterId: string; vote: string }[]
+  votes: { voterId: string; score: number }[]
   voting?: VotingMetrics
 }
 

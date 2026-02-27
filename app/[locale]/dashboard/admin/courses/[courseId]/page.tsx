@@ -17,7 +17,7 @@ import VotingSlider from '@/components/VotingSlider'
 
 type ChapterVote = {
   voterId: string
-  vote: string
+  score: number
 }
 
 type VotingMetrics = {
@@ -64,7 +64,7 @@ type ChapterQuestion = {
   authorId: string
   author: { id: string; name: string | null; email: string | null }
   options: QuestionOption[]
-  votes: { voterId: string; vote: string }[]
+  votes: { voterId: string; score: number }[]
   voting?: VotingMetrics
   createdAt: string
 }
