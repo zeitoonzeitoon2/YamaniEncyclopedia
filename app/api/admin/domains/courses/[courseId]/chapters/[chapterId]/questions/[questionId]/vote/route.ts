@@ -13,10 +13,10 @@ export async function POST(
 
     const { questionId } = params
     const body = await request.json()
-    const { vote } = body // 'APPROVE' or 'REJECT'
+    const { score } = body
 
-    if (!['APPROVE', 'REJECT'].includes(vote)) {
-      return NextResponse.json({ error: 'Invalid vote' }, { status: 400 })
+    if (typeof score !== 'number' || !Number.isInteger(score) || score < -2 || score > 2) {
+      return NextResponse.json({ error: 'Score must be an integer between -2 and 2' }, { status: 400 })
     }
 
     const question = await prisma.chapterQuestion.findUnique({
@@ -31,7 +31,6 @@ export async function POST(
     const userId = session.user.id
     const domainId = question.chapter.course.domainId
 
-    // Check if user is an expert in the domain
     const membership = await prisma.domainExpert.findFirst({
       where: { userId, domainId, role: { in: ['HEAD', 'EXPERT'] } },
     })
@@ -47,16 +46,13 @@ export async function POST(
           voterId: userId,
         },
       },
-      update: { vote },
+      update: { score },
       create: {
         questionId,
         voterId: userId,
-        vote,
+        score,
       },
     })
-
-    // Auto-approve logic if needed (optional)
-    // For now, let's just record the vote.
 
     return NextResponse.json({ success: true })
   } catch (error) {
