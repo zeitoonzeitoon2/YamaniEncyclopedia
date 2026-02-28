@@ -109,6 +109,31 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       originalId = original.id
     }
 
+    // Reuse existing PENDING draft for the same root chapter by the same author
+    if (originalId) {
+      const existingDraft = await prisma.courseChapter.findFirst({
+        where: {
+          originalChapterId: originalId,
+          authorId: perm.userId,
+          status: 'PENDING',
+        },
+        select: { id: true },
+      })
+
+      if (existingDraft) {
+        await prisma.courseChapter.update({
+          where: { id: existingDraft.id },
+          data: {
+            title,
+            content,
+            orderIndex,
+            ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
+          },
+        })
+        return NextResponse.json({ chapter: existingDraft }, { status: 200 })
+      }
+    }
+
     const chapter = await prisma.courseChapter.create({
       data: {
         title,
@@ -126,7 +151,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     // If this is a revision, copy questions from the original chapter
     if (originalId) {
       const originalQuestions = await prisma.chapterQuestion.findMany({
-        where: { chapterId: originalId },
+        where: { chapterId: originalId, status: 'APPROVED' },
         include: { options: true }
       })
 
@@ -136,7 +161,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
             data: {
               chapterId: chapter.id,
               question: q.question,
-              authorId: perm.userId, // The person creating the draft is now the author of these draft questions
+              authorId: perm.userId,
               status: 'PENDING',
               options: {
                 create: q.options.map(opt => ({

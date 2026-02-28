@@ -360,17 +360,22 @@ export default function AdminCourseChaptersPage() {
     try {
       setSaving(true)
       
-      // Determine if we need to create a new draft or update an existing one
       let targetId = activeDraftId
       let isNewDraftNeeded = false
       
       if (mode === 'edit' && selectedChapter) {
         if (selectedChapter.status === 'APPROVED' || selectedChapter.status === 'REJECTED') {
-          // If the selected version is already APPROVED or REJECTED, we MUST create a new draft.
-          // We should not overwrite an existing REJECTED draft if the user wants to propose something new.
-          isNewDraftNeeded = true
+          const rootId = getRootId(selectedChapter)
+          const userId = session?.user?.id || ''
+          const existingDraft = chapters.find(
+            (c) => c.status === 'PENDING' && c.originalChapterId === rootId && c.author.id === userId
+          )
+          if (existingDraft) {
+            targetId = existingDraft.id
+          } else {
+            isNewDraftNeeded = true
+          }
         } else if (!targetId) {
-          // Editing an existing PENDING chapter
           targetId = selectedId
         }
       }
@@ -483,11 +488,21 @@ export default function AdminCourseChaptersPage() {
     
     // If current selected is already APPROVED or REJECTED, we MUST create a new draft
     if (selectedChapter.status !== 'PENDING') {
-      // Create draft automatically
+      // First check if a PENDING draft already exists for this root chapter
+      const rootId = getRootId(selectedChapter)
+      const userId = session?.user?.id || ''
+      const existingDraft = chapters.find(
+        (c) => c.status === 'PENDING' && c.originalChapterId === rootId && c.author.id === userId
+      )
+      if (existingDraft) {
+        setActiveDraftId(existingDraft.id)
+        setSelectedId(existingDraft.id)
+        return existingDraft.id
+      }
+
       if (autoDraftingRef.current) return null
       autoDraftingRef.current = true
       try {
-        const rootId = getRootId(selectedChapter)
         const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
