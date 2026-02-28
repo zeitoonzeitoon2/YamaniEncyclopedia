@@ -148,10 +148,20 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       select: { id: true },
     })
 
-    // If this is a revision, copy questions from the original chapter
+    // Copy questions from the latest APPROVED version (not just the root)
     if (originalId) {
+      const latestApproved = await prisma.courseChapter.findFirst({
+        where: {
+          OR: [{ id: originalId }, { originalChapterId: originalId }],
+          status: 'APPROVED',
+        },
+        orderBy: { version: 'desc' },
+        select: { id: true },
+      })
+      const sourceChapterId = latestApproved?.id || originalId
+
       const originalQuestions = await prisma.chapterQuestion.findMany({
-        where: { chapterId: originalId, status: 'APPROVED' },
+        where: { chapterId: sourceChapterId, status: 'APPROVED' },
         include: { options: true }
       })
 
