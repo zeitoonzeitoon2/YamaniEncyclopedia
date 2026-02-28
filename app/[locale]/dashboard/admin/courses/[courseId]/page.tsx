@@ -249,22 +249,27 @@ export default function AdminCourseChaptersPage() {
     setMode('edit')
     fetchQuestions(current.id)
 
-    // Also fetch questions for the previous version if it exists
+    // Fetch questions for the previous version (latest APPROVED for PENDING drafts)
     const rootId = current.originalChapterId || current.id
-    const versions = chaptersRef.current
-      .filter((c) => (c.originalChapterId || c.id) === rootId)
-      .sort((a, b) => {
-        const va = a.version ?? 0
-        const vb = b.version ?? 0
-        if (va !== vb) return va - vb
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      })
-    const idx = versions.findIndex((c) => c.id === current.id)
-    if (idx > 0) {
-      const prev = versions[idx - 1]
+    let prevChapter: typeof current | null = null
+
+    if (current.status === 'PENDING') {
+      const approved = chaptersRef.current
+        .filter((c) => (c.originalChapterId || c.id) === rootId && c.status === 'APPROVED')
+        .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
+      prevChapter = approved.length ? approved[approved.length - 1] : null
+    } else {
+      const approved = chaptersRef.current
+        .filter((c) => (c.originalChapterId || c.id) === rootId && c.status === 'APPROVED')
+        .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
+      const idx = approved.findIndex((c) => c.id === current.id)
+      prevChapter = idx > 0 ? approved[idx - 1] : null
+    }
+
+    if (prevChapter) {
       const fetchPrevQuestions = async () => {
         try {
-          const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${prev.id}/questions`)
+          const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${prevChapter!.id}/questions`)
           const data = await res.json()
           if (res.ok) setPreviousChapterQuestions(data.questions || [])
         } catch (error) {
@@ -570,18 +575,20 @@ export default function AdminCourseChaptersPage() {
   const selectedPreviousChapter = useMemo(() => {
     if (!selectedChapter) return null
     const rootId = getRootId(selectedChapter)
-    const versions = chapters
-      .filter((c) => getRootId(c) === rootId)
-      .sort((a, b) => {
-        const va = a.version ?? 0
-        const vb = b.version ?? 0
-        if (va !== vb) return va - vb
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      })
-    const idx = versions.findIndex((c) => c.id === selectedChapter.id)
+
+    // For PENDING drafts, the "previous" is the latest APPROVED version
+    if (selectedChapter.status === 'PENDING') {
+      return selectedApprovedChapter
+    }
+
+    // For APPROVED versions, find the version right before it
+    const approved = chapters
+      .filter((c) => getRootId(c) === rootId && c.status === 'APPROVED')
+      .sort((a, b) => (a.version ?? 0) - (b.version ?? 0))
+    const idx = approved.findIndex((c) => c.id === selectedChapter.id)
     if (idx <= 0) return null
-    return versions[idx - 1]
-  }, [chapters, selectedChapter])
+    return approved[idx - 1]
+  }, [chapters, selectedChapter, selectedApprovedChapter])
 
   const previewDiffOps = useMemo(() => {
     if (!selectedChapter) return null
