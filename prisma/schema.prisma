@@ -194,13 +194,14 @@ model CourseVote {
 }
 
 model CourseChapter {
-  id          String   @id @default(cuid())
-  title       String
-  content     String   @default("")
-  orderIndex  Int      @default(0)
-  status      String   @default("PENDING")
-  version     Int?
-  courseId    String
+  id                 String   @id @default(cuid())
+  title              String
+  content            String   @default("")
+  orderIndex         Int      @default(0)
+  status             String   @default("PENDING")
+  submittedForVote    Boolean  @default(false)
+  version            Int?
+  courseId           String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   authorId    String
   author      User     @relation(fields: [authorId], references: [id])

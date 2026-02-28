@@ -44,8 +44,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
     const content = typeof body.content === 'string' ? body.content : undefined
     const orderIndex = typeof body.orderIndex === 'number' ? body.orderIndex : undefined
     const changeReason = body.changeReason
+    const submittedForVote = body.submittedForVote === true
 
-    if (!title && !content && orderIndex === undefined) {
+    if (!title && !content && orderIndex === undefined && !submittedForVote) {
       return NextResponse.json({ error: 'No changes provided' }, { status: 400 })
     }
 
@@ -56,7 +57,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
         ...(content !== undefined ? { content } : {}),
         ...(orderIndex !== undefined ? { orderIndex } : {}),
         ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-        status: 'PENDING', // Always reset to PENDING on edit
+        ...(submittedForVote ? { submittedForVote: true } : {}),
+        status: 'PENDING',
       },
       select: { id: true },
     })

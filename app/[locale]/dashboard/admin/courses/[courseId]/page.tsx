@@ -42,6 +42,7 @@ type CourseChapter = {
   content: string
   orderIndex: number
   status: string
+  submittedForVote?: boolean
   version: number | null
   originalChapterId: string | null
   changeReason?: {
@@ -389,7 +390,8 @@ export default function AdminCourseChaptersPage() {
         title, 
         content, 
         orderIndex: form.orderIndex,
-        changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
+        changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined,
+        submittedForVote: true,
       }
 
       if (targetId && !isNewDraftNeeded) {
@@ -410,6 +412,7 @@ export default function AdminCourseChaptersPage() {
           body: JSON.stringify({
             ...body,
             originalChapterId: isNewDraftNeeded ? getRootId(selectedChapter!) : (form.originalChapterId || undefined),
+            submittedForVote: true,
           }),
         })
         const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
@@ -561,7 +564,9 @@ export default function AdminCourseChaptersPage() {
     setExpandedRoots((prev) => ({ ...prev, [rootId]: !prev[rootId] }))
   }
 
-  const pendingChapters = chapters.filter((c) => c.status === 'PENDING')
+  const pendingChapters = chapters.filter(
+    (c) => c.status === 'PENDING' && (c.submittedForVote === true || c.submittedForVote === undefined)
+  )
 
   const selectChapterById = (chapterId: string) => {
     const target = chaptersRef.current.find((c) => c.id === chapterId) || null

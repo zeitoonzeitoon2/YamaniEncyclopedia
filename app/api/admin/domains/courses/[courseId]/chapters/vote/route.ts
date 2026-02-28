@@ -29,6 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
         id: true,
         courseId: true,
         status: true,
+        submittedForVote: true,
         originalChapterId: true,
         course: { select: { domainId: true } },
       },
@@ -38,6 +39,9 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     }
     if (chapter.status !== 'PENDING') {
       return NextResponse.json({ error: 'Chapter draft is closed' }, { status: 409 })
+    }
+    if (!chapter.submittedForVote) {
+      return NextResponse.json({ error: 'Chapter not submitted for vote yet' }, { status: 409 })
     }
 
     const weight = await calculateUserVotingWeight(session.user.id, chapter.course.domainId, 'DIRECT')
