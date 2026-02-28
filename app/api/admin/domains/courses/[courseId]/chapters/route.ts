@@ -128,7 +128,6 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
             content,
             orderIndex,
             ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-            ...(submittedForVote ? { submittedForVote: true } : {}),
           },
         })
         return NextResponse.json({ chapter: existingDraft }, { status: 200 })
