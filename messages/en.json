@@ -56,6 +56,7 @@
     "completed": "Completed",
     "markComplete": "Mark as complete",
     "completedButton": "Completed",
+    "markCompleteQuizFirst": "Answer all chapter self-assessment questions first.",
     "enrollHint": "Enroll to track progress.",
     "previous": "Previous",
     "next": "Next",

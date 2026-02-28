@@ -18,9 +18,11 @@ type ChapterQuestion = {
 interface StudentChapterQuizProps {
   courseId: string
   chapterId: string
+  onQuizLoaded?: (hasQuestions: boolean) => void
+  onQuizSubmitted?: () => void
 }
 
-export default function StudentChapterQuiz({ courseId, chapterId }: StudentChapterQuizProps) {
+export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, onQuizSubmitted }: StudentChapterQuizProps) {
   const [questions, setQuestions] = useState<ChapterQuestion[]>([])
   const [loading, setLoading] = useState(false)
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
@@ -32,20 +34,29 @@ export default function StudentChapterQuiz({ courseId, chapterId }: StudentChapt
       const res = await fetch(`/api/academy/course/${courseId}/chapters/${chapterId}/quiz`)
       const data = await res.json()
       if (res.ok) {
-        setQuestions(data.questions || [])
+        const list = data.questions || []
+        setQuestions(list)
+        onQuizLoaded?.(list.length > 0)
+      } else {
+        onQuizLoaded?.(false)
       }
     } catch (error) {
       console.error('Error fetching quiz:', error)
+      onQuizLoaded?.(false)
     } finally {
       setLoading(false)
     }
-  }, [courseId, chapterId])
+  }, [courseId, chapterId, onQuizLoaded])
 
   useEffect(() => {
     fetchQuiz()
     setUserAnswers({})
     setShowResults(false)
   }, [fetchQuiz])
+
+  useEffect(() => {
+    if (!loading && questions.length === 0) onQuizLoaded?.(false)
+  }, [loading, questions.length, onQuizLoaded])
 
   if (loading) return <div className="text-site-muted text-sm p-4 text-center">در حال بارگذاری پرسشنامه...</div>
   if (questions.length === 0) return null
@@ -61,6 +72,7 @@ export default function StudentChapterQuiz({ courseId, chapterId }: StudentChapt
       return
     }
     setShowResults(true)
+    onQuizSubmitted?.()
   }
 
   const score = questions.reduce((acc, q) => {

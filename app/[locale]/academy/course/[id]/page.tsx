@@ -60,6 +60,8 @@ export default function CourseViewerPage() {
   const [markingId, setMarkingId] = useState<string | null>(null)
   const [requestingExam, setRequestingExam] = useState(false)
   const [previewHtml, setPreviewHtml] = useState('')
+  const [chapterHasQuiz, setChapterHasQuiz] = useState<Record<string, boolean>>({})
+  const [quizSubmittedChapters, setQuizSubmittedChapters] = useState<Record<string, boolean>>({})
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
   const currentIndex = useMemo(() => chapters.findIndex((c) => c.id === selectedId), [chapters, selectedId])
@@ -297,8 +299,17 @@ export default function CourseViewerPage() {
                     <button
                       type="button"
                       onClick={markComplete}
-                      disabled={markingId === selectedChapter.id || progress.includes(selectedChapter.id)}
+                      disabled={
+                        markingId === selectedChapter.id ||
+                        progress.includes(selectedChapter.id) ||
+                        (chapterHasQuiz[selectedChapter.id] !== false && !quizSubmittedChapters[selectedChapter.id])
+                      }
                       className="btn-primary disabled:opacity-50"
+                      title={
+                        chapterHasQuiz[selectedChapter.id] !== false && !quizSubmittedChapters[selectedChapter.id]
+                          ? t('markCompleteQuizFirst')
+                          : undefined
+                      }
                     >
                       {progress.includes(selectedChapter.id)
                         ? t('completedButton')
@@ -349,7 +360,18 @@ export default function CourseViewerPage() {
                   dangerouslySetInnerHTML={{ __html: previewHtml }}
                 />
 
-                {selectedId && <StudentChapterQuiz courseId={courseId} chapterId={selectedId} />}
+                {selectedId && (
+                  <StudentChapterQuiz
+                    courseId={courseId}
+                    chapterId={selectedId}
+                    onQuizLoaded={(hasQuestions) => {
+                      if (selectedId) setChapterHasQuiz((prev) => ({ ...prev, [selectedId]: hasQuestions }))
+                    }}
+                    onQuizSubmitted={() => {
+                      if (selectedId) setQuizSubmittedChapters((prev) => ({ ...prev, [selectedId]: true }))
+                    }}
+                  />
+                )}
 
                 <div className="flex items-center justify-between pt-8 border-t border-site-border">
                   <button
