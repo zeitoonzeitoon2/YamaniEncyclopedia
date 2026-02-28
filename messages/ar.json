@@ -887,6 +887,7 @@
     "charCount": "عدد الأحرف: {count}",
     "noContent": "لا يوجد محتوى بعد.",
     "saveDraft": "حفظ المسودة",
+    "preview": "معاينة",
     "previewContent": "معاينة المحتوى",
     "previewQuestionnaire": "معاينة الاستبيان",
     "previousVersion": "النسخة السابقة",
@@ -929,7 +930,8 @@
       "deleteSuccess": "تم حذف الفصل بنجاح",
       "deleteError": "خطأ في حذف الفصل",
       "voteError": "خطأ في تسجيل التصويت",
-      "draftCreateError": "خطأ في إنشاء المسودة"
+      "draftCreateError": "خطأ في إنشاء المسودة",
+      "requiredFields": "يرجى إدخال عنوان ومحتوى الفصل"
     },
     "prerequisites": {
       "proposeTitle": "اقتراح متطلب سابق جديد",

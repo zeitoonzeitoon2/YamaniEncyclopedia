@@ -910,6 +910,7 @@
     "charCount": "Character Count: {count}",
     "noContent": "No content yet.",
     "saveDraft": "Save Draft",
+    "preview": "Preview",
     "previewContent": "Preview Content",
     "previewQuestionnaire": "Preview Questionnaire",
     "previousVersion": "Previous Version",
@@ -952,7 +953,8 @@
       "deleteSuccess": "Chapter deleted successfully",
       "deleteError": "Error deleting chapter",
       "voteError": "Error casting vote",
-      "draftCreateError": "Error creating draft"
+      "draftCreateError": "Error creating draft",
+      "requiredFields": "Please enter both title and content for the chapter"
     },
     "prerequisites": {
       "proposeTitle": "Propose New Prerequisite",

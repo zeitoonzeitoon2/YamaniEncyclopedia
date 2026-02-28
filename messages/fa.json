@@ -942,6 +942,7 @@
     "charCount": "تعداد نویسه‌ها: {count}",
     "noContent": "هنوز محتوایی وجود ندارد.",
     "saveDraft": "ذخیره پیش‌نویس",
+    "preview": "پیش‌نمایش",
     "previewContent": "پیش‌نمایش محتوا",
     "previewQuestionnaire": "پیش‌نمایش پرسشنامه",
     "previousVersion": "نسخه قبلی",
@@ -984,7 +985,8 @@
       "deleteSuccess": "فصل با موفقیت حذف شد",
       "deleteError": "خطا در حذف فصل",
       "voteError": "خطا در ثبت رای",
-      "draftCreateError": "خطا در ایجاد پیش‌نویس"
+      "draftCreateError": "خطا در ایجاد پیش‌نویس",
+      "requiredFields": "لطفاً عنوان و محتوای فصل را وارد کنید"
     },
     "prerequisites": {
       "proposeTitle": "پیشنهاد پیش‌نیاز جدید",
