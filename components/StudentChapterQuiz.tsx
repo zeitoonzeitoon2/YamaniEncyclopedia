@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 
 type QuestionOption = {
@@ -28,6 +28,11 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
   const [showResults, setShowResults] = useState(false)
 
+  const onQuizLoadedRef = useRef(onQuizLoaded)
+  const onQuizSubmittedRef = useRef(onQuizSubmitted)
+  onQuizLoadedRef.current = onQuizLoaded
+  onQuizSubmittedRef.current = onQuizSubmitted
+
   const fetchQuiz = useCallback(async () => {
     try {
       setLoading(true)
@@ -36,17 +41,17 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
       if (res.ok) {
         const list = data.questions || []
         setQuestions(list)
-        onQuizLoaded?.(list.length > 0)
+        onQuizLoadedRef.current?.(list.length > 0)
       } else {
-        onQuizLoaded?.(false)
+        onQuizLoadedRef.current?.(false)
       }
     } catch (error) {
       console.error('Error fetching quiz:', error)
-      onQuizLoaded?.(false)
+      onQuizLoadedRef.current?.(false)
     } finally {
       setLoading(false)
     }
-  }, [courseId, chapterId, onQuizLoaded])
+  }, [courseId, chapterId])
 
   useEffect(() => {
     fetchQuiz()
@@ -54,9 +59,6 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
     setShowResults(false)
   }, [fetchQuiz])
 
-  useEffect(() => {
-    if (!loading && questions.length === 0) onQuizLoaded?.(false)
-  }, [loading, questions.length, onQuizLoaded])
 
   if (loading) return <div className="text-site-muted text-sm p-4 text-center">در حال بارگذاری پرسشنامه...</div>
   if (questions.length === 0) return null
@@ -72,7 +74,7 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
       return
     }
     setShowResults(true)
-    onQuizSubmitted?.()
+    onQuizSubmittedRef.current?.()
   }
 
   const score = questions.reduce((acc, q) => {

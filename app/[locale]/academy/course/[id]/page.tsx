@@ -1,7 +1,7 @@
 'use client'
 
 import { Link } from '@/lib/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { applyArticleTransforms } from '@/lib/footnotes'
@@ -131,6 +131,14 @@ export default function CourseViewerPage() {
       setMarkingId(null)
     }
   }
+
+  const handleQuizLoaded = useCallback((hasQuestions: boolean) => {
+    if (selectedId) setChapterHasQuiz((prev) => ({ ...prev, [selectedId]: hasQuestions }))
+  }, [selectedId])
+
+  const handleQuizSubmitted = useCallback(() => {
+    if (selectedId) setQuizSubmittedChapters((prev) => ({ ...prev, [selectedId]: true }))
+  }, [selectedId])
 
   const requestExam = async () => {
     if (!courseId || requestingExam) return
@@ -364,12 +372,8 @@ export default function CourseViewerPage() {
                   <StudentChapterQuiz
                     courseId={courseId}
                     chapterId={selectedId}
-                    onQuizLoaded={(hasQuestions) => {
-                      if (selectedId) setChapterHasQuiz((prev) => ({ ...prev, [selectedId]: hasQuestions }))
-                    }}
-                    onQuizSubmitted={() => {
-                      if (selectedId) setQuizSubmittedChapters((prev) => ({ ...prev, [selectedId]: true }))
-                    }}
+                    onQuizLoaded={handleQuizLoaded}
+                    onQuizSubmitted={handleQuizSubmitted}
                   />
                 )}
 
