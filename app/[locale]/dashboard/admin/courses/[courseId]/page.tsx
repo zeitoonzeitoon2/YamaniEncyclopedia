@@ -140,16 +140,17 @@ export default function AdminCourseChaptersPage() {
     }
 
     const groups = Array.from(byRoot.entries()).map(([rootId, list]) => {
-      const versions = [...list].sort((a, b) => {
+      const allVersions = [...list].sort((a, b) => {
         const va = a.version ?? 0
         const vb = b.version ?? 0
         if (va !== vb) return va - vb
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       })
-      const approvedVersions = versions.filter((c) => c.status === 'APPROVED')
+      const approvedVersions = allVersions.filter((c) => c.status === 'APPROVED')
       const approved = approvedVersions.length ? approvedVersions[approvedVersions.length - 1] : null
-      const parent = approved || versions[versions.length - 1]
-      const orderIndex = Math.min(...versions.map((c) => c.orderIndex ?? 0))
+      const parent = approved || allVersions[allVersions.length - 1]
+      const orderIndex = Math.min(...allVersions.map((c) => c.orderIndex ?? 0))
+      const versions = allVersions.filter((c) => c.status !== 'REJECTED')
       return { rootId, orderIndex, parent, versions, approved }
     })
 
