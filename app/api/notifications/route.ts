@@ -50,7 +50,6 @@ export async function GET() {
         prisma.courseChapter.findMany({
           where: {
             status: 'PENDING',
-            submittedForVote: true,
             course: { domainId: { in: domainIds } },
             votes: { none: { voterId: userId } },
           },
