@@ -1949,23 +1949,15 @@ export default function AdminDashboard() {
                                           </div>
                                         )}
                                       </div>
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <Link
-                                          href={`/dashboard/admin/courses/${course.id}`}
-                                          className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-                                        >
-                                          {t('manageChapters')}
-                                        </Link>
-                                        {canVoteOnSelectedDomainCourses && (
-                                          <div className="w-48">
-                                            <VotingSlider
-                                              currentVote={typeof myVote === 'number' ? myVote : 0}
-                                              onVote={(score) => voteOnCourse(course.id, score)}
-                                              disabled={courseVotingKey !== null}
-                                            />
-                                          </div>
-                                        )}
-                                      </div>
+                                      {canVoteOnSelectedDomainCourses && (
+                                        <div className="shrink-0 w-48">
+                                          <VotingSlider
+                                            currentVote={typeof myVote === 'number' ? myVote : 0}
+                                            onVote={(score) => voteOnCourse(course.id, score)}
+                                            disabled={courseVotingKey !== null}
+                                          />
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 )
