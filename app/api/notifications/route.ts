@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateUserVotingWeight } from '@/lib/voting-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,7 @@ export async function GET() {
 
     const items: NotificationItem[] = []
 
-    const [courses, chapters, prerequisites, domainPrereqs, proposals, investments, questions, posts] =
+    const [courses, chapters, prerequisites, domainPrereqs, proposals, investments, questions, posts, candidacies] =
       await Promise.all([
         prisma.course.findMany({
           where: {
@@ -125,6 +126,21 @@ export async function GET() {
           },
           select: { id: true, content: true, domainId: true, createdAt: true, type: true },
         }),
+
+        prisma.expertCandidacy.findMany({
+          where: {
+            status: 'PENDING',
+            votes: { none: { voterUserId: userId } },
+          },
+          select: {
+            id: true,
+            wing: true,
+            domainId: true,
+            createdAt: true,
+            domain: { select: { name: true } },
+            candidateUser: { select: { name: true, email: true } },
+          },
+        }),
       ])
 
     for (const c of courses) {
@@ -154,6 +170,27 @@ export async function GET() {
     for (const p of posts) {
       const snippet = p.content.replace(/<[^>]*>/g, '').slice(0, 50)
       items.push({ type: 'post', id: p.id, title: snippet || p.type, domainName: p.domainId ? domainNameMap[p.domainId] : undefined, createdAt: p.createdAt.toISOString() })
+    }
+
+    const candidacyWeights = await Promise.all(
+      candidacies.map(async (c) => {
+        const weight = await calculateUserVotingWeight(userId, c.domainId, 'CANDIDACY', { targetWing: c.wing })
+        return { id: c.id, weight }
+      })
+    )
+    const weightMap = new Map(candidacyWeights.map((w) => [w.id, w.weight]))
+
+    for (const c of candidacies) {
+      const weight = weightMap.get(c.id) || 0
+      if (weight <= 0) continue
+      const candidateName = c.candidateUser.name || c.candidateUser.email || 'Candidate'
+      items.push({
+        type: 'candidacy',
+        id: c.id,
+        title: candidateName,
+        domainName: c.domain?.name || domainNameMap[c.domainId],
+        createdAt: c.createdAt.toISOString(),
+      })
     }
 
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
