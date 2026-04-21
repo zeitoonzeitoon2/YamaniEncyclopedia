@@ -110,11 +110,11 @@ export async function POST(request: NextRequest) {
             hasPermission = true
             break
           }
-          const domain = await prisma.domain.findUnique({
+          const parentDomain: { parentId: string | null } | null = await prisma.domain.findUnique({
             where: { id: currentId },
             select: { parentId: true }
           })
-          currentId = domain?.parentId || null
+          currentId = parentDomain?.parentId || null
         }
         
         if (!hasPermission) return NextResponse.json({ error: 'Only parent domain experts (or ancestors) can propose creation' }, { status: 403 })
@@ -146,11 +146,11 @@ export async function POST(request: NextRequest) {
             hasPermission = true
             break
           }
-          const parent = await prisma.domain.findUnique({
+          const parentDomain: { parentId: string | null } | null = await prisma.domain.findUnique({
             where: { id: currentId },
             select: { parentId: true }
           })
-          currentId = parent?.parentId || null
+          currentId = parentDomain?.parentId || null
         }
 
         if (!hasPermission) return NextResponse.json({ error: 'Only parent domain experts (or ancestors) can propose deletion' }, { status: 403 })
