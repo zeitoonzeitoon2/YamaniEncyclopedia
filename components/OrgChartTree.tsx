@@ -24,11 +24,25 @@ interface OrgChartTreeProps {
   selectedId: string | null
   onSelect: (node: DomainNode) => void
   onAddChild?: (node: DomainNode) => void
+  canAddChild?: (node: DomainNode) => boolean
 }
 
-const TreeNode = ({ node, selectedId, onSelect, onAddChild }: { node: DomainNode; selectedId: string | null; onSelect: (node: DomainNode) => void; onAddChild?: (node: DomainNode) => void }) => {
+const TreeNode = ({ 
+  node, 
+  selectedId, 
+  onSelect, 
+  onAddChild,
+  canAddChild 
+}: { 
+  node: DomainNode; 
+  selectedId: string | null; 
+  onSelect: (node: DomainNode) => void; 
+  onAddChild?: (node: DomainNode) => void;
+  canAddChild?: (node: DomainNode) => boolean
+}) => {
   const isSelected = selectedId === node.id
   const hasChildren = node.children && node.children.length > 0
+  const showAdd = onAddChild && (!canAddChild || canAddChild(node))
 
   return (
     <li>
@@ -57,7 +71,7 @@ const TreeNode = ({ node, selectedId, onSelect, onAddChild }: { node: DomainNode
         </div>
         
         {/* Add Child Button - visible on hover or selected */}
-        {onAddChild && (
+        {showAdd && (
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -83,6 +97,7 @@ const TreeNode = ({ node, selectedId, onSelect, onAddChild }: { node: DomainNode
               selectedId={selectedId} 
               onSelect={onSelect}
               onAddChild={onAddChild}
+              canAddChild={canAddChild}
             />
           ))}
         </ul>
@@ -91,7 +106,7 @@ const TreeNode = ({ node, selectedId, onSelect, onAddChild }: { node: DomainNode
   )
 }
 
-export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild }: OrgChartTreeProps) {
+export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, canAddChild }: OrgChartTreeProps) {
   if (!nodes || nodes.length === 0) return null
 
   return (
@@ -105,6 +120,7 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild }
               selectedId={selectedId} 
               onSelect={onSelect}
               onAddChild={onAddChild}
+              canAddChild={canAddChild}
             />
           ))}
         </ul>

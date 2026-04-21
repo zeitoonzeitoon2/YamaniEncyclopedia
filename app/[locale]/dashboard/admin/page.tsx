@@ -324,6 +324,13 @@ export default function AdminDashboard() {
     return selectedDomain.experts.some((ex) => ex.user.id === userId)
   }, [selectedDomain, session?.user?.id])
 
+  const canAddSubDomain = useCallback((node: DomainNode) => {
+    if (session?.user?.role === 'ADMIN') return true
+    const userId = session?.user?.id
+    if (!userId) return false
+    return node.experts.some(ex => ex.user.id === userId)
+  }, [session?.user?.id, session?.user?.role])
+
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
   const pendingMembersVotes = useMemo(() => {
@@ -1187,6 +1194,7 @@ export default function AdminDashboard() {
               selectedId={selectedDomainId} 
               onSelect={(node) => setSelectedDomainId(node.id)}
               onAddChild={(node) => openAddModal(node)}
+              canAddChild={canAddSubDomain}
             />
           </div>
 
