@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+    const isAdmin = session?.user?.role === 'ADMIN'
+    const isDev = process.env.NODE_ENV !== 'production'
+    if (!isDev && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // ایجاد جدول ExamSession با تمام ستون‌های مورد نیاز
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "ExamSession" (

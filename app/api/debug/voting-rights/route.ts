@@ -2,8 +2,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calculateUserVotingWeight } from '@/lib/voting-utils'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  const isAdmin = session?.user?.role === 'ADMIN'
+  const isDev = process.env.NODE_ENV !== 'production'
+  if (!isDev && !isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const { searchParams } = new URL(request.url)
   const email = searchParams.get('email')
   const domainName = searchParams.get('domain')

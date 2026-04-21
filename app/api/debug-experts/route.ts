@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  const isAdmin = session?.user?.role === 'ADMIN'
+  const isDev = process.env.NODE_ENV !== 'production'
+  if (!isDev && !isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const philosophy = await prisma.domain.findUnique({
     where: { slug: 'philosophy' },
     include: {

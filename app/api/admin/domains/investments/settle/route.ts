@@ -5,7 +5,7 @@ import { settleExpiredInvestments } from '@/lib/voting-utils'
 
 export async function POST() {
   const session = await getServerSession(authOptions)
-  if (!session?.user) {
+  if (!session?.user || session.user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

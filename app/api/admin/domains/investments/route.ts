@@ -198,9 +198,24 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    // Auto-settle expired investments whenever the list is fetched
-    await settleExpiredInvestments()
-    await rejectExpiredProposals()
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      const membership = await prisma.domainExpert.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    } else {
+      // Keep automatic maintenance, but only for admins.
+      await settleExpiredInvestments()
+      await rejectExpiredProposals()
+    }
 
     const { searchParams } = new URL(req.url)
     const domainId = searchParams.get('domainId')

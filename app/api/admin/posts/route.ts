@@ -18,8 +18,8 @@ export async function GET() {
       where: { email: session.user.email }
     })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const posts = await prisma.post.findMany({
