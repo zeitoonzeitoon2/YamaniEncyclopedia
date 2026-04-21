@@ -344,7 +344,7 @@ export default function AdminDashboard() {
     let current: DomainNode | undefined = node
     while (current) {
       if (current.experts.some((ex) => ex.user.id === userId)) return true
-      const pid = current.parentId
+      const pid: string | null = current.parentId
       current = pid ? domainMap.get(pid) : undefined
     }
     return false
