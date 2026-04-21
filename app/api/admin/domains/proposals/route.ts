@@ -98,12 +98,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Name and parentId are required for creation' }, { status: 400 })
       }
       
-      // Check if user is expert of parent
+      // Check if user is expert of parent or any ancestor
       if (session.user.role !== 'ADMIN') {
-        const isExpert = await prisma.domainExpert.findFirst({
-          where: { domainId: parentId, userId: session.user.id }
-        })
-        if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose creation' }, { status: 403 })
+        let hasPermission = false
+        let currentId: string | null = parentId
+        while (currentId) {
+          const isExpert = await prisma.domainExpert.findFirst({
+            where: { domainId: currentId, userId: session.user.id }
+          })
+          if (isExpert) {
+            hasPermission = true
+            break
+          }
+          const domain = await prisma.domain.findUnique({
+            where: { id: currentId },
+            select: { parentId: true }
+          })
+          currentId = domain?.parentId || null
+        }
+        
+        if (!hasPermission) return NextResponse.json({ error: 'Only parent domain experts (or ancestors) can propose creation' }, { status: 403 })
       }
     } else if (type === 'DELETE') {
       if (!targetDomainId) {
@@ -118,13 +132,28 @@ export async function POST(request: NextRequest) {
 
       finalParentId = domain.parentId ?? undefined
 
-      // Check if user is expert of parent
+      // Check if user is expert of parent or any ancestor
       if (session.user.role !== 'ADMIN') {
         if (!domain.parentId) return NextResponse.json({ error: 'Only admins can propose deleting root domains' }, { status: 403 })
-        const isExpert = await prisma.domainExpert.findFirst({
-          where: { domainId: domain.parentId, userId: session.user.id }
-        })
-        if (!isExpert) return NextResponse.json({ error: 'Only parent domain experts can propose deletion' }, { status: 403 })
+        
+        let hasPermission = false
+        let currentId: string | null = domain.parentId
+        while (currentId) {
+          const isExpert = await prisma.domainExpert.findFirst({
+            where: { domainId: currentId, userId: session.user.id }
+          })
+          if (isExpert) {
+            hasPermission = true
+            break
+          }
+          const parent = await prisma.domain.findUnique({
+            where: { id: currentId },
+            select: { parentId: true }
+          })
+          currentId = parent?.parentId || null
+        }
+
+        if (!hasPermission) return NextResponse.json({ error: 'Only parent domain experts (or ancestors) can propose deletion' }, { status: 403 })
       }
     } else if (type === 'RENAME') {
       if (!targetDomainId || !name) {

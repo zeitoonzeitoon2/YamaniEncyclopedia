@@ -308,6 +308,7 @@ mark {
   position: absolute; top: 0; right: 50%;
   border-top: 1px solid rgb(var(--site-border));
   width: 50%; height: 20px;
+  box-sizing: border-box;
 }
 .org-tree li::after {
   right: auto; left: 50%;
@@ -326,7 +327,7 @@ mark {
 }
 /* Adding back the vertical connector to the last nodes */
 .org-tree li:last-child::before {
-  border-right: 1px solid rgb(var(--site-border));
+  border-left: 1px solid rgb(var(--site-border));
   border-radius: 0 5px 0 0;
   -webkit-border-radius: 0 5px 0 0;
   -moz-border-radius: 0 5px 0 0;
@@ -343,6 +344,7 @@ mark {
   position: absolute; top: 0; left: 50%;
   border-left: 1px solid rgb(var(--site-border));
   width: 0; height: 20px;
+  margin-left: -0.5px;
 }
 
 /* Org Chart Hover Effects */

@@ -324,12 +324,31 @@ export default function AdminDashboard() {
     return selectedDomain.experts.some((ex) => ex.user.id === userId)
   }, [selectedDomain, session?.user?.id])
 
+  const domainMap = useMemo(() => {
+    const map = new Map<string, DomainNode>()
+    const traverse = (nodes: DomainNode[]) => {
+      nodes.forEach((node) => {
+        map.set(node.id, node)
+        if (node.children) traverse(node.children)
+      })
+    }
+    traverse(roots)
+    return map
+  }, [roots])
+
   const canAddSubDomain = useCallback((node: DomainNode) => {
     if (session?.user?.role === 'ADMIN') return true
     const userId = session?.user?.id
     if (!userId) return false
-    return node.experts.some(ex => ex.user.id === userId)
-  }, [session?.user?.id, session?.user?.role])
+    
+    let current: DomainNode | undefined = node
+    while (current) {
+      if (current.experts.some((ex) => ex.user.id === userId)) return true
+      const pid = current.parentId
+      current = pid ? domainMap.get(pid) : undefined
+    }
+    return false
+  }, [session?.user?.id, session?.user?.role, domainMap])
 
   const philosophyRoot = useMemo(() => roots.find((r) => r.slug === 'philosophy') || null, [roots])
 
