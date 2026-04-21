@@ -285,36 +285,32 @@ mark {
   }
 }
 
-/* Org Chart Tree Styles - Improved for Pixel Perfect Connections */
+/* Org Chart Tree Styles - table layout for stable connectors */
 .org-tree ul {
-  padding-top: 20px; 
+  padding-top: 20px;
   position: relative;
-  display: flex;
-  justify-content: center;
-  transition: all 0.3s ease;
-  isolation: isolate;
+  display: table;
+  margin: 0 auto;
 }
 
 .org-tree li {
   list-style-type: none;
   position: relative;
   padding: 20px 10px 0 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: table-cell;
+  text-align: center;
+  vertical-align: top;
 }
 
-/* Horizontal connectors using li::before and li::after */
-.org-tree li::before, 
+.org-tree li::before,
 .org-tree li::after {
   content: '';
   position: absolute;
   top: 0;
   right: 50%;
+  border-top: 1px solid rgb(var(--site-border));
   width: 50%;
   height: 20px;
-  border-top: 1px solid rgb(var(--site-border));
-  z-index: -1;
 }
 
 .org-tree li::after {
@@ -323,8 +319,7 @@ mark {
   border-left: 1px solid rgb(var(--site-border));
 }
 
-/* Handle first, last and only children */
-.org-tree li:only-child::after, 
+.org-tree li:only-child::after,
 .org-tree li:only-child::before {
   display: none;
 }
@@ -333,16 +328,11 @@ mark {
   padding-top: 0;
 }
 
-/* Remove horizontal lines that go "out" of the tree boundaries */
-.org-tree li:first-child::before {
+.org-tree li:first-child::before,
+.org-tree li:last-child::after {
   border: 0 none;
 }
 
-.org-tree li:last-child::after {
-  border-top: 0 none;
-}
-
-/* Rounded corners for the edges of the horizontal connector */
 .org-tree li:last-child::before {
   border-right: 1px solid rgb(var(--site-border));
   border-radius: 0 5px 0 0;
@@ -352,7 +342,6 @@ mark {
   border-radius: 5px 0 0 0;
 }
 
-/* Vertical line from parent to child list */
 .org-tree ul ul::before {
   content: '';
   position: absolute;
@@ -361,12 +350,8 @@ mark {
   border-left: 1px solid rgb(var(--site-border));
   width: 0;
   height: 20px;
-  z-index: -1;
-  transform: translateX(-0.5px);
 }
 
-/* Vertical line from the child box up to the horizontal connector */
-/* This ensures every node card has a line above it that meets the parent's horizontal line */
 .org-tree li .node-card::before {
   content: '';
   position: absolute;
@@ -375,31 +360,26 @@ mark {
   width: 0;
   height: 20px;
   border-left: 1px solid rgb(var(--site-border));
-  transform: translateX(-0.5px);
-  z-index: -1;
 }
 
-/* Exception: Root nodes don't need the top line */
 .org-tree > ul > li > .node-card::before {
   display: none;
 }
 
-/* Adjustments for the add button to not overlap lines */
 .org-tree .node-card {
   position: relative;
-  z-index: 10;
+  z-index: 1;
 }
 
-/* Org Chart Hover Effects */
-.org-tree li .node-card:hover, 
+.org-tree li .node-card:hover,
 .org-tree li .node-card:hover + ul li .node-card {
   @apply bg-site-secondary text-site-text border-warm-primary;
 }
 
 .org-tree li .node-card:hover::before,
-.org-tree li .node-card:hover + ul li::after, 
-.org-tree li .node-card:hover + ul li::before, 
-.org-tree li .node-card:hover + ul::before, 
+.org-tree li .node-card:hover + ul li::after,
+.org-tree li .node-card:hover + ul li::before,
+.org-tree li .node-card:hover + ul::before,
 .org-tree li .node-card:hover + ul ul::before {
   @apply border-warm-primary;
 }
