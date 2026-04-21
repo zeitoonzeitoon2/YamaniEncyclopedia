@@ -354,13 +354,14 @@ export default function AdminDashboard() {
 
   const pendingMembersVotes = useMemo(() => {
     if (!session?.user) return 0
-    const canVote = canManageSelectedDomainMembers
+    const canVote = session.user.role === 'ADMIN' || userVotingRights.RIGHT.canVote || userVotingRights.LEFT.canVote
     if (!canVote) return 0
     return pendingCandidacies.filter(c => 
       c.status === 'PENDING' && 
+      (session.user.role === 'ADMIN' || (c.wing === 'RIGHT' ? userVotingRights.RIGHT.canVote : userVotingRights.LEFT.canVote)) &&
       !c.votes.some(v => v.voterUserId === session.user.id)
     ).length
-  }, [session?.user, pendingCandidacies, canManageSelectedDomainMembers])
+  }, [session?.user, pendingCandidacies, userVotingRights])
 
   const pendingCoursesVotes = useMemo(() => {
     if (!session?.user) return 0
@@ -1760,7 +1761,7 @@ export default function AdminDashboard() {
                                     <div className="text-xs text-site-muted mt-1">
                                       {t('proposerLabel')}: {p.proposer.name || p.proposer.email}
                                     </div>
-                                    {p.voting && (
+                                    {p.voting && !(p.status === 'PENDING' && canVote) && (
                                       <div className="mt-2">
                                         <VotingStatusSummary
                                           eligibleCount={p.voting.eligibleCount}
@@ -1791,11 +1792,27 @@ export default function AdminDashboard() {
 
                                 {p.status === 'PENDING' && canVote && (
                                   <div className="pt-2 border-t border-site-border">
-                                    <VotingSlider
-                                      currentVote={typeof myVote === 'number' ? myVote : 0}
-                                      onVote={(score) => voteOnProposal(p.id, score)}
-                                      disabled={votingOnProposalKey !== null}
-                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-3 items-center" dir="ltr">
+                                      <div className="order-1 md:order-1" dir="rtl">
+                                        {p.voting && (
+                                          <VotingStatusSummary
+                                            eligibleCount={p.voting.eligibleCount}
+                                            totalRights={p.voting.totalRights}
+                                            votedCount={p.voting.votedCount}
+                                            usedRights={p.voting.usedRights}
+                                            rightsUsedPercent={p.voting.rightsUsedPercent}
+                                            totalScore={p.voting.totalScore}
+                                          />
+                                        )}
+                                      </div>
+                                      <div className="order-2 md:order-2 w-full max-w-[360px] md:justify-self-end" dir="rtl">
+                                        <VotingSlider
+                                          currentVote={typeof myVote === 'number' ? myVote : 0}
+                                          onVote={(score) => voteOnProposal(p.id, score)}
+                                          disabled={votingOnProposalKey !== null}
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                                 {p.status === 'PENDING' && !canVote && (
