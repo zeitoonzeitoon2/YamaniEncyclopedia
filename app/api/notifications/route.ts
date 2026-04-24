@@ -72,7 +72,7 @@ export async function GET() {
           },
           select: {
             id: true, createdAt: true,
-            course: { select: { title: true, domainId: true } },
+            course: { select: { id: true, title: true, domainId: true } },
             prerequisiteCourse: { select: { title: true } },
           },
         }),
