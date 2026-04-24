@@ -214,6 +214,7 @@ mark {
 .article-content-body h4,
 .article-content-body details > summary a {
   color: rgb(var(--site-accent));
+  text-decoration: none;
 }
 
 /* Specific colors for dark mode if we want creamy white for quotes/ayahs */

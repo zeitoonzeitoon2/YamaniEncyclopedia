@@ -247,7 +247,7 @@ export function applyArticleTransforms(input: string, locale: string = 'ar'): st
       .map((h) => {
         const mr = (h.level - 2) * 16
         const size = h.level === 2 ? 'text-lg font-semibold' : h.level === 3 ? 'text-base font-medium' : 'text-sm'
-        return `<li class="mb-1"><a href="#h-${h.id}" class="text-site-accent hover:text-amber-500 hover:underline underline-offset-2 ${size}" style="margin-right:${mr}px">${escapeHtml(h.text)}</a></li>`
+        return `<li class="mb-1"><a href="#h-${h.id}" class="text-site-accent hover:text-amber-500 no-underline underline-offset-2 ${size}" style="margin-right:${mr}px">${escapeHtml(h.text)}</a></li>`
       })
       .join('')
     const controls = `<div style="background:var(--site-secondary);border:1px solid var(--site-border);border-radius:8px;padding:4px;display:flex;gap:6px"><button onclick="window.__articleResize && window.__articleResize.dec && window.__articleResize.dec()" title="کوچک‌کردن" aria-label="کوچک‌کردن" style="background:var(--site-card);color:var(--site-text);border:1px solid var(--site-border);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">−</button><button onclick="window.__articleResize && window.__articleResize.inc && window.__articleResize.inc()" title="بزرگ‌کردن" aria-label="بزرگ‌کردن" style="background:var(--site-card);color:var(--site-text);border:1px solid var(--site-border);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center">＋</button></div>`
