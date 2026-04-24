@@ -1666,7 +1666,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
 
-                      {canManageSelectedDomainMembers && (
+                      {(canManageSelectedDomainMembers || userVotingRights?.RIGHT?.canVote || userVotingRights?.LEFT?.canVote) && (
                         <div className="p-4 rounded-lg border border-site-border bg-site-secondary/30">
                           <div className="flex items-center gap-2 mb-2">
                             <UserPlus size={16} className="text-warm-accent" />

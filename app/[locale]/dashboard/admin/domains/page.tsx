@@ -790,7 +790,7 @@ export default function AdminDomainsPage() {
                     )}
                   </div>
 
-                  {canParticipateInElection && (
+                  {(canParticipateInElection || userVotingRights?.RIGHT?.canVote || userVotingRights?.LEFT?.canVote) && (
                   <div className="mt-4 p-4 rounded-lg border border-site-border bg-site-secondary/30">
                       <div className="flex items-center gap-2 mb-2">
                         <UserPlus size={16} className="text-warm-accent" />
