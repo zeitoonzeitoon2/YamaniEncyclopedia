@@ -10,6 +10,40 @@ export interface VotingShare {
   }
 }
 
+export async function getDomainParents(domainId: string): Promise<Array<{ id: string; name: string }>> {
+  const [domain, links] = await Promise.all([
+    prisma.domain.findUnique({
+      where: { id: domainId },
+      select: { parentId: true, parent: { select: { id: true, name: true } } }
+    }),
+    prisma.domainParentLink.findMany({
+      where: { childDomainId: domainId },
+      orderBy: { order: 'asc' },
+      select: { parentDomain: { select: { id: true, name: true } } }
+    })
+  ])
+
+  if (links.length > 0) {
+    return links.map((l) => l.parentDomain)
+  }
+  if (domain?.parent) return [domain.parent]
+  return []
+}
+
+export async function isFirstRightElection(domainId: string): Promise<boolean> {
+  const [rightExperts, pastRounds] = await Promise.all([
+    prisma.domainExpert.count({ where: { domainId, wing: 'RIGHT' } }),
+    prisma.electionRound.count({
+      where: {
+        domainId,
+        wing: 'RIGHT',
+        status: { in: ['MEMBERS_COMPLETED', 'HEAD_COMPLETED'] }
+      }
+    })
+  ])
+  return rightExperts === 0 && pastRounds === 0
+}
+
 export async function getParentWingSharesForRightElection(domainId: string): Promise<{
   parentId: string | null
   rightShare: number
@@ -64,6 +98,47 @@ export async function getParentWingSharesForRightElection(domainId: string): Pro
   }
 
   return { parentId: domain.parentId, rightShare, leftShare, bootstrap: false }
+}
+
+export async function getRightElectionEligibleSharesForTwoParents(domainId: string): Promise<Array<{
+  ownerDomainId: string
+  ownerWing: 'RIGHT' | 'LEFT'
+  percentage: number
+  ownerDomainName: string
+}>> {
+  const parents = await getDomainParents(domainId)
+  if (parents.length === 0) return []
+  const twoParents = parents.slice(0, 2)
+
+  // Bootstrap rule: first election starts with 50/50 between RIGHT teams of parents.
+  const firstRound = await isFirstRightElection(domainId)
+  if (twoParents.length === 2 && firstRound) {
+    return twoParents.map((p) => ({
+      ownerDomainId: p.id,
+      ownerWing: 'RIGHT' as const,
+      percentage: 50,
+      ownerDomainName: p.name
+    }))
+  }
+
+  // After first round, only parent wings that both (1) are parent RIGHT/LEFT and (2) own shares can vote.
+  const ownership = await getEffectiveOwnershipForTargetTeam(domainId, 'RIGHT')
+  const allowedKeys = new Set<string>()
+  for (const p of twoParents) {
+    allowedKeys.add(`${p.id}:RIGHT`)
+    allowedKeys.add(`${p.id}:LEFT`)
+  }
+
+  const filtered = ownership
+    .filter((s) => allowedKeys.has(`${s.ownerDomainId}:${s.ownerWing}`) && s.percentage > 0)
+    .map((s) => ({
+      ownerDomainId: s.ownerDomainId,
+      ownerWing: s.ownerWing,
+      percentage: s.percentage,
+      ownerDomainName: twoParents.find((p) => p.id === s.ownerDomainId)?.name || ''
+    }))
+
+  return filtered
 }
 
 export async function getEffectiveOwnershipForTargetTeam(
@@ -289,29 +364,50 @@ export async function calculateUserVotingWeight(
 
      if (!domain) return 0
 
-     // Special rule for RIGHT-wing team elections in sub-domains:
-     // only parent RIGHT and parent LEFT can vote, and only by their contractual holdings.
-     if (targetWing === 'RIGHT' && domain.parent) {
-       const parentShares = await getParentWingSharesForRightElection(domainId)
-       const total = parentShares.rightShare + parentShares.leftShare
-       if (total <= 0) return 0
+     // RIGHT-election special logic for child domains (single-parent and two-parent).
+     if (targetWing === 'RIGHT') {
+       const parents = await getDomainParents(domainId)
+       if (parents.length === 2) {
+         const eligibleShares = await getRightElectionEligibleSharesForTwoParents(domainId)
+         const total = eligibleShares.reduce((sum, s) => sum + s.percentage, 0)
+         if (total <= 0) return 0
 
-       const userExperts = await prisma.domainExpert.findMany({
-         where: { userId },
-         select: { domainId: true, wing: true }
-       })
-
-       let maxWeight = 0
-       for (const exp of userExperts) {
-         if (exp.domainId !== domain.parent.id) continue
-         const expWing = (exp.wing || '').toUpperCase()
-         if (expWing === 'RIGHT') {
-           maxWeight = Math.max(maxWeight, (parentShares.rightShare / total) * 100)
-         } else if (expWing === 'LEFT') {
-           maxWeight = Math.max(maxWeight, (parentShares.leftShare / total) * 100)
+         const userExperts = await prisma.domainExpert.findMany({
+           where: { userId },
+           select: { domainId: true, wing: true }
+         })
+         let maxWeight = 0
+         for (const exp of userExperts) {
+           const wing = (exp.wing || '').toUpperCase()
+           const match = eligibleShares.find((s) => s.ownerDomainId === exp.domainId && s.ownerWing === wing)
+           if (!match) continue
+           maxWeight = Math.max(maxWeight, (match.percentage / total) * 100)
          }
+         return maxWeight
        }
-       return maxWeight
+
+       if (domain.parent) {
+         const parentShares = await getParentWingSharesForRightElection(domainId)
+         const total = parentShares.rightShare + parentShares.leftShare
+         if (total <= 0) return 0
+
+         const userExperts = await prisma.domainExpert.findMany({
+           where: { userId },
+           select: { domainId: true, wing: true }
+         })
+
+         let maxWeight = 0
+         for (const exp of userExperts) {
+           if (exp.domainId !== domain.parent.id) continue
+           const expWing = (exp.wing || '').toUpperCase()
+           if (expWing === 'RIGHT') {
+             maxWeight = Math.max(maxWeight, (parentShares.rightShare / total) * 100)
+           } else if (expWing === 'LEFT') {
+             maxWeight = Math.max(maxWeight, (parentShares.leftShare / total) * 100)
+           }
+         }
+         return maxWeight
+       }
      }
 
      if (targetWing === 'LEFT') {

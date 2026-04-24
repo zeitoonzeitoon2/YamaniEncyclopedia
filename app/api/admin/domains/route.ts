@@ -137,7 +137,12 @@ export async function POST(request: NextRequest) {
 
     const name = typeof body.name === 'string' ? body.name.trim() : ''
     const parentIdRaw = typeof body.parentId === 'string' ? body.parentId.trim() : ''
-    const parentId = parentIdRaw ? parentIdRaw : null
+    const inputParentIds = Array.isArray(body.parentIds)
+      ? body.parentIds.filter((p): p is string => typeof p === 'string').map((p) => p.trim()).filter(Boolean)
+      : []
+    const uniqueParentIds = Array.from(new Set(inputParentIds))
+    const normalizedParentIds = uniqueParentIds.length > 0 ? uniqueParentIds : (parentIdRaw ? [parentIdRaw] : [])
+    const parentId = normalizedParentIds.length > 0 ? normalizedParentIds[0] : null
     const slugRaw = typeof body.slug === 'string' ? body.slug.trim() : ''
     const description = typeof body.description === 'string' ? body.description.trim() : null
 
@@ -145,9 +150,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 })
     }
 
-    if (parentId) {
-      const parent = await prisma.domain.findUnique({ where: { id: parentId }, select: { id: true } })
-      if (!parent) return NextResponse.json({ error: 'Invalid parentId' }, { status: 400 })
+    if (normalizedParentIds.length > 2) {
+      return NextResponse.json({ error: 'At most two parents are allowed' }, { status: 400 })
+    }
+
+    for (const pid of normalizedParentIds) {
+      const parent = await prisma.domain.findUnique({ where: { id: pid }, select: { id: true } })
+      if (!parent) return NextResponse.json({ error: 'Invalid parentIds' }, { status: 400 })
     }
 
     const slug = slugRaw ? slugify(slugRaw) : slugify(name)
@@ -158,9 +167,18 @@ export async function POST(request: NextRequest) {
         select: { id: true, name: true, slug: true, parentId: true },
       })
 
-      // Initialize voting shares: 
-      // If has parent, parent's RIGHT wing owns 100% of child's RIGHT wing. 
-      // Otherwise (root), the domain's RIGHT wing owns 100% of itself.
+      if (normalizedParentIds.length > 0) {
+        await tx.domainParentLink.createMany({
+          data: normalizedParentIds.map((pid, idx) => ({
+            childDomainId: domain.id,
+            parentDomainId: pid,
+            order: idx,
+          })),
+          skipDuplicates: true,
+        })
+      }
+
+      // Initialize voting shares.
       await tx.domainVotingShare.create({
         data: {
           domainId: domain.id,

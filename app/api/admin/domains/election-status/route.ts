@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDomainVotingShares, getParentWingSharesForRightElection, getEffectiveOwnershipForTargetTeam } from '@/lib/voting-utils'
+import {
+  getDomainVotingShares,
+  getParentWingSharesForRightElection,
+  getEffectiveOwnershipForTargetTeam,
+  getDomainParents,
+  getRightElectionEligibleSharesForTwoParents
+} from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,15 +86,17 @@ export async function GET(request: NextRequest) {
     }> = []
     const targetWing = wing.toUpperCase()
 
+    const parentDomains = await getDomainParents(domainId)
+
     if (targetWing === 'RIGHT') {
       // RULE: Election of RIGHT Team
-      if (!domain.parent) {
+      if (parentDomains.length === 0) {
         // ROOT EXCEPTION: Root Domain's Right Team is self-appointed
         eligibleGroups.push({ domainId: domainId, wing: 'RIGHT' })
-      } else {
+      } else if (parentDomains.length === 1) {
         // SUB-DOMAINS: Competition between Direct Parent Right & Direct Parent Left
-        eligibleGroups.push({ domainId: domain.parent.id, wing: 'RIGHT' })
-        eligibleGroups.push({ domainId: domain.parent.id, wing: 'LEFT' })
+        eligibleGroups.push({ domainId: parentDomains[0].id, wing: 'RIGHT' })
+        eligibleGroups.push({ domainId: parentDomains[0].id, wing: 'LEFT' })
       }
     } else {
       // RULE: Election of LEFT Team
@@ -102,20 +110,28 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (targetWing === 'RIGHT' && domain.parent) {
+    if (targetWing === 'RIGHT' && parentDomains.length === 2) {
+      const twoParentShares = await getRightElectionEligibleSharesForTwoParents(domainId)
+      eligibleShares = twoParentShares.map((s) => ({
+        ownerDomainId: s.ownerDomainId,
+        ownerWing: s.ownerWing,
+        percentage: s.percentage,
+        ownerDomain: { id: s.ownerDomainId, name: s.ownerDomainName }
+      }))
+    } else if (targetWing === 'RIGHT' && parentDomains.length === 1) {
       const parentShares = await getParentWingSharesForRightElection(domainId)
       eligibleShares = [
         {
-          ownerDomainId: domain.parent.id,
+          ownerDomainId: parentDomains[0].id,
           ownerWing: 'RIGHT',
           percentage: parentShares.rightShare,
-          ownerDomain: { id: domain.parent.id, name: domain.parent.name }
+          ownerDomain: { id: parentDomains[0].id, name: parentDomains[0].name }
         },
         {
-          ownerDomainId: domain.parent.id,
+          ownerDomainId: parentDomains[0].id,
           ownerWing: 'LEFT',
           percentage: parentShares.leftShare,
-          ownerDomain: { id: domain.parent.id, name: domain.parent.name }
+          ownerDomain: { id: parentDomains[0].id, name: parentDomains[0].name }
         }
       ]
     } else if (targetWing === 'LEFT') {

@@ -21,6 +21,8 @@ model Domain {
   parentId    String?
   parent      Domain?  @relation("DomainHierarchy", fields: [parentId], references: [id])
   children    Domain[] @relation("DomainHierarchy")
+  parentLinks DomainParentLink[] @relation("DomainAsChild")
+  childLinks  DomainParentLink[] @relation("DomainAsParent")
 
   experts     DomainExpert[]
   expertCandidacies ExpertCandidacy[]
@@ -41,6 +43,20 @@ model Domain {
   updatedAt   DateTime @updatedAt
 
   @@index([parentId])
+}
+
+model DomainParentLink {
+  id            String   @id @default(cuid())
+  childDomainId String
+  childDomain   Domain   @relation("DomainAsChild", fields: [childDomainId], references: [id], onDelete: Cascade)
+  parentDomainId String
+  parentDomain   Domain   @relation("DomainAsParent", fields: [parentDomainId], references: [id], onDelete: Cascade)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@unique([childDomainId, parentDomainId])
+  @@index([childDomainId])
+  @@index([parentDomainId])
 }
 
 model DomainExpert {
