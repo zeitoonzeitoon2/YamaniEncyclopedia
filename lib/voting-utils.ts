@@ -10,6 +10,62 @@ export interface VotingShare {
   }
 }
 
+export async function getParentWingSharesForRightElection(domainId: string): Promise<{
+  parentId: string | null
+  rightShare: number
+  leftShare: number
+  bootstrap: boolean
+}> {
+  const domain = await prisma.domain.findUnique({
+    where: { id: domainId },
+    select: { id: true, parentId: true }
+  })
+  if (!domain?.parentId) {
+    return { parentId: domain?.parentId || null, rightShare: 0, leftShare: 0, bootstrap: false }
+  }
+
+  // First election after subdomain creation: 100% for parent's right wing
+  const existingExperts = await prisma.domainExpert.count({
+    where: { domainId }
+  })
+  if (existingExperts === 0) {
+    return { parentId: domain.parentId, rightShare: 100, leftShare: 0, bootstrap: true }
+  }
+
+  const investments = await prisma.domainInvestment.findMany({
+    where: {
+      OR: [{ targetDomainId: domainId }, { proposerDomainId: domainId }],
+      status: { in: ['ACTIVE', 'COMPLETED', 'RETURNED'] }
+    },
+    select: {
+      proposerDomainId: true,
+      proposerWing: true,
+      targetDomainId: true,
+      targetWing: true,
+      percentageInvested: true,
+      percentageReturn: true,
+      status: true
+    }
+  })
+
+  let rightShare = 0
+  let leftShare = 0
+  for (const inv of investments) {
+    // Domain is target: completed/returned give profit-share to proposer
+    if (inv.targetDomainId === domainId && (inv.status === 'COMPLETED' || inv.status === 'RETURNED') && inv.proposerDomainId === domain.parentId) {
+      if (inv.proposerWing === 'RIGHT') rightShare += inv.percentageReturn
+      if (inv.proposerWing === 'LEFT') leftShare += inv.percentageReturn
+    }
+    // Domain is proposer: active means invested share is currently owned by target
+    if (inv.proposerDomainId === domainId && inv.status === 'ACTIVE' && inv.targetDomainId === domain.parentId) {
+      if (inv.targetWing === 'RIGHT') rightShare += inv.percentageInvested
+      if (inv.targetWing === 'LEFT') leftShare += inv.percentageInvested
+    }
+  }
+
+  return { parentId: domain.parentId, rightShare, leftShare, bootstrap: false }
+}
+
 /**
  * Calculates voting shares for a specific election (domain + wing).
  * 
@@ -172,9 +228,32 @@ export async function calculateUserVotingWeight(
 
      if (!domain) return 0
 
+     // Special rule for RIGHT-wing team elections in sub-domains:
+     // only parent RIGHT and parent LEFT can vote, and only by their contractual holdings.
+     if (targetWing === 'RIGHT' && domain.parent) {
+       const parentShares = await getParentWingSharesForRightElection(domainId)
+       const total = parentShares.rightShare + parentShares.leftShare
+       if (total <= 0) return 0
+
+       const userExperts = await prisma.domainExpert.findMany({
+         where: { userId },
+         select: { domainId: true, wing: true }
+       })
+
+       let maxWeight = 0
+       for (const exp of userExperts) {
+         if (exp.domainId !== domain.parent.id) continue
+         const expWing = (exp.wing || '').toUpperCase()
+         if (expWing === 'RIGHT') {
+           maxWeight = Math.max(maxWeight, (parentShares.rightShare / total) * 100)
+         } else if (expWing === 'LEFT') {
+           maxWeight = Math.max(maxWeight, (parentShares.leftShare / total) * 100)
+         }
+       }
+       return maxWeight
+     }
+
      // Fetch Universal Shares of the Domain
-     // (We ask for 'RIGHT' but the function currently returns all shares regardless of wing arg, 
-     //  checking both Right and Left investors)
      const shares = await getDomainVotingShares(domainId, 'RIGHT')
      
      // Determine Eligible Voter Groups based on Governance Rules

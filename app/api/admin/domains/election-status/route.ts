@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDomainVotingShares } from '@/lib/voting-utils'
+import { getDomainVotingShares, getParentWingSharesForRightElection } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,10 +49,8 @@ export async function GET(request: NextRequest) {
       where: { domainId, wing }
     })
 
-    // 2. Get Voting Shares using the helper
-    // NOTE: This helper returns ALL shares (who owns what).
-    // We must FILTER this list to show only ELIGIBLE VOTERS for the current election.
-    const shares = await getDomainVotingShares(domainId, 'RIGHT') // 'RIGHT' logic is universal for share calculation
+    // 2. Get Voting Shares using helper(s)
+    const shares = await getDomainVotingShares(domainId, 'RIGHT') // default path for non-special cases
     
     // Determine Eligible Voter Groups based on Governance Rules (Copied from voting-utils)
     // TODO: Ideally refactor this logic into a shared helper `getEligibleVoterGroups(domainId, wing)`
@@ -98,22 +96,47 @@ export async function GET(request: NextRequest) {
       return childMatch?.name || ''
     }
 
-    const shareByKey = new Map<string, typeof shares[number]>()
-    for (const share of shares) {
-      shareByKey.set(`${share.ownerDomainId}:${(share.ownerWing || '').toUpperCase()}`, share)
-    }
+    let eligibleShares: Array<{
+      ownerDomainId: string
+      ownerWing: string
+      percentage: number
+      ownerDomain: { id: string; name: string }
+    }> = []
 
-    const eligibleShares = eligibleGroups.map(group => {
-      const key = `${group.domainId}:${(group.wing || '').toUpperCase()}`
-      const existing = shareByKey.get(key)
-      if (existing) return existing
-      return {
-        ownerDomainId: group.domainId,
-        ownerWing: group.wing,
-        percentage: 0,
-        ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
+    if (targetWing === 'RIGHT' && domain.parent) {
+      const parentShares = await getParentWingSharesForRightElection(domainId)
+      eligibleShares = [
+        {
+          ownerDomainId: domain.parent.id,
+          ownerWing: 'RIGHT',
+          percentage: parentShares.rightShare,
+          ownerDomain: { id: domain.parent.id, name: domain.parent.name }
+        },
+        {
+          ownerDomainId: domain.parent.id,
+          ownerWing: 'LEFT',
+          percentage: parentShares.leftShare,
+          ownerDomain: { id: domain.parent.id, name: domain.parent.name }
+        }
+      ]
+    } else {
+      const shareByKey = new Map<string, typeof shares[number]>()
+      for (const share of shares) {
+        shareByKey.set(`${share.ownerDomainId}:${(share.ownerWing || '').toUpperCase()}`, share)
       }
-    })
+
+      eligibleShares = eligibleGroups.map(group => {
+        const key = `${group.domainId}:${(group.wing || '').toUpperCase()}`
+        const existing = shareByKey.get(key)
+        if (existing) return existing
+        return {
+          ownerDomainId: group.domainId,
+          ownerWing: group.wing,
+          percentage: 0,
+          ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
+        }
+      })
+    }
 
     // Calculate Total Eligible Percentage for Relative Weighting
     let totalEligiblePercentage = eligibleShares.reduce((sum, s) => sum + s.percentage, 0)
