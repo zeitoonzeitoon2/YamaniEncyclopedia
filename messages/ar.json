@@ -115,7 +115,16 @@
     "noInstructors": "لم يتم العثور على مدرسين",
     "noStudents": "لم يتم العثور على طلاب",
     "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الرسالة؟",
-    "deleteSuccess": "تم حذف الرسالة بنجاح"
+    "deleteSuccess": "تم حذف الرسالة بنجاح",
+    "quiz": {
+      "title": "التقييم الذاتي للفصل",
+      "scoreResult": "نتيجتك: {score} من {total}",
+      "answerAll": "يرجى الإجابة على جميع الأسئلة",
+      "viewResults": "عرض النتائج",
+      "retry": "إعادة المحاولة",
+      "disclaimer": "هذا الاستبيان للتقييم الذاتي فقط ولا يؤثر على الدرجة النهائية.",
+      "loading": "جاري تحميل الاستبيان..."
+    }
   },
   "voting": {
     "strategicExchanges": "التبادلات الاستراتيجية",
@@ -976,6 +985,34 @@
         "proposed": "تم تقديم الاقتراح بنجاح",
         "error": "حدث خطأ ما"
       }
+    },
+    "questionnaire": {
+      "title": "استبيان الفصل",
+      "viewAndManage": "عرض وإدارة",
+      "questionsCount": "عدد الأسئلة: {count}",
+      "loading": "جارٍ التحميل...",
+      "listTitle": "قائمة الأسئلة",
+      "addNew": "إضافة سؤال جديد",
+      "questionLabel": "نص السؤال",
+      "questionPlaceholder": "اكتب سؤالك هنا...",
+      "optionLabel": "الخيار {number}",
+      "correctAnswer": "الإجابة الصحيحة",
+      "markAsCorrect": "تحديد كإجابة صحيحة",
+      "optionPlaceholder": "نص الخيار {number}...",
+      "cancel": "إلغاء",
+      "submit": "إرسال السؤال",
+      "submitting": "جارٍ الإرسال...",
+      "noQuestions": "لم يتم تسجيل أي أسئلة لهذا الفصل بعد.",
+      "by": "بواسطة {name}",
+      "unknown": "غير معروف",
+      "delete": "حذف",
+      "fillAllFields": "يرجى إدخال نص السؤال وجميع الخيارات",
+      "saveSuccess": "تم حفظ السؤال بنجاح",
+      "saveError": "خطأ في حفظ السؤال",
+      "networkError": "خطأ في الاتصال بالخادم",
+      "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذا السؤال؟",
+      "deleteSuccess": "تم حذف السؤال",
+      "deleteError": "خطأ في حذف السؤال"
     }
   },
   "adminDomains": {

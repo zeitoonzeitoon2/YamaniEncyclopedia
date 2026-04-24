@@ -953,18 +953,18 @@ export default function AdminCourseChaptersPage() {
                     
                     <div className="rounded-lg border border-site-border bg-site-secondary/30 p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm text-site-text">پرسشنامه فصل</div>
+                        <div className="text-sm text-site-text">{t('questionnaire.title')}</div>
                         <button
                           type="button"
                           onClick={() => setQuestionnaireOpen(true)}
                           disabled={!selectedId}
                           className="px-3 py-1 text-xs rounded-lg border border-site-border bg-site-secondary/30 hover:bg-site-secondary/50 text-site-text transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm disabled:opacity-50"
                         >
-                          مشاهده و مدیریت
+                          {t('questionnaire.viewAndManage')}
                         </button>
                       </div>
                       <div className="text-xs text-site-muted">
-                        {loadingQuestions ? 'در حال بارگذاری...' : `تعداد سوالات: ${chapterQuestions.length}`}
+                        {loadingQuestions ? t('questionnaire.loading') : t('questionnaire.questionsCount', { count: chapterQuestions.length })}
                       </div>
                     </div>
                   </div>

@@ -116,7 +116,16 @@
     "noInstructors": "استادی یافت نشد",
     "noStudents": "دانشجویی یافت نشد",
     "deleteConfirm": "آیا از حذف این پیام اطمینان دارید؟",
-    "deleteSuccess": "پیام با موفقیت حذف شد"
+    "deleteSuccess": "پیام با موفقیت حذف شد",
+    "quiz": {
+      "title": "خودارزیابی فصل",
+      "scoreResult": "امتیاز شما: {score} از {total}",
+      "answerAll": "لطفاً به تمام سوالات پاسخ دهید",
+      "viewResults": "مشاهده نتایج",
+      "retry": "تلاش مجدد",
+      "disclaimer": "این پرسشنامه صرفاً برای خودارزیابی شماست و تاثیری در نمره نهایی ندارد.",
+      "loading": "در حال بارگذاری پرسشنامه..."
+    }
   },
   "voting": {
     "strategicExchanges": "تبادلات استراتژیک",
@@ -1031,6 +1040,34 @@
         "voted": "رای شما ثبت شد",
         "error": "خطایی رخ داد"
       }
+    },
+    "questionnaire": {
+      "title": "پرسشنامه فصل",
+      "viewAndManage": "مشاهده و مدیریت",
+      "questionsCount": "تعداد سوالات: {count}",
+      "loading": "در حال بارگذاری...",
+      "listTitle": "لیست سوالات",
+      "addNew": "افزودن سوال جدید",
+      "questionLabel": "صورت سوال",
+      "questionPlaceholder": "سوال خود را اینجا بنویسید...",
+      "optionLabel": "گزینه {number}",
+      "correctAnswer": "پاسخ صحیح",
+      "markAsCorrect": "انتخاب به عنوان صحیح",
+      "optionPlaceholder": "متن گزینه {number}...",
+      "cancel": "انصراف",
+      "submit": "ثبت سوال",
+      "submitting": "در حال ثبت...",
+      "noQuestions": "هنوز سوالی برای این فصل ثبت نشده است.",
+      "by": "توسط {name}",
+      "unknown": "نامشخص",
+      "delete": "حذف",
+      "fillAllFields": "لطفاً صورت سوال و تمام گزینه‌ها را وارد کنید",
+      "saveSuccess": "سوال با موفقیت ثبت شد",
+      "saveError": "خطا در ثبت سوال",
+      "networkError": "خطا در برقراری ارتباط با سرور",
+      "deleteConfirm": "آیا از حذف این سوال مطمئن هستید؟",
+      "deleteSuccess": "سوال حذف شد",
+      "deleteError": "خطا در حذف سوال"
     }
   },
   "adminDomains": {

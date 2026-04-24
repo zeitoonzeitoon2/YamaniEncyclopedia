@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 type QuestionOption = {
   id: string
@@ -23,6 +24,7 @@ interface StudentChapterQuizProps {
 }
 
 export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, onQuizSubmitted }: StudentChapterQuizProps) {
+  const t = useTranslations('academy')
   const [questions, setQuestions] = useState<ChapterQuestion[]>([])
   const [loading, setLoading] = useState(false)
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
@@ -60,7 +62,7 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
   }, [fetchQuiz])
 
 
-  if (loading) return <div className="text-site-muted text-sm p-4 text-center">در حال بارگذاری پرسشنامه...</div>
+  if (loading) return <div className="text-site-muted text-sm p-4 text-center">{t('quiz.loading')}</div>
   if (questions.length === 0) return null
 
   const handleAnswer = (questionId: string, optionId: string) => {
@@ -70,7 +72,7 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
 
   const handleSubmit = () => {
     if (Object.keys(userAnswers).length < questions.length) {
-      toast.error('لطفاً به تمام سوالات پاسخ دهید')
+      toast.error(t('quiz.answerAll'))
       return
     }
     setShowResults(true)
@@ -86,10 +88,10 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
   return (
     <div className="card space-y-4 mt-6 border-warm-primary/30">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-site-text heading">خودارزیابی فصل</h3>
+        <h3 className="text-lg font-bold text-site-text heading">{t('quiz.title')}</h3>
         {showResults && (
           <span className="text-sm font-bold text-warm-primary">
-            امتیاز شما: {score} از {questions.length}
+            {t('quiz.scoreResult', { score, total: questions.length })}
           </span>
         )}
       </div>
@@ -141,7 +143,7 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
           onClick={handleSubmit}
           className="btn-primary w-full text-sm mt-4"
         >
-          مشاهده نتایج
+          {t('quiz.viewResults')}
         </button>
       ) : (
         <button
@@ -151,11 +153,11 @@ export default function StudentChapterQuiz({ courseId, chapterId, onQuizLoaded, 
           }}
           className="btn-secondary w-full text-sm mt-4"
         >
-          تلاش مجدد
+          {t('quiz.retry')}
         </button>
       )}
       <p className="text-[10px] text-site-muted text-center mt-2">
-        این پرسشنامه صرفاً برای خودارزیابی شماست و تاثیری در نمره نهایی ندارد.
+        {t('quiz.disclaimer')}
       </p>
     </div>
   )

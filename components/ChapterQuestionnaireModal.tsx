@@ -51,8 +51,7 @@ export default function ChapterQuestionnaireModal({
   onRefresh,
   onDraftNeeded
 }: ChapterQuestionnaireModalProps) {
-  const t = useTranslations('admin')
-  const tDashboard = useTranslations('admin.dashboard')
+  const t = useTranslations('adminCourses')
   const [isAdding, setIsAdding] = useState(false)
   const [newQuestion, setNewQuestion] = useState('')
   const [newOptions, setNewOptions] = useState<QuestionOption[]>([
@@ -65,7 +64,7 @@ export default function ChapterQuestionnaireModal({
 
   const handleAddQuestion = useCallback(async () => {
     if (!newQuestion.trim() || newOptions.some(opt => !opt.text.trim())) {
-      toast.error('لطفاً صورت سوال و تمام گزینه‌ها را وارد کنید')
+      toast.error(t('questionnaire.fillAllFields'))
       return
     }
 
@@ -88,7 +87,7 @@ export default function ChapterQuestionnaireModal({
       })
 
       if (res.ok) {
-        toast.success('سوال با موفقیت ثبت شد')
+        toast.success(t('questionnaire.saveSuccess'))
         setIsAdding(false)
         setNewQuestion('')
         setNewOptions([
@@ -100,17 +99,17 @@ export default function ChapterQuestionnaireModal({
         onRefresh()
       } else {
         const data = await res.json()
-        toast.error(data.error || 'خطا در ثبت سوال')
+        toast.error(data.error || t('questionnaire.saveError'))
       }
     } catch (error) {
-      toast.error('خطا در برقراری ارتباط با سرور')
+      toast.error(t('questionnaire.networkError'))
     } finally {
       setSubmitting(false)
     }
-  }, [newQuestion, newOptions, chapterId, onDraftNeeded, courseId, onRefresh])
+  }, [newQuestion, newOptions, chapterId, onDraftNeeded, courseId, onRefresh, t])
 
   const handleDelete = useCallback(async (questionId: string) => {
-    if (!confirm('آیا از حذف این سوال مطمئن هستید؟')) return
+    if (!confirm(t('questionnaire.deleteConfirm'))) return
 
     try {
       let targetChapterId = chapterId
@@ -125,28 +124,28 @@ export default function ChapterQuestionnaireModal({
 
       if (res.ok) {
         onRefresh()
-        toast.success('سوال حذف شد')
+        toast.success(t('questionnaire.deleteSuccess'))
       } else {
         const data = await res.json()
-        toast.error(data.error || 'خطا در حذف سوال')
+        toast.error(data.error || t('questionnaire.deleteError'))
       }
     } catch (error) {
-      toast.error('خطا در برقراری ارتباط با سرور')
+      toast.error(t('questionnaire.networkError'))
     }
-  }, [chapterId, onDraftNeeded, courseId, onRefresh])
+  }, [chapterId, onDraftNeeded, courseId, onRefresh, t])
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="پرسشنامه فصل">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('questionnaire.title')}>
       <div className="space-y-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-site-text heading">لیست سوالات</h3>
+          <h3 className="text-lg font-bold text-site-text heading">{t('questionnaire.listTitle')}</h3>
           {!isAdding && (
             <button
               onClick={() => setIsAdding(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-warm-primary text-white rounded-lg text-sm hover:bg-warm-primary/90 transition-colors"
             >
               <FaPlus size={12} />
-              <span>افزودن سوال جدید</span>
+              <span>{t('questionnaire.addNew')}</span>
             </button>
           )}
         </div>
@@ -154,13 +153,13 @@ export default function ChapterQuestionnaireModal({
         {isAdding && (
           <div className="card border-warm-primary/30 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm text-site-muted">صورت سوال</label>
+              <label className="text-sm text-site-muted">{t('questionnaire.questionLabel')}</label>
               <textarea
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
                 className="w-full bg-site-bg border border-gray-700 rounded-lg p-3 text-sm text-site-text focus:border-warm-primary outline-none"
                 rows={3}
-                placeholder="سوال خود را اینجا بنویسید..."
+                placeholder={t('questionnaire.questionPlaceholder')}
               />
             </div>
 
@@ -168,7 +167,7 @@ export default function ChapterQuestionnaireModal({
               {newOptions.map((opt, idx) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-site-muted">گزینه {idx + 1}</label>
+                    <label className="text-xs text-site-muted">{t('questionnaire.optionLabel', { number: idx + 1 })}</label>
                     <button
                       onClick={() => {
                         const next = [...newOptions]
@@ -177,7 +176,7 @@ export default function ChapterQuestionnaireModal({
                       }}
                       className={`text-[10px] px-2 py-0.5 rounded ${opt.isCorrect ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400'}`}
                     >
-                      {opt.isCorrect ? 'پاسخ صحیح' : 'انتخاب به عنوان صحیح'}
+                      {opt.isCorrect ? t('questionnaire.correctAnswer') : t('questionnaire.markAsCorrect')}
                     </button>
                   </div>
                   <input
@@ -189,7 +188,7 @@ export default function ChapterQuestionnaireModal({
                       setNewOptions(next)
                     }}
                     className="w-full bg-site-bg border border-gray-700 rounded-lg p-2 text-sm text-site-text focus:border-warm-primary outline-none"
-                    placeholder={`متن گزینه ${idx + 1}...`}
+                    placeholder={t('questionnaire.optionPlaceholder', { number: idx + 1 })}
                   />
                 </div>
               ))}
@@ -200,14 +199,14 @@ export default function ChapterQuestionnaireModal({
                 onClick={() => setIsAdding(false)}
                 className="px-4 py-2 text-sm text-site-muted hover:text-site-text"
               >
-                انصراف
+                {t('questionnaire.cancel')}
               </button>
               <button
                 onClick={handleAddQuestion}
                 disabled={submitting}
                 className="px-4 py-2 bg-warm-primary text-white rounded-lg text-sm disabled:opacity-50"
               >
-                {submitting ? 'در حال ثبت...' : 'ثبت سوال'}
+                {submitting ? t('questionnaire.submitting') : t('questionnaire.submit')}
               </button>
             </div>
           </div>
@@ -215,7 +214,7 @@ export default function ChapterQuestionnaireModal({
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {questions.length === 0 ? (
-            <div className="text-center py-10 text-site-muted">هنوز سوالی برای این فصل ثبت نشده است.</div>
+            <div className="text-center py-10 text-site-muted">{t('questionnaire.noQuestions')}</div>
           ) : (
             questions.map((q) => (
               <div key={q.id} className="card border-gray-800 hover:border-gray-700 transition-colors">
@@ -227,9 +226,9 @@ export default function ChapterQuestionnaireModal({
                         q.status === 'REJECTED' ? 'bg-red-600/20 text-red-400' :
                         'bg-yellow-600/20 text-yellow-400'
                       }`}>
-                        {q.status === 'APPROVED' ? 'تایید شده' : q.status === 'REJECTED' ? 'رد شده' : 'در انتظار تایید'}
+                        {q.status === 'APPROVED' ? t('statusApproved') : q.status === 'REJECTED' ? t('statusRejected') : t('statusDraft')}
                       </span>
-                      <span className="text-[10px] text-site-muted">توسط {q.author.name || 'نامشخص'}</span>
+                      <span className="text-[10px] text-site-muted">{t('questionnaire.by', { name: q.author.name || t('questionnaire.unknown') })}</span>
                     </div>
                     <p className="text-sm font-medium text-site-text">{q.question}</p>
                     {q.voting && (
@@ -255,7 +254,7 @@ export default function ChapterQuestionnaireModal({
                     <button
                       onClick={() => handleDelete(q.id)}
                       className="p-2 bg-gray-800 text-gray-400 hover:bg-red-600/20 hover:text-red-500 rounded transition-colors"
-                      title="حذف"
+                      title={t('questionnaire.delete')}
                     >
                       <FaTrash size={14} />
                     </button>
