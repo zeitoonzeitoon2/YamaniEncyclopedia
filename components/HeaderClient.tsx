@@ -23,7 +23,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [langMenuOpen, setLangMenuOpen] = React.useState(false)
   const [profileImageError, setProfileImageError] = React.useState(false)
-  const [notifications, setNotifications] = React.useState<{ total: number; items: Array<{ type: string; id: string; title: string; domainName?: string; createdAt: string }> }>({ total: 0, items: [] })
+  const [notifications, setNotifications] = React.useState<{ total: number; items: Array<{ type: string; id: string; title: string; domainName?: string; createdAt: string; href?: string }> }>({ total: 0, items: [] })
   const [notifOpen, setNotifOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement | null>(null)
   const langMenuRef = React.useRef<HTMLDivElement | null>(null)
