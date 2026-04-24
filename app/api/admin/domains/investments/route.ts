@@ -264,8 +264,16 @@ export async function GET(req: NextRequest) {
       const proposerMapped = proposerVotes.map(v => ({ voterId: v.voterId, score: v.score }))
       const targetMapped = targetVotes.map(v => ({ voterId: v.voterId, score: v.score }))
 
-      const proposerMetrics = await getInternalVotingMetrics(inv.proposerDomainId, proposerMapped)
-      const targetMetrics = await getInternalVotingMetrics(inv.targetDomainId, targetMapped)
+      const proposerMetrics = await getInternalVotingMetrics(
+        inv.proposerDomainId,
+        proposerMapped,
+        { wing: inv.proposerWing as 'RIGHT' | 'LEFT' }
+      )
+      const targetMetrics = await getInternalVotingMetrics(
+        inv.targetDomainId,
+        targetMapped,
+        { wing: inv.targetWing as 'RIGHT' | 'LEFT' }
+      )
 
       return {
         ...inv,

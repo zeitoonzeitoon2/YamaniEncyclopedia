@@ -344,7 +344,8 @@ export async function calculateVotingResult(
 
 export async function getInternalVotingMetrics(
   domainId: string,
-  votes: Array<{ voterId: string; vote?: 'APPROVE' | 'REJECT'; score?: number }>
+  votes: Array<{ voterId: string; vote?: 'APPROVE' | 'REJECT'; score?: number }>,
+  options?: { wing?: 'RIGHT' | 'LEFT' }
 ): Promise<{
   eligibleCount: number
   totalRights: number
@@ -354,7 +355,10 @@ export async function getInternalVotingMetrics(
   totalScore: number
 }> {
   const experts = await prisma.domainExpert.findMany({
-    where: { domainId },
+    where: {
+      domainId,
+      ...(options?.wing ? { wing: options.wing } : {}),
+    },
     select: { userId: true, role: true, wing: true }
   })
   const totalRights = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
@@ -380,7 +384,7 @@ export async function getInternalVotingMetrics(
 export async function checkScoreApproval(
   domainId: string,
   votes: Array<{ voterId: string; score: number }>,
-  options?: { noRejection?: boolean }
+  options?: { noRejection?: boolean; wing?: 'RIGHT' | 'LEFT' }
 ): Promise<{
   approved: boolean
   rejected: boolean
@@ -391,7 +395,10 @@ export async function checkScoreApproval(
   eligibleCount: number
 }> {
   const experts = await prisma.domainExpert.findMany({
-    where: { domainId },
+    where: {
+      domainId,
+      ...(options?.wing ? { wing: options.wing } : {}),
+    },
     select: { userId: true, role: true, wing: true }
   })
   const totalRights = experts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)

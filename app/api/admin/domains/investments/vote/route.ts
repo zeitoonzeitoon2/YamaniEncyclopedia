@@ -37,10 +37,18 @@ export async function POST(req: NextRequest) {
     }
 
     const proposerMember = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.proposerDomainId }
+      where: {
+        userId: session.user.id,
+        domainId: investment.proposerDomainId,
+        wing: investment.proposerWing,
+      }
     })
     const targetMember = await prisma.domainExpert.findFirst({
-      where: { userId: session.user.id, domainId: investment.targetDomainId }
+      where: {
+        userId: session.user.id,
+        domainId: investment.targetDomainId,
+        wing: investment.targetWing,
+      }
     })
 
     const affectedDomains = []
@@ -79,11 +87,13 @@ export async function POST(req: NextRequest) {
 
     const proposerResult = await checkScoreApproval(
       investment.proposerDomainId,
-      proposerVotes.map(v => ({ voterId: v.voterId, score: v.score }))
+      proposerVotes.map(v => ({ voterId: v.voterId, score: v.score })),
+      { wing: investment.proposerWing as 'RIGHT' | 'LEFT' }
     )
     const targetResult = await checkScoreApproval(
       investment.targetDomainId,
-      targetVotes.map(v => ({ voterId: v.voterId, score: v.score }))
+      targetVotes.map(v => ({ voterId: v.voterId, score: v.score })),
+      { wing: investment.targetWing as 'RIGHT' | 'LEFT' }
     )
 
     if (proposerResult.rejected || targetResult.rejected) {
