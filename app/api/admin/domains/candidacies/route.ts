@@ -14,10 +14,6 @@ async function hasAnyDomainExpertMembership(userId: string) {
 async function canProposeCandidacy(userId: string, domainId: string, targetWing: string, userRole?: string) {
   if (userRole === 'ADMIN') return { ok: true as const }
 
-  // New logic per user request:
-  // "همه اعضای یک حوزه و زیرحوزه های مستقیمش بتونن برای عضویت در تیم راست یا چپ یک حوزه نامزد معرفی کنند"
-  // "All members of a domain and its direct sub-domains can propose candidates for membership in the Right or Left team of a domain"
-
   // 1. Check if user is expert in the target domain itself
   const isMemberOfDomain = await prisma.domainExpert.findFirst({
     where: { userId, domainId },
@@ -25,17 +21,50 @@ async function canProposeCandidacy(userId: string, domainId: string, targetWing:
   })
   if (isMemberOfDomain) return { ok: true as const }
 
-  // 2. Check if user is expert in any direct child domain of the target domain
-  const isMemberOfChild = await prisma.domainExpert.findFirst({
-    where: {
-      userId,
-      domain: { parentId: domainId }
-    },
-    select: { id: true }
-  })
-  if (isMemberOfChild) return { ok: true as const }
+  if (targetWing === 'RIGHT') {
+    // For RIGHT team: Right and Left teams of the PARENT domain(s)
+    const domain = await prisma.domain.findUnique({
+      where: { id: domainId },
+      select: { 
+        parentId: true,
+        parentLinks: { select: { parentDomainId: true } }
+      }
+    })
+    
+    const parentIds: string[] = []
+    if (domain?.parentId) parentIds.push(domain.parentId)
+    if (domain?.parentLinks) parentIds.push(...domain.parentLinks.map(l => l.parentDomainId))
+    
+    if (parentIds.length > 0) {
+      const isMemberOfParent = await prisma.domainExpert.findFirst({
+        where: {
+          userId,
+          domainId: { in: parentIds },
+          wing: { in: ['RIGHT', 'LEFT'] }
+        },
+        select: { id: true }
+      })
+      if (isMemberOfParent) return { ok: true as const }
+    }
+  } else if (targetWing === 'LEFT') {
+    // For LEFT team: Right teams of SUB-DOMAINS
+    const isRightMemberOfChild = await prisma.domainExpert.findFirst({
+      where: {
+        userId,
+        wing: 'RIGHT',
+        domain: {
+          OR: [
+            { parentId: domainId },
+            { parentLinks: { some: { parentDomainId: domainId } } }
+          ]
+        }
+      },
+      select: { id: true }
+    })
+    if (isRightMemberOfChild) return { ok: true as const }
+  }
 
-  return { ok: false as const, status: 403 as const, error: 'Only members of this domain or its sub-domains can propose candidates' }
+  return { ok: false as const, status: 403 as const, error: 'Only authorized voting members and domain experts can propose candidates' }
 }
 
 export async function GET(request: NextRequest) {
