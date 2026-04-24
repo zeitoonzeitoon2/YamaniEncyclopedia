@@ -48,13 +48,14 @@ function buildTree(rows: Array<Omit<DomainTreeNode, 'children'>>): DomainTreeNod
       roots.push(node)
     } else {
       let attached = false
-      parentIds.forEach((pid) => {
+      for (const pid of parentIds) {
         const parent = byId[pid]
         if (parent) {
           parent.children.push(node)
           attached = true
+          break // Only attach to the first parent found for visual tree structure
         }
-      })
+      }
       if (!attached) {
         roots.push(node)
       }

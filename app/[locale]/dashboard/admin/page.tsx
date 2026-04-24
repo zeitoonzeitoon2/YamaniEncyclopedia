@@ -110,6 +110,7 @@ type DomainNode = {
   slug: string
   description: string | null
   parentId: string | null
+  parentLinks?: Array<{ parentDomainId: string }>
   experts: DomainExpert[]
   counts: { posts: number; children: number }
   children: DomainNode[]
