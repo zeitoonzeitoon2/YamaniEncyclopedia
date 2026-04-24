@@ -50,14 +50,14 @@ const TreeNode = ({
   const showAdd = onAddChild && (!canAddChild || canAddChild(node))
 
   return (
-    <li>
+    <li className="relative px-4 py-6 flex flex-col items-center">
       <div 
         ref={(el) => registerRef(node.id, el)}
         className={cn(
-          "node-card relative z-10 group min-w-[120px] p-2 rounded-lg border transition-all duration-200 flex flex-col items-center gap-1",
+          "node-card relative z-10 group min-w-[140px] p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1.5 shadow-sm",
           isSelected 
-            ? "border-warm-primary bg-warm-primary/10 shadow-md !border-warm-primary" 
-            : "border-site-border bg-site-bg hover:border-warm-primary/50 hover:shadow-sm cursor-pointer"
+            ? "border-warm-primary bg-warm-primary/15 shadow-warm-primary/20 shadow-lg scale-105" 
+            : "border-site-border bg-site-bg/80 backdrop-blur-sm hover:border-warm-primary/60 hover:shadow-md cursor-pointer hover:-translate-y-1"
         )}
         onClick={(e) => {
           e.stopPropagation()
@@ -71,7 +71,7 @@ const TreeNode = ({
           )}>
             {node.name}
           </span>
-          <span className="text-[10px] text-site-muted">
+          <span className="text-[10px] text-site-muted font-medium">
             {node.counts.posts} نوشته
           </span>
         </div>
@@ -83,18 +83,18 @@ const TreeNode = ({
               onAddChild(node)
             }}
             className={cn(
-              "absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-site-bg border border-site-border flex items-center justify-center shadow-sm hover:bg-warm-primary hover:text-white hover:border-warm-primary transition-colors opacity-0 group-hover:opacity-100",
-              isSelected && "opacity-100"
+              "absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-site-bg border border-site-border flex items-center justify-center shadow-md hover:bg-warm-primary hover:text-white hover:border-warm-primary transition-all opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100",
+              isSelected && "opacity-100 scale-100"
             )}
             title="Add Child Domain"
           >
-            <Plus size={12} />
+            <Plus size={14} />
           </button>
         )}
       </div>
 
       {hasChildren && (
-        <ul>
+        <ul className="flex flex-row justify-center mt-8 gap-4">
           {node.children.map((child) => (
             <TreeNode 
               key={child.id} 
@@ -115,7 +115,7 @@ const TreeNode = ({
 export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, canAddChild }: OrgChartTreeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const nodeRefs = useRef<Record<string, HTMLDivElement>>({})
-  const [lines, setLines] = useState<Array<{ fromId: string; toId: string }>>([])
+  const [lines, setLines] = useState<Array<{ fromId: string; toId: string; isPrimary: boolean }>>([])
   const [coords, setCoords] = useState<Record<string, Rect>>({})
 
   const registerRef = useCallback((id: string, el: HTMLDivElement | null) => {
@@ -123,17 +123,24 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
     else delete nodeRefs.current[id]
   }, [])
 
-  // Discover all nodes to find secondary parents
+  // Discover all nodes and their parent links
   useLayoutEffect(() => {
-    const allLines: Array<{ fromId: string; toId: string }> = []
+    const allLines: Array<{ fromId: string; toId: string; isPrimary: boolean }> = []
     const process = (n: DomainNode) => {
-      if (n.parentLinks && n.parentLinks.length > 1) {
-        // First parent is the primary one (handled by CSS). 
-        // Others are secondary (need SVG lines).
-        for (let i = 1; i < n.parentLinks.length; i++) {
-          allLines.push({ fromId: n.parentLinks[i].parentDomainId, toId: n.id })
-        }
+      // Primary parent
+      if (n.parentId) {
+        allLines.push({ fromId: n.parentId, toId: n.id, isPrimary: true })
       }
+      
+      // Secondary parents (excluding the primary one to avoid duplication)
+      if (n.parentLinks) {
+        n.parentLinks.forEach(link => {
+          if (link.parentDomainId !== n.parentId) {
+            allLines.push({ fromId: link.parentDomainId, toId: n.id, isPrimary: false })
+          }
+        })
+      }
+      
       n.children.forEach(process)
     }
     nodes.forEach(process)
@@ -160,46 +167,64 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
 
   useLayoutEffect(() => {
     updateCoords()
+    const observer = new ResizeObserver(updateCoords)
+    if (containerRef.current) observer.observe(containerRef.current)
     window.addEventListener('resize', updateCoords)
-    return () => window.removeEventListener('resize', updateCoords)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateCoords)
+    }
   }, [updateCoords, nodes])
 
   if (!nodes || nodes.length === 0) return null
 
   return (
-    <div className="w-full overflow-auto custom-scrollbar py-8 bg-site-bg/50 rounded-xl border border-site-border/50 relative">
-      <div ref={containerRef} className="min-w-max flex justify-center org-tree px-4 relative">
+    <div className="w-full overflow-auto custom-scrollbar py-12 bg-site-bg/30 rounded-2xl border border-site-border/40 relative shadow-inner">
+      <div ref={containerRef} className="min-w-max flex justify-center px-8 relative">
         <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-visible">
+          <defs>
+            <marker
+              id="arrowhead"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="rgb(var(--site-border))" className="opacity-40" />
+            </marker>
+          </defs>
           {lines.map((line, idx) => {
             const from = coords[line.fromId]
             const to = coords[line.toId]
             if (!from || !to) return null
 
-            // Calculate start and end points
-            // Start from bottom center of parent, end at top center of child
             const x1 = from.x + from.w / 2
             const y1 = from.y + from.h
             const x2 = to.x + to.w / 2
             const y2 = to.y
 
-            // Draw a curved path (cubic bezier)
             const midY = (y1 + y2) / 2
             const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`
 
             return (
               <path 
-                key={idx}
+                key={`${line.fromId}-${line.toId}-${idx}`}
                 d={path}
                 fill="none"
-                stroke="rgb(var(--site-border))"
-                strokeWidth="1"
-                strokeDasharray="4,2"
-                className="transition-all duration-500 opacity-60"
+                stroke={line.isPrimary ? "rgb(var(--site-border))" : "rgb(var(--site-border))"}
+                strokeWidth={line.isPrimary ? "2" : "1.5"}
+                strokeDasharray={line.isPrimary ? "0" : "5,3"}
+                className={cn(
+                  "transition-all duration-700",
+                  line.isPrimary ? "opacity-80" : "opacity-50"
+                )}
+                markerEnd="url(#arrowhead)"
               />
             )
           })}
         </svg>
-        <ul>
+        <ul className="flex flex-row justify-center gap-8">
           {nodes.map((node) => (
             <TreeNode 
               key={node.id} 
@@ -216,4 +241,5 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
     </div>
   )
 }
+
 
