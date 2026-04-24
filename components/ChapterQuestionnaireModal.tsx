@@ -224,9 +224,13 @@ export default function ChapterQuestionnaireModal({
                       <span className={`text-[10px] px-2 py-0.5 rounded ${
                         q.status === 'APPROVED' ? 'bg-green-600/20 text-green-400' :
                         q.status === 'REJECTED' ? 'bg-red-600/20 text-red-400' :
-                        'bg-yellow-600/20 text-yellow-400'
+                        q.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
+                        'bg-blue-600/20 text-blue-400'
                       }`}>
-                        {q.status === 'APPROVED' ? t('statusApproved') : q.status === 'REJECTED' ? t('statusRejected') : t('statusDraft')}
+                        {q.status === 'APPROVED' ? t('statusApproved') : 
+                         q.status === 'REJECTED' ? t('statusRejected') : 
+                         q.status === 'PENDING' ? t('statusPending') : 
+                         t('statusDraft')}
                       </span>
                       <span className="text-[10px] text-site-muted">{t('questionnaire.by', { name: q.author.name || t('questionnaire.unknown') })}</span>
                     </div>

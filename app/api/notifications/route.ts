@@ -12,6 +12,7 @@ type NotificationItem = {
   title: string
   domainName?: string
   createdAt: string
+  href?: string
 }
 
 export async function GET() {
@@ -54,7 +55,13 @@ export async function GET() {
             course: { domainId: { in: domainIds } },
             votes: { none: { voterId: userId } },
           },
-          select: { id: true, title: true, createdAt: true, course: { select: { domainId: true, title: true } } },
+          select: { 
+            id: true, 
+            title: true, 
+            createdAt: true, 
+            courseId: true,
+            course: { select: { domainId: true, title: true } } 
+          },
         }),
 
         prisma.coursePrerequisite.findMany({
@@ -112,7 +119,19 @@ export async function GET() {
             chapter: { course: { domainId: { in: domainIds } } },
             votes: { none: { voterId: userId } },
           },
-          select: { id: true, question: true, createdAt: true, chapter: { select: { course: { select: { domainId: true } } } } },
+          select: { 
+            id: true, 
+            question: true, 
+            createdAt: true, 
+            chapterId: true,
+            chapter: { 
+              select: { 
+                title: true,
+                courseId: true,
+                course: { select: { domainId: true, title: true } } 
+              } 
+            } 
+          },
         }),
 
         prisma.post.findMany({
@@ -143,14 +162,65 @@ export async function GET() {
         }),
       ])
 
+    // Grouping for Chapters and Questions
+    const chapterGroups = new Map<string, NotificationItem>()
+
     for (const c of courses) {
-      items.push({ type: 'course', id: c.id, title: c.title, domainName: domainNameMap[c.domainId], createdAt: c.createdAt.toISOString() })
+      items.push({ 
+        type: 'course', 
+        id: c.id, 
+        title: c.title, 
+        domainName: domainNameMap[c.domainId], 
+        createdAt: c.createdAt.toISOString(),
+        href: `/dashboard/admin/courses/${c.id}` 
+      })
     }
+
     for (const ch of chapters) {
-      items.push({ type: 'chapter', id: ch.id, title: ch.title, domainName: domainNameMap[ch.course.domainId], createdAt: ch.createdAt.toISOString() })
+      if (!chapterGroups.has(ch.id)) {
+        chapterGroups.set(ch.id, {
+          type: 'chapter',
+          id: ch.id,
+          title: `${ch.course.title}: ${ch.title}`,
+          domainName: domainNameMap[ch.course.domainId],
+          createdAt: ch.createdAt.toISOString(),
+          href: `/dashboard/admin/courses/${ch.courseId}`
+        })
+      }
     }
+
+    for (const q of questions) {
+      const ch = q.chapter
+      if (!chapterGroups.has(q.chapterId)) {
+        chapterGroups.set(q.chapterId, {
+          type: 'chapter', // We treat it as a chapter-level notification
+          id: q.chapterId,
+          title: `${ch.course.title}: ${ch.title}`,
+          domainName: domainNameMap[ch.course.domainId],
+          createdAt: q.createdAt.toISOString(),
+          href: `/dashboard/admin/courses/${ch.courseId}`
+        })
+      } else {
+        // If chapter already exists, just update createdAt if question is newer
+        const existing = chapterGroups.get(q.chapterId)!
+        if (new Date(q.createdAt) > new Date(existing.createdAt)) {
+          existing.createdAt = q.createdAt.toISOString()
+        }
+      }
+    }
+
+    // Add grouped chapters to items
+    items.push(...Array.from(chapterGroups.values()))
+
     for (const p of prerequisites) {
-      items.push({ type: 'prerequisite', id: p.id, title: `${p.prerequisiteCourse.title} → ${p.course.title}`, domainName: domainNameMap[p.course.domainId], createdAt: p.createdAt.toISOString() })
+      items.push({ 
+        type: 'prerequisite', 
+        id: p.id, 
+        title: `${p.prerequisiteCourse.title} → ${p.course.title}`, 
+        domainName: domainNameMap[p.course.domainId], 
+        createdAt: p.createdAt.toISOString(),
+        href: `/dashboard/admin/courses/${p.course.id}`
+      })
     }
     for (const d of domainPrereqs) {
       items.push({ type: 'domainPrerequisite', id: d.id, title: d.course.title, domainName: domainNameMap[d.domainId], createdAt: d.createdAt.toISOString() })
@@ -164,9 +234,7 @@ export async function GET() {
       const tName = domainNameMap[inv.targetDomainId]
       items.push({ type: 'investment', id: inv.id, title: `${pName || '?'} → ${tName || '?'}`, createdAt: inv.createdAt.toISOString() })
     }
-    for (const q of questions) {
-      items.push({ type: 'question', id: q.id, title: q.question.slice(0, 60), domainName: domainNameMap[q.chapter.course.domainId], createdAt: q.createdAt.toISOString() })
-    }
+    
     for (const p of posts) {
       const snippet = p.content.replace(/<[^>]*>/g, '').slice(0, 50)
       items.push({ type: 'post', id: p.id, title: snippet || p.type, domainName: p.domainId ? domainNameMap[p.domainId] : undefined, createdAt: p.createdAt.toISOString() })

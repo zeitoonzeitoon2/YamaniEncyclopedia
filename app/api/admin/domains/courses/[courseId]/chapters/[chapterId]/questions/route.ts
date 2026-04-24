@@ -96,7 +96,7 @@ export async function POST(
         question,
         chapterId,
         authorId: perm.userId,
-        status: 'PENDING',
+        status: 'DRAFT',
         options: {
           create: options.map(opt => ({
             text: opt.text,

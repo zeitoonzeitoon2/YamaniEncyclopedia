@@ -121,15 +121,22 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
       })
 
       if (existingDraft) {
-        await prisma.courseChapter.update({
-          where: { id: existingDraft.id },
-          data: {
-            title,
-            content,
-            orderIndex,
-            ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-          },
-        })
+        await prisma.$transaction([
+          prisma.courseChapter.update({
+            where: { id: existingDraft.id },
+            data: {
+              title,
+              content,
+              orderIndex,
+              status: 'PENDING',
+              ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
+            },
+          }),
+          prisma.chapterQuestion.updateMany({
+            where: { chapterId: existingDraft.id, status: 'DRAFT' },
+            data: { status: 'PENDING' }
+          })
+        ])
         return NextResponse.json({ chapter: existingDraft }, { status: 200 })
       }
     }

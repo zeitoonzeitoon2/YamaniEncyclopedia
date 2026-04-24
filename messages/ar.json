@@ -914,7 +914,8 @@
     "selectedVersion": "النسخة المحددة",
     "statusApproved": "معتمد",
     "statusRejected": "مرفوض",
-    "statusDraft": "مسودة",
+    "statusDraft": "مسودة (غیر منشورة)",
+    "statusPending": "قید المراجعة",
     "loading": "جارٍ التحميل...",
     "strategicInvestments": "الاستثمار الاستراتيجي لقوة التصويت",
     "investment": {

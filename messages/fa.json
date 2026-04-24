@@ -969,7 +969,8 @@
     "selectedVersion": "نسخه انتخاب شده",
     "statusApproved": "تایید شده",
     "statusRejected": "رد شده",
-    "statusDraft": "پیش‌نویس",
+    "statusDraft": "پیش‌نویس (منتشر نشده)",
+    "statusPending": "در انتظار تایید",
     "loading": "در حال بارگذاری...",
     "strategicInvestments": "سرمایه‌گذاری استراتژیک قدرت رای",
     "investment": {

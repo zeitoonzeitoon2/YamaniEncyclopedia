@@ -275,7 +275,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                                 <a
                                   key={`${item.type}-${item.id}`}
                                   href={getLocalizedHref(
-                                    item.type === 'post' ? `/expert` : '/dashboard/admin'
+                                    item.href || (item.type === 'post' ? `/expert` : '/dashboard/admin')
                                   )}
                                   className="block px-4 py-2 hover:bg-site-card/40 border-t border-gray-700/30"
                                   onClick={(e) => {

@@ -49,16 +49,26 @@ export async function PATCH(request: NextRequest, { params }: { params: { course
       return NextResponse.json({ error: 'No changes provided' }, { status: 400 })
     }
 
-    const updated = await prisma.courseChapter.update({
-      where: { id: chapterId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(content !== undefined ? { content } : {}),
-        ...(orderIndex !== undefined ? { orderIndex } : {}),
-        ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-        status: 'PENDING',
-      },
-      select: { id: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.courseChapter.update({
+        where: { id: chapterId },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(content !== undefined ? { content } : {}),
+          ...(orderIndex !== undefined ? { orderIndex } : {}),
+          ...(changeReason !== undefined ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
+          status: 'PENDING',
+        },
+        select: { id: true },
+      })
+
+      // Also promote any DRAFT questions to PENDING
+      await tx.chapterQuestion.updateMany({
+        where: { chapterId, status: 'DRAFT' },
+        data: { status: 'PENDING' }
+      })
+
+      return u
     })
 
     return NextResponse.json({ chapter: updated })
