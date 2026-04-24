@@ -182,18 +182,6 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
     <div className="w-full overflow-auto custom-scrollbar py-12 bg-site-bg/30 rounded-2xl border border-site-border/40 relative shadow-inner">
       <div ref={containerRef} className="min-w-max flex justify-center px-8 relative">
         <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-visible">
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
-              orient="auto"
-            >
-              <polygon points="0 0, 10 3.5, 0 7" fill="rgb(var(--site-border))" className="opacity-40" />
-            </marker>
-          </defs>
           {lines.map((line, idx) => {
             const from = coords[line.fromId]
             const to = coords[line.toId]
@@ -212,14 +200,13 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
                 key={`${line.fromId}-${line.toId}-${idx}`}
                 d={path}
                 fill="none"
-                stroke={line.isPrimary ? "rgb(var(--site-border))" : "rgb(var(--site-border))"}
-                strokeWidth={line.isPrimary ? "2" : "1.5"}
-                strokeDasharray={line.isPrimary ? "0" : "5,3"}
+                stroke="rgb(var(--site-border))"
+                strokeWidth={line.isPrimary ? "2" : "2"}
+                strokeDasharray="0"
                 className={cn(
                   "transition-all duration-700",
-                  line.isPrimary ? "opacity-80" : "opacity-50"
+                  line.isPrimary ? "opacity-80" : "opacity-80"
                 )}
-                markerEnd="url(#arrowhead)"
               />
             )
           })}
