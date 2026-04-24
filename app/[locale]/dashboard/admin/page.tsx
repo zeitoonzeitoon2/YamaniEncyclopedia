@@ -2169,7 +2169,7 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-site-secondary rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-site-border">
-              <h2 className="text-xl font-bold text-site-text">{t('addChildDomainTitle')}</h2>
+              <h2 className="text-xl font-bold text-site-text">{tDomains('addModal.title')}</h2>
               <button
                 onClick={() => setAddModalOpen(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
@@ -2180,11 +2180,29 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-site-muted">
-                {t('parentLabel')}: {addParentName || t('nonePlaceholder')}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-site-text mb-2">{tDomains('addModal.parent1Label')}</label>
+                  <div className="p-3 rounded-lg border border-site-border bg-site-bg/50 text-site-text opacity-70">
+                    {addParentName || '-'}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-site-text mb-2">{tDomains('addModal.parent2Label')}</label>
+                  <select
+                    value={addForm.parentId2}
+                    onChange={(e) => setAddForm(p => ({ ...p, parentId2: e.target.value }))}
+                    className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  >
+                    <option value="">{tDomains('addModal.nonePlaceholder')}</option>
+                    {flatDomains.filter(d => d.id !== addParentId).map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">{t('nameRequiredLabel')}</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{tDomains('addModal.nameLabel')}</label>
                 <input
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
@@ -2192,16 +2210,16 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">{t('slugOptionalLabel')}</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{tDomains('addModal.slugLabel')}</label>
                 <input
                   value={addForm.slug}
                   onChange={(e) => setAddForm((p) => ({ ...p, slug: e.target.value }))}
                   className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
-                  placeholder="auto"
+                  placeholder={tDomains('addModal.slugPlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-site-text mb-2">{t('descriptionOptionalLabel')}</label>
+                <label className="block text-sm font-medium text-site-text mb-2">{tDomains('addModal.descLabel')}</label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
@@ -2211,10 +2229,10 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setAddModalOpen(false)} className="btn-secondary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
-                  {t('cancel')}
+                  {tDomains('addModal.cancel')}
                 </button>
                 <button type="button" onClick={createDomain} disabled={creating} className="btn-primary disabled:opacity-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                  {creating ? '...' : t('create')}
+                  {creating ? '...' : tDomains('addModal.create')}
                 </button>
               </div>
             </div>
