@@ -65,9 +65,19 @@ export async function GET(request: NextRequest) {
         return { ...p, voting: null }
       }
 
-      const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
-      const metrics = await getInternalVotingMetrics(votingDomainIds, votes)
-      return { ...p, voting: metrics }
+      const votes = p.votes.map((v: any) => ({ voterId: v.voterId, score: v.score }))
+      
+      const parentDomains = await prisma.domain.findMany({
+        where: { id: { in: votingDomainIds } },
+        select: { id: true, name: true }
+      })
+
+      const metricsArray = await Promise.all(parentDomains.map(async (domain) => {
+        const metrics = await getInternalVotingMetrics(domain.id, votes)
+        return { ...metrics, domainId: domain.id, domainName: domain.name }
+      }))
+
+      return { ...p, voting: metricsArray }
     }))
 
     return NextResponse.json({ proposals: enriched })

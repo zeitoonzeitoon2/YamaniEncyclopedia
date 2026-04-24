@@ -1807,15 +1807,31 @@ export default function AdminDashboard() {
                                       {t('proposerLabel')}: {p.proposer.name || p.proposer.email}
                                     </div>
                                     {p.voting && !(p.status === 'PENDING' && canVote) && (
-                                      <div className="mt-2">
-                                        <VotingStatusSummary
-                                          eligibleCount={p.voting.eligibleCount}
-                                          totalRights={p.voting.totalRights}
-                                          votedCount={p.voting.votedCount}
-                                          usedRights={p.voting.usedRights}
-                                          rightsUsedPercent={p.voting.rightsUsedPercent}
-                                          totalScore={p.voting.totalScore}
-                                        />
+                                      <div className="mt-2 space-y-2">
+                                        {Array.isArray(p.voting) ? (
+                                          p.voting.map((m: any, idx: number) => (
+                                            <div key={m.domainId || idx} className="space-y-1">
+                                              {m.domainName && <div className="text-xs text-site-text/80">{m.domainName}</div>}
+                                              <VotingStatusSummary
+                                                eligibleCount={m.eligibleCount}
+                                                totalRights={m.totalRights}
+                                                votedCount={m.votedCount}
+                                                usedRights={m.usedRights}
+                                                rightsUsedPercent={m.rightsUsedPercent}
+                                                totalScore={m.totalScore}
+                                              />
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <VotingStatusSummary
+                                            eligibleCount={p.voting.eligibleCount}
+                                            totalRights={p.voting.totalRights}
+                                            votedCount={p.voting.votedCount}
+                                            usedRights={p.voting.usedRights}
+                                            rightsUsedPercent={p.voting.rightsUsedPercent}
+                                            totalScore={p.voting.totalScore}
+                                          />
+                                        )}
                                       </div>
                                     )}
                                     {p.description && (
@@ -1840,14 +1856,32 @@ export default function AdminDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-3 items-center" dir="ltr">
                                       <div className="order-1 md:order-1" dir="rtl">
                                         {p.voting && (
-                                          <VotingStatusSummary
-                                            eligibleCount={p.voting.eligibleCount}
-                                            totalRights={p.voting.totalRights}
-                                            votedCount={p.voting.votedCount}
-                                            usedRights={p.voting.usedRights}
-                                            rightsUsedPercent={p.voting.rightsUsedPercent}
-                                            totalScore={p.voting.totalScore}
-                                          />
+                                          <div className="space-y-2">
+                                            {Array.isArray(p.voting) ? (
+                                              p.voting.map((m: any, idx: number) => (
+                                                <div key={m.domainId || idx} className="space-y-1">
+                                                  {m.domainName && <div className="text-xs text-site-text/80">{m.domainName}</div>}
+                                                  <VotingStatusSummary
+                                                    eligibleCount={m.eligibleCount}
+                                                    totalRights={m.totalRights}
+                                                    votedCount={m.votedCount}
+                                                    usedRights={m.usedRights}
+                                                    rightsUsedPercent={m.rightsUsedPercent}
+                                                    totalScore={m.totalScore}
+                                                  />
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <VotingStatusSummary
+                                                eligibleCount={p.voting.eligibleCount}
+                                                totalRights={p.voting.totalRights}
+                                                votedCount={p.voting.votedCount}
+                                                usedRights={p.voting.usedRights}
+                                                rightsUsedPercent={p.voting.rightsUsedPercent}
+                                                totalScore={p.voting.totalScore}
+                                              />
+                                            )}
+                                          </div>
                                         )}
                                       </div>
                                       <div className="order-2 md:order-2 w-full max-w-[360px] md:justify-self-end" dir="rtl">

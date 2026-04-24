@@ -68,12 +68,19 @@ export async function POST(
     let result: any
 
     if (votingDomainIds.length > 0) {
-      result = await checkScoreApproval(
-        votingDomainIds,
-        allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
-      )
-      if (result.approved) nextStatus = 'APPROVED'
-      else if (result.rejected) nextStatus = 'REJECTED'
+      const votes = allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
+      const results = await Promise.all(votingDomainIds.map(async (vid) => {
+        const res = await checkScoreApproval(vid, votes)
+        return { ...res, domainId: vid }
+      }))
+      
+      const allApproved = results.every(r => r.approved)
+      const anyRejected = results.some(r => r.rejected)
+      
+      if (allApproved) nextStatus = 'APPROVED'
+      else if (anyRejected) nextStatus = 'REJECTED'
+      
+      result = results
     } else {
       // Root domain actions: admin-only scoring
       const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } })
