@@ -23,6 +23,7 @@ type DomainTreeNode = {
   slug: string
   description: string | null
   parentId: string | null
+  parentLinks: Array<{ parentDomainId: string }>
   experts: DomainTreeExpert[]
   counts: { posts: number; children: number }
   children: DomainTreeNode[]
@@ -30,26 +31,36 @@ type DomainTreeNode = {
 
 function buildTree(rows: Array<Omit<DomainTreeNode, 'children'>>): DomainTreeNode[] {
   const byId: Record<string, DomainTreeNode> = {}
-  const all: DomainTreeNode[] = new Array(rows.length)
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i]
-    const node: DomainTreeNode = { ...r, children: [] }
+  const allNodes: DomainTreeNode[] = rows.map((r) => ({ ...r, children: [] }))
+  
+  for (const node of allNodes) {
     byId[node.id] = node
-    all[i] = node
   }
 
   const roots: DomainTreeNode[] = []
-  for (let i = 0; i < all.length; i++) {
-    const node = all[i]
-    const pid = node.parentId
-    if (pid) {
-      const parent = byId[pid]
-      if (parent) parent.children.push(node)
-      else roots.push(node)
-    } else {
+  for (const node of allNodes) {
+    // If we have explicit parentLinks, use them. Otherwise fallback to parentId.
+    const parentIds = node.parentLinks.length > 0
+      ? node.parentLinks.map(l => l.parentDomainId)
+      : (node.parentId ? [node.parentId] : [])
+
+    if (parentIds.length === 0) {
       roots.push(node)
+    } else {
+      let attached = false
+      parentIds.forEach((pid) => {
+        const parent = byId[pid]
+        if (parent) {
+          parent.children.push(node)
+          attached = true
+        }
+      })
+      if (!attached) {
+        roots.push(node)
+      }
     }
   }
+
   const sortRec = (n: DomainTreeNode) => {
     n.children.sort((a, b) => a.name.localeCompare(b.name))
     for (let i = 0; i < n.children.length; i++) sortRec(n.children[i])
@@ -96,6 +107,7 @@ export async function GET(_request: NextRequest) {
         slug: true,
         description: true,
         parentId: true,
+        parentLinks: { select: { parentDomainId: true } },
         experts: {
           orderBy: [{ role: 'asc' }],
           select: {
@@ -115,6 +127,7 @@ export async function GET(_request: NextRequest) {
       slug: d.slug,
       description: d.description,
       parentId: d.parentId,
+      parentLinks: d.parentLinks,
       experts: d.experts,
       counts: { posts: d._count.posts, children: d._count.children },
     }))
