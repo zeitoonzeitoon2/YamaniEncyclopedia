@@ -412,6 +412,15 @@
       "toast": {
         "createSuccess": "پیشنهاد با موفقیت ثبت شد",
         "createError": "خطا در ثبت پیشنهاد"
+      },
+      "errors": {
+        "unauthorized": "شما مجاز به انجام این عملیات نیستید.",
+        "missingFields": "لطفاً تمام فیلدهای الزامی را پر کنید.",
+        "sameDomain": "امکان سرمایه‌گذاری در همان حوزه وجود ندارد.",
+        "parentChildOnly": "سرمایه‌گذاری فقط بین حوزه‌های والد و فرزند مستقیم مجاز است.",
+        "notExpert": "شما باید کارشناس جناح {proposerWing} در حوزه سرمایه‌گذار یا جناح {targetWing} در حوزه هدف باشید.",
+        "insufficientBalance": "موجودی فعلی کافی نیست. موجودی: {balance}٪، مورد نیاز: {need}٪.",
+        "insufficientBalanceFuture": "موجودی در تاریخ {date} کافی نخواهد بود. موجودی به {balance}٪ کاهش می‌یابد به دلیل {type}."
       }
     },
     "sendNomination": "ارسال نامزدی",

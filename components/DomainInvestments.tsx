@@ -181,7 +181,14 @@ export default function DomainInvestments() {
         fetchData()
       } else {
         const d = await res.json()
-        toast.error(d.error || t('investment.toast.createError'))
+        if (d.errorKey) {
+          const params = { ...d.params }
+          if (params.proposerWing) params.proposerWing = t(`wings.${params.proposerWing.toLowerCase()}`)
+          if (params.targetWing) params.targetWing = t(`wings.${params.targetWing.toLowerCase()}`)
+          toast.error(t(d.errorKey, params))
+        } else {
+          toast.error(d.error || t('investment.toast.createError'))
+        }
       }
     } catch (e) {
       toast.error(t('investment.toast.createError'))
@@ -203,7 +210,11 @@ export default function DomainInvestments() {
         fetchData()
       } else {
         const data = await res.json()
-        toast.error(data.error || t('voteError'))
+        if (data.errorKey) {
+          toast.error(t(data.errorKey, data.params))
+        } else {
+          toast.error(data.error || t('voteError'))
+        }
       }
     } catch (e) {
       toast.error(t('voteError'))
@@ -227,7 +238,11 @@ export default function DomainInvestments() {
         fetchData()
       } else {
         const d = await res.json()
-        toast.error(d.error || t('investment.terminateError'))
+        if (d.errorKey) {
+          toast.error(t(d.errorKey, d.params))
+        } else {
+          toast.error(d.error || t('investment.terminateError'))
+        }
       }
     } catch (e) {
       toast.error(t('investment.terminateError'))

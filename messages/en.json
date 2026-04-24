@@ -384,7 +384,16 @@
           "createSuccess": "Proposal registered successfully",
           "createError": "Error registering proposal"
         },
-        "actions": "Actions"
+        "actions": "Actions",
+        "errors": {
+          "unauthorized": "Unauthorized action.",
+          "missingFields": "Please fill in all required fields.",
+          "sameDomain": "Cannot invest in the same domain.",
+          "parentChildOnly": "Investments are only allowed between direct parent and child domains.",
+          "notExpert": "You must be an expert in the {proposerWing} wing of the proposer domain OR the {targetWing} wing of the target domain.",
+          "insufficientBalance": "Insufficient current balance. Have {balance}%, need {need}%.",
+          "insufficientBalanceFuture": "Insufficient balance at {date}. Balance drops to {balance}% due to {type}."
+        }
       },
       "strategicExchanges": "Strategic Voting Share Exchanges",
       "sendNomination": "Send nomination",

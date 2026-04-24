@@ -361,7 +361,16 @@
           "createSuccess": "تم تسجيل المقترح بنجاح",
           "createError": "خطأ في تسجيل المقترح"
         },
-        "actions": "الإجراءات"
+        "actions": "الإجراءات",
+        "errors": {
+          "unauthorized": "غير مصرح لك بالقيام بهذا الإجراء.",
+          "missingFields": "يرجى ملء جميع الحقول المطلوبة.",
+          "sameDomain": "لا يمكن الاستثمار في نفس المجال.",
+          "parentChildOnly": "الاستثمار متاح فقط بين المجالات الوالدة والأبناء المباشرة.",
+          "notExpert": "يجب أن تكون خبيراً في الجناح {proposerWing} للمجال المستثمر أو الجناح {targetWing} للمجال المستهدف.",
+          "insufficientBalance": "الرصيد الحالي غير كافٍ. المتاح {balance}%، والمطلوب {need}%.",
+          "insufficientBalanceFuture": "الرصيد غير كافٍ في تاريخ {date}. سينخفض الرصيد إلى {balance}% بسبب {type}."
+        }
       },
     "sendNomination": "إرسال الترشيح",
     "electionRound": "دورة انتخابية",

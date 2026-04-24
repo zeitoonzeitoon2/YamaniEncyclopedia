@@ -8,17 +8,17 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ errorKey: 'investment.errors.unauthorized' }, { status: 401 })
     }
 
     const { proposerDomainId, targetDomainId, percentageInvested, percentageReturn, endDate, proposerWing = 'RIGHT', targetWing = 'RIGHT', investedDomainId } = await req.json()
 
     if (!proposerDomainId || !targetDomainId || percentageInvested === undefined || percentageReturn === undefined || !endDate) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json({ errorKey: 'investment.errors.missingFields' }, { status: 400 })
     }
 
     if (proposerDomainId === targetDomainId) {
-      return NextResponse.json({ error: 'Cannot invest in the same domain' }, { status: 400 })
+      return NextResponse.json({ errorKey: 'investment.errors.sameDomain' }, { status: 400 })
     }
 
     // Restriction: Only Direct Parent and Direct Child can invest in each other
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const isParentChild = proposer?.parentId === targetDomainId || target?.parentId === proposerDomainId
     if (!isParentChild) {
-      return NextResponse.json({ error: 'Investments are only allowed between direct parent and child domains' }, { status: 403 })
+      return NextResponse.json({ errorKey: 'investment.errors.parentChildOnly' }, { status: 403 })
     }
 
     // Check if proposer is an expert in the proposer domain OR the target domain
@@ -49,7 +49,10 @@ export async function POST(req: NextRequest) {
     })
 
     if (!membership && session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: `You must be an expert in the ${proposerWing} wing of the proposer domain OR the ${targetWing} wing of the target domain` }, { status: 403 })
+      return NextResponse.json({ 
+        errorKey: 'investment.errors.notExpert',
+        params: { proposerWing, targetWing }
+      }, { status: 403 })
     }
 
     // Identify the currency domain (whose shares are being moved)
@@ -153,7 +156,8 @@ export async function POST(req: NextRequest) {
     // Check Initial Balance (Current Status)
     if (currentBalance < percentageInvested) {
       return NextResponse.json({ 
-        error: `Insufficient current balance. Have ${currentBalance.toFixed(2)}%, need ${percentageInvested}%` 
+        errorKey: 'investment.errors.insufficientBalance',
+        params: { balance: currentBalance.toFixed(2), need: percentageInvested }
       }, { status: 400 })
     }
 
@@ -169,7 +173,12 @@ export async function POST(req: NextRequest) {
       // JavaScript float precision issues might cause 0 to be -0.00000001.
       if (simulatedBalance < -0.00001) {
          return NextResponse.json({ 
-           error: `Insufficient balance at ${event.date.toISOString().split('T')[0]}. Balance drops to ${simulatedBalance.toFixed(2)}% due to ${event.type}.` 
+           errorKey: 'investment.errors.insufficientBalanceFuture',
+           params: { 
+             date: event.date.toISOString().split('T')[0], 
+             balance: simulatedBalance.toFixed(2), 
+             type: event.type 
+           }
          }, { status: 400 })
       }
     }
@@ -209,7 +218,7 @@ export async function GET(req: NextRequest) {
         select: { id: true },
       })
       if (!membership) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ errorKey: 'investment.errors.unauthorized' }, { status: 401 })
       }
     } else {
       // Keep automatic maintenance, but only for admins.
