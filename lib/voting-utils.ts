@@ -644,7 +644,7 @@ export async function getInternalVotingMetrics(
 }
 
 export async function checkScoreApproval(
-  domainId: string,
+  domainId: string | string[],
   votes: Array<{ voterId: string; score: number }>,
   options?: { noRejection?: boolean; wing?: 'RIGHT' | 'LEFT' }
 ): Promise<{
@@ -656,9 +656,10 @@ export async function checkScoreApproval(
   voterCount: number
   eligibleCount: number
 }> {
+  const domainIds = Array.isArray(domainId) ? domainId : [domainId]
   const experts = await prisma.domainExpert.findMany({
     where: {
-      domainId,
+      domainId: { in: domainIds },
       ...(options?.wing ? { wing: options.wing } : {}),
     },
     select: { userId: true, role: true, wing: true }

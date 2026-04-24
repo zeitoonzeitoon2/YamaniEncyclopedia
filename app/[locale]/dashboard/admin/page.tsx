@@ -234,30 +234,38 @@ export default function AdminDashboard() {
   const canVoteOnProposal = useCallback((p: any) => {
     if (!session?.user?.id) return false
     
-    let votingDomainId = p.type === 'CREATE' ? p.parentId : p.targetDomain?.parentId
+    let votingDomainIds: string[] = []
+    
+    if (p.type === 'CREATE') {
+      if (p.parentId) votingDomainIds.push(p.parentId)
+      if (p.parentId2) votingDomainIds.push(p.parentId2)
+    } else {
+      if (p.targetDomain?.parentId) votingDomainIds.push(p.targetDomain.parentId)
+    }
  
     // Special case for RENAME on root domain: voting happens in the domain itself
-    if (!votingDomainId && p.type === 'RENAME') {
-      votingDomainId = p.targetDomainId || p.targetDomain?.id
+    if (votingDomainIds.length === 0 && p.type === 'RENAME') {
+      const id = p.targetDomainId || p.targetDomain?.id
+      if (id) votingDomainIds.push(id)
     }
 
-    if (!votingDomainId) return false // Root domain create/delete handled by admin only
-    
-    // Try to find voting domain in roots first to ensure we have the latest data
-    let votingDomain = findDomainById(roots, votingDomainId)
-    
-    // Fallback to selectedDomain if it matches and roots lookup failed (unlikely but safe)
-    if (!votingDomain && selectedDomain?.id === votingDomainId) {
-        votingDomain = selectedDomain
-    }
-
-    if (!votingDomain) return false
+    if (votingDomainIds.length === 0) return false // Root domain create/delete handled by admin only
     
     const userId = session.user.id
-    const expert = votingDomain.experts?.find((ex: any) => ex.user?.id === userId)
     
-    if (!expert) return false
-    return true
+    // Check if user is expert in ANY of the voting domains
+    for (const vId of votingDomainIds) {
+      let votingDomain = findDomainById(roots, vId)
+      if (!votingDomain && selectedDomain?.id === vId) {
+        votingDomain = selectedDomain
+      }
+      if (votingDomain) {
+        const expert = votingDomain.experts?.find((ex: any) => ex.user?.id === userId)
+        if (expert) return true
+      }
+    }
+    
+    return false
   }, [session?.user?.id, roots, selectedDomain])
 
   const [loadingCourses, setLoadingCourses] = useState(false)

@@ -28,19 +28,28 @@ export async function POST(
       return NextResponse.json({ error: 'Proposal not found or closed' }, { status: 404 })
     }
 
-    let votingDomainId = proposal.type === 'CREATE' ? proposal.parentId : proposal.targetDomain?.parentId
-
-    if (!votingDomainId && proposal.type === 'RENAME' && proposal.targetDomainId) {
-      votingDomainId = proposal.targetDomainId
+    let votingDomainIds: string[] = []
+    
+    if (proposal.type === 'CREATE') {
+      if (proposal.parentId) votingDomainIds.push(proposal.parentId)
+      if (proposal.parentId2) votingDomainIds.push(proposal.parentId2)
+    } else {
+      if (proposal.targetDomain?.parentId) votingDomainIds.push(proposal.targetDomain.parentId)
+      // Note: for delete/rename we ideally should also fetch parentLinks of targetDomain
+      // For now we just use the main parentId. (Can expand later if needed).
     }
 
-    if (!votingDomainId) {
+    if (votingDomainIds.length === 0 && proposal.type === 'RENAME' && proposal.targetDomainId) {
+      votingDomainIds.push(proposal.targetDomainId)
+    }
+
+    if (votingDomainIds.length === 0) {
       if (session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Only admins can vote on root domain creation/deletion' }, { status: 403 })
       }
     } else {
       const isExpert = await prisma.domainExpert.findFirst({
-        where: { domainId: votingDomainId, userId: session.user.id }
+        where: { domainId: { in: votingDomainIds }, userId: session.user.id }
       })
       if (!isExpert) {
         return NextResponse.json({ error: 'Only domain experts can vote on proposals' }, { status: 403 })
@@ -58,9 +67,9 @@ export async function POST(
     let nextStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING'
     let result: any
 
-    if (votingDomainId) {
+    if (votingDomainIds.length > 0) {
       result = await checkScoreApproval(
-        votingDomainId,
+        votingDomainIds,
         allVotes.map(v => ({ voterId: v.voterId, score: v.score }))
       )
       if (result.approved) nextStatus = 'APPROVED'
