@@ -113,17 +113,17 @@ export default function AdminDomainsPage() {
     if (!selectedDomainId) return null
     return findDomainById(roots, selectedDomainId)
   }, [roots, selectedDomainId])
-116: 
-117:   const flatDomains = useMemo(() => {
-118:     const list: { id: string; name: string }[] = []
-119:     const stack: DomainNode[] = [...roots]
-120:     while (stack.length) {
-121:       const cur = stack.pop()!
-122:       list.push({ id: cur.id, name: cur.name })
-123:       for (const c of cur.children) stack.push(c)
-124:     }
-125:     return list.sort((a, b) => a.name.localeCompare(b.name))
-126:   }, [roots])
+
+  const flatDomains = useMemo(() => {
+    const list: { id: string; name: string }[] = []
+    const stack: DomainNode[] = [...roots]
+    while (stack.length) {
+      const cur = stack.pop()!
+      list.push({ id: cur.id, name: cur.name })
+      for (const c of cur.children) stack.push(c)
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name))
+  }, [roots])
 
   const canManageSelectedDomainMembers = useMemo(() => {
     const userId = session?.user?.id
