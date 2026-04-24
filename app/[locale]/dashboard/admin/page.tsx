@@ -304,8 +304,28 @@ export default function AdminDashboard() {
       }
     }
     
+    // 3. Check if user is expert of parent domain
+    if (selectedDomain.parentId) {
+      const parent = findDomainById(roots, selectedDomain.parentId)
+      if (parent && parent.experts.some((ex) => ex.user.id === userId)) return true
+    }
+
+    // 4. Check for multiple parents by traversing all nodes
+    const isExpertInAnyParent = () => {
+      const stack: DomainNode[] = [...roots]
+      while (stack.length) {
+        const cur = stack.pop()!
+        if (cur.children.some(c => c.id === selectedDomain.id)) {
+          if (cur.experts.some(ex => ex.user.id === userId)) return true
+        }
+        for (const c of cur.children) stack.push(c)
+      }
+      return false
+    }
+    if (isExpertInAnyParent()) return true
+    
     return false
-  }, [selectedDomain, session?.user?.id, session?.user?.role])
+  }, [roots, selectedDomain, session?.user?.id, session?.user?.role])
 
   const canProposeRename = useMemo(() => {
     const userId = session?.user?.id
