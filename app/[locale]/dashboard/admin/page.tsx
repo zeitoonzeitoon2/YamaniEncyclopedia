@@ -689,8 +689,10 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           type: 'CREATE',
           name,
+          slug: slug || undefined,
           description: description || undefined,
           parentId: addParentId || undefined,
+          parentId2: addForm.parentId2 || undefined,
         }),
       })
 
