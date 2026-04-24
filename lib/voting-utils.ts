@@ -605,7 +605,7 @@ export async function calculateVotingResult(
 }
 
 export async function getInternalVotingMetrics(
-  domainId: string,
+  domainId: string | string[],
   votes: Array<{ voterId: string; vote?: 'APPROVE' | 'REJECT'; score?: number }>,
   options?: { wing?: 'RIGHT' | 'LEFT' }
 ): Promise<{
@@ -616,9 +616,10 @@ export async function getInternalVotingMetrics(
   rightsUsedPercent: number
   totalScore: number
 }> {
+  const domainIds = Array.isArray(domainId) ? domainId : [domainId]
   const experts = await prisma.domainExpert.findMany({
     where: {
-      domainId,
+      domainId: { in: domainIds },
       ...(options?.wing ? { wing: options.wing } : {}),
     },
     select: { userId: true, role: true, wing: true }

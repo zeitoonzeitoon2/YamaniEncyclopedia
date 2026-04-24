@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
     const domainId = url.searchParams.get('domainId')
 
     const where: any = { status: 'PENDING' }
-    
-    // اگر domainId معتبر نبود (مثلاً رشته "undefined" یا خالی)، آن را نادیده می‌گیریم
-    if (domainId && domainId !== 'undefined' && domainId !== 'null' && domainId.length > 5) {
+    if (domainId) {
       where.OR = [
         { parentId: domainId },
+        { parentId2: domainId },
         { targetDomainId: domainId },
-        { targetDomain: { parentId: domainId } }
+        { targetDomain: { parentId: domainId } },
+        { targetDomain: { parentLinks: { some: { parentDomainId: domainId } } } }
       ]
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           proposer: { select: { id: true, name: true, email: true } },
-          targetDomain: { select: { id: true, name: true, parentId: true } },
+          targetDomain: { select: { id: true, name: true, parentId: true, parentLinks: { select: { parentDomainId: true } } } },
           votes: true
         },
         orderBy: { createdAt: 'desc' }
@@ -45,19 +45,28 @@ export async function GET(request: NextRequest) {
     }
 
     const enriched = await Promise.all(proposals.map(async (p) => {
-      let votingDomainId: string | null = null
-      if (p.type === 'CREATE') votingDomainId = p.parentId
-      else votingDomainId = p.targetDomain?.parentId || null
-      if (!votingDomainId && p.type === 'RENAME' && p.targetDomainId) {
-        votingDomainId = p.targetDomainId
+      let votingDomainIds: string[] = []
+      
+      if (p.type === 'CREATE') {
+        if (p.parentId) votingDomainIds.push(p.parentId)
+        if (p.parentId2) votingDomainIds.push(p.parentId2)
+      } else {
+        if (p.targetDomain?.parentId) votingDomainIds.push(p.targetDomain.parentId)
+        if (p.targetDomain?.parentLinks) {
+          votingDomainIds.push(...p.targetDomain.parentLinks.map((l: any) => l.parentDomainId))
+        }
       }
 
-      if (!votingDomainId) {
+      if (votingDomainIds.length === 0 && p.type === 'RENAME' && p.targetDomainId) {
+        votingDomainIds.push(p.targetDomainId)
+      }
+
+      if (votingDomainIds.length === 0) {
         return { ...p, voting: null }
       }
 
       const votes = p.votes.map(v => ({ voterId: v.voterId, score: v.score }))
-      const metrics = await getInternalVotingMetrics(votingDomainId, votes)
+      const metrics = await getInternalVotingMetrics(votingDomainIds, votes)
       return { ...p, voting: metrics }
     }))
 

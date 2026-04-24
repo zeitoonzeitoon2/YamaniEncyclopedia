@@ -241,6 +241,9 @@ export default function AdminDashboard() {
       if (p.parentId2) votingDomainIds.push(p.parentId2)
     } else {
       if (p.targetDomain?.parentId) votingDomainIds.push(p.targetDomain.parentId)
+      if (p.targetDomain?.parentLinks) {
+        votingDomainIds.push(...p.targetDomain.parentLinks.map((l: any) => l.parentDomainId))
+      }
     }
  
     // Special case for RENAME on root domain: voting happens in the domain itself
