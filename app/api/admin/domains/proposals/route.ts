@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       name?: string
       description?: string
       parentId?: string
+      parentId2?: string
       targetDomainId?: string
     }
 
@@ -207,6 +208,7 @@ export async function POST(request: NextRequest) {
         name: name || null,
         description: description || null,
         parentId: finalParentId || null,
+        parentId2: parentId2 || null,
         targetDomainId: targetDomainId || null,
         proposerId: session.user.id
       }

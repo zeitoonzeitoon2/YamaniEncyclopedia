@@ -1067,7 +1067,9 @@
     "sendNomination": "ارسال ترشیح",
     "addModal": {
       "title": "افزودن حوزه فرعی",
-      "parent": "والد",
+      "parent1Label": "والد اول (اصلی)",
+      "parent2Label": "والد دوم (اختیاری)",
+      "nonePlaceholder": "-",
       "nameLabel": "نام *",
       "slugLabel": "Slug (اختیاری)",
       "slugPlaceholder": "خودکار",

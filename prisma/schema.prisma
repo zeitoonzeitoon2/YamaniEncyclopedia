@@ -532,6 +532,7 @@ model DomainProposal {
   description    String?
   reason         String?
   parentId       String?
+  parentId2      String?
   targetDomainId String?
   targetDomain   Domain?              @relation("TargetedProposals", fields: [targetDomainId], references: [id])
   status         String               @default("PENDING") // PENDING, APPROVED, REJECTED

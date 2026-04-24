@@ -112,6 +112,20 @@ export async function POST(
                 parentId: proposal.parentId
               }
             })
+
+            // Link parents (support for joint domains)
+            const parents = [proposal.parentId, proposal.parentId2].filter((p): p is string => !!p)
+            if (parents.length > 0) {
+              await tx.domainParentLink.createMany({
+                data: parents.map((pid, idx) => ({
+                  childDomainId: domain.id,
+                  parentDomainId: pid,
+                  order: idx
+                })),
+                skipDuplicates: true
+              })
+            }
+
             await tx.domainVotingShare.create({
               data: {
                 domainId: domain.id,

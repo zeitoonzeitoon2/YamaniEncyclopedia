@@ -88,7 +88,7 @@ export default function AdminDomainsPage() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [addParentId, setAddParentId] = useState<string | null>(null)
   const [addParentName, setAddParentName] = useState<string | null>(null)
-  const [addForm, setAddForm] = useState({ name: '', slug: '', description: '' })
+  const [addForm, setAddForm] = useState({ name: '', slug: '', description: '', parentId2: '' })
   const [creating, setCreating] = useState(false)
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -113,6 +113,17 @@ export default function AdminDomainsPage() {
     if (!selectedDomainId) return null
     return findDomainById(roots, selectedDomainId)
   }, [roots, selectedDomainId])
+116: 
+117:   const flatDomains = useMemo(() => {
+118:     const list: { id: string; name: string }[] = []
+119:     const stack: DomainNode[] = [...roots]
+120:     while (stack.length) {
+121:       const cur = stack.pop()!
+122:       list.push({ id: cur.id, name: cur.name })
+123:       for (const c of cur.children) stack.push(c)
+124:     }
+125:     return list.sort((a, b) => a.name.localeCompare(b.name))
+126:   }, [roots])
 
   const canManageSelectedDomainMembers = useMemo(() => {
     const userId = session?.user?.id
@@ -245,7 +256,7 @@ export default function AdminDomainsPage() {
   const openAddModal = (parent: DomainNode) => {
     setAddParentId(parent.id)
     setAddParentName(parent.name)
-    setAddForm({ name: '', slug: '', description: '' })
+    setAddForm({ name: '', slug: '', description: '', parentId2: '' })
     setAddModalOpen(true)
   }
 
@@ -288,6 +299,7 @@ export default function AdminDomainsPage() {
           slug: slug || undefined,
           description: description || undefined,
           parentId: addParentId || undefined,
+          parentId2: addForm.parentId2 || undefined,
         }),
       })
 
@@ -887,7 +899,27 @@ export default function AdminDomainsPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-site-muted">{t('addModal.parent')}: {addParentName || '-'}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.parent1Label')}</label>
+                  <div className="p-3 rounded-lg border border-site-border bg-site-bg/50 text-site-text opacity-70">
+                    {addParentName || '-'}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.parent2Label')}</label>
+                  <select
+                    value={addForm.parentId2}
+                    onChange={(e) => setAddForm(p => ({ ...p, parentId2: e.target.value }))}
+                    className="w-full p-3 rounded-lg border border-site-border bg-site-bg text-site-text focus:outline-none focus:ring-2 focus:ring-warm-primary"
+                  >
+                    <option value="">{t('addModal.nonePlaceholder')}</option>
+                    {flatDomains.filter(d => d.id !== addParentId).map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-site-text mb-2">{t('addModal.nameLabel')}</label>
                 <input

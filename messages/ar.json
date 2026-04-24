@@ -1012,7 +1012,9 @@
     "sendNomination": "إرسال الترشيح",
     "addModal": {
       "title": "إضافة مجال فرعي",
-      "parent": "الأب",
+      "parent1Label": "الأب الأول (الأساسي)",
+      "parent2Label": "الأب الثاني (اختياري)",
+      "nonePlaceholder": "-",
       "nameLabel": "الاسم *",
       "slugLabel": "Slug (اختياري)",
       "slugPlaceholder": "تلقائي",
