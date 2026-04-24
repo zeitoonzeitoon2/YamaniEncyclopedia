@@ -166,6 +166,7 @@ export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const t = useTranslations('admin.dashboard')
+  const tDomains = useTranslations('adminDomains')
 
   const [headerUrl, setHeaderUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -188,7 +189,7 @@ export default function AdminDashboard() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [addParentId, setAddParentId] = useState<string | null>(null)
   const [addParentName, setAddParentName] = useState<string | null>(null)
-  const [addForm, setAddForm] = useState({ name: '', slug: '', description: '' })
+  const [addForm, setAddForm] = useState({ name: '', slug: '', description: '', parentId2: '' })
   const [creating, setCreating] = useState(false)
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -218,6 +219,17 @@ export default function AdminDashboard() {
     if (!selectedDomainId) return null
     return findDomainById(roots, selectedDomainId)
   }, [roots, selectedDomainId])
+
+  const flatDomains = useMemo(() => {
+    const list: { id: string; name: string }[] = []
+    const stack: DomainNode[] = [...roots]
+    while (stack.length) {
+      const cur = stack.pop()!
+      list.push({ id: cur.id, name: cur.name })
+      for (const c of cur.children) stack.push(c)
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name))
+  }, [roots])
 
   const canVoteOnProposal = useCallback((p: any) => {
     if (!session?.user?.id) return false
@@ -637,7 +649,7 @@ export default function AdminDashboard() {
   const openAddModal = (parent: DomainNode) => {
     setAddParentId(parent.id)
     setAddParentName(parent.name)
-    setAddForm({ name: '', slug: '', description: '' })
+    setAddForm({ name: '', slug: '', description: '', parentId2: '' })
     setAddModalOpen(true)
   }
 
