@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDomainVotingShares, getParentWingSharesForRightElection } from '@/lib/voting-utils'
+import { getDomainVotingShares, getParentWingSharesForRightElection, getEffectiveOwnershipForTargetTeam } from '@/lib/voting-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,6 +77,17 @@ export async function GET(request: NextRequest) {
         eligibleGroups.push({ domainId: domain.parent.id, wing: 'RIGHT' })
         eligibleGroups.push({ domainId: domain.parent.id, wing: 'LEFT' })
       }
+    } else if (targetWing === 'LEFT') {
+      const ownership = await getEffectiveOwnershipForTargetTeam(domainId, 'RIGHT')
+      const ownershipByKey = new Map(ownership.map(s => [`${s.ownerDomainId}:${s.ownerWing}`, s.percentage]))
+
+      const groups = [{ domainId: domain.id, wing: 'RIGHT' }, ...(domain.children || []).map(c => ({ domainId: c.id, wing: 'RIGHT' }))]
+      eligibleShares = groups.map(group => ({
+        ownerDomainId: group.domainId,
+        ownerWing: group.wing,
+        percentage: ownershipByKey.get(`${group.domainId}:${group.wing}`) || 0,
+        ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
+      }))
     } else {
       // RULE: Election of LEFT Team
       // Competition between Self Right & Direct Children Right

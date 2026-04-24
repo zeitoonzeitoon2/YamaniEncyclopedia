@@ -66,6 +66,67 @@ export async function getParentWingSharesForRightElection(domainId: string): Pro
   return { parentId: domain.parentId, rightShare, leftShare, bootstrap: false }
 }
 
+export async function getEffectiveOwnershipForTargetTeam(
+  targetDomainId: string,
+  targetWing: 'RIGHT' | 'LEFT'
+): Promise<Array<{ ownerDomainId: string; ownerWing: 'RIGHT' | 'LEFT'; percentage: number }>> {
+  const [explicitShares, investments] = await Promise.all([
+    prisma.domainVotingShare.findMany({
+      where: { domainId: targetDomainId, domainWing: targetWing },
+      select: { ownerDomainId: true, ownerWing: true, percentage: true }
+    }),
+    prisma.domainInvestment.findMany({
+      where: { status: { in: ['ACTIVE', 'COMPLETED', 'RETURNED'] } },
+      select: {
+        proposerDomainId: true,
+        proposerWing: true,
+        targetDomainId: true,
+        targetWing: true,
+        percentageInvested: true,
+        percentageReturn: true,
+        status: true
+      }
+    })
+  ])
+
+  const byOwner = new Map<string, { ownerDomainId: string; ownerWing: 'RIGHT' | 'LEFT'; percentage: number }>()
+  const add = (ownerDomainId: string, ownerWing: string, percentage: number) => {
+    const wing = (ownerWing || 'RIGHT').toUpperCase() === 'LEFT' ? 'LEFT' : 'RIGHT'
+    const key = `${ownerDomainId}:${wing}`
+    const existing = byOwner.get(key)
+    if (existing) existing.percentage += percentage
+    else byOwner.set(key, { ownerDomainId, ownerWing: wing, percentage })
+  }
+
+  // A) Explicit shares
+  for (const s of explicitShares) add(s.ownerDomainId, s.ownerWing, s.percentage)
+
+  // B) Investment-derived shares (same ownership semantics as portfolio)
+  for (const inv of investments) {
+    if ((inv.status === 'COMPLETED' || inv.status === 'RETURNED') && inv.percentageReturn > 0) {
+      if (inv.targetDomainId === targetDomainId && inv.targetWing === targetWing) {
+        add(inv.proposerDomainId, inv.proposerWing, inv.percentageReturn)
+      }
+    }
+    if (inv.status === 'ACTIVE' && inv.percentageInvested > 0) {
+      if (inv.proposerDomainId === targetDomainId && inv.proposerWing === targetWing) {
+        add(inv.targetDomainId, inv.targetWing, inv.percentageInvested)
+      }
+    }
+  }
+
+  // Rebuild self share as remainder to 100 (portfolio-consistent)
+  const selfKey = `${targetDomainId}:${targetWing}`
+  byOwner.delete(selfKey)
+  const totalExternal = Array.from(byOwner.values()).reduce((sum, s) => sum + s.percentage, 0)
+  const selfPercent = Math.max(0, 100 - totalExternal)
+  if (selfPercent > 0 && targetWing === 'RIGHT') {
+    byOwner.set(selfKey, { ownerDomainId: targetDomainId, ownerWing: 'RIGHT', percentage: selfPercent })
+  }
+
+  return Array.from(byOwner.values())
+}
+
 /**
  * Calculates voting shares for a specific election (domain + wing).
  * 
@@ -249,6 +310,32 @@ export async function calculateUserVotingWeight(
          } else if (expWing === 'LEFT') {
            maxWeight = Math.max(maxWeight, (parentShares.leftShare / total) * 100)
          }
+       }
+       return maxWeight
+     }
+
+     if (targetWing === 'LEFT') {
+       const ownership = await getEffectiveOwnershipForTargetTeam(domainId, 'RIGHT')
+       const ownershipByKey = new Map(ownership.map(s => [`${s.ownerDomainId}:${s.ownerWing}`, s.percentage]))
+
+       const eligibleGroups: { domainId: string; wing: 'RIGHT' }[] = [{ domainId, wing: 'RIGHT' }]
+       if (domain.children && domain.children.length > 0) {
+         for (const child of domain.children) eligibleGroups.push({ domainId: child.id, wing: 'RIGHT' })
+       }
+
+       let totalEligible = 0
+       for (const g of eligibleGroups) totalEligible += ownershipByKey.get(`${g.domainId}:${g.wing}`) || 0
+       if (totalEligible <= 0) return 0
+
+       const userExperts = await prisma.domainExpert.findMany({
+         where: { userId },
+         select: { domainId: true, wing: true }
+       })
+       let maxWeight = 0
+       for (const exp of userExperts) {
+         if ((exp.wing || '').toUpperCase() !== 'RIGHT') continue
+         const share = ownershipByKey.get(`${exp.domainId}:RIGHT`) || 0
+         if (share > 0) maxWeight = Math.max(maxWeight, (share / totalEligible) * 100)
        }
        return maxWeight
      }
