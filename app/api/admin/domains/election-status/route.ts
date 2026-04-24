@@ -64,7 +64,20 @@ export async function GET(request: NextRequest) {
 
     if (!domain) return NextResponse.json({ error: 'Domain not found' }, { status: 404 })
 
+    const getDomainNameById = (id: string) => {
+      if (id === domain.id) return domain.name
+      if (domain.parent && id === domain.parent.id) return domain.parent.name
+      const childMatch = domain.children?.find(c => c.id === id)
+      return childMatch?.name || ''
+    }
+
     let eligibleGroups: { domainId: string, wing: string }[] = []
+    let eligibleShares: Array<{
+      ownerDomainId: string
+      ownerWing: string
+      percentage: number
+      ownerDomain: { id: string; name: string }
+    }> = []
     const targetWing = wing.toUpperCase()
 
     if (targetWing === 'RIGHT') {
@@ -77,17 +90,6 @@ export async function GET(request: NextRequest) {
         eligibleGroups.push({ domainId: domain.parent.id, wing: 'RIGHT' })
         eligibleGroups.push({ domainId: domain.parent.id, wing: 'LEFT' })
       }
-    } else if (targetWing === 'LEFT') {
-      const ownership = await getEffectiveOwnershipForTargetTeam(domainId, 'RIGHT')
-      const ownershipByKey = new Map(ownership.map(s => [`${s.ownerDomainId}:${s.ownerWing}`, s.percentage]))
-
-      const groups = [{ domainId: domain.id, wing: 'RIGHT' }, ...(domain.children || []).map(c => ({ domainId: c.id, wing: 'RIGHT' }))]
-      eligibleShares = groups.map(group => ({
-        ownerDomainId: group.domainId,
-        ownerWing: group.wing,
-        percentage: ownershipByKey.get(`${group.domainId}:${group.wing}`) || 0,
-        ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
-      }))
     } else {
       // RULE: Election of LEFT Team
       // Competition between Self Right & Direct Children Right
@@ -99,20 +101,6 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-
-    const getDomainNameById = (id: string) => {
-      if (id === domain.id) return domain.name
-      if (domain.parent && id === domain.parent.id) return domain.parent.name
-      const childMatch = domain.children?.find(c => c.id === id)
-      return childMatch?.name || ''
-    }
-
-    let eligibleShares: Array<{
-      ownerDomainId: string
-      ownerWing: string
-      percentage: number
-      ownerDomain: { id: string; name: string }
-    }> = []
 
     if (targetWing === 'RIGHT' && domain.parent) {
       const parentShares = await getParentWingSharesForRightElection(domainId)
@@ -130,6 +118,16 @@ export async function GET(request: NextRequest) {
           ownerDomain: { id: domain.parent.id, name: domain.parent.name }
         }
       ]
+    } else if (targetWing === 'LEFT') {
+      const ownership = await getEffectiveOwnershipForTargetTeam(domainId, 'RIGHT')
+      const ownershipByKey = new Map(ownership.map(s => [`${s.ownerDomainId}:${s.ownerWing}`, s.percentage]))
+      const groups = [{ domainId: domain.id, wing: 'RIGHT' }, ...(domain.children || []).map(c => ({ domainId: c.id, wing: 'RIGHT' }))]
+      eligibleShares = groups.map(group => ({
+        ownerDomainId: group.domainId,
+        ownerWing: group.wing,
+        percentage: ownershipByKey.get(`${group.domainId}:${group.wing}`) || 0,
+        ownerDomain: { id: group.domainId, name: getDomainNameById(group.domainId) }
+      }))
     } else {
       const shareByKey = new Map<string, typeof shares[number]>()
       for (const share of shares) {
