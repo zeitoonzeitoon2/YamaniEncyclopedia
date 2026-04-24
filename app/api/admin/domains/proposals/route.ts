@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
-    const { type, name, description, parentId, targetDomainId } = body as {
+    const { type, name, description, parentId, parentId2, targetDomainId } = body as {
       type: 'CREATE' | 'DELETE'
       name?: string
       description?: string
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('Creating proposal:', { type, name, finalParentId, targetDomainId, proposerId: session.user.id })
+    console.log('Creating proposal:', { type, name, finalParentId, parentId2, targetDomainId, proposerId: session.user.id })
 
     const proposal = await prisma.domainProposal.create({
       data: {
