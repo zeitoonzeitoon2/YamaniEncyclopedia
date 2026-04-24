@@ -139,20 +139,26 @@ export default function AdminCourseChaptersPage() {
       byRoot.set(rootId, list)
     }
 
-    const groups = Array.from(byRoot.entries()).map(([rootId, list]) => {
-      const allVersions = [...list].sort((a, b) => {
-        const va = a.version ?? 0
-        const vb = b.version ?? 0
-        if (va !== vb) return va - vb
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    const groups = Array.from(byRoot.entries())
+      .map(([rootId, list]) => {
+        const allVersions = [...list].sort((a, b) => {
+          const va = a.version ?? 0
+          const vb = b.version ?? 0
+          if (va !== vb) return va - vb
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        })
+        const approvedVersions = allVersions.filter((c) => c.status === 'APPROVED')
+        
+        // If there are no approved versions, this chapter group shouldn't be in the top list
+        if (approvedVersions.length === 0) return null
+
+        const approved = approvedVersions[approvedVersions.length - 1]
+        const parent = approved
+        const orderIndex = Math.min(...allVersions.map((c) => c.orderIndex ?? 0))
+        const versions = approvedVersions // Only show approved versions in the top list
+        return { rootId, orderIndex, parent, versions, approved }
       })
-      const approvedVersions = allVersions.filter((c) => c.status === 'APPROVED')
-      const approved = approvedVersions.length ? approvedVersions[approvedVersions.length - 1] : null
-      const parent = approved || allVersions[allVersions.length - 1]
-      const orderIndex = Math.min(...allVersions.map((c) => c.orderIndex ?? 0))
-      const versions = allVersions.filter((c) => c.status !== 'REJECTED')
-      return { rootId, orderIndex, parent, versions, approved }
-    })
+      .filter((g): g is NonNullable<typeof g> => g !== null)
 
     groups.sort((a, b) => {
       if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex
