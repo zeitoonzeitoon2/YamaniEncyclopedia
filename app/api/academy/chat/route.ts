@@ -133,15 +133,28 @@ export async function POST(req: NextRequest) {
 
     // Check if user is an authorized examiner
     const isQualifiedExaminer = await canExamineCourse(session.user.id, examSession.courseId)
+    const isStudent = examSession.studentId === session.user.id
 
     const isAuthorized = 
-      examSession.studentId === session.user.id || 
+      isStudent || 
       examSession.examinerId === session.user.id || 
       isQualifiedExaminer ||
       session.user.role === 'ADMIN'
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Student specific restrictions: only allowed if approved or examiner-initiated
+    if (isStudent && !isQualifiedExaminer && session.user.role !== 'ADMIN') {
+      const isApproved = ['SCHEDULED', 'PASSED', 'FAILED', 'CANCELED'].includes(examSession.status)
+      const examinerInitiated = examSession.status === 'ENROLLED' && examSession.examinerId !== null
+      
+      if (!isApproved && !examinerInitiated) {
+        return NextResponse.json({ 
+          error: 'You can only chat after your exam request is approved or an instructor initiates the conversation.' 
+        }, { status: 403 })
+      }
     }
 
     // Auto-assign examiner if they are qualified and sending a message to a session without an examiner

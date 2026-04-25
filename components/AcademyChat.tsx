@@ -341,22 +341,44 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="p-4 border-t border-gray-700 bg-site-card/50 flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={t('chatPlaceholder')}
-                className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-4 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="btn-primary p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send size={18} />
-              </button>
-            </form>
+            {(() => {
+              const isAdmin = session?.user?.role === 'ADMIN'
+              const isExpert = selectedExam.course.domain.experts.some(e => e.user.id === session?.user?.id) ||
+                              selectedExam.course.domain.parent?.experts.some(e => e.user.id === session?.user?.id)
+              
+              const canChat = isExaminer || isAdmin || isExpert || 
+                              ['SCHEDULED', 'PASSED', 'FAILED', 'CANCELED'].includes(selectedExam.status) ||
+                              (selectedExam.status === 'ENROLLED' && selectedExam.examinerId !== null)
+
+              if (!canChat) {
+                return (
+                  <div className="p-4 border-t border-gray-700 bg-site-card/50 text-center">
+                    <p className="text-xs text-site-muted italic">
+                      {t('chatWaitingApproval' as any) || 'You can chat here after your exam request is approved.'}
+                    </p>
+                  </div>
+                )
+              }
+
+              return (
+                <form onSubmit={handleSend} className="p-4 border-t border-gray-700 bg-site-card/50 flex gap-2">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={t('chatPlaceholder')}
+                    className="flex-1 bg-site-bg border border-gray-700 rounded-lg px-4 py-2 text-sm text-site-text focus:outline-none focus:border-warm-primary transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim()}
+                    className="btn-primary p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send size={18} />
+                  </button>
+                </form>
+              )
+            })()}
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-site-muted">
