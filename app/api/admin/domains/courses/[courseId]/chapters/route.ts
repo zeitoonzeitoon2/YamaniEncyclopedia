@@ -101,44 +101,13 @@ export async function POST(request: NextRequest, { params }: { params: { courseI
     if (originalChapterId) {
       const original = await prisma.courseChapter.findUnique({
         where: { id: originalChapterId },
-        select: { id: true, courseId: true },
+        select: { id: true, courseId: true, originalChapterId: true },
       })
       if (!original || original.courseId !== courseId) {
         return NextResponse.json({ error: 'Original chapter not found' }, { status: 404 })
       }
-      originalId = original.id
-    }
-
-    // Reuse existing PENDING draft for the same root chapter by the same author
-    if (originalId) {
-      const existingDraft = await prisma.courseChapter.findFirst({
-        where: {
-          originalChapterId: originalId,
-          authorId: perm.userId,
-          status: 'PENDING',
-        },
-        select: { id: true },
-      })
-
-      if (existingDraft) {
-        await prisma.$transaction([
-          prisma.courseChapter.update({
-            where: { id: existingDraft.id },
-            data: {
-              title,
-              content,
-              orderIndex,
-              status: 'PENDING',
-              ...(changeReason ? { changeReason: (changeReason as any) as Prisma.InputJsonValue } : {}),
-            },
-          }),
-          prisma.chapterQuestion.updateMany({
-            where: { chapterId: existingDraft.id, status: 'DRAFT' },
-            data: { status: 'PENDING' }
-          })
-        ])
-        return NextResponse.json({ chapter: existingDraft }, { status: 200 })
-      }
+      // Always point to the absolute root to keep all versions in one group
+      originalId = original.originalChapterId || original.id
     }
 
     const chapter = await prisma.courseChapter.create({

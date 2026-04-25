@@ -128,7 +128,18 @@ export default function AdminCourseChaptersPage() {
 
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
 
-  const getRootId = (chapter: CourseChapter) => chapter.originalChapterId || chapter.id
+  const getRootId = useCallback((chapter: CourseChapter) => {
+    if (!chapter.originalChapterId) return chapter.id
+    // To handle legacy chain-linked revisions (V3 -> V2 -> V1), 
+    // we find the root by looking up the originalChapterId in our current list
+    let current = chapter
+    while (current.originalChapterId) {
+      const parent = chapters.find(c => c.id === current.originalChapterId)
+      if (!parent || parent.id === current.id) break
+      current = parent
+    }
+    return current.id
+  }, [chapters])
 
   const chapterGroups = useMemo(() => {
     const byRoot = new Map<string, CourseChapter[]>()
@@ -149,7 +160,8 @@ export default function AdminCourseChaptersPage() {
         })
         const approvedVersions = allVersions.filter((c) => c.status === 'APPROVED')
         
-        // If there are no approved versions, this chapter group shouldn't be in the top list
+        // If there are no approved versions, this chapter group shouldn't be in the main list
+        // except if we are explicitly looking at a draft (this will be handled by pendingChapters)
         if (approvedVersions.length === 0) return null
 
         const approved = approvedVersions[approvedVersions.length - 1]
@@ -166,7 +178,7 @@ export default function AdminCourseChaptersPage() {
     })
 
     return groups
-  }, [chapters])
+  }, [chapters, getRootId])
 
   const selectedApprovedChapter = useMemo(() => {
     if (!selectedChapter) return null
