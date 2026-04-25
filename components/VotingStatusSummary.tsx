@@ -29,11 +29,11 @@ export default function VotingStatusSummary({
   const [hoveredItem, setHoveredItem] = useState<'participation' | 'score' | null>(null)
 
   const currentUsedRights = usedRights ?? votedCount
-  const participationThreshold = totalRights / 2
+  const participationThreshold = Math.ceil(eligibleCount / 2)
   const scoreThreshold = totalRights / 2
   const fmt = (n: number) => Number.isInteger(n) ? String(n) : n.toFixed(1)
 
-  const participationMet = currentUsedRights >= participationThreshold
+  const participationMet = votedCount >= participationThreshold
   const scoreMet = totalScore !== undefined && totalScore >= scoreThreshold
 
   return (
@@ -52,10 +52,10 @@ export default function VotingStatusSummary({
           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${participationMet ? 'bg-green-500' : 'bg-site-muted/40'}`} />
           <span className="text-site-muted">{t('participationLabel')}</span>
           <span className={`font-semibold mr-auto ${participationMet ? 'text-green-500' : 'text-site-text'}`}>
-            {fmt(currentUsedRights)}
+            {votedCount}
           </span>
           <span className="text-site-muted/60">{t('of')}</span>
-          <span className="text-site-muted font-medium">{fmt(participationThreshold)}</span>
+          <span className="text-site-muted font-medium">{participationThreshold}</span>
           {participationMet && <span className="text-green-500 text-[10px]">✓</span>}
         </div>
 
@@ -64,8 +64,8 @@ export default function VotingStatusSummary({
             {t('participationTooltip', {
               eligible: eligibleCount,
               totalRights: fmt(totalRights),
-              threshold: fmt(participationThreshold),
-              current: fmt(currentUsedRights),
+              threshold: participationThreshold,
+              current: votedCount,
             })}
           </div>
         )}

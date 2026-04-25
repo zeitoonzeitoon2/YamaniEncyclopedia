@@ -681,8 +681,8 @@ export async function checkScoreApproval(
     totalScore += v.score * weight
   }
 
-  const participationThreshold = totalRights / 2
-  const participationMet = totalRights > 0 && usedRights >= participationThreshold
+  const participationThreshold = Math.ceil(eligibleCount / 2)
+  const participationMet = eligibleCount > 0 && voterCount >= participationThreshold
   const scoreThreshold = totalRights / 2
   const approved = participationMet && totalScore >= scoreThreshold
   const rejected = !options?.noRejection && participationMet && totalScore <= -scoreThreshold
