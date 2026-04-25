@@ -25,7 +25,8 @@
     "notifType_post": "Post",
     "notifType_candidacy": "Expert candidacy",
     "signIn": "Sign in",
-    "signUp": "Create account"
+    "signUp": "Create account",
+    "newPostWithId": "New post with ID {id} has been submitted"
   },
   "academy": {
     "subtitle": "Learning and examination platform to achieve research points",

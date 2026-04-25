@@ -13,6 +13,8 @@ type NotificationItem = {
   domainName?: string
   createdAt: string
   href?: string
+  isKey?: boolean
+  params?: Record<string, string>
 }
 
 export async function GET() {
@@ -143,7 +145,7 @@ export async function GET() {
               { relatedDomainIds: { hasSome: domainIds } },
             ],
           },
-          select: { id: true, content: true, domainId: true, createdAt: true, type: true },
+          select: { id: true, content: true, domainId: true, createdAt: true, type: true, version: true, revisionNumber: true },
         }),
 
         prisma.expertCandidacy.findMany({
@@ -236,8 +238,20 @@ export async function GET() {
     }
     
     for (const p of posts) {
-      const snippet = p.content.replace(/<[^>]*>/g, '').slice(0, 50)
-      items.push({ type: 'post', id: p.id, title: snippet || p.type, domainName: p.domainId ? domainNameMap[p.domainId] : undefined, createdAt: p.createdAt.toISOString() })
+      const displayId = p.version !== null 
+        ? `${p.version}/${p.revisionNumber || 0}` 
+        : (p.revisionNumber !== null ? `R${p.revisionNumber}` : p.id.slice(-4))
+
+      items.push({ 
+        type: 'post', 
+        id: p.id, 
+        title: 'newPostWithId', 
+        isKey: true,
+        params: { id: displayId },
+        domainName: p.domainId ? domainNameMap[p.domainId] : undefined, 
+        createdAt: p.createdAt.toISOString(),
+        href: `/expert`
+      })
     }
 
     const candidacyWeights = await Promise.all(

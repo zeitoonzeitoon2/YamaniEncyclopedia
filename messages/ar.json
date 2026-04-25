@@ -25,7 +25,8 @@
     "notifType_post": "منشور",
     "notifType_candidacy": "ترشيح خبير",
     "signIn": "تسجيل الدخول",
-    "signUp": "إنشاء حساب"
+    "signUp": "إنشاء حساب",
+    "newPostWithId": "تم إرسال منشور جديد بالمعرف {id}"
   },
   "academy": {
     "subtitle": "منصّة للتعليم والاختبارات للحصول على نقاط بحثية",

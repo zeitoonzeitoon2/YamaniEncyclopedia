@@ -25,7 +25,8 @@
     "notifType_post": "نوشته",
     "notifType_candidacy": "نامزدی کارشناس",
     "signIn": "ورود",
-    "signUp": "ایجاد حساب"
+    "signUp": "ایجاد حساب",
+    "newPostWithId": "نوشته جدید با شناسه {id} ارسال شده است"
   },
   "academy": {
     "subtitle": "پلتفرم آموزش و آزمون برای دستیابی به امتیازهای پژوهشی",
