@@ -316,57 +316,6 @@ export default function AdminCourseChaptersPage() {
 
   const handleEditorDraftChange = async (draft: { title: string; description?: string; content: string }) => {
     setForm((prev) => ({ ...prev, title: draft.title, content: draft.content }))
-    if (!selectedChapter) return
-    if (selectedChapter.status !== 'APPROVED') return
-    if (activeDraftId) return
-    if (!draft.content.trim()) return
-    if (!courseId) return
-    const userId = session?.user?.id || ''
-    if (!userId) return
-
-    const rootId = selectedChapter.originalChapterId || selectedChapter.id
-    const existingDraft = chapters.find(
-      (chapter) =>
-        chapter.status === 'PENDING' && chapter.originalChapterId === rootId && chapter.author.id === userId
-    )
-    if (existingDraft) {
-      setActiveDraftId(existingDraft.id)
-      setMode('edit')
-      return
-    }
-
-    if (autoDraftingRef.current) return
-    const draftTitle = (draft.title || selectedChapter.title || '').trim()
-    if (!draftTitle) return
-    autoDraftingRef.current = true
-    try {
-      const content = draft.content
-      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: draftTitle,
-          content,
-          orderIndex: selectedChapter.orderIndex ?? 0,
-          originalChapterId: rootId,
-        }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id?: string } }
-      if (!res.ok) {
-        toast.error(payload.error || t('toast.draftCreateError'))
-        return
-      }
-      if (payload.chapter?.id) {
-        setActiveDraftId(payload.chapter.id)
-      }
-      setMode('edit')
-      await fetchChapters()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : t('toast.draftCreateError')
-      toast.error(msg)
-    } finally {
-      autoDraftingRef.current = false
-    }
   }
 
   const handleSave = async () => {
