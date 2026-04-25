@@ -1154,6 +1154,7 @@
     "passwordPlaceholder": "رمز عبور خود را وارد کنید",
     "loggingIn": "در حال ورود...",
     "loginButton": "ورود",
+    "googleLogin": "ورود با گوگل",
     "invalidCredentials": "ایمیل یا رمز عبور اشتباه است",
     "loginSuccess": "ورود با موفقیت انجام شد",
     "loginError": "خطا در برقراری ارتباط با سرور",

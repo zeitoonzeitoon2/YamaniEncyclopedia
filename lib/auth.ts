@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
@@ -56,9 +57,42 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
         }
       }
-    })
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
+    signIn: async ({ user, account }) => {
+      if (account?.provider === 'google') {
+        const { email, name, image } = user
+        if (!email) return false
+
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+          })
+
+          if (!dbUser) {
+            // Create user if not exists
+            await prisma.user.create({
+              data: {
+                email,
+                name: name || email.split('@')[0],
+                image,
+                role: 'USER',
+              },
+            })
+          }
+          return true
+        } catch (error) {
+          console.error('Error in Google signIn callback:', error)
+          return false
+        }
+      }
+      return true
+    },
     session: async ({ session, token }) => {
       if (session?.user) {
         session.user.id = token.sub!

@@ -1194,6 +1194,7 @@
     "passwordPlaceholder": "Enter your password",
     "loggingIn": "Logging in...",
     "loginButton": "Login",
+    "googleLogin": "Login with Google",
     "invalidCredentials": "Invalid email or password",
     "loginSuccess": "Logged in successfully",
     "loginError": "Error connecting to server",

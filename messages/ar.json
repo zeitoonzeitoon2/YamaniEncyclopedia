@@ -1172,6 +1172,7 @@
     "passwordPlaceholder": "أدخل كلمة المرور",
     "loggingIn": "جاري تسجيل الدخول...",
     "loginButton": "تسجيل الدخول",
+    "googleLogin": "تسجيل الدخول عبر جوجل",
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "loginSuccess": "تم تسجيل الدخول بنجاح",
     "loginError": "خطا في الاتصال بالخادم",

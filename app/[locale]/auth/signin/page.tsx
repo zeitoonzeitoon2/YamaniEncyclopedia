@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { Link, useRouter } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
+import { FcGoogle } from 'react-icons/fc'
 
 export default function SignIn() {
   const router = useRouter()
@@ -96,6 +97,23 @@ export default function SignIn() {
             {isLoading ? t('loggingIn') : t('loginButton')}
           </button>
         </form>
+        
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-site-muted opacity-20"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-site-bg text-site-muted">OR</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => signIn('google', { callbackUrl: '/' })}
+          className="btn-outline w-full flex items-center justify-center gap-2 py-3 border border-site-muted hover:bg-site-bg-alt transition-colors"
+        >
+          <FcGoogle className="text-xl" />
+          <span>{t('googleLogin')}</span>
+        </button>
 
         <div className="mt-6 text-center">
           <p className="text-site-muted text-sm">
