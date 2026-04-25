@@ -39,19 +39,16 @@ export default async function HomePage({ params: { locale } }: { params: { local
   }
   
   let headerUrl: string | null = null
-  /*
   try {
     const { prisma } = await import('@/lib/prisma')
-    const settingPromise = prisma.setting.findUnique({
-      where: { key: 'home.headerImage' }
-    })
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 3000))
-    const setting = await Promise.race([settingPromise, timeoutPromise]) as any
-    headerUrl = setting?.value || null
+    const [primary, legacy] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: 'header_image' } }),
+      prisma.setting.findUnique({ where: { key: 'home.headerImage' } })
+    ])
+    headerUrl = primary?.value || legacy?.value || null
   } catch (err) {
     console.warn('[HomePage] Failed to fetch header image setting:', err)
   }
-  */
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col relative z-0">
