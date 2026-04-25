@@ -243,28 +243,6 @@ export function AcademyChat({ role = 'student' }: { role?: 'student' | 'examiner
                     }
                   </div>
                 </div>
-                {selectedExam.status === 'SCHEDULED' && selectedExam.scheduledAt && (
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2 text-xs text-green-500">
-                    <div className="font-bold flex items-center gap-1">
-                      <Calendar size={12} />
-                      {t('examApprovedMsg')}
-                    </div>
-                    <div className="mt-1">
-                      {t('examScheduledMsg', { date: new Date(selectedExam.scheduledAt).toLocaleString('en-GB') })}
-                    </div>
-                    {selectedExam.meetLink && (
-                      <a
-                        href={selectedExam.meetLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 flex items-center gap-1 text-warm-primary hover:underline"
-                      >
-                        <ExternalLink size={12} />
-                        {t('meetLinkMsg')} {selectedExam.meetLink}
-                      </a>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
 

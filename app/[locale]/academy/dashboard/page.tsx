@@ -4,7 +4,7 @@ import { Link } from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
-import { Award, BookOpen, User, Calendar, FileText, MessageCircle } from 'lucide-react'
+import { Award, BookOpen, User, Calendar, FileText, MessageCircle, ExternalLink } from 'lucide-react'
 import { AcademyChat } from '@/components/AcademyChat'
 
 type AcademyCourse = {
@@ -34,10 +34,19 @@ type TranscriptItem = {
   examiner: { name: string | null } | null
 }
 
+type ExamSession = {
+  id: string
+  status: string
+  scheduledAt: string | null
+  meetLink: string | null
+  course: { title: string }
+}
+
 export default function AcademyDashboardPage() {
   const t = useTranslations('academy')
   const [domains, setDomains] = useState<AcademyDomain[]>([])
   const [transcript, setTranscript] = useState<TranscriptItem[]>([])
+  const [exams, setExams] = useState<ExamSession[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'courses' | 'transcript' | 'communication'>('courses')
 
@@ -45,19 +54,23 @@ export default function AcademyDashboardPage() {
     const load = async () => {
       try {
         setLoading(true)
-        const [coursesRes, transcriptRes] = await Promise.all([
+        const [coursesRes, transcriptRes, examsRes] = await Promise.all([
           fetch('/api/academy/courses?mine=true', { cache: 'no-store' }),
-          fetch('/api/academy/transcript', { cache: 'no-store' })
+          fetch('/api/academy/transcript', { cache: 'no-store' }),
+          fetch('/api/academy/exams/my', { cache: 'no-store' })
         ])
 
         const coursesPayload = (await coursesRes.json().catch(() => ({}))) as { domains?: AcademyDomain[]; error?: string }
         const transcriptPayload = (await transcriptRes.json().catch(() => ({}))) as { transcript?: TranscriptItem[]; error?: string }
+        const examsPayload = (await examsRes.json().catch(() => ({}))) as { exams?: ExamSession[]; error?: string }
 
         if (!coursesRes.ok) toast.error(coursesPayload.error || t('loadError'))
         if (!transcriptRes.ok) toast.error(transcriptPayload.error || t('loadError'))
+        if (!examsRes.ok) toast.error(examsPayload.error || t('loadError'))
 
         setDomains(Array.isArray(coursesPayload.domains) ? coursesPayload.domains : [])
         setTranscript(Array.isArray(transcriptPayload.transcript) ? transcriptPayload.transcript : [])
+        setExams(Array.isArray(examsPayload.exams) ? examsPayload.exams : [])
       } catch (e: unknown) {
         toast.error(t('loadError'))
       } finally {
@@ -79,6 +92,53 @@ export default function AcademyDashboardPage() {
             {t('backToAcademy')}
           </Link>
         </div>
+
+        {/* Notifications */}
+        {!loading && (
+          <div className="space-y-3">
+            {exams
+              .filter((e) => e.status === 'SCHEDULED' && e.scheduledAt)
+              .map((exam) => (
+                <div
+                  key={exam.id}
+                  className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-sm text-green-500 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-500/20 rounded-lg">
+                      <Calendar size={20} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-base flex items-center gap-2">
+                        {t('examApprovedMsg')} — {exam.course.title}
+                      </div>
+                      <div className="mt-1 opacity-90">
+                        {t('examScheduledMsg', {
+                          date: new Date(exam.scheduledAt!).toLocaleString('en-GB', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }),
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  {exam.meetLink && (
+                    <a
+                      href={exam.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary py-2 px-4 flex items-center gap-2 text-white text-xs"
+                    >
+                      <ExternalLink size={14} />
+                      {t('joinExam')}
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-site-border pb-px">
