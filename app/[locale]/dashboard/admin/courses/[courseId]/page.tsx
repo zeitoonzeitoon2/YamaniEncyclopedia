@@ -371,26 +371,6 @@ export default function AdminCourseChaptersPage() {
     try {
       setSaving(true)
       
-      let targetId = activeDraftId
-      let isNewDraftNeeded = false
-      
-      if (mode === 'edit' && selectedChapter) {
-        if (selectedChapter.status === 'APPROVED' || selectedChapter.status === 'REJECTED') {
-          const rootId = getRootId(selectedChapter)
-          const userId = session?.user?.id || ''
-          const existingDraft = chapters.find(
-            (c) => c.status === 'PENDING' && c.originalChapterId === rootId && c.author.id === userId
-          )
-          if (existingDraft) {
-            targetId = existingDraft.id
-          } else {
-            isNewDraftNeeded = true
-          }
-        } else if (!targetId) {
-          targetId = selectedId
-        }
-      }
-
       const body: any = { 
         title, 
         content, 
@@ -398,41 +378,32 @@ export default function AdminCourseChaptersPage() {
         changeReason: session?.user?.role !== 'ADMIN' ? argumentation : undefined
       }
 
-      if (targetId && !isNewDraftNeeded) {
-        const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters/${targetId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-        const payload = (await res.json().catch(() => ({}))) as { error?: string }
-        if (!res.ok) {
-          toast.error(payload.error || t('toast.saveError'))
-          return
-        }
-      } else {
-        const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...body,
-            originalChapterId: isNewDraftNeeded ? getRootId(selectedChapter!) : (form.originalChapterId || undefined),
-          }),
-        })
-        const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
-        if (!res.ok) {
-          toast.error(payload.error || t('toast.draftCreateError'))
-          return
-        }
-        if (payload.chapter?.id) {
-          setActiveDraftId(payload.chapter.id)
-          setSelectedId(payload.chapter.id)
-        }
+      // Always create a new draft when saving a revision/draft from the UI button
+      // as requested by the user for versioning/snapshots.
+      const isRevision = mode === 'edit' || (mode === 'new' && selectedChapter)
+      const originalChapterId = isRevision ? getRootId(selectedChapter!) : (form.originalChapterId || undefined)
+
+      const res = await fetch(`/api/admin/domains/courses/${courseId}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...body,
+          originalChapterId,
+        }),
+      })
+      
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; chapter?: { id: string } }
+      if (!res.ok) {
+        toast.error(payload.error || t('toast.draftCreateError'))
+        return
       }
+
+      if (payload.chapter?.id) {
+        setActiveDraftId(payload.chapter.id)
+        setSelectedId(payload.chapter.id)
+      }
+      
       await fetchChapters()
-      // After fetching, we should ensure the newly created or updated draft is selected
-      if (isNewDraftNeeded) {
-        // If it was a new draft, we already updated selectedId in the POST success block
-      }
       toast.success(t('toast.saveSuccess'))
       setShowArgModal(false)
     } catch (e: unknown) {
@@ -883,6 +854,17 @@ export default function AdminCourseChaptersPage() {
                           disabled={!!votingKey}
                         />
                       </div>
+                      {(chapter.author.id === session?.user?.id || session?.user?.role === 'ADMIN') && chapter.votes.length === 0 && (
+                        <div className="flex justify-end mt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(chapter.id)}
+                            className="px-2 py-1 text-[10px] rounded border border-red-600/60 text-red-400 hover:text-red-200 transition-all duration-200 hover:scale-105 hover:bg-red-600/10"
+                          >
+                            {t('delete')}
+                          </button>
+                        </div>
+                      )}
                       {chapter.voting && (
                         <div className="mt-2">
                           <VotingStatusSummary
