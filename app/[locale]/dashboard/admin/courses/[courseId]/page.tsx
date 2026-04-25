@@ -813,15 +813,17 @@ export default function AdminCourseChaptersPage() {
                                         </div>
                                       </div>
                                     </button>
-                                    <div className="flex items-center justify-end gap-2 mt-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDelete(chapter.id)}
-                                        className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200 transition-all duration-200 hover:scale-105 hover:bg-red-600/10"
-                                      >
-                                        {t('delete')}
-                                      </button>
-                                    </div>
+                                    {chapter.status === 'PENDING' && (chapter.author.id === session?.user?.id || session?.user?.role === 'ADMIN') && chapter.votes.length === 0 && (
+                                       <div className="flex items-center justify-end gap-2 mt-2">
+                                         <button
+                                           type="button"
+                                           onClick={() => handleDelete(chapter.id)}
+                                           className="px-2 py-1 text-xs rounded border border-red-600/60 text-red-400 hover:text-red-200 transition-all duration-200 hover:scale-105 hover:bg-red-600/10"
+                                         >
+                                           {t('delete')}
+                                         </button>
+                                       </div>
+                                     )}
                                   </div>
                                 )
                               })}
