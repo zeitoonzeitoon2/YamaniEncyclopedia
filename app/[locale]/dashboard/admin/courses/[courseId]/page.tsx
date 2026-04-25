@@ -129,16 +129,26 @@ export default function AdminCourseChaptersPage() {
   const selectedChapter = useMemo(() => chapters.find((c) => c.id === selectedId) || null, [chapters, selectedId])
 
   const getRootId = useCallback((chapter: CourseChapter) => {
-    if (!chapter.originalChapterId) return chapter.id
-    // To handle legacy chain-linked revisions (V3 -> V2 -> V1), 
-    // we find the root by looking up the originalChapterId in our current list
-    let current = chapter
-    while (current.originalChapterId) {
-      const parent = chapters.find(c => c.id === current.originalChapterId)
-      if (!parent || parent.id === current.id) break
-      current = parent
+    if (chapter.originalChapterId) {
+      // To handle chain-linked revisions (V3 -> V2 -> V1), 
+      // we find the absolute root by traversing up
+      let current = chapter
+      while (current.originalChapterId) {
+        const parent = chapters.find(c => c.id === current.originalChapterId)
+        if (!parent || parent.id === current.id) break
+        current = parent
+      }
+      return current.id
     }
-    return current.id
+    
+    // Fallback: Group root chapters by title if they have identical names.
+    // This helps group chapters that were created as "New" but intended to be revisions.
+    const firstWithSameTitle = chapters.find(c => 
+      c.title.trim() === chapter.title.trim() && 
+      !c.originalChapterId && 
+      new Date(c.createdAt).getTime() <= new Date(chapter.createdAt).getTime()
+    )
+    return firstWithSameTitle ? firstWithSameTitle.id : chapter.id
   }, [chapters])
 
   const chapterGroups = useMemo(() => {
@@ -413,6 +423,7 @@ export default function AdminCourseChaptersPage() {
       if (payload.chapter?.id) {
         setActiveDraftId(payload.chapter.id)
         setSelectedId(payload.chapter.id)
+        setMode('edit')
       }
       
       await fetchChapters()
