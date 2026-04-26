@@ -128,23 +128,9 @@ async function finalizeRound(roundId: string) {
           where: { candidacyId: candidacy.id }
         })
 
-        // Use upsert to avoid Unique constraint violation
-        await tx.expertCandidacy.upsert({
-          where: {
-            domainId_candidateUserId: {
-              domainId: round.domainId,
-              candidateUserId: candidacy.candidateUserId
-            }
-          },
-          update: {
-            proposerUserId: candidacy.candidateUserId,
-            role: 'HEAD',
-            wing: round.wing,
-            status: 'PENDING',
-            roundId: headRound.id,
-            totalScore: 0
-          },
-          create: {
+        // Create new candidacy for HEAD round (create only, since this is a new round)
+        await tx.expertCandidacy.create({
+          data: {
             domainId: round.domainId,
             candidateUserId: candidacy.candidateUserId,
             proposerUserId: candidacy.candidateUserId, // Self-nominated automatically
