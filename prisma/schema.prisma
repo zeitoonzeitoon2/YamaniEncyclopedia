@@ -92,7 +92,7 @@ model ExpertCandidacy {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  @@unique([domainId, candidateUserId])
+  @@unique([domainId, candidateUserId, roundId])
   @@index([domainId])
   @@index([candidateUserId])
   @@index([proposerUserId])

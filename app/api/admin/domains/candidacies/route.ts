@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getDomainVotingShares, calculateUserVotingWeight } from '@/lib/voting-utils'
+import { calculateUserVotingWeight } from '@/lib/voting-utils'
 
 const ALLOWED_ROLES = new Set(['HEAD', 'EXPERT'])
 
@@ -84,9 +84,19 @@ export async function GET(request: NextRequest) {
     const domainId = (searchParams.get('domainId') || '').trim()
     if (!domainId) return NextResponse.json({ error: 'domainId is required' }, { status: 400 })
 
-    // Calculate sequentially to avoid connection issues
-    const weightRight = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'RIGHT' })
-    const weightLeft = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'LEFT' })
+    // Calculate weights safely
+    let weightRight = 0
+    let weightLeft = 0
+    try {
+      weightRight = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'RIGHT' })
+    } catch (err) {
+      console.error('[candidacies GET] weightRight error:', err)
+    }
+    try {
+      weightLeft = await calculateUserVotingWeight(userId, domainId, 'CANDIDACY', { targetWing: 'LEFT' })
+    } catch (err) {
+      console.error('[candidacies GET] weightLeft error:', err)
+    }
 
     const canVoteRight = role === 'ADMIN' || weightRight > 0
     const canVoteLeft = role === 'ADMIN' || weightLeft > 0
@@ -114,55 +124,14 @@ export async function GET(request: NextRequest) {
           select: { 
             voterUserId: true,
             score: true,
-            voterUser: {
-              select: {
-                domainExperts: {
-                  select: { domainId: true, wing: true }
-                }
-              }
-            }
           } 
         },
       },
     })
 
-    // Calculate Weighted Scores
-    // Fetch shares for both wings (memoized)
-    const [sharesRight, sharesLeft] = await Promise.all([
-      getDomainVotingShares(domainId, 'RIGHT'),
-      getDomainVotingShares(domainId, 'LEFT')
-    ])
-
     const candidaciesWithWeightedScore = candidacies.map(c => {
-      const shares = c.wing === 'RIGHT' ? sharesRight : sharesLeft
-      let weightedScore = 0
-
-      // Calculate weighted score based on voter's share
-      if (shares.length > 0) {
-        for (const vote of c.votes) {
-          let maxShare = 0
-          // Check all expert memberships of the voter
-          // @ts-ignore
-          const experts = vote.voterUser?.domainExperts || []
-          for (const exp of experts) {
-            const expWing = (exp.wing || '').toUpperCase()
-            const share = shares.find(s => s.ownerDomainId === exp.domainId && (s.ownerWing || '').toUpperCase() === expWing)
-            if (share) {
-              maxShare = Math.max(maxShare, share.percentage)
-            }
-          }
-          
-          // Add weighted score: VoteScore * (Share / 100)
-          weightedScore += (vote.score || 0) * (maxShare / 100)
-        }
-      } else {
-        // Fallback (should not happen due to default share logic)
-        weightedScore = c.totalScore
-      }
-
-      // Round to 2 decimal places for display
-      weightedScore = Math.round(weightedScore * 100) / 100
-
+      // Use totalScore for now (stored in DB after each vote)
+      const weightedScore = Math.round((c.totalScore || 0) * 100) / 100
       return { ...c, weightedScore }
     })
 
@@ -263,18 +232,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User is already a candidate in this round' }, { status: 400 })
     }
 
-    const candidacy = await prisma.expertCandidacy.create({
-      data: {
-        domainId,
-        candidateUserId,
-        proposerUserId: userId,
-        role: roleValue,
-        wing: wingVal,
-        roundId: activeRound.id,
-        status: 'PENDING',
-        totalScore: 0
+    let candidacy
+    try {
+      candidacy = await prisma.expertCandidacy.create({
+        data: {
+          domainId,
+          candidateUserId,
+          proposerUserId: userId,
+          role: roleValue,
+          wing: wingVal,
+          roundId: activeRound.id,
+          status: 'PENDING',
+          totalScore: 0
+        }
+      })
+    } catch (createError: any) {
+      // Handle unique constraint violation (old DB schema has @@unique([domainId, candidateUserId]))
+      // This happens when the same user was previously nominated in a past round
+      if (createError?.code === 'P2002') {
+        // Find the old record and update it for the new round
+        const oldCandidacy = await prisma.expertCandidacy.findFirst({
+          where: { domainId, candidateUserId }
+        })
+        if (oldCandidacy) {
+          candidacy = await prisma.expertCandidacy.update({
+            where: { id: oldCandidacy.id },
+            data: {
+              proposerUserId: userId,
+              role: roleValue,
+              wing: wingVal,
+              roundId: activeRound.id,
+              status: 'PENDING',
+              totalScore: 0
+            }
+          })
+          // Remove old votes since this is a new round
+          await prisma.candidacyVote.deleteMany({ where: { candidacyId: oldCandidacy.id } })
+        } else {
+          throw createError
+        }
+      } else {
+        throw createError
       }
-    })
+    }
 
     return NextResponse.json({ candidacy })
   } catch (error) {
