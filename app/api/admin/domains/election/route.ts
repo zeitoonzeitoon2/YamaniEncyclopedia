@@ -128,19 +128,38 @@ async function finalizeRound(roundId: string) {
           where: { candidacyId: candidacy.id }
         })
 
-        // Create new candidacy for HEAD round (create only, since this is a new round)
-        await tx.expertCandidacy.create({
-          data: {
-            domainId: round.domainId,
-            candidateUserId: candidacy.candidateUserId,
-            proposerUserId: candidacy.candidateUserId, // Self-nominated automatically
-            role: 'HEAD',
-            wing: round.wing,
-            status: 'PENDING',
-            roundId: headRound.id,
-            totalScore: 0
-          }
+        // Safely create or update HEAD candidacy (handles old DB unique constraint on domainId+candidateUserId)
+        const existingHeadCandidacy = await tx.expertCandidacy.findFirst({
+          where: { domainId: round.domainId, candidateUserId: candidacy.candidateUserId }
         })
+        if (existingHeadCandidacy) {
+          // Update existing record for the new HEAD round
+          await tx.candidacyVote.deleteMany({ where: { candidacyId: existingHeadCandidacy.id } })
+          await tx.expertCandidacy.update({
+            where: { id: existingHeadCandidacy.id },
+            data: {
+              proposerUserId: candidacy.candidateUserId,
+              role: 'HEAD',
+              wing: round.wing,
+              status: 'PENDING',
+              roundId: headRound.id,
+              totalScore: 0
+            }
+          })
+        } else {
+          await tx.expertCandidacy.create({
+            data: {
+              domainId: round.domainId,
+              candidateUserId: candidacy.candidateUserId,
+              proposerUserId: candidacy.candidateUserId,
+              role: 'HEAD',
+              wing: round.wing,
+              status: 'PENDING',
+              roundId: headRound.id,
+              totalScore: 0
+            }
+          })
+        }
       }
 
     } else if (isHeadElection) {
