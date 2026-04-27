@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
       : {
           AND: [
             { NOT: { status: { in: ['DRAFT'] } } },
-            { status: 'PENDING' },
             {
               OR: [
                 { domainId: { in: expertDomainIds } },
