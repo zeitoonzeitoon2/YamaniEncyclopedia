@@ -176,9 +176,23 @@ export async function POST(request: NextRequest) {
             }
           })
 
-          // Note: We removed edge-based domain checks to allow connecting domain-less nodes 
-          // to domain-specific nodes without needing prerequisites for those domains, 
-          // as long as the domain-specific nodes themselves aren't being changed.
+          // 3. New Edges (Children added to existing nodes)
+          const oldEdges = Array.isArray(oldTree?.edges) ? oldTree.edges : []
+          const getEdgeKey = (e: any) => `${e.source}->${e.target}`
+          const oldEdgeKeys = new Set(oldEdges.map(getEdgeKey))
+
+          newEdges.forEach((e: any) => {
+            if (!oldEdgeKeys.has(getEdgeKey(e))) {
+              const sourceNode = newNodes.find((n: any) => n.id === e.source)
+              if (sourceNode) {
+                const did = normalizeDomainId(sourceNode.data?.domainId)
+                if (did) {
+                  affectedDomainIds.add(did)
+                  console.log(`[DEBUG] Edit: Added source domain ${did} from NEW edge ${e.source}->${e.target}`)
+                }
+              }
+            }
+          })
         }
       } catch (e) {
         // Fallback: check all domains in content
