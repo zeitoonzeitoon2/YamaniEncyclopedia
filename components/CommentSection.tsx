@@ -376,9 +376,10 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
           )}
           <div className="space-y-3">
             {node.poll.options.map(opt => {
-              const percentage = node.poll.totalVotes > 0 ? (opt.count / node.poll.totalVotes) * 100 : 0
+              const poll = node.poll! // TypeScript narrowing for the map callback
+              const percentage = poll.totalVotes > 0 ? (opt.count / poll.totalVotes) * 100 : 0
               const isVoting = votingFor === opt.id
-              const isMostVoted = node.poll.totalVotes > 0 && opt.count === Math.max(...node.poll!.options.map(o => o.count))
+              const isMostVoted = poll.totalVotes > 0 && opt.count === Math.max(...poll.options.map(o => o.count))
 
               return (
                 <div key={opt.id} className="group relative">
@@ -396,7 +397,7 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
                         const res = await fetch('/api/comments/poll/vote', { 
                           method: 'POST', 
                           headers: { 'Content-Type': 'application/json' }, 
-                          body: JSON.stringify({ pollId: node.poll!.id, optionId: opt.id }) 
+                          body: JSON.stringify({ pollId: poll.id, optionId: opt.id }) 
                         })
                         if (res.ok) {
                           if (typeof window !== 'undefined') {
