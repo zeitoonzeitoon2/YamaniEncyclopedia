@@ -240,6 +240,21 @@ export async function POST(request: NextRequest) {
       const edgesArr = Array.isArray(tree?.edges) ? tree.edges : null
 
       if (nodesArr) {
+        // Validation: Every node must belong to a domain
+        const nodesWithoutDomain = nodesArr.filter((n: any) => {
+          const did = normalizeDomainId(n?.data?.domainId)
+          return !did
+        })
+
+        if (nodesWithoutDomain.length > 0) {
+          const labels = nodesWithoutDomain.map((n: any) => n.data?.label || n.id).join(', ')
+          return NextResponse.json({ 
+            error: `All nodes must belong to a domain. The following nodes are missing a domain: ${labels}`,
+            code: 'MISSING_NODE_DOMAIN',
+            nodeIds: nodesWithoutDomain.map((n: any) => n.id)
+          }, { status: 400 })
+        }
+
         const byId: Record<string, any> = {}
         for (let i = 0; i < nodesArr.length; i++) {
           const n = nodesArr[i]

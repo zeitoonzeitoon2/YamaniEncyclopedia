@@ -234,6 +234,12 @@ function CreatePost() {
       toast.error(tArg('validationError'))
       return
     }
+    const nodesWithoutDomain = treeData.nodes.filter(n => !n.data?.domainId)
+    if (nodesWithoutDomain.length > 0) {
+      const labels = nodesWithoutDomain.map(n => n.data?.label || n.id).join(', ')
+      toast.error(`${t('missingDomainError')}: ${labels}`)
+      return
+    }
     setIsSubmitting(true)
     try {
       const body: any = {

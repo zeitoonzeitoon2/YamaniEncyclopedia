@@ -814,6 +814,7 @@
     "minNodesError": "Please create at least one node in the diagram",
     "submitSuccess": "Your diagram has been submitted successfully and is awaiting approval",
     "submitError": "Error submitting diagram",
+    "missingDomainError": "All nodes must belong to a domain. These nodes are missing a domain",
     "summaryTitle": "Please write a summary of the changes and any clarifications you see fit",
     "summaryPlaceholder": "Example: Added a sub-node to clarify the second step, and edited the main node name to be clearer.",
     "confirmSubmit": "Confirm Submission"
