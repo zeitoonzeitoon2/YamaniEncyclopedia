@@ -55,15 +55,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
-    const expert = await prisma.domainExpert.findFirst({
-      where: { userId: user.id, domainId: targetDomainId },
-      select: { role: true, wing: true }
-    })
-
-    if (!expert) {
-      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
-    }
-
     const voteDomainId = domainId || post.domainId || null
 
     const existingVote = await prisma.vote.findFirst({
