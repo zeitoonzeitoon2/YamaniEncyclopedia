@@ -112,12 +112,24 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     jwt: async ({ token, user }) => {
-      // On initial sign in, persist role from user object
+      // On initial sign in, persist role and ID from DB to the token
       if (user) {
-        token.role = (user as any).role
-      }
-      // On subsequent requests, refresh role from DB to keep token in sync
-      if (!user && token?.sub) {
+        // If this is a Google login (or any non-credentials login where user comes from provider)
+        // we need to find our internal DB user to get the correct internal ID
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+          select: { id: true, role: true }
+        })
+        
+        if (dbUser) {
+          token.sub = dbUser.id
+          token.role = dbUser.role
+        } else {
+          // Fallback if user somehow not found yet
+          token.role = (user as any).role || 'USER'
+        }
+      } else if (token?.sub) {
+        // On subsequent requests, refresh role from DB to keep token in sync
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
@@ -127,8 +139,7 @@ export const authOptions: NextAuthOptions = {
             token.role = dbUser.role
           }
         } catch {
-          // تطبيع البريد الإلكتروني ليكون غير حساس لحالة الأحرف مع دعم السجلات الحالية
-          // تصحيح (DEBUG): تسجيل محاولة البحث (دون بيانات حساسة)
+          // Silent fallback
         }
       }
       return token
