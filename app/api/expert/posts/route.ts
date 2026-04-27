@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 import { Prisma } from '@prisma/client'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, getInternalVotingWeight } from '@/lib/voting-utils'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -114,6 +114,11 @@ export async function GET(request: NextRequest) {
     })
     const domainMap = new Map(domains.map(d => [d.id, d.name]))
 
+    // Fetch experts to calculate weighted scores
+    const experts = await prisma.domainExpert.findMany({
+      where: { domainId: { in: Array.from(allDomainIds) } }
+    })
+
     const postIds = posts.map(p => p.id)
 
     const reads = postIds.length ? await prisma.commentRead.findMany({
@@ -154,7 +159,13 @@ export async function GET(request: NextRequest) {
     }
 
     const items = await Promise.all(posts.map(async (post) => {
-      const totalScore = post.votes ? post.votes.reduce((sum, vote) => sum + vote.score, 0) : 0
+      // Calculate weighted score
+      const totalScore = post.votes ? post.votes.reduce((sum, vote) => {
+        const expert = experts.find(e => e.userId === vote.adminId && e.domainId === vote.domainId)
+        if (!expert) return sum + vote.score
+        const weight = getInternalVotingWeight(expert.role, expert.wing)
+        return sum + (vote.score * weight)
+      }, 0) : 0
       const cm = commentsMap.get(post.id)
       
       const relatedDomains = (post.relatedDomainIds || []).map(id => ({
