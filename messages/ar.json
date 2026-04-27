@@ -626,6 +626,9 @@
     "loading": "جارٍ التحميل...",
     "placeholder": "اكتب تعليقك هنا...",
     "submit": "إرسال التعليق",
+    "actions": {
+      "delete": "حذف"
+    },
     "reply": "رد",
     "cancel": "إلغاء",
     "tagLabel": "وسم التعليق:",
