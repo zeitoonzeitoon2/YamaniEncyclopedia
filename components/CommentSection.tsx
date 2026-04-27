@@ -279,6 +279,7 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
   const [replyContentLocal, setReplyContentLocal] = useState('')
   const [replyCategoryLocal, setReplyCategoryLocal] = useState<null | 'QUESTION' | 'CRITIQUE' | 'SUPPORT' | 'SUGGESTION'>(null)
   const [isSubmittingLocal, setIsSubmittingLocal] = useState(false)
+  const [votingFor, setVotingFor] = useState<string | null>(null)
 
   const handleSubmitLocal = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -369,34 +370,82 @@ function CommentNodeView({ node, depth, postId, chapterId, style, onPickUser, ca
         <p className="text-site-text flex-1">{node.content}</p>
       </div>
       {node.poll && (
-        <div className="mt-3 p-3 bg-site-bg border border-site-border rounded-lg">
+        <div className="mt-4 p-4 bg-site-card border border-site-border rounded-xl shadow-sm">
           {node.poll.question && (
-            <div className="text-site-text mb-2">{node.poll.question}</div>
+            <div className="text-site-text font-semibold mb-4 text-lg">{node.poll.question}</div>
           )}
-          <div className="space-y-2">
-            {node.poll.options.map(opt => (
-              <div key={opt.id} className="flex items-center justify-between">
-                <button
-                  type="button"
-                  disabled={!canVotePoll}
-                  onClick={async () => {
-                    try {
-                      if (!canVotePoll) return
-                      const res = await fetch('/api/comments/poll/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pollId: node.poll!.id, optionId: opt.id }) })
-                      if (res.ok) {
-                        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('comments:reload'))
+          <div className="space-y-3">
+            {node.poll.options.map(opt => {
+              const percentage = node.poll.totalVotes > 0 ? (opt.count / node.poll.totalVotes) * 100 : 0
+              const isVoting = votingFor === opt.id
+              const isMostVoted = node.poll.totalVotes > 0 && opt.count === Math.max(...node.poll!.options.map(o => o.count))
+
+              return (
+                <div key={opt.id} className="group relative">
+                  <div 
+                    className={`absolute inset-y-0 right-0 rounded-lg transition-all duration-700 ease-out ${isMostVoted ? 'bg-warm-primary/20' : 'bg-site-secondary/50'}`}
+                    style={{ width: `${percentage}%` }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!canVotePoll || !!votingFor}
+                    onClick={async () => {
+                      try {
+                        if (!canVotePoll || votingFor) return
+                        setVotingFor(opt.id)
+                        const res = await fetch('/api/comments/poll/vote', { 
+                          method: 'POST', 
+                          headers: { 'Content-Type': 'application/json' }, 
+                          body: JSON.stringify({ pollId: node.poll!.id, optionId: opt.id }) 
+                        })
+                        if (res.ok) {
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('comments:reload'))
+                          }
+                        }
+                      } catch (err) {
+                        console.error('Vote failed', err)
+                      } finally {
+                        setVotingFor(null)
                       }
-                    } catch {}
-                  }}
-                  className={`px-3 py-1 rounded ${canVotePoll ? 'bg-warm-primary text-white hover:bg-warm-accent' : 'bg-site-secondary text-site-muted'}`}
-                >
-                  {opt.text}
-                </button>
-                <span className="text-sm text-site-muted">{opt.count}</span>
-              </div>
-            ))}
+                    }}
+                    className={`relative w-full px-4 py-3 rounded-lg border transition-all duration-200 flex items-center justify-between z-10 ${
+                      canVotePoll 
+                        ? 'border-site-border hover:border-warm-primary/50' 
+                        : 'border-transparent cursor-default'
+                    } ${isVoting ? 'opacity-70 scale-[0.98]' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-medium ${isMostVoted ? 'text-warm-primary' : 'text-site-text'}`}>
+                        {opt.text}
+                      </span>
+                      {isVoting && (
+                        <div className="w-4 h-4 border-2 border-warm-primary border-t-transparent rounded-full animate-spin" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-site-muted">{Math.round(percentage)}%</span>
+                      <span className={`text-sm font-bold ${isMostVoted ? 'text-warm-primary' : 'text-site-muted'}`}>
+                        {opt.count}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              )
+            })}
           </div>
-          <div className="text-xs text-site-muted mt-2">{t('poll.votes', { count: node.poll.totalVotes })}</div>
+          <div className="text-xs text-site-muted mt-4 flex items-center justify-between border-t border-site-border pt-2">
+            <span>{t('poll.votes', { count: node.poll.totalVotes })}</span>
+            {canVotePoll ? (
+              <span className="text-[10px] bg-warm-primary/10 text-warm-primary px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                Live Poll
+              </span>
+            ) : (
+              <span className="text-[10px] bg-site-secondary text-site-muted px-2 py-0.5 rounded-full">
+                Login to vote
+              </span>
+            )}
+          </div>
         </div>
       )}
       {replyToLocal === node.id && (
