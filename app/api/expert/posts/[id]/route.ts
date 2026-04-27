@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { generateNextVersion } from '@/lib/postUtils'
 import { processArticlesData } from '@/lib/articleUtils'
 import { getToken } from 'next-auth/jwt'
-import { getInternalVotingMetrics } from '@/lib/voting-utils'
+import { getInternalVotingMetrics, getInternalVotingWeight } from '@/lib/voting-utils'
 
 interface RouteParams {
   params: { id: string }
@@ -54,8 +54,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const totalScore = post.votes ? post.votes.reduce((sum, v) => sum + v.score, 0) : 0
-
     const allDomainIds = new Set<string>()
     if (post.domainId) allDomainIds.add(post.domainId)
     if (Array.isArray(post.relatedDomainIds)) {
@@ -70,6 +68,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       : []
     const domainMap = new Map(domains.map((d) => [d.id, d.name]))
 
+    // Fetch experts for weight calculation
+    const experts = await prisma.domainExpert.findMany({
+      where: { domainId: { in: Array.from(allDomainIds) } }
+    })
+
+    const totalScore = post.votes ? post.votes.reduce((sum, v) => {
+      const expert = experts.find(e => e.userId === v.adminId && e.domainId === v.domainId)
+      if (!expert) return sum + v.score
+      const weight = getInternalVotingWeight(expert.role, expert.wing)
+      return sum + (v.score * weight)
+    }, 0) : 0
+
     const relatedDomains = (post.relatedDomainIds || []).map((id: string) => ({
       id,
       name: domainMap.get(id) || id,
@@ -80,9 +90,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const myVotes = post.votes
       .filter((v) => v.adminId === user.id)
-      .map((v) => ({ domainId: v.domainId || post.domainId || null, score: v.score }))
+      .map((v) => {
+        const expert = experts.find(e => e.userId === v.adminId && e.domainId === v.domainId)
+        const weight = expert ? getInternalVotingWeight(expert.role, expert.wing) : 1
+        return { 
+          domainId: v.domainId || post.domainId || null, 
+          score: v.score, // RAW score for the slider
+          weightedScore: v.score * weight // Weighted score for display
+        }
+      })
 
-    const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }> = {}
+    const votingByDomain: Record<string, any> = {}
     for (const d of relatedDomains) {
       const domainVotes = post.votes.filter((v) => v.domainId === d.id || (!v.domainId && d.id === post.domainId))
       const mappedVotes = domainVotes.map((v) => ({ voterId: v.adminId, score: v.score }))
