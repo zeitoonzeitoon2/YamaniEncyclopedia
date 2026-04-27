@@ -55,22 +55,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
-    multiplier = getInternalVotingWeight(expert.role, expert.wing)
-    const scaledMultiplier = Math.round(multiplier * 2)
-    const weightedScore = Math.round(score * scaledMultiplier)
+    const expert = await prisma.domainExpert.findFirst({
+      where: { userId: user.id, domainId: targetDomainId },
+      select: { role: true, wing: true }
+    })
 
-    // Calculate final score based on direction and multiplier
-    // Preserve 0 as 0
-    let finalScore = score
-    if (score !== 0) {
-      const direction = score > 0 ? 1 : -1
-      // If the input was a "strong" vote (2/-2), we keep that intensity, 
-      // AND apply the HEAD multiplier? 
-      // User said "Head has 2x voting power". 
-      // If Expert votes 1 -> 1. Head votes 1 -> 2.
-      // If Expert votes 2 -> 2. Head votes 2 -> 4.
-      // So we multiply the input score by the multiplier.
-      finalScore = score * multiplier
+    if (!expert) {
+      return NextResponse.json({ error: 'دسترسی غیرمجاز' }, { status: 403 })
     }
 
     const voteDomainId = domainId || post.domainId || null
@@ -87,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (existingVote) {
       vote = await prisma.vote.update({
         where: { id: existingVote.id },
-        data: { score: weightedScore }
+        data: { score: score }
       })
     } else {
       vote = await prisma.vote.create({
@@ -95,7 +86,7 @@ export async function POST(request: NextRequest) {
           postId,
           adminId: user.id,
           domainId: voteDomainId,
-          score: weightedScore,
+          score: score,
         }
       })
     }
