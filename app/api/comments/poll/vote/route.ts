@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const me = await prisma.user.findUnique({ where: { id: session.user.id } })
-    if (!me || !['EXPERT','ADMIN'].includes(me.role)) {
-      return NextResponse.json({ error: 'Only experts can vote' }, { status: 403 })
+    if (!me) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -47,16 +47,12 @@ export async function POST(request: NextRequest) {
     })
 
     const domainId = poll?.comment?.post?.domainId || poll?.comment?.chapter?.course?.domainId
-    if (!domainId) {
-      return NextResponse.json({ error: 'Domain not found' }, { status: 400 })
-    }
-
-    const expert = await prisma.domainExpert.findFirst({
+    
+    // We don't block the vote if no expert record is found, 
+    // we just use weight 1 for those users.
+    const expert = domainId ? await prisma.domainExpert.findFirst({
       where: { userId: session.user.id, domainId }
-    })
-    if (!expert) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    }) : null;
 
     const votes = await prisma.commentPollVote.findMany({ 
       where: { pollId }, 
@@ -68,12 +64,14 @@ export async function POST(request: NextRequest) {
     let voterRoles: Record<string, string> = {}
     
     const voterIds = votes.map(v => v.voterId)
-    const experts = await prisma.domainExpert.findMany({
-      where: { domainId, userId: { in: voterIds } },
-      select: { userId: true, role: true, wing: true }
-    })
-    for (const e of experts) {
-      voterRoles[e.userId] = `${e.role}:${e.wing}`
+    if (domainId) {
+      const experts = await prisma.domainExpert.findMany({
+        where: { domainId, userId: { in: voterIds } },
+        select: { userId: true, role: true, wing: true }
+      })
+      for (const e of experts) {
+        voterRoles[e.userId] = `${e.role}:${e.wing}`
+      }
     }
 
     const counts: Record<string, number> = {}

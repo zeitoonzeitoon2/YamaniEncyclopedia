@@ -79,7 +79,7 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
   // All logged-in users are allowed to post comments
   const canComment = !!session?.user
   const canCreatePoll = (session?.user?.role === 'USER' || session?.user?.role === 'EDITOR' || session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN')
-  const canVotePoll = (session?.user?.role === 'EXPERT' || session?.user?.role === 'ADMIN')
+  const canVotePoll = !!session?.user
 
   // Load comments
   const loadComments = useCallback(async () => {

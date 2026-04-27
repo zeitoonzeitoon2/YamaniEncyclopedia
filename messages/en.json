@@ -650,6 +650,9 @@
     "loading": "Loading...",
     "placeholder": "Write your comment here...",
     "submit": "Submit Comment",
+    "actions": {
+      "delete": "Delete"
+    },
     "reply": "Reply",
     "cancel": "Cancel",
     "tagLabel": "Comment Tag:",
