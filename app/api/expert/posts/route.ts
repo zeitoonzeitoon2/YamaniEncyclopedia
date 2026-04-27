@@ -128,17 +128,17 @@ export async function GET(request: NextRequest) {
     for (const r of reads) readMap.set(r.postId, r.lastReadAt)
 
     const unreadCounts: Record<string, number> = {}
-    for (const postId of postIds) {
+    const unreadCountsResults = await Promise.all(postIds.map(postId => {
       const lastReadAt = readMap.get(postId)
-      const count = await prisma.comment.count({
+      return prisma.comment.count({
         where: {
           postId,
           ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
           NOT: { authorId: user.id },
         },
       })
-      unreadCounts[postId] = count
-    }
+    }))
+    postIds.forEach((id, idx) => { unreadCounts[id] = unreadCountsResults[idx] })
 
     const commentsAgg = postIds.length > 0 ? await prisma.comment.groupBy({
       by: ['postId'],
@@ -157,8 +157,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const items = await Promise.all(posts.map(async (post) => {
-      // Calculate weighted score
+    const items = posts.map((post) => {
+      // Calculate weighted score using pre-fetched experts
       const totalScore = post.votes ? post.votes.reduce((sum, vote) => {
         const expert = experts.find(e => e.userId === vote.adminId && e.domainId === vote.domainId)
         if (!expert) return sum + vote.score
@@ -181,11 +181,35 @@ export async function GET(request: NextRequest) {
         score: v.score
       }))
 
-      const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; rightsUsedPercent: number }> = {}
+      const votingByDomain: Record<string, { eligibleCount: number; totalRights: number; votedCount: number; usedRights: number; rightsUsedPercent: number; totalScore: number }> = {}
       for (const d of relatedDomains) {
+        const domainExperts = experts.filter(e => e.domainId === d.id)
         const domainVotes = post.votes.filter(v => v.domainId === d.id || (!v.domainId && d.id === post.domainId))
-        const mappedVotes = domainVotes.map(v => ({ voterId: v.adminId, score: v.score }))
-        votingByDomain[d.id] = await getInternalVotingMetrics(d.id, mappedVotes)
+        
+        const totalRights = domainExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+        const eligibleCount = domainExperts.length
+        const votedSet = new Set(domainVotes.map(v => v.adminId))
+        const votedExperts = domainExperts.filter(e => votedSet.has(e.userId))
+        const votedCount = votedExperts.length
+        const usedRights = votedExperts.reduce((sum, e) => sum + getInternalVotingWeight(e.role, e.wing), 0)
+        const rightsUsedPercent = totalRights > 0 ? (usedRights / totalRights) * 100 : 0
+
+        let postTotalScore = 0
+        for (const v of domainVotes) {
+          const expert = domainExperts.find(e => e.userId === v.adminId)
+          if (!expert) continue
+          const weight = getInternalVotingWeight(expert.role, expert.wing)
+          postTotalScore += v.score * weight
+        }
+
+        votingByDomain[d.id] = {
+          eligibleCount,
+          totalRights,
+          votedCount,
+          usedRights,
+          rightsUsedPercent,
+          totalScore: postTotalScore
+        }
       }
 
       return {
@@ -198,7 +222,7 @@ export async function GET(request: NextRequest) {
         myVotes,
         votingByDomain
       }
-    }))
+    })
 
     return NextResponse.json({
       items,

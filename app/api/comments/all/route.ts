@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
     }
 
     const comments = await prisma.comment.findMany({
+      where: {
+        postId: { not: null }
+      },
       include: {
         author: {
           select: {

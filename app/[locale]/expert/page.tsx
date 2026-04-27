@@ -956,26 +956,29 @@ export default function ExpertDashboard() {
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                      {recentComments.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => openPostById(c.post.id)}
-                          className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={t('comment.openRelated')}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="inline-flex items-center gap-1 text-xs text-site-muted">
-                              <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
-                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
+                      {recentComments.map((c) => {
+                        if (!c.post) return null
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => openPostById(c.post!.id)}
+                            className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                            title={t('comment.openRelated')}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="inline-flex items-center gap-1 text-xs text-site-muted">
+                                <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                  {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
+                                </span>
+                                <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
                               </span>
-                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
-                            </span>
-                          </div>
-                          <div className="text-sm text-site-text line-clamp-2">
-                            {c.content}
-                          </div>
-                        </button>
-                      ))}
+                            </div>
+                            <div className="text-sm text-site-text line-clamp-2">
+                              {c.content}
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   )
                 ) : filter === 'related' ? (
@@ -985,26 +988,29 @@ export default function ExpertDashboard() {
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                      {relatedComments.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => openPostById(c.post.id)}
-                          className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
-                          title={t('comment.openRelatedPost')}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="inline-flex items-center gap-1 text-xs text-site-muted">
-                              <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
-                                {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
+                      {relatedComments.map((c) => {
+                        if (!c.post) return null
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => openPostById(c.post!.id)}
+                            className="w-full text-right bg-site-card hover:bg-gray-800/60 transition-colors rounded-lg p-3 border border-gray-700"
+                            title={t('comment.openRelatedPost')}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="inline-flex items-center gap-1 text-xs text-site-muted">
+                                <span className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-gray-200">
+                                  {getPostDisplayId({ id: c.post.id, version: c.post.version ?? null, revisionNumber: c.post.revisionNumber ?? null, status: c.post.status, originalPost: c.post.originalPost ?? null }, tPost)}
+                                </span>
+                                <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
                               </span>
-                              <span className="truncate">{c.author.name || t('author.unknown')} • {new Date(c.createdAt).toLocaleDateString('en-GB')}</span>
-                            </span>
-                          </div>
-                          <div className="text-sm text-site-text line-clamp-2">
-                            {c.content}
-                          </div>
-                        </button>
-                      ))}
+                            </div>
+                            <div className="text-sm text-site-text line-clamp-2">
+                              {c.content}
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   )
                 ) : (
