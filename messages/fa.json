@@ -623,7 +623,9 @@
       "totalScoreLabel": "مجموع امتیاز:",
       "participantsLabel": "مشارکت‌کنندگان: {value}",
       "empty": "لطفاً یک طرح را از لیست انتخاب کنید.",
-      "voteForDomain": "رای‌دهی در حوزه {domain}"
+      "voteForDomain": "رای‌دهی در حوزه {domain}",
+      "notEligibleToVote": "فقط کارشناسان این حوزه می‌توانند در اینجا رای دهند.",
+      "multiDomainNotice": "این طرح برای انتشار نهایی به تایید تمامی حوزه‌های فوق نیاز دارد."
     },
     "diagram": {
       "changeSummary": "خلاصه تغییرات",

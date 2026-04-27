@@ -568,7 +568,10 @@
       "participationThreshold": "حد المشاركة: {value}",
       "totalScoreLabel": "إجمالي النقاط:",
       "participantsLabel": "المشاركون: {value}",
-      "empty": "يرجى اختيار طرح من القائمة."
+      "empty": "يرجى اختيار طرح من القائمة.",
+      "voteForDomain": "التصويت في مجال {domain}",
+      "notEligibleToVote": "فقط خبراء هذا المجال يمكنهم التصويت هنا.",
+      "multiDomainNotice": "يتطلب هذا التصميم موافقة جميع المجالات المذكورة أدناه للنشر النهائي."
     },
     "diagram": {
       "changeSummary": "ملخص التغييرات",

@@ -1077,73 +1077,74 @@ export default function ExpertDashboard() {
                     </button>
                   )}
                   
-                  {isVoter && (
-                    <div className="mb-4">
-                      {selectedPost.status === 'APPROVED' ? (
-                        <div className="p-3 rounded-lg border border-green-200 bg-green-100 text-green-800 text-sm dark:bg-green-900/20 dark:text-green-300 dark:border-green-700">
-                          {t('details.voteStopped')}
-                        </div>
-                      ) : (
-                        <>
-                          {selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0 ? (
-                            <div className="space-y-4">
-                              {selectedPost.relatedDomains.map(domain => {
-                                const canVote = userExpertDomains.includes(domain.id)
-                                if (!canVote) return null
-                                
-                                const myVote = selectedPost.myVotes?.find(v => v.domainId === domain.id)?.score
-                                return (
-                                  <div key={domain.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/40">
-                                    <div className="text-sm font-medium mb-3 text-site-text flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  {/* Voting Section */}
+                  <div className="mb-6">
+                    {selectedPost.status === 'APPROVED' ? (
+                      <div className="p-3 rounded-lg border border-green-200 bg-green-100 text-green-800 text-sm dark:bg-green-900/20 dark:text-green-300 dark:border-green-700">
+                        {t('details.voteStopped')}
+                      </div>
+                    ) : (
+                      <>
+                        {selectedPost.relatedDomains && selectedPost.relatedDomains.length > 1 && (
+                          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            {t('details.multiDomainNotice')}
+                          </div>
+                        )}
+
+                        <div className="space-y-4">
+                          {(selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0 ? selectedPost.relatedDomains : (selectedPost.domainId ? [{id: selectedPost.domainId, name: ''}] : [])).map(domain => {
+                            const canVote = userExpertDomains.includes(domain.id)
+                            const myVote = selectedPost.myVotes?.find(v => v.domainId === domain.id)?.score
+                            const metrics = selectedPost.votingByDomain?.[domain.id]
+                            
+                            return (
+                              <div key={domain.id} className="p-4 border border-site-border rounded-xl bg-site-card shadow-sm">
+                                {domain.name && (
+                                  <div className="text-sm font-bold mb-3 text-site-text flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-warm-primary shadow-[0_0_8px_rgba(var(--warm-primary-rgb),0.5)]"></span>
                                       {t('details.voteForDomain', { domain: domain.name })}
                                     </div>
+                                    {!canVote && (
+                                      <span className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full border border-gray-200 dark:border-gray-700">
+                                        {t('details.notEligibleToVote')}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {canVote ? (
+                                  <div className="mb-4">
                                     <VotingSlider
                                       currentVote={myVote || 0}
                                       onVote={(score) => handleVote(selectedPost.id, score, domain.id)}
                                       disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
                                     />
-                                    {selectedPost.votingByDomain?.[domain.id] && (
-                                      <div className="mt-3">
-                                        <VotingStatusSummary
-                                          eligibleCount={selectedPost.votingByDomain[domain.id].eligibleCount}
-                                          totalRights={selectedPost.votingByDomain[domain.id].totalRights}
-                                          votedCount={selectedPost.votingByDomain[domain.id].votedCount}
-                                          usedRights={selectedPost.votingByDomain[domain.id].usedRights}
-                                          rightsUsedPercent={selectedPost.votingByDomain[domain.id].rightsUsedPercent}
-                                          totalScore={selectedPost.votingByDomain[domain.id].totalScore}
-                                        />
-                                      </div>
-                                    )}
                                   </div>
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            <>
-                              <VotingSlider
-                                currentVote={currentUserVote}
-                                onVote={(score) => handleVote(selectedPost.id, score)}
-                                disabled={['REJECTED','ARCHIVED'].includes(selectedPost.status)}
-                              />
-                              {selectedPost.domainId && selectedPost.votingByDomain?.[selectedPost.domainId] && (
-                                <div className="mt-3">
+                                ) : (
+                                  <div className="mb-4 p-3 bg-gray-50/50 dark:bg-gray-900/30 rounded-lg border border-dashed border-gray-200 dark:border-gray-800 text-center">
+                                    <p className="text-xs text-site-muted italic">{t('details.notEligibleToVote')}</p>
+                                  </div>
+                                )}
+
+                                {metrics && (
                                   <VotingStatusSummary
-                                    eligibleCount={selectedPost.votingByDomain[selectedPost.domainId].eligibleCount}
-                                    totalRights={selectedPost.votingByDomain[selectedPost.domainId].totalRights}
-                                    votedCount={selectedPost.votingByDomain[selectedPost.domainId].votedCount}
-                                    usedRights={selectedPost.votingByDomain[selectedPost.domainId].usedRights}
-                                    rightsUsedPercent={selectedPost.votingByDomain[selectedPost.domainId].rightsUsedPercent}
-                                    totalScore={selectedPost.votingByDomain[selectedPost.domainId].totalScore}
+                                    eligibleCount={metrics.eligibleCount}
+                                    totalRights={metrics.totalRights}
+                                    votedCount={metrics.votedCount}
+                                    usedRights={metrics.usedRights}
+                                    rightsUsedPercent={metrics.rightsUsedPercent}
+                                    totalScore={metrics.totalScore}
                                   />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   
                   <div className="flex justify-between items-center text-sm text-site-muted">
                     {isExpertRole && adminStats ? (

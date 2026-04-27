@@ -592,7 +592,10 @@
       "participationThreshold": "Participation Threshold: {value}",
       "totalScoreLabel": "Total Score:",
       "participantsLabel": "Participants: {value}",
-      "empty": "Please select a design from the list."
+      "empty": "Please select a design from the list.",
+      "voteForDomain": "Voting in domain {domain}",
+      "notEligibleToVote": "Only experts of this domain can vote here.",
+      "multiDomainNotice": "This design requires approval from all the domains listed below for final publication."
     },
     "diagram": {
       "changeSummary": "Change Summary",
