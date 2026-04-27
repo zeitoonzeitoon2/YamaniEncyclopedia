@@ -173,10 +173,8 @@ export default function ExpertDashboard() {
   
   const expertParticipation = useMemo(() => {
     if (!selectedPost?.votes) return 0
-    return selectedPost.votes.filter(v => {
-      const role = (v as any)?.admin?.role
-      return role === 'EXPERT' || role === 'ADMIN'
-    }).length
+    const uniqueVoters = new Set(selectedPost.votes.map(v => v.adminId || (v as any).userId || (v as any).voterId))
+    return uniqueVoters.size
   }, [selectedPost])
 
   const getRoleLabel = (role: string) => {
