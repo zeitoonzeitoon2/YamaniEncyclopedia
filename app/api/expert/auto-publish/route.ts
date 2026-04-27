@@ -55,11 +55,17 @@ export async function POST(request: NextRequest) {
 
     const isExpert = me.role === 'EXPERT' || me.role === 'ADMIN'
     if (!isExpert) {
-      if (!post.domainId) {
+      const allPostDomains = [post.domainId, ...(Array.isArray(post.relatedDomainIds) ? post.relatedDomainIds : [])].filter(Boolean) as string[]
+      
+      if (allPostDomains.length === 0) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
+      
       const expert = await prisma.domainExpert.findFirst({
-        where: { userId: me.id, domainId: post.domainId },
+        where: { 
+          userId: me.id, 
+          domainId: { in: allPostDomains } 
+        },
         select: { id: true },
       })
       if (!expert) {
