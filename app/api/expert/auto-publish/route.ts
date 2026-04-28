@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         domainId: true,
         relatedDomainIds: true,
         votes: { select: { score: true, adminId: true, domainId: true } },
-        originalPost: { select: { id: true, version: true } },
+        originalPost: { select: { id: true, version: true, content: true } },
       },
     })
 
@@ -174,68 +174,103 @@ export async function POST(request: NextRequest) {
                   status: { in: ['APPROVED', 'ARCHIVED'] },
                   version: { gt: baseVersion, lte: liveVersion },
                 },
-                select: { version: true, domainId: true, relatedDomainIds: true },
+                select: { version: true, domainId: true, content: true },
                 orderBy: { version: 'asc' },
               }),
             ])
 
-            const parentById = new Map<string, string | null>()
-            const childrenById = new Map<string, string[]>()
-            const nameById = new Map<string, string>()
-            for (const d of domains) {
-              parentById.set(d.id, d.parentId)
-              nameById.set(d.id, d.name)
-              if (d.parentId) {
-                const arr = childrenById.get(d.parentId) || []
-                arr.push(d.id)
-                childrenById.set(d.parentId, arr)
+            const getChangedNodeIds = (baseContent: string | null, newContent: string | null) => {
+              const changedIds = new Set<string>()
+              try {
+                const baseTree = JSON.parse(baseContent || '{"nodes":[],"edges":[]}')
+                const newTree = JSON.parse(newContent || '{"nodes":[],"edges":[]}')
+                const baseNodes = Array.isArray(baseTree.nodes) ? baseTree.nodes : []
+                const newNodes = Array.isArray(newTree.nodes) ? newTree.nodes : []
+                
+                const baseMap = new Map(baseNodes.map((n: any) => [n.id, n]))
+                for (const n of newNodes) {
+                  const b = baseMap.get(n.id)
+                  if (!b) {
+                    changedIds.add(n.id)
+                  } else if (
+                    n.data?.label !== b.data?.label ||
+                    n.data?.domainId !== b.data?.domainId ||
+                    n.data?.flashText !== b.data?.flashText ||
+                    n.data?.articleLink !== b.data?.articleLink
+                  ) {
+                    changedIds.add(n.id)
+                  }
+                }
+                for (const b of baseNodes) {
+                  if (!newNodes.find((n: any) => n.id === b.id)) changedIds.add(b.id)
+                }
+
+                const baseEdges = Array.isArray(baseTree.edges) ? baseTree.edges : []
+                const newEdges = Array.isArray(newTree.edges) ? newTree.edges : []
+                const baseEdgeSet = new Set(baseEdges.map(e => `${e.source}->${e.target}`))
+                const newEdgeSet = new Set(newEdges.map(e => `${e.source}->${e.target}`))
+                
+                for (const e of newEdges) {
+                  if (!baseEdgeSet.has(`${e.source}->${e.target}`)) {
+                    changedIds.add(e.source); changedIds.add(e.target);
+                  }
+                }
+                for (const e of baseEdges) {
+                  if (!newEdgeSet.has(`${e.source}->${e.target}`)) {
+                    changedIds.add(e.source); changedIds.add(e.target);
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing tree for conflict check", e)
               }
+              return Array.from(changedIds)
             }
 
-            const collectDescendants = (id: string) => {
-              const out: string[] = []
-              const stack: string[] = [...(childrenById.get(id) || [])]
-              while (stack.length) {
-                const cur = stack.pop()!
-                out.push(cur)
-                const kids = childrenById.get(cur)
-                if (kids?.length) stack.push(...kids)
-              }
-              return out
+            const getDescendants = (nodeIds: string[], content: string | null): Set<string> => {
+              const descendants = new Set<string>()
+              try {
+                const tree = JSON.parse(content || '{"nodes":[],"edges":[]}')
+                const edges = Array.isArray(tree.edges) ? tree.edges : []
+                const childrenMap = new Map<string, string[]>()
+                for (const e of edges) {
+                  if (!childrenMap.has(e.source)) childrenMap.set(e.source, [])
+                  childrenMap.get(e.source)!.push(e.target)
+                }
+                
+                const stack = [...nodeIds]
+                while (stack.length) {
+                  const cur = stack.pop()!
+                  if (!descendants.has(cur)) {
+                    descendants.add(cur)
+                    const kids = childrenMap.get(cur)
+                    if (kids) stack.push(...kids)
+                  }
+                }
+              } catch (e) {}
+              return descendants
             }
 
-            const expandDomainIds = (ids: string[]) => {
-              const set = new Set<string>()
-              for (const id of ids) {
-                if (!id) continue
-                set.add(id)
-                for (const c of collectDescendants(id)) set.add(c)
-              }
-              return set
-            }
-
-            const draftDomainIds = Array.from(
-              new Set([post.domainId || '', ...(Array.isArray(post.relatedDomainIds) ? post.relatedDomainIds : [])].filter(Boolean))
-            )
-            const draftExpanded = expandDomainIds(draftDomainIds)
+            const baseContent = post.originalPost?.content || null
+            const draftChangedNodes = getChangedNodeIds(baseContent, post.content)
+            const draftDescendants = getDescendants(draftChangedNodes, post.content)
 
             let conflict: { version: number; domainId: string } | null = null
             for (const pub of publishedBetween) {
               if (pub.version == null) continue
-              const pubDomainIds = Array.from(
-                new Set([pub.domainId || '', ...(Array.isArray(pub.relatedDomainIds) ? pub.relatedDomainIds : [])].filter(Boolean))
-              )
-              if (pubDomainIds.length === 0) continue
-              const pubExpanded = expandDomainIds(pubDomainIds)
+              
+              const pubChangedNodes = getChangedNodeIds(baseContent, pub.content)
+              const pubDescendants = getDescendants(pubChangedNodes, pub.content)
+              
               let intersects = false
-              for (const id of Array.from(pubExpanded)) {
-                if (draftExpanded.has(id)) {
+              for (const id of Array.from(pubDescendants)) {
+                if (draftDescendants.has(id)) {
                   intersects = true
                   break
                 }
               }
+              
               if (intersects) {
-                conflict = { version: pub.version, domainId: pub.domainId || pubDomainIds[0] }
+                conflict = { version: pub.version, domainId: pub.domainId || 'unknown' }
                 break
               }
             }
@@ -246,7 +281,7 @@ export async function POST(request: NextRequest) {
                 data: { status: 'REVIEWABLE' },
               })
 
-              const domainName = nameById.get(conflict.domainId) || 'غير معروف'
+              const domainName = domains.find(d => d.id === conflict?.domainId)?.name || 'غير معروف'
               const draftDisplayId = getPostDisplayId({
                 id: post.id,
                 status: post.status,
