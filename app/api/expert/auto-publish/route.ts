@@ -187,8 +187,8 @@ export async function POST(request: NextRequest) {
                 const baseNodes = Array.isArray(baseTree.nodes) ? baseTree.nodes : []
                 const newNodes = Array.isArray(newTree.nodes) ? newTree.nodes : []
                 
-                const baseMap = new Map(baseNodes.map((n: any) => [n.id, n]))
-                for (const n of newNodes) {
+                const baseMap = new Map<string, any>(baseNodes.map((n: any) => [n.id, n]))
+                for (const n of (newNodes as any[])) {
                   const b = baseMap.get(n.id)
                   if (!b) {
                     changedIds.add(n.id)
