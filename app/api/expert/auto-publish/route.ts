@@ -192,18 +192,6 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            const collectAncestors = (id: string): string[] => {
-              const out: string[] = []
-              let curId: string | null | undefined = id
-              while (curId) {
-                const pId: string | null = parentById.get(curId) || null
-                if (!pId) break
-                out.push(pId)
-                curId = pId
-              }
-              return out
-            }
-
             const collectDescendants = (id: string) => {
               const out: string[] = []
               const stack: string[] = [...(childrenById.get(id) || [])]
@@ -221,7 +209,6 @@ export async function POST(request: NextRequest) {
               for (const id of ids) {
                 if (!id) continue
                 set.add(id)
-                for (const a of collectAncestors(id)) set.add(a)
                 for (const c of collectDescendants(id)) set.add(c)
               }
               return set
