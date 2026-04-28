@@ -922,21 +922,48 @@
     "statusApproved": "معتمد",
     "statusRejected": "مرفوض",
     "statusDraft": "مسودة",
-    "noDependencies": "هذه الدورة ليست متطلباً سابقاً لأي دورة أخرى بعد.",
-    "proposedBy": "مقترح من قبل",
-    "types": {
-      "STUDY": "دراسة",
-      "TEACH": "تدريس"
-    },
-    "status": {
-      "PENDING": "قيد المراجعة",
-      "APPROVED": "تمت الموافقة",
-      "REJECTED": "مرفوض"
-    },
     "toast": {
-      "voted": "تم تسجيل صوتك بنجاح",
-      "proposed": "تم تقديم الاقتراح بنجاح",
-      "error": "حدث خطأ ما"
+      "fetchError": "خطأ في جلب الفصول",
+      "saveSuccess": "تم حفظ التغييرات بنجاح",
+      "saveError": "خطأ في حفظ التغييرات",
+      "deleteSuccess": "تم حذف الفصل بنجاح",
+      "deleteError": "خطأ في حذف الفصل",
+      "voteError": "خطأ في التصويت",
+      "draftCreateError": "خطأ في إنشاء المسودة",
+      "requiredFields": "يرجى إدخال العنوان والمحتوى للفصل"
+    },
+    "prerequisites": {
+      "proposeTitle": "اقتراح متطلب جديد",
+      "selectCourse": "اختيار دورة...",
+      "typeLabel": "نوع المتطلب:",
+      "studyType": "دراسة (للطالب)",
+      "teachType": "تدريس (للمدرس/الممتحن)",
+      "proposeBtn": "اقتراح",
+      "listTitle": "قائمة المتطلبات السابقة",
+      "thisCoursePrerequisites": "المتطلبات السابقة لهذه الدورة",
+      "otherCoursesDependencies": "أين هذه الدورة متطلب سابق؟ (التبعيات)",
+      "studyPrerequisites": "متطلبات الدراسة",
+      "teachPrerequisites": "متطلبات التدريس",
+      "dependencyNote": "يتم جمع هذه المعلومات من الأقسام الأخرى ولا يمكن تغييرها من هنا.",
+      "noPrerequisites": "لم يتم تحديد أي متطلبات بعد.",
+      "noDependencies": "هذه الدورة ليست متطلباً سابقاً لأي دورة أخرى بعد.",
+      "proposedBy": "مقترح من قبل",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "types": {
+        "STUDY": "دراسة",
+        "TEACH": "تدريس"
+      },
+      "status": {
+        "PENDING": "قيد المراجعة",
+        "APPROVED": "تمت الموافقة",
+        "REJECTED": "مرفوض"
+      },
+      "toast": {
+        "voted": "تم تسجيل صوتك بنجاح",
+        "proposed": "تم تقديم الاقتراح بنجاح",
+        "error": "حدث خطأ ما"
+      }
     },
     "questionnaire": {
       "title": "استبيان الفصل",
