@@ -276,7 +276,7 @@ export default function TreeDiagramEditor({
         const color = getDomainColor(String(srcDomainId))
         return {
           ...edge,
-          style: { ...edge.style, stroke: color, strokeWidth: 3 },
+          style: { ...edge.style, stroke: color || undefined, strokeWidth: 3 },
         }
       }
       return edge
