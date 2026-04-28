@@ -32,6 +32,35 @@ interface FlashcardField {
 
 type PreviewDraft = { title: string; description?: string; content: string }
 
+const DOMAIN_COLORS = [
+  '#3b82f6', // blue
+  '#ef4444', // red
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#f97316', // orange
+  '#84cc16', // lime
+  '#6366f1', // indigo
+  '#a855f7', // purple
+  '#14b8a6', // teal
+  '#f43f5e', // rose
+  '#0ea5e9', // sky
+]
+
+const getDomainColor = (domainId: string | null) => {
+  if (!domainId) return null
+  let hash = 0
+  for (let i = 0; i < domainId.length; i++) {
+    hash = domainId.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % DOMAIN_COLORS.length
+  return DOMAIN_COLORS[index]
+}
+
+type DomainDisplayMode = 'hidden' | 'names' | 'colors'
+
 const CustomNode = ({ data, isConnectable }: any) => {
   const t = useTranslations('treeDiagramEditor')
   // Check if the node has flashcard content (text, article link, or extra items)
@@ -65,8 +94,17 @@ const CustomNode = ({ data, isConnectable }: any) => {
       }`}
     >
       <Handle type="target" position={Position.Right} isConnectable={isConnectable} className="w-3 h-3 !bg-gray-600" />
-      <div className="text-center">
-        <div className="text-sm font-bold text-gray-800">{data.label}</div>
+      <div className="text-center flex flex-col items-center">
+        <div className="flex items-center gap-1.5">
+          {data?._showDomainColors && data?._domainColor && (
+            <span 
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm" 
+              style={{ backgroundColor: data._domainColor }} 
+              title={data.domainName}
+            />
+          )}
+          <div className="text-sm font-bold text-gray-800">{data.label}</div>
+        </div>
         {!!data?.domainName && !!data?._showDomainName && (
           <div className="text-[11px] text-gray-600 mt-0.5">{data.domainName}</div>
         )}
@@ -120,7 +158,7 @@ export default function TreeDiagramEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || [])
   const [nodeLabel, setNodeLabel] = useState('')
   const nodeIdRef = useRef(2)
-  const [showDomainNames, setShowDomainNames] = useState(showDomainNamesAtTop)
+  const [domainDisplayMode, setDomainDisplayMode] = useState<DomainDisplayMode>(showDomainNamesAtTop ? 'names' : 'hidden')
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -131,7 +169,7 @@ export default function TreeDiagramEditor({
   }, [actionsPortalId])
 
   useEffect(() => {
-    setShowDomainNames(showDomainNamesAtTop)
+    setDomainDisplayMode(showDomainNamesAtTop ? 'names' : 'hidden')
   }, [showDomainNamesAtTop])
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -201,7 +239,7 @@ export default function TreeDiagramEditor({
     highlightRelatedNodes(sourceId, targetId)
   }, [highlightRelatedNodes])
 
-  // Compute nodes with highlight flags
+  // Compute nodes with highlight and domain flags
   const computedNodes = React.useMemo(() => {
     const mapOne = (n: any, highlighted: boolean) => {
       const dataAny = (n.data as any) || {}
@@ -213,14 +251,51 @@ export default function TreeDiagramEditor({
           ...dataAny,
           domainId,
           domainName,
-          _showDomainName: showDomainNames ? true : undefined,
+          _showDomainName: domainDisplayMode === 'names' ? true : undefined,
+          _showDomainColors: domainDisplayMode === 'colors' ? true : undefined,
+          _domainColor: domainId ? getDomainColor(String(domainId)) : null,
           _highlight: highlighted ? true : undefined,
         },
       }
     }
     if (!highlightedNodeIds.length) return nodes.map((n) => mapOne(n, false))
     return nodes.map((n) => mapOne(n, highlightedNodeIds.includes(n.id)))
-  }, [nodes, highlightedNodeIds, domainNameById, showDomainNames])
+  }, [nodes, highlightedNodeIds, domainNameById, domainDisplayMode])
+
+  // Compute edges with optional domain color-coding
+  const computedEdges = React.useMemo(() => {
+    if (domainDisplayMode !== 'colors') return edges
+
+    return edges.map((edge) => {
+      const sourceNode = nodes.find((n) => n.id === edge.source)
+      const targetNode = nodes.find((n) => n.id === edge.target)
+      const srcDomainId = (sourceNode?.data as any)?.domainId
+      const tgtDomainId = (targetNode?.data as any)?.domainId
+
+      if (srcDomainId && srcDomainId === tgtDomainId) {
+        const color = getDomainColor(String(srcDomainId))
+        return {
+          ...edge,
+          style: { ...edge.style, stroke: color, strokeWidth: 3 },
+        }
+      }
+      return edge
+    })
+  }, [edges, nodes, domainDisplayMode])
+
+  const toggleDomainDisplay = useCallback(() => {
+    setDomainDisplayMode((prev) => {
+      if (prev === 'hidden') return 'names'
+      if (prev === 'names') return 'colors'
+      return 'hidden'
+    })
+  }, [])
+
+  const getDisplayModeText = useCallback(() => {
+    if (domainDisplayMode === 'hidden') return t('showDomainNames')
+    if (domainDisplayMode === 'names') return t('showDomainColors')
+    return t('hideDomainNames') // or displayMode_hidden if we added it, but hideDomainNames works as "Reset"
+  }, [domainDisplayMode, t])
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [previewDraft, setPreviewDraft] = useState<PreviewDraft | null>(null)
@@ -1005,20 +1080,20 @@ export default function TreeDiagramEditor({
             createPortal(
               <button
                 type="button"
-                onClick={() => setShowDomainNames((prev) => !prev)}
+                onClick={toggleDomainDisplay}
                 className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary relative z-[100]"
               >
-                {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+                {getDisplayModeText()}
               </button>,
               portalTarget
             )
           ) : (
             <button
               type="button"
-              onClick={() => setShowDomainNames((prev) => !prev)}
+              onClick={toggleDomainDisplay}
               className="px-4 py-2 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
             >
-              {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+              {getDisplayModeText()}
             </button>
           )}
         </div>
@@ -1029,20 +1104,20 @@ export default function TreeDiagramEditor({
               createPortal(
                 <button
                   type="button"
-                  onClick={() => setShowDomainNames((prev) => !prev)}
+                  onClick={toggleDomainDisplay}
                   className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
                 >
-                  {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+                  {getDisplayModeText()}
                 </button>,
                 portalTarget
               )
             ) : (
               <button
                 type="button"
-                onClick={() => setShowDomainNames((prev) => !prev)}
+                onClick={toggleDomainDisplay}
                 className="px-3 py-1.5 bg-site-card text-site-text border border-site-border rounded-md text-sm hover:bg-site-secondary"
               >
-                {showDomainNames ? t('hideDomainNames') : t('showDomainNames')}
+                {getDisplayModeText()}
               </button>
             )}
           </div>
@@ -1053,7 +1128,7 @@ export default function TreeDiagramEditor({
         <div className="flex-1 min-h-0">
           <ReactFlow
             nodes={computedNodes}
-            edges={edges}
+            edges={computedEdges}
              onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onNodesDelete={handleNodesDelete}
@@ -1074,6 +1149,26 @@ export default function TreeDiagramEditor({
           >
             <Background />
             <Controls />
+            {domainDisplayMode === 'colors' && domains.length > 0 && (
+              <div className="absolute bottom-4 right-4 bg-site-card/90 backdrop-blur-sm border border-site-border p-3 rounded-lg shadow-lg z-[100] max-h-[200px] overflow-y-auto min-w-[150px]">
+                <div className="text-xs font-bold text-site-text mb-2 border-b border-site-border pb-1">
+                  {t('domainColorLegend')}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {domains.map((d) => (
+                    <div key={d.id} className="flex items-center gap-2">
+                      <span 
+                        className="w-3 h-3 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: getDomainColor(d.id) || '#ccc' }} 
+                      />
+                      <span className="text-[10px] text-site-text truncate" title={d.name}>
+                        {d.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </ReactFlow>
         </div>
 

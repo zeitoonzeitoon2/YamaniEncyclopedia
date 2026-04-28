@@ -1047,6 +1047,8 @@
     "deleteSelected": "حذف المحدد",
     "showDomainNames": "إظهار أسماء المجالات",
     "hideDomainNames": "إخفاء أسماء المجالات",
+    "showDomainColors": "إظهار ألوان المجالات",
+    "domainColorLegend": "دليل ألوان المجالات",
     "nodePrompt": "أدخل اسم العقدة الجديد:",
     "flashcardTitle": "بطاقة البيانات للعقدة: {label}",
     "flashcardText": "نص بطاقة البيانات",

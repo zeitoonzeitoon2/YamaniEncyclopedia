@@ -1191,6 +1191,8 @@
     "deleteSelected": "حذف موارد انتخاب شده",
     "showDomainNames": "نمایش نام حوزه‌ها",
     "hideDomainNames": "عدم نمایش نام حوزه‌ها",
+    "showDomainColors": "نمایش رنگ حوزه‌ها",
+    "domainColorLegend": "راهنمای رنگ حوزه‌ها",
     "nodePrompt": "نام جدید گره را وارد کنید:",
     "flashcardTitle": "کارت داده گره: {label}",
     "flashcardText": "متن کارت داده",

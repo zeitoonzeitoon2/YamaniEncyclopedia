@@ -1128,6 +1128,8 @@
     "deleteSelected": "Delete Selected",
     "showDomainNames": "Show Domain Names",
     "hideDomainNames": "Hide Domain Names",
+    "showDomainColors": "Show Domain Colors",
+    "domainColorLegend": "Domain Color Legend",
     "nodePrompt": "Enter new node label:",
     "flashcardTitle": "Flashcard for {label}",
     "flashcardText": "Flashcard Text",
