@@ -93,6 +93,7 @@ export default function ExpertDashboard() {
   const [isDomainExpert, setIsDomainExpert] = useState(false)
   const [userExpertDomains, setUserExpertDomains] = useState<string[]>([])
   const isExpertRole = session?.user?.role === 'EXPERT'
+  const [mobilePanel, setMobilePanel] = React.useState<'list' | 'detail'>('list')
   const canVoteOnSelectedPost = useMemo(() => {
     if (!selectedPost) return false
     if (selectedPost.relatedDomains && selectedPost.relatedDomains.length > 0) {
@@ -431,6 +432,7 @@ export default function ExpertDashboard() {
       } else {
         setSelectedPost(found)
       }
+      setMobilePanel('detail')
       setTimeout(() => {
         const el = document.getElementById('comments')
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -698,57 +700,57 @@ export default function ExpertDashboard() {
           </div>
         )}
 
-        {/* Comparison Stats - showing analytical stats for the last selected post card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Comparison Stats */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
           {/* Nodes card */}
-           <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.nodes')}</h3>
-            <div className="flex justify-around mt-3">
+           <div className="card text-center p-3 sm:p-6">
+             <h3 className="text-sm sm:text-lg font-semibold text-site-text heading">{t('stats.nodes')}</h3>
+            <div className="flex justify-around mt-2 sm:mt-3">
               <div className="text-center">
-                <p className="text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.added')}</p>
+                <p className="text-base sm:text-xl font-bold text-green-400">{comparisonStats?.nodes.added || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
+                <p className="text-base sm:text-xl font-bold text-red-400">{comparisonStats?.nodes.removed || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
             </div>
           </div>
 
           {/* Flashcards card */}
-           <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.flashcards')}</h3>
-            <div className="grid grid-cols-3 gap-2 mt-3">
+           <div className="card text-center p-3 sm:p-6">
+             <h3 className="text-sm sm:text-lg font-semibold text-site-text heading">{t('stats.flashcards')}</h3>
+            <div className="grid grid-cols-3 gap-1 sm:gap-2 mt-2 sm:mt-3">
               <div className="text-center">
-                <p className="text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.added')}</p>
+                <p className="text-sm sm:text-lg font-bold text-green-400">{comparisonStats?.flashcards.added || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
+                <p className="text-sm sm:text-lg font-bold text-red-400">{comparisonStats?.flashcards.removed || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.edited')}</p>
+                <p className="text-sm sm:text-lg font-bold text-yellow-400">{comparisonStats?.flashcards.edited || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.edited')}</p>
               </div>
             </div>
           </div>
 
           {/* Articles card */}
-           <div className="card text-center">
-             <h3 className="text-lg font-semibold text-site-text heading">{t('stats.articles')}</h3>
-            <div className="grid grid-cols-3 gap-2 mt-3">
+           <div className="card text-center p-3 sm:p-6">
+             <h3 className="text-sm sm:text-lg font-semibold text-site-text heading">{t('stats.articles')}</h3>
+            <div className="grid grid-cols-3 gap-1 sm:gap-2 mt-2 sm:mt-3">
               <div className="text-center">
-                <p className="text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.added')}</p>
+                <p className="text-sm sm:text-lg font-bold text-green-400">{comparisonStats?.articles.added || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.added')}</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.removed')}</p>
+                <p className="text-sm sm:text-lg font-bold text-red-400">{comparisonStats?.articles.removed || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.removed')}</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
-                <p className="text-xs text-site-muted">{t('stats.edited')}</p>
+                <p className="text-sm sm:text-lg font-bold text-yellow-400">{comparisonStats?.articles.edited || 0}</p>
+                <p className="text-[10px] sm:text-xs text-site-muted">{t('stats.edited')}</p>
               </div>
             </div>
           </div>
@@ -757,9 +759,11 @@ export default function ExpertDashboard() {
 
         {/* Posts */}
         <div className="flex gap-6">
-          {/* Collapsible Posts List */}
+          {/* Collapsible Posts List — hidden on mobile when detail panel is open */}
           <div className={`transition-all duration-300 ${
             isPostsListCollapsed ? 'w-12' : 'w-80 lg:w-96'
+          } ${
+            mobilePanel === 'detail' ? 'hidden md:block' : 'block'
           }`}>
             <div className="flex items-center justify-between mb-4">
               {!isPostsListCollapsed && (
@@ -1054,8 +1058,18 @@ export default function ExpertDashboard() {
             )}
           </div>
 
-          {/* Post Details */}
-          <div className="flex-1">
+          {/* Post Details — hidden on mobile when list panel is shown */}
+          <div className={`flex-1 ${
+            mobilePanel === 'list' ? 'hidden md:block' : 'block'
+          }`}>
+            {/* Mobile back button */}
+            <button
+              className="md:hidden mb-3 flex items-center gap-2 text-sm text-site-muted hover:text-site-text transition-colors"
+              onClick={() => setMobilePanel('list')}
+            >
+              <span>→</span>
+              <span>بازگشت به لیست</span>
+            </button>
             {selectedPost ? (
               <div>
                 <h2 className="text-xl font-bold text-site-text mb-4 heading">{t('details.title')}</h2>

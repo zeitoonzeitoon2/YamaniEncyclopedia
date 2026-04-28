@@ -2,11 +2,16 @@ import './globals.css'
 import { getLocale } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 
+import type { Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+}
+
 export async function generateMetadata() {
-  /*
-  const logo = await prisma.setting.findUnique({ where: { key: 'site.logo' } })
-  const logoUrl = logo?.value
-  */
   const logoUrl = null
 
   return {

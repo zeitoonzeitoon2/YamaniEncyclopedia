@@ -180,7 +180,7 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
 
   if (isLoading) {
     return (
-      <div className="bg-site-card rounded-lg p-6 border border-site-border">
+      <div className="bg-site-card rounded-lg p-4 sm:p-6 border border-site-border">
         <h3 className="text-lg font-semibold text-site-text mb-4 heading">{t('title')}</h3>
         <div className="text-site-muted">{t('loading')}</div>
       </div>
@@ -188,7 +188,7 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
   }
 
   return (
-    <div className="bg-site-card rounded-lg p-6 border border-site-border">
+    <div className="bg-site-card rounded-lg p-4 sm:p-6 border border-site-border">
       <h3 className="text-lg font-semibold text-site-text mb-4">
         {t('count', { count: comments.length })}
       </h3>
@@ -196,8 +196,8 @@ export default function CommentSection({ postId, chapterId, onPickUser }: Commen
       {/* New comment form */}
       {canComment && (
         <form onSubmit={handleSubmitComment} className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <label className="text-site-muted text-sm">{t('tagLabel')}</label>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+            <label className="text-site-muted text-sm whitespace-nowrap">{t('tagLabel')}</label>
             <select
               value={newCategory ?? ''}
               onChange={(e) => setNewCategory(e.target.value ? (e.target.value as any) : null)}

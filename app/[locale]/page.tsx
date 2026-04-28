@@ -52,7 +52,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
 
   return (
     <div className="min-h-screen bg-site-bg flex flex-col relative z-0">
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {headerUrl && (
           <ScrollReveal direction="none" distance={0} duration={1} className="relative h-48 md:h-64 lg:h-80 mb-8 overflow-hidden rounded-xl shadow-2xl">
             <Image 
@@ -98,47 +98,47 @@ export default async function HomePage({ params: { locale } }: { params: { local
           )}
         </ScrollReveal>
 
-        <section className="mb-20">
-          <ScrollReveal direction="up" className="card rounded-2xl p-8 md:p-12 shadow-2xl border border-site-border/40 bg-gradient-to-br from-site-card via-site-card to-site-secondary/20 relative overflow-hidden">
+        <section className="mb-12 sm:mb-20">
+          <ScrollReveal direction="up" className="card rounded-2xl p-5 sm:p-8 md:p-12 shadow-2xl border border-site-border/40 bg-gradient-to-br from-site-card via-site-card to-site-secondary/20 relative overflow-hidden">
             {/* Background decorative elements for a floating feel */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-warm-accent/30 to-transparent" />
             
             <Parallax offset={30} className="space-y-8">
               <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-warm-accent flex items-center gap-4">
-                  <span className="h-10 w-1.5 bg-warm-accent rounded-full" />
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-warm-accent flex items-center gap-3 sm:gap-4">
+                  <span className="h-8 sm:h-10 w-1.5 bg-warm-accent rounded-full" />
                   {t('aboutTitle')}
                 </h2>
                 <div className="space-y-4 max-w-4xl">
-                  <p className="text-site-text leading-9 text-xl opacity-90 font-medium">
+                  <p className="text-site-text leading-8 sm:leading-9 text-base sm:text-xl opacity-90 font-medium">
                     {t('aboutDesc1')}
                   </p>
-                  <p className="text-site-text leading-8 text-lg opacity-80">
+                  <p className="text-site-text leading-7 sm:leading-8 text-base sm:text-lg opacity-80">
                     {t('aboutDesc2')}
                   </p>
                 </div>
               </div>
 
-              <div className="grid lg:grid-cols-2 gap-12 mt-12 pt-12 border-t border-site-border/30">
-                <Parallax offset={60} className="space-y-6 bg-site-secondary/10 p-6 rounded-xl border border-site-border/20 shadow-inner">
-                  <h3 className="text-2xl font-bold text-warm-accent flex items-center gap-3">
+                <div className="grid lg:grid-cols-2 gap-6 sm:gap-12 mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-site-border/30">
+                  <Parallax offset={60} className="space-y-4 sm:space-y-6 bg-site-secondary/10 p-4 sm:p-6 rounded-xl border border-site-border/20 shadow-inner">
+                    <h3 className="text-xl sm:text-2xl font-bold text-warm-accent flex items-center gap-3">
                     <div className="p-2 bg-warm-accent/10 rounded-lg">
                       <span className="block w-3 h-3 bg-warm-accent rounded-full animate-pulse" />
                     </div>
                     {t('whyImportantTitle')}
                   </h3>
                   <div className="space-y-4">
-                    <p className="text-site-text leading-8 text-lg opacity-85">
-                      {t('whyImportantDesc1')}
-                    </p>
-                    <p className="text-site-text leading-8 text-lg opacity-85">
+                      <p className="text-site-text leading-7 sm:leading-8 text-base sm:text-lg opacity-85">
+                        {t('whyImportantDesc1')}
+                      </p>
+                      <p className="text-site-text leading-7 sm:leading-8 text-base sm:text-lg opacity-85">
                       {t('whyImportantDesc2')}
                     </p>
                   </div>
                 </Parallax>
 
-                <Parallax offset={-40} className="space-y-6 bg-site-secondary/5 p-6 rounded-xl border border-site-border/10">
-                  <h3 className="text-2xl font-bold text-warm-accent flex items-center gap-3">
+                  <Parallax offset={-40} className="space-y-4 sm:space-y-6 bg-site-secondary/5 p-4 sm:p-6 rounded-xl border border-site-border/10">
+                    <h3 className="text-xl sm:text-2xl font-bold text-warm-accent flex items-center gap-3">
                     <div className="p-2 bg-warm-accent/10 rounded-lg">
                       <span className="block w-3 h-3 bg-warm-accent rounded-full" />
                     </div>
@@ -147,9 +147,9 @@ export default async function HomePage({ params: { locale } }: { params: { local
                   <StaggerContainer className="text-site-text leading-7 grid sm:grid-cols-1 gap-3">
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                       <StaggerItem key={i}>
-                        <div className="flex items-start gap-3 group p-2 rounded-lg hover:bg-site-secondary/20 transition-all duration-300">
-                          <span className="mt-2 w-2 h-2 bg-warm-accent/40 rounded-full group-hover:bg-warm-accent group-hover:scale-125 transition-all" />
-                          <span className="text-lg opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all">{t(`structureItem${i}` as any)}</span>
+                        <div className="flex items-start gap-2 sm:gap-3 group p-2 rounded-lg hover:bg-site-secondary/20 transition-all duration-300">
+                          <span className="mt-2 w-2 h-2 bg-warm-accent/40 rounded-full group-hover:bg-warm-accent group-hover:scale-125 transition-all shrink-0" />
+                          <span className="text-sm sm:text-lg opacity-80 group-hover:opacity-100 transition-all">{t(`structureItem${i}` as any)}</span>
                         </div>
                       </StaggerItem>
                     ))}

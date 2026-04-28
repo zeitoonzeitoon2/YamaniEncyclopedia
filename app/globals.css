@@ -393,3 +393,64 @@ mark {
 .org-tree li .node-card:hover + ul ul::before {
   @apply border-warm-primary;
 }
+
+/* ============================
+   Mobile Responsive Overrides
+   ============================ */
+
+/* Prevent horizontal overflow globally */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Org-chart scrollable on small screens */
+@media (max-width: 768px) {
+  .org-tree {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+  }
+
+  /* Article font sizes reduced on mobile */
+  .article-content-body {
+    font-size: calc(var(--article-scale,1) * 16px);
+  }
+
+  .article-content-body blockquote.q-ayah {
+    font-size: 24px;
+    padding: 16px 20px;
+    line-height: 2;
+  }
+
+  .article-content-body blockquote {
+    font-size: 17px;
+    padding: 14px 18px 14px 12px;
+  }
+
+  .article-content-body blockquote.q-quote {
+    font-size: 18px;
+  }
+
+  /* Bigger touch targets for buttons */
+  button, a {
+    min-height: 36px;
+  }
+
+  /* Card padding reduced on mobile */
+  .card {
+    @apply p-4;
+  }
+
+  /* Collapse filter button grids to 2 cols on tiny screens */
+  .filter-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Safe area for notch phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
