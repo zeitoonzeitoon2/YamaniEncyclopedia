@@ -207,8 +207,8 @@ export async function POST(request: NextRequest) {
 
                 const baseEdges = Array.isArray(baseTree.edges) ? baseTree.edges : []
                 const newEdges = Array.isArray(newTree.edges) ? newTree.edges : []
-                const baseEdgeSet = new Set(baseEdges.map(e => `${e.source}->${e.target}`))
-                const newEdgeSet = new Set(newEdges.map(e => `${e.source}->${e.target}`))
+                const baseEdgeSet = new Set(baseEdges.map((e: any) => `${e.source}->${e.target}`))
+                const newEdgeSet = new Set(newEdges.map((e: any) => `${e.source}->${e.target}`))
                 
                 for (const e of newEdges) {
                   if (!baseEdgeSet.has(`${e.source}->${e.target}`)) {
