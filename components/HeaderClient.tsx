@@ -121,11 +121,11 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
 
   return (
     <>
-      <div className="flex items-center justify-center relative z-[1001]">
+      <div className="flex items-center justify-center shrink relative z-[1001] mx-1">
         <div className="flex items-center rounded-full bg-site-border/40 p-0.5 border border-site-border/50">
           <a
             href={getLocalizedHref('/')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
+            className={`px-2 py-1 sm:px-3 text-[10px] sm:text-xs rounded-full transition-colors ${
               isAcademy ? 'text-site-muted hover:text-site-text' : 'bg-warm-primary/20 text-site-text font-medium'
             }`}
             onClick={(e) => {
@@ -137,7 +137,7 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
           </a>
           <a
             href={getLocalizedHref('/academy')}
-            className={`px-3 py-1 rounded-full text-xs transition-colors ${
+            className={`px-2 py-1 sm:px-3 text-[10px] sm:text-xs rounded-full transition-colors ${
               isAcademy ? 'bg-warm-primary/20 text-site-text font-medium' : 'text-site-muted hover:text-site-text'
             }`}
             onClick={(e) => {
@@ -150,17 +150,19 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
         </div>
       </div>
 
-      <nav className="flex items-center justify-end gap-3 relative z-[1001]">
-        <div className="flex items-center gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
+      <nav className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0 relative z-[1001]">
+        <div className="flex items-center gap-0 sm:gap-0.5 p-0.5 bg-site-border/20 backdrop-blur-md border border-site-border/80 rounded-full shadow-md hover:border-warm-primary/50 transition-all">
           <PageGuide />
           
           <div className="flex items-center">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
+              className="p-1.5 sm:p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
               aria-label={t('themeToggle')}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              <div className="scale-90 sm:scale-100">
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </div>
             </button>
           </div>
 
@@ -170,10 +172,12 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                 e.stopPropagation();
                 setLangMenuOpen((prev) => !prev);
               }}
-              className="p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
+              className="p-1.5 sm:p-2 rounded-full hover:bg-site-border/40 transition-colors text-site-text"
               aria-label={tl('label')}
             >
-              <Languages size={16} />
+              <div className="scale-90 sm:scale-100">
+                <Languages size={16} />
+              </div>
             </button>
             {langMenuOpen && (
               <div className="absolute end-0 mt-2 w-32 rounded-lg border border-gray-700 bg-site-secondary shadow-xl overflow-hidden z-[1010]">
@@ -200,18 +204,20 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
 
           {session && (
             <>
-              <div className="w-px h-5 bg-site-border/50 mx-1" />
+              <div className="w-px h-5 bg-site-border/50 mx-0.5 sm:mx-1" />
               {!isAcademy && (
                 <a 
                   href={getLocalizedHref('/create')} 
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 bg-warm-primary hover:bg-warm-primary-hover text-white rounded-full transition-all text-[10px] sm:text-xs font-bold shadow-sm hover:shadow-md active:scale-95"
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(false)
                   }}
                 >
-                  <Edit size={14} />
-                  <span className="hidden sm:inline">{t('newEdit')}</span>
+                  <div className="scale-90 sm:scale-100">
+                    <Edit size={14} />
+                  </div>
+                  <span className="hidden md:inline">{t('newEdit')}</span>
                 </a>
               )}
 
@@ -230,12 +236,12 @@ export function HeaderClient({ initialLocale }: HeaderClientProps) {
                       alt={session.user.name || ''}
                       width={28}
                       height={28}
-                      className="rounded-full border border-site-border/50"
+                      className="rounded-full border border-site-border/50 w-6 h-6 sm:w-7 sm:h-7"
                       onError={() => setProfileImageError(true)}
                     />
                   ) : (
-                    <span className="w-7 h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">
-                      <User size={14} />
+                    <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-site-border flex items-center justify-center text-site-text">
+                      <User size={14} className="scale-90 sm:scale-100" />
                     </span>
                   )}
                   {notifications.total > 0 && (
