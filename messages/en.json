@@ -1240,7 +1240,7 @@
     },
     "academy": {
       "title": "Academy Guide",
-      "content": "<p>The Academy is the learning and assessment hub.</p><h3>Rules:</h3><ul><li><strong>Prerequisites:</strong> Must be completed before enrolling in advanced courses.</li><li><strong>Exams:</strong> Request exams after studying. Examiners grade them.</li><li><strong>Level Up:</strong> Passing courses is required to become an Expert or Editor.</li></ul>"
+      "content": "<p>The Academy is the learning and assessment center in the Tree of Knowledge.</p><h3>Rules and Processes:</h3><ul><li><strong>Prerequisites:</strong> To participate in some courses, teach some courses, or research in some domains, you must first pass the prerequisite courses.</li><li><strong>Exams:</strong> After studying the content and answering the chapter questionnaires of each course, you can request an exam. Exams will be held as online video calls and graded by examiners.</li><li><strong>Level Up:</strong> Passing courses is a prerequisite for acquiring higher roles (such as expert, editor, or instructor) in scientific domains.</li><li><strong>Communication with Instructor:</strong> You can communicate with your instructor in the dedicated chat space in the student dashboard.</li></ul>"
     },
     "adminCourses": {
       "title": "Course Management Guide",
