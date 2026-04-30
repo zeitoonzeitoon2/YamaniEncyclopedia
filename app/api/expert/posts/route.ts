@@ -41,19 +41,7 @@ export async function GET(request: NextRequest) {
     const authorQueryRaw = url.searchParams.get('authorQuery')
     const authorQuery = authorQueryRaw ? authorQueryRaw.trim() : ''
 
-    const baseWhere: Prisma.PostWhereInput = isExpert || !isDomainExpert
-      ? { NOT: { status: { in: ['DRAFT'] } } }
-      : {
-          AND: [
-            { NOT: { status: { in: ['DRAFT'] } } },
-            {
-              OR: [
-                { domainId: { in: expertDomainIds } },
-                { relatedDomainIds: { hasSome: expertDomainIds } },
-              ],
-            },
-          ],
-        }
+    const baseWhere: Prisma.PostWhereInput = { NOT: { status: { in: ['DRAFT'] } } }
     const whereClause: Prisma.PostWhereInput = authorQuery
       ? {
           AND: [
