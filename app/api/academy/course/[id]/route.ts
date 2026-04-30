@@ -37,7 +37,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const byRoot = new Map<string, typeof approved[number]>()
     for (const ch of approved) {
-      const rootId = ch.originalChapterId || ch.id
+      // Use title as the grouping key to prevent duplicates if originalChapterId is missing
+      const rootId = ch.title.trim()
       const current = byRoot.get(rootId)
       const currentVersion = current?.version ?? 0
       const nextVersion = ch.version ?? 0
