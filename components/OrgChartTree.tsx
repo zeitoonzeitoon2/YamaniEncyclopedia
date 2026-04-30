@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useLayoutEffect, useCallback, useMemo } from 'react'
 import { Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 // Simple utility for class names
 function cn(...classes: (string | undefined | null | false)[]) {
@@ -39,6 +40,7 @@ type NodePos = {
 }
 
 export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, canAddChild }: OrgChartTreeProps) {
+  const t = useTranslations('adminDomains')
   const containerRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<{ nodes: NodePos[]; lines: Array<{ from: string; to: string }> }>({ nodes: [], lines: [] })
 
@@ -225,7 +227,7 @@ export default function OrgChartTree({ nodes, selectedId, onSelect, onAddChild, 
                 {n.node.name}
               </span>
               <span className="text-[9px] text-site-muted font-medium">
-                {n.node.counts.posts} نوشته
+                {t('postCount', { count: n.node.counts.posts })}
               </span>
 
               {showAdd && (
