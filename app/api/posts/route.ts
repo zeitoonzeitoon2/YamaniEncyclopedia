@@ -149,7 +149,10 @@ export async function POST(request: NextRequest) {
                 normalizeString(newNode.data?.label) !== normalizeString(oldNode.data?.label) ||
                 oldDid !== newDid ||
                 normalizeString(newNode.data?.flashText) !== normalizeString(oldNode.data?.flashText) ||
-                normalizeString(newNode.data?.articleLink) !== normalizeString(oldNode.data?.articleLink)
+                normalizeString(newNode.data?.articleLink) !== normalizeString(oldNode.data?.articleLink) ||
+                JSON.stringify(newNode.data?.extraItems ?? []) !== JSON.stringify(oldNode.data?.extraItems ?? []) ||
+                JSON.stringify(newNode.data?.extraTexts ?? []) !== JSON.stringify(oldNode.data?.extraTexts ?? []) ||
+                JSON.stringify(newNode.data?.extraLinks ?? []) !== JSON.stringify(oldNode.data?.extraLinks ?? [])
               
               if (contentChanged) {
                 if (oldDid) {
